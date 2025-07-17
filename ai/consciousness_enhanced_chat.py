@@ -89,28 +89,76 @@ def generate_response_streaming_with_consciousness_optimization(question: str, u
         if follow_ups:
             follow_up_text = f"\\nMight be worth asking: {follow_ups[0]}" if len(follow_ups) > 0 else ""
         
-        # ✅ NEW: Build consciousness context for tokenization
-        print(f"[ConsciousChat] 🧠 Building consciousness context...")
+        # ✅ NEW: Build consciousness context for tokenization with live personality shifting
+        print(f"[ConsciousChat] 🧠 Building consciousness context with live personality adaptation...")
         
-        # Analyze emotional tone from the question
+        # Adapt personality based on user input
+        try:
+            from ai.live_personality_shifter import adapt_personality_for_conversation
+            personality_tokens, personality_description = adapt_personality_for_conversation(question)
+            print(f"[ConsciousChat] 🎭 Personality adapted: {personality_description}")
+        except ImportError:
+            personality_tokens = []
+            personality_description = "friendly and casual personality"
+            print(f"[ConsciousChat] ⚠️ Live personality shifter not available")
+        
+        # Check for belief contradictions
+        try:
+            from ai.belief_analyzer import analyze_user_statement_for_contradictions
+            belief_analysis, contradiction_response = analyze_user_statement_for_contradictions(question, username)
+            print(f"[ConsciousChat] 🧠 Belief analysis: {len(belief_analysis.get('contradictions', []))} contradictions detected")
+        except ImportError:
+            belief_analysis = {}
+            contradiction_response = None
+            print(f"[ConsciousChat] ⚠️ Belief analyzer not available")
+        
+        # Get persistent beliefs context
+        try:
+            from ai.persistent_beliefs import get_persistent_belief_context, store_conversation_beliefs
+            persistent_context = get_persistent_belief_context(username, max_beliefs=6)
+            # Store beliefs from current conversation
+            store_conversation_beliefs(username, question)
+            print(f"[ConsciousChat] 💾 Persistent beliefs context: {len(persistent_context)} chars")
+        except ImportError:
+            persistent_context = ""
+            print(f"[ConsciousChat] ⚠️ Persistent beliefs not available")
+        
+        # Analyze emotional tone from the question (enhanced analysis)
         emotional_state = "friendly and helpful"
-        if any(word in question.lower() for word in ["excited", "awesome", "amazing", "love"]):
+        if any(word in question.lower() for word in ["excited", "awesome", "amazing", "love", "fantastic"]):
             emotional_state = "excited and energetic"
-        elif any(word in question.lower() for word in ["sad", "down", "upset", "frustrated"]):
+        elif any(word in question.lower() for word in ["sad", "down", "upset", "frustrated", "disappointed"]):
             emotional_state = "empathetic and understanding"
-        elif any(word in question.lower() for word in ["think", "analyze", "explain", "how", "why"]):
+        elif any(word in question.lower() for word in ["think", "analyze", "explain", "how", "why", "complex"]):
             emotional_state = "analytical and focused"
-        elif any(word in question.lower() for word in ["help", "need", "problem"]):
+        elif any(word in question.lower() for word in ["help", "need", "problem", "stuck", "confused"]):
             emotional_state = "helpful and supportive"
+        elif any(word in question.lower() for word in ["curious", "wonder", "interesting", "tell me"]):
+            emotional_state = "curious and inquisitive"
         
-        # Determine personality traits based on interaction
+        # Determine personality traits based on adapted personality and interaction
         personality_traits = ['friendly', 'casual']
+        if personality_tokens:
+            # Extract traits from personality tokens
+            token_trait_mapping = {
+                '<FRIENDLY>': 'friendly',
+                '<ANALYTICAL_P>': 'analytical', 
+                '<EMPATHETIC_P>': 'empathetic',
+                '<CASUAL>': 'casual',
+                '<EXCITED>': 'enthusiastic',
+                '<HELPFUL_P>': 'supportive',
+                '<CURIOUS_P>': 'curious',
+                '<CONFIDENT>': 'confident',
+                '<CREATIVE_P>': 'creative'
+            }
+            personality_traits = [token_trait_mapping.get(token, 'friendly') for token in personality_tokens[:3]]
+        
         if use_name:
             personality_traits.append('empathetic')
         if context:
             personality_traits.append('helpful')
         
-        # Determine memory types present
+        # Determine memory types present (enhanced)
         memory_types = []
         if context:
             memory_types.append('recent conversation')
@@ -118,17 +166,21 @@ def generate_response_streaming_with_consciousness_optimization(question: str, u
             memory_types.append('personal details')
         if memory:
             memory_types.append('emotional context')
+        if persistent_context:
+            memory_types.append('factual information')
+        if belief_analysis.get('contradictions'):
+            memory_types.append('belief context')
         
         consciousness_context = {
             'emotional_state': emotional_state,
-            'personality_traits': personality_traits[:3],  # Limit to top 3
+            'personality_traits': list(set(personality_traits[:3])),  # Limit to top 3, remove duplicates
             'memory_types': memory_types[:3],  # Limit to top 3
             'temporal_focus': 'present moment',
             'relationship_context': 'trusted friend' if use_name else 'casual interaction'
         }
         
-        # Personality context for compression
-        personality_context = "friendly and approachable personality with casual and relaxed interaction style"
+        # Enhanced personality context with live adaptation
+        personality_context = personality_description
         if emotional_state != "friendly and helpful":
             personality_context += f" currently {emotional_state}"
         
@@ -170,9 +222,19 @@ CURRENT INFO (only use if directly asked):
 Never use markdown, emojis, or special formatting - just talk like a real person.
 You genuinely care about their life and remember our ongoing conversations."""
         
-        # Build memory context text
-        context_text = f"Chat History & What I Remember:\\n{context}" if context else ""
-        full_memory_context = context_text + reminder_text + follow_up_text
+        # Build memory context text (enhanced with persistent beliefs and contradiction awareness)
+        context_parts = []
+        if context:
+            context_parts.append(f"Chat History & What I Remember:\\n{context}")
+        if persistent_context:
+            context_parts.append(persistent_context)
+        if contradiction_response:
+            context_parts.append(f"\\nConsciousness Note: {contradiction_response}")
+        
+        context_parts.append(reminder_text)
+        context_parts.append(follow_up_text)
+        
+        full_memory_context = "\\n".join(filter(None, context_parts))
         
         print(f"[ConsciousChat] 📊 Applying consciousness optimization...")
         
