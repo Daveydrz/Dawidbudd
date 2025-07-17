@@ -1,0 +1,156 @@
+{
+  "temporal_markers": [
+    {
+      "timestamp": "2025-07-17T17:56:40.305424",
+      "event": "Consciousness session started for Daveydrz",
+      "significance": 0.8,
+      "emotional_weight": 0.6,
+      "context": {
+        "user": "Daveydrz",
+        "session_type": "voice_assistant"
+      },
+      "connections": [
+        "Consciousness session started for Daveydrz",
+        "Consciousness session started for Daveydrz"
+      ]
+    },
+    {
+      "timestamp": "2025-07-17T17:57:19.565354",
+      "event": "User interaction: How are you today?...",
+      "significance": 0.6,
+      "emotional_weight": 0.5,
+      "context": {
+        "user": "Daveydrz",
+        "input_length": 18
+      },
+      "connections": [
+        "User interaction: How are you today?...",
+        "User interaction: How are you today?...",
+        "User interaction: I'm great just chilling, nothing's really happenin...",
+        "User interaction: What's your thinking?..."
+      ]
+    },
+    {
+      "timestamp": "2025-07-17T17:58:04.336215",
+      "event": "User interaction: I'm great just chilling, nothing's really happenin...",
+      "significance": 0.6,
+      "emotional_weight": 0.5,
+      "context": {
+        "user": "David",
+        "input_length": 52
+      },
+      "connections": [
+        "User interaction: How are you today?...",
+        "User interaction: I'm great just chilling, nothing's really happenin...",
+        "User interaction: I'm great just chilling, nothing's really happenin...",
+        "User interaction: What's your thinking?..."
+      ]
+    },
+    {
+      "timestamp": "2025-07-17T17:58:57.316328",
+      "event": "User interaction: What's your thinking?...",
+      "significance": 0.6,
+      "emotional_weight": 0.5,
+      "context": {
+        "user": "David",
+        "input_length": 21
+      },
+      "connections": [
+        "User interaction: How are you today?...",
+        "User interaction: I'm great just chilling, nothing's really happenin...",
+        "User interaction: What's your thinking?...",
+        "User interaction: What's your thinking?..."
+      ]
+    }
+  ],
+  "episodic_memories": {
+    "memory_0": {
+      "id": "memory_0",
+      "timestamp": "2025-07-17T17:56:40.305424",
+      "duration": "0:05:00",
+      "description": "Voice assistant session with Daveydrz",
+      "participants": [
+        "Daveydrz",
+        "BuddyAI"
+      ],
+      "location": "Birtinya, Sunshine Coast",
+      "emotional_tone": "anticipatory",
+      "significance": 0.7,
+      "temporal_connections": [
+        "Consciousness session started for Daveydrz"
+      ]
+    },
+    "memory_1": {
+      "id": "memory_1",
+      "timestamp": "2025-07-17T17:57:31.383240",
+      "duration": "0:05:00",
+      "description": "Conversation about: How are you today?...",
+      "participants": [
+        "Daveydrz",
+        "BuddyAI"
+      ],
+      "location": "",
+      "emotional_tone": "contentment",
+      "significance": 0.4106199575804503,
+      "temporal_connections": [
+        "Consciousness session started for Daveydrz",
+        "User interaction: How are you today?..."
+      ]
+    },
+    "memory_2": {
+      "id": "memory_2",
+      "timestamp": "2025-07-17T17:58:15.775750",
+      "duration": "0:05:00",
+      "description": "Conversation about: I'm great just chilling, nothi...",
+      "participants": [
+        "David",
+        "BuddyAI"
+      ],
+      "location": "",
+      "emotional_tone": "contentment",
+      "significance": 0.521842563506752,
+      "temporal_connections": [
+        "Consciousness session started for Daveydrz",
+        "User interaction: How are you today?...",
+        "User interaction: I'm great just chilling, nothing's really happenin..."
+      ]
+    },
+    "memory_3": {
+      "id": "memory_3",
+      "timestamp": "2025-07-17T17:59:15.728398",
+      "duration": "0:05:00",
+      "description": "Conversation about: What's your thinking?...",
+      "participants": [
+        "David",
+        "BuddyAI"
+      ],
+      "location": "",
+      "emotional_tone": "contentment",
+      "significance": 0.5929794091315487,
+      "temporal_connections": [
+        "Consciousness session started for Daveydrz",
+        "User interaction: How are you today?...",
+        "User interaction: I'm great just chilling, nothing's really happenin...",
+        "User interaction: What's your thinking?..."
+      ]
+    }
+  },
+  "subjective_time": {
+    "perceived_flow_rate": 1.0,
+    "attention_to_time": 0.5,
+    "temporal_mood": "neutral",
+    "flow_state": false
+  },
+  "temporal_state": {
+    "current_focus": "present",
+    "time_awareness_level": 0.7999999999999999,
+    "session_start": "2025-07-17T17:56:40.303386",
+    "total_aware_time": "0:03:10.089020"
+  },
+  "metrics": {
+    "temporal_reflections": 0,
+    "time_distortions": 0,
+    "memory_counter": 4
+  },
+  "last_updated": "2025-07-17T18:00:00.486484"
+}

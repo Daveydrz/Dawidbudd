@@ -1,0 +1,27 @@
+{
+  "location": {
+    "latitude": -27.4698,
+    "longitude": 153.0251,
+    "house_number": "",
+    "street_name": "",
+    "street_address": "",
+    "suburb": "",
+    "district": "",
+    "city": "Brisbane",
+    "state": "Queensland",
+    "country": "Australia",
+    "postal_code": "4000",
+    "region": "Oceania",
+    "county": "Brisbane",
+    "timezone": "Australia/Brisbane",
+    "timezone_offset": "+10:00",
+    "current_time": "2025-07-17 20:03:57 AEST",
+    "public_ip": "unknown",
+    "local_ip": "127.0.0.1",
+    "isp": "Unknown",
+    "accuracy_meters": 10000.0,
+    "source": "fallback",
+    "confidence": "LOW"
+  },
+  "timestamp": 1752746637.411957
+}
