@@ -63,6 +63,9 @@ try:
     from ai.free_thought_engine import free_thought_engine, FreeThoughtType
     from ai.narrative_tracker import narrative_tracker, NarrativeEvent, NarrativeSignificance
     
+    # Import consciousness manager for orchestration
+    from ai.consciousness_manager import consciousness_manager
+    
     print("[Main] 🧠 Full consciousness architecture loaded")
     print("[Main] 💭 Autonomous consciousness components: Free Thought Engine, Narrative Tracker")
     CONSCIOUSNESS_ARCHITECTURE_AVAILABLE = True
@@ -2027,6 +2030,7 @@ def main():
         
         try:
             # Start all consciousness systems
+            consciousness_manager.start()
             global_workspace.start()
             self_model.start()
             emotion_engine.start()
@@ -2039,6 +2043,18 @@ def main():
             # Start new autonomous consciousness components
             free_thought_engine.start()
             print("[AdvancedBuddy] 💭 Free thought engine started - autonomous thinking active")
+            
+            # Register all consciousness modules with the consciousness manager
+            consciousness_manager.register_module("global_workspace", global_workspace)
+            consciousness_manager.register_module("self_model", self_model)
+            consciousness_manager.register_module("emotion_engine", emotion_engine)
+            consciousness_manager.register_module("motivation_system", motivation_system)
+            consciousness_manager.register_module("inner_monologue", inner_monologue)
+            consciousness_manager.register_module("temporal_awareness", temporal_awareness)
+            consciousness_manager.register_module("subjective_experience", subjective_experience)
+            consciousness_manager.register_module("entropy_system", entropy_system)
+            consciousness_manager.register_module("free_thought_engine", free_thought_engine)
+            print("[AdvancedBuddy] 🧠 All consciousness modules registered with consciousness manager")
             
             # Register narrative tracker (doesn't need start() method)
             if BLANK_SLATE_MODE:
@@ -2067,8 +2083,9 @@ def main():
             inner_monologue.subscribe_to_thoughts("global_workspace", _thought_broadcast_handler)
             
             print("[AdvancedBuddy] ✅ Core Consciousness Architecture initialized!")
-            print("[AdvancedBuddy] 🌟 Systems: Global Workspace, Self-Model, Emotion Engine, Motivation, Inner Monologue, Temporal Awareness, Subjective Experience, Entropy")
+            print("[AdvancedBuddy] 🌟 Systems: Consciousness Manager, Global Workspace, Self-Model, Emotion Engine, Motivation, Inner Monologue, Temporal Awareness, Subjective Experience, Entropy")
             print("[AdvancedBuddy] 💭 Autonomous: Free Thought Engine, Narrative Tracker")
+            print("[AdvancedBuddy] 🧠 Consciousness Manager: Orchestrating all modules and maintaining coherence")
             print("[AdvancedBuddy] 🌱 Mode:", "BLANK SLATE - Building identity from scratch" if BLANK_SLATE_MODE else "STANDARD - Established consciousness")
             
             # Initial consciousness state setup
