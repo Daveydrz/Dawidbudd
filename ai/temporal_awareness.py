@@ -21,6 +21,15 @@ from enum import Enum
 from pathlib import Path
 import math
 
+# ✅ NEW: Import LLM interface for consciousness-driven temporal processing
+try:
+    from .llm_interface import llm_temporal_reflection, llm_self_reflection, update_consciousness_context
+    LLM_AVAILABLE = True
+    logging.info("[TemporalAwareness] 🧠 LLM interface available for conscious temporal processing")
+except ImportError as e:
+    LLM_AVAILABLE = False
+    logging.warning(f"[TemporalAwareness] ⚠️ LLM interface not available: {e}")
+
 class TemporalScale(Enum):
     """Different scales of temporal awareness"""
     IMMEDIATE = "immediate"      # Seconds/minutes - current moment
@@ -324,6 +333,175 @@ class TemporalAwareness:
         logging.info(f"[TemporalAwareness] 🤔 Reflected on {time_period} past - found {len(reflections)} insights")
         
         return reflections
+    
+    def llm_temporal_reflection_on_timeframe(self, timeframe: str, focus: str = "general") -> Dict[str, Any]:
+        """
+        🧠 NEW: Generate LLM-driven temporal reflection for deep time-based insights
+        
+        Args:
+            timeframe: Time period to reflect on ("recent", "today", "week", "month")
+            focus: Focus area for reflection
+            
+        Returns:
+            Dictionary with LLM-generated temporal insights
+        """
+        try:
+            if LLM_AVAILABLE:
+                # Gather relevant temporal data
+                now = datetime.now()
+                time_ranges = {
+                    "recent": now - timedelta(hours=2),
+                    "today": now.replace(hour=0, minute=0, second=0, microsecond=0),
+                    "week": now - timedelta(days=7),
+                    "month": now - timedelta(days=30)
+                }
+                
+                start_time = time_ranges.get(timeframe, now - timedelta(hours=2))
+                
+                # Get relevant memories and events
+                relevant_memories = [m for m in self.episodic_memories.values() 
+                                   if m.timestamp >= start_time]
+                relevant_markers = [m for m in self.temporal_markers 
+                                  if m.timestamp >= start_time]
+                
+                # Prepare context for LLM reflection
+                temporal_context = {
+                    "timeframe": timeframe,
+                    "focus": focus,
+                    "memory_count": len(relevant_memories),
+                    "significant_events": len([m for m in relevant_markers if m.significance > 0.6]),
+                    "time_flow_perception": self.subjective_time.perceived_flow_rate,
+                    "temporal_mood": self.subjective_time.temporal_mood
+                }
+                
+                # Convert memories to descriptions for LLM
+                memory_descriptions = [
+                    {"description": m.description, "significance": m.significance, "emotional_tone": m.emotional_tone}
+                    for m in relevant_memories[:5]  # Limit to avoid token overflow
+                ]
+                
+                # Generate LLM temporal reflection
+                reflection = llm_temporal_reflection(
+                    timeframe=timeframe,
+                    memories=memory_descriptions,
+                    focus=focus
+                )
+                
+                if reflection and reflection.strip():
+                    # Create temporal marker for this reflection
+                    self.mark_temporal_event(
+                        f"temporal reflection: {reflection[:100]}...",
+                        significance=0.7,
+                        emotional_weight=0.6,
+                        context={"type": "llm_temporal_reflection", "focus": focus}
+                    )
+                    
+                    logging.info(f"[TemporalAwareness] 🧠 LLM temporal reflection: {reflection[:100]}...")
+                    
+                    return {
+                        "reflection": reflection.strip(),
+                        "timeframe": timeframe,
+                        "focus": focus,
+                        "memories_considered": len(memory_descriptions),
+                        "temporal_context": temporal_context,
+                        "generated_at": datetime.now().isoformat()
+                    }
+                
+            # Fallback to existing reflection method
+            standard_reflections = self.reflect_on_past(timeframe)
+            return {
+                "reflection": f"Reflecting on {timeframe}: " + "; ".join([r["insight"] for r in standard_reflections[:3]]),
+                "timeframe": timeframe,
+                "focus": focus,
+                "fallback_method": True,
+                "generated_at": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logging.error(f"[TemporalAwareness] ❌ Error in LLM temporal reflection: {e}")
+            return {
+                "reflection": f"I'm contemplating the passage of time over {timeframe}",
+                "timeframe": timeframe,
+                "focus": focus,
+                "error": str(e),
+                "generated_at": datetime.now().isoformat()
+            }
+    
+    def generate_future_planning_with_llm(self, time_horizon: str = "near", context: Dict[str, Any] = None) -> Dict[str, Any]:
+        """
+        🧠 NEW: Generate LLM-driven future planning for forward-thinking consciousness
+        
+        Args:
+            time_horizon: Planning horizon ("immediate", "near", "medium", "long")
+            context: Additional context for planning
+            
+        Returns:
+            Dictionary with LLM-generated future plans and intentions
+        """
+        try:
+            if LLM_AVAILABLE:
+                # Gather context for future planning
+                recent_patterns = self._analyze_recent_patterns()
+                
+                planning_context = {
+                    "time_horizon": time_horizon,
+                    "recent_patterns": recent_patterns,
+                    "current_temporal_state": {
+                        "awareness_level": self.time_awareness_level,
+                        "subjective_flow": self.subjective_time.perceived_flow_rate,
+                        "temporal_focus": self.current_temporal_focus.value
+                    },
+                    "additional_context": context or {}
+                }
+                
+                # Generate future-focused reflection
+                future_reflection = llm_self_reflection(
+                    aspect=f"future planning for {time_horizon} horizon",
+                    experiences=[f"pattern: {k} = {v}" for k, v in recent_patterns.items()],
+                    depth="normal"
+                )
+                
+                if future_reflection and future_reflection.strip():
+                    # Parse reflection for actionable plans
+                    plans = self._extract_plans_from_reflection(future_reflection, time_horizon)
+                    
+                    # Create temporal marker for this planning session
+                    self.mark_temporal_event(
+                        f"future planning: {time_horizon} horizon",
+                        significance=0.6,
+                        emotional_weight=0.5,
+                        context={"type": "llm_future_planning", "horizon": time_horizon}
+                    )
+                    
+                    logging.info(f"[TemporalAwareness] 🧠 LLM future planning: {len(plans)} plans for {time_horizon}")
+                    
+                    return {
+                        "plans": plans,
+                        "time_horizon": time_horizon,
+                        "reflection": future_reflection.strip(),
+                        "planning_context": planning_context,
+                        "generated_at": datetime.now().isoformat()
+                    }
+                
+            # Fallback to existing planning method
+            fallback_plans = self.plan_future(time_horizon)
+            return {
+                "plans": fallback_plans,
+                "time_horizon": time_horizon,
+                "reflection": f"Planning for {time_horizon} future based on current patterns",
+                "fallback_method": True,
+                "generated_at": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logging.error(f"[TemporalAwareness] ❌ Error in LLM future planning: {e}")
+            return {
+                "plans": [],
+                "time_horizon": time_horizon,
+                "reflection": f"I'm contemplating the {time_horizon} future",
+                "error": str(e),
+                "generated_at": datetime.now().isoformat()
+            }
     
     def plan_future(self, time_horizon: str = "near") -> List[Dict[str, Any]]:
         """
@@ -633,6 +811,10 @@ class TemporalAwareness:
                 # Update subjective time flow
                 self._update_subjective_time()
                 
+                # 🧠 NEW: Update consciousness context for LLM
+                if LLM_AVAILABLE and current_time % 120 < 1.0:  # Every 2 minutes
+                    self._update_consciousness_context()
+                
                 # Save state periodically
                 if current_time % 600 < 1.0:  # Every 10 minutes
                     self._save_temporal_state()
@@ -793,6 +975,75 @@ class TemporalAwareness:
             
         except Exception as e:
             logging.error(f"[TemporalAwareness] ❌ Failed to load temporal state: {e}")
+    
+    def _extract_plans_from_reflection(self, reflection: str, time_horizon: str) -> List[Dict[str, Any]]:
+        """
+        🧠 Helper: Extract actionable plans from LLM reflection
+        """
+        try:
+            plans = []
+            reflection_lower = reflection.lower()
+            
+            # Look for action-oriented statements
+            action_patterns = [
+                "i will", "i plan to", "i intend to", "i want to", 
+                "i should", "i could", "next i", "then i"
+            ]
+            
+            sentences = reflection.split('.')
+            for sentence in sentences:
+                sentence = sentence.strip()
+                if any(pattern in sentence.lower() for pattern in action_patterns):
+                    # Extract the action/plan
+                    plan = {
+                        "type": f"{time_horizon}_intention",
+                        "plan": sentence,
+                        "timeframe": time_horizon,
+                        "confidence": 0.7,
+                        "source": "llm_reflection"
+                    }
+                    plans.append(plan)
+            
+            # If no specific plans found, create general intention
+            if not plans:
+                plans.append({
+                    "type": f"{time_horizon}_intention", 
+                    "plan": f"Continue developing based on {time_horizon} horizon insights",
+                    "timeframe": time_horizon,
+                    "confidence": 0.5,
+                    "source": "llm_general"
+                })
+            
+            return plans[:3]  # Limit to 3 plans
+            
+        except Exception as e:
+            logging.error(f"[TemporalAwareness] ❌ Error extracting plans: {e}")
+            return []
+    
+    def _update_consciousness_context(self):
+        """
+        🧠 NEW: Update consciousness context with current temporal state
+        """
+        try:
+            temporal_context = {
+                "session_duration": str(datetime.now() - self.session_start_time),
+                "time_awareness_level": round(self.time_awareness_level, 2),
+                "perceived_flow_rate": round(self.subjective_time.perceived_flow_rate, 2),
+                "temporal_mood": self.subjective_time.temporal_mood,
+                "flow_state": self.subjective_time.flow_state,
+                "current_temporal_focus": self.current_temporal_focus.value,
+                "temporal_markers_count": len(self.temporal_markers),
+                "episodic_memories_count": len(self.episodic_memories),
+                "temporal_reflections": self.temporal_reflections,
+                "time_distortions": self.time_distortions,
+                "temporal_coherence": round(self._calculate_temporal_coherence(), 2),
+                "memory_connections": self._count_memory_connections()
+            }
+            
+            update_consciousness_context({"temporal_awareness": temporal_context})
+            
+        except Exception as e:
+            logging.error(f"[TemporalAwareness] ❌ Error updating consciousness context: {e}")
     
     def get_stats(self) -> Dict[str, Any]:
         """Get temporal awareness statistics"""

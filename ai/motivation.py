@@ -20,6 +20,15 @@ from enum import Enum
 from pathlib import Path
 import random
 
+# ✅ NEW: Import LLM interface for consciousness-driven motivation
+try:
+    from .llm_interface import llm_generate_goal, llm_self_reflection, update_consciousness_context
+    LLM_AVAILABLE = True
+    logging.info("[MotivationSystem] 🧠 LLM interface available for conscious motivation processing")
+except ImportError as e:
+    LLM_AVAILABLE = False
+    logging.warning(f"[MotivationSystem] ⚠️ LLM interface not available: {e}")
+
 class MotivationType(Enum):
     """Types of intrinsic motivations"""
     CURIOSITY = "curiosity"              # Drive to learn and explore
@@ -201,6 +210,152 @@ class MotivationSystem:
             
             logging.info(f"[MotivationSystem] ➕ Added goal: {description}")
             return goal_id
+    
+    def generate_goals_from_context(self, context: Dict[str, Any], max_goals: int = 3) -> List[str]:
+        """
+        🧠 NEW: Generate dynamic goals using LLM based on current context
+        
+        Args:
+            context: Current context including emotions, experiences, needs
+            max_goals: Maximum number of goals to generate
+            
+        Returns:
+            List of generated goal IDs
+        """
+        try:
+            generated_goal_ids = []
+            
+            if LLM_AVAILABLE:
+                # Analyze current motivations to determine most pressing needs
+                current_motivations = self.get_current_motivations(5)
+                
+                for motivation_type, intensity in current_motivations[:max_goals]:
+                    if intensity > 0.6:  # Only generate goals for strong motivations
+                        
+                        # Prepare context for LLM goal generation
+                        llm_context = {
+                            "motivation_type": motivation_type.value,
+                            "intensity": intensity,
+                            "current_context": context,
+                            "existing_goals": [g.description for g in self.get_priority_goals(3)],
+                            "recent_satisfaction": self.overall_satisfaction
+                        }
+                        
+                        # Generate goal using LLM
+                        goal_description = llm_generate_goal(motivation_type.value, llm_context)
+                        
+                        if goal_description and goal_description.strip():
+                            # Parse LLM response and create goal
+                            goal_id = self.add_goal(
+                                description=goal_description.strip(),
+                                motivation_type=motivation_type,
+                                goal_type=GoalType.SHORT_TERM,
+                                priority=min(0.9, intensity),
+                                context={"generated_by": "llm", "source_context": context}
+                            )
+                            
+                            generated_goal_ids.append(goal_id)
+                            logging.info(f"[MotivationSystem] 🧠 LLM generated goal: {goal_description[:50]}...")
+                
+            return generated_goal_ids
+            
+        except Exception as e:
+            logging.error(f"[MotivationSystem] ❌ Error generating LLM goals: {e}")
+            return []
+    
+    def evaluate_goal_progress_with_llm(self, goal_id: str, recent_experiences: List[str]) -> Dict[str, Any]:
+        """
+        🧠 NEW: Use LLM to evaluate goal progress based on experiences
+        
+        Args:
+            goal_id: ID of goal to evaluate
+            recent_experiences: Recent experiences that might relate to goal
+            
+        Returns:
+            Dictionary with progress assessment
+        """
+        try:
+            if not LLM_AVAILABLE or goal_id not in self.goals:
+                return {"progress_estimate": 0.0, "assessment": "Cannot evaluate"}
+            
+            goal = self.goals[goal_id]
+            
+            # Use LLM to assess progress
+            assessment_context = {
+                "goal_description": goal.description,
+                "current_progress": goal.progress,
+                "recent_experiences": recent_experiences,
+                "goal_context": goal.context,
+                "motivation_type": goal.motivation_type.value
+            }
+            
+            # Generate assessment using self-reflection on progress
+            assessment = llm_self_reflection(
+                aspect=f"progress evaluation for goal: {goal.description}",
+                experiences=recent_experiences,
+                depth="normal"
+            )
+            
+            # Parse assessment for progress indicators
+            progress_change = self._parse_progress_from_assessment(assessment, goal.progress)
+            
+            # Update goal if significant progress detected
+            if abs(progress_change) > 0.05:  # Minimum threshold for updates
+                new_progress = max(0.0, min(1.0, goal.progress + progress_change))
+                self.update_goal_progress(goal_id, new_progress, abs(progress_change) * 0.5)
+            
+            return {
+                "progress_estimate": goal.progress + progress_change,
+                "assessment": assessment,
+                "progress_change": progress_change,
+                "goal_id": goal_id
+            }
+            
+        except Exception as e:
+            logging.error(f"[MotivationSystem] ❌ Error evaluating goal progress with LLM: {e}")
+            return {"progress_estimate": 0.0, "assessment": f"Error: {e}"}
+    
+    def llm_reflection_on_motivations(self, focus_area: str = "general") -> str:
+        """
+        🧠 NEW: Generate LLM-powered reflection on current motivations and goals
+        
+        Args:
+            focus_area: Area to focus reflection on
+            
+        Returns:
+            LLM-generated motivational reflection
+        """
+        try:
+            if LLM_AVAILABLE:
+                # Gather context for reflection
+                current_motivations = self.get_current_motivations(5)
+                active_goals = self.get_priority_goals(5)
+                
+                motivation_context = {
+                    "focus_area": focus_area,
+                    "current_motivations": [(m.value, i) for m, i in current_motivations],
+                    "active_goals": [g.description for g in active_goals],
+                    "overall_satisfaction": self.overall_satisfaction,
+                    "goals_completed": self.goals_completed,
+                    "primary_goal": self.goals[self.current_primary_goal].description if self.current_primary_goal and self.current_primary_goal in self.goals else None
+                }
+                
+                # Generate motivational reflection
+                reflection = llm_self_reflection(
+                    aspect=f"motivational reflection on {focus_area}",
+                    experiences=[f"motivation: {m} (intensity: {i:.1f})" for m, i in current_motivations[:3]],
+                    depth="deep"
+                )
+                
+                if reflection and reflection.strip():
+                    logging.info(f"[MotivationSystem] 🧠 LLM motivational reflection: {reflection[:100]}...")
+                    return reflection.strip()
+            
+            return f"I'm currently focused on {focus_area} and feeling motivated by my current goals"
+            
+        except Exception as e:
+            logging.error(f"[MotivationSystem] ❌ Error in LLM motivational reflection: {e}")
+            return f"I'm reflecting on my motivations regarding {focus_area}"
     
     def update_goal_progress(self, goal_id: str, progress: float, satisfaction_gained: float = 0.0) -> bool:
         """
@@ -602,6 +757,11 @@ class MotivationSystem:
                     self._update_motivation_states()
                     self._update_overall_satisfaction()
                     self._generate_spontaneous_goals()
+                    
+                    # 🧠 NEW: Update consciousness context for LLM
+                    if LLM_AVAILABLE:
+                        self._update_consciousness_context()
+                    
                     last_update = current_time
                 
                 # Save state periodically
@@ -804,6 +964,61 @@ class MotivationSystem:
             
         except Exception as e:
             logging.error(f"[MotivationSystem] ❌ Failed to load motivation state: {e}")
+    
+    def _parse_progress_from_assessment(self, assessment: str, current_progress: float) -> float:
+        """
+        🧠 Helper: Parse LLM assessment to extract progress change
+        """
+        try:
+            assessment_lower = assessment.lower()
+            
+            # Look for progress indicators
+            positive_indicators = ["progress", "improved", "better", "achieved", "accomplished", "success", "forward"]
+            negative_indicators = ["stuck", "setback", "problem", "difficulty", "blocked", "behind"]
+            stagnant_indicators = ["same", "unchanged", "stagnant", "no progress"]
+            
+            positive_count = sum(1 for indicator in positive_indicators if indicator in assessment_lower)
+            negative_count = sum(1 for indicator in negative_indicators if indicator in assessment_lower)
+            stagnant_count = sum(1 for indicator in stagnant_indicators if indicator in assessment_lower)
+            
+            # Calculate progress change based on indicators
+            if positive_count > negative_count and positive_count > stagnant_count:
+                return 0.1 + (positive_count * 0.05)  # Small positive progress
+            elif negative_count > positive_count:
+                return -0.05 - (negative_count * 0.02)  # Small negative progress
+            elif stagnant_count > 0:
+                return 0.0  # No change
+            else:
+                return 0.02  # Minimal progress for neutral assessment
+            
+        except Exception as e:
+            logging.error(f"[MotivationSystem] ❌ Error parsing progress assessment: {e}")
+            return 0.0
+    
+    def _update_consciousness_context(self):
+        """
+        🧠 NEW: Update consciousness context with current motivation state
+        """
+        try:
+            current_motivations = self.get_current_motivations(5)
+            active_goals = self.get_priority_goals(3)
+            
+            motivation_context = {
+                "overall_satisfaction": round(self.overall_satisfaction, 2),
+                "total_goals": len(self.goals),
+                "active_goals": len([g for g in self.goals.values() if g.status == GoalStatus.ACTIVE]),
+                "completed_goals": self.goals_completed,
+                "current_primary_goal": self.goals[self.current_primary_goal].description if self.current_primary_goal and self.current_primary_goal in self.goals else None,
+                "strongest_motivations": [(m.value, round(i, 2)) for m, i in current_motivations[:3]],
+                "priority_goals": [g.description for g in active_goals],
+                "total_satisfaction_gained": round(self.total_satisfaction_gained, 2),
+                "motivation_distribution": {mt.value: round(ms.intensity, 2) for mt, ms in self.motivation_states.items() if ms.intensity > 0.3}
+            }
+            
+            update_consciousness_context({"motivation_system": motivation_context})
+            
+        except Exception as e:
+            logging.error(f"[MotivationSystem] ❌ Error updating consciousness context: {e}")
     
     def get_stats(self) -> Dict[str, Any]:
         """Get motivation system statistics"""

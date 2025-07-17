@@ -19,6 +19,15 @@ from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 
+# ✅ NEW: Import LLM interface for consciousness-driven self-reflection
+try:
+    from .llm_interface import llm_self_reflection, llm_update_belief, update_consciousness_context
+    LLM_AVAILABLE = True
+    logging.info("[SelfModel] 🧠 LLM interface available for conscious self-reflection")
+except ImportError as e:
+    LLM_AVAILABLE = False
+    logging.warning(f"[SelfModel] ⚠️ LLM interface not available: {e}")
+
 class SelfAspect(Enum):
     """Different aspects of self-awareness"""
     IDENTITY = "identity"          # Who am I?
@@ -194,6 +203,177 @@ class SelfModel:
             logging.error(f"[SelfModel] ❌ Reflection error: {e}")
         
         return None
+    
+    def generate_self_description(self) -> str:
+        """
+        🧠 NEW: Generate dynamic self-description using LLM for personality building
+        
+        Returns:
+            LLM-generated self-description based on current identity state
+        """
+        try:
+            if LLM_AVAILABLE and not self.blank_slate_mode:
+                # Prepare context for LLM
+                recent_experiences = [r.content for r in self.self_reflections[-5:]]
+                identity_context = {
+                    "identity_components": [comp.description for comp in self.identity_components.values()],
+                    "confidence_level": self.confidence_level,
+                    "self_awareness_level": self.self_awareness_level,
+                    "recent_reflections": recent_experiences,
+                    "personality_traits": getattr(self, 'personality_traits_emerging', {}),
+                    "formation_stage": getattr(self, 'identity_formation_stage', 'established')
+                }
+                
+                response = llm_self_reflection(
+                    aspect="comprehensive self-description",
+                    experiences=recent_experiences,
+                    depth="normal"
+                )
+                
+                if response and response.strip():
+                    logging.info(f"[SelfModel] 🧠 Generated LLM self-description: {response[:100]}...")
+                    return response.strip()
+            
+            # Fallback to existing method
+            return self.describe_self()
+            
+        except Exception as e:
+            logging.error(f"[SelfModel] ❌ Error generating LLM self-description: {e}")
+            return self.describe_self()
+    
+    def update_beliefs_from_conversation(self, conversation_context: Dict[str, Any]) -> List[str]:
+        """
+        🧠 NEW: Update beliefs based on conversation using LLM for belief evolution
+        
+        Args:
+            conversation_context: Context from recent conversation
+            
+        Returns:
+            List of belief updates made
+        """
+        try:
+            belief_updates = []
+            
+            if LLM_AVAILABLE:
+                # Extract potential belief-relevant content
+                conversation_text = conversation_context.get('content', '')
+                user_statements = conversation_context.get('user_statements', [])
+                
+                for statement in user_statements[-3:]:  # Last 3 statements
+                    # Check if statement might affect beliefs
+                    if any(keyword in statement.lower() for keyword in [
+                        'believe', 'think', 'feel', 'true', 'false', 'right', 'wrong',
+                        'should', 'must', 'always', 'never', 'important', 'value'
+                    ]):
+                        
+                        # Use LLM to analyze belief implications
+                        belief_analysis = llm_update_belief(
+                            belief=f"belief update from: {statement}",
+                            evidence=statement,
+                            context={
+                                "conversation_context": conversation_context,
+                                "current_beliefs": list(self.self_knowledge.beliefs.keys())[:5]
+                            }
+                        )
+                        
+                        # Extract actionable belief update
+                        analysis = belief_analysis.get('analysis', '')
+                        if 'adopt' in analysis.lower() or 'accept' in analysis.lower():
+                            # Extract belief from analysis
+                            belief_to_add = self._extract_belief_from_analysis(analysis, statement)
+                            if belief_to_add:
+                                self.update_belief(belief_to_add, 0.3, f"conversation: {statement}")
+                                belief_updates.append(belief_to_add)
+                                logging.info(f"[SelfModel] 🧠 LLM belief update: {belief_to_add}")
+                
+            return belief_updates
+            
+        except Exception as e:
+            logging.error(f"[SelfModel] ❌ Error updating beliefs from conversation: {e}")
+            return []
+    
+    def reflect_on_identity(self, focus_area: str = "general") -> str:
+        """
+        🧠 NEW: LLM-powered self-reflection for identity development
+        
+        Args:
+            focus_area: Specific area to reflect on
+            
+        Returns:
+            Deep self-reflection insight
+        """
+        try:
+            if LLM_AVAILABLE:
+                # Gather context for reflection
+                recent_experiences = [r.content for r in self.self_reflections[-10:]]
+                identity_context = {
+                    "focus_area": focus_area,
+                    "identity_components": {name: comp.description for name, comp in self.identity_components.items()},
+                    "current_state": {
+                        "confidence": self.confidence_level,
+                        "self_awareness": self.self_awareness_level,
+                        "mood": self.current_mood
+                    },
+                    "recent_identity_changes": self.identity_changes
+                }
+                
+                reflection = llm_self_reflection(
+                    aspect=f"identity reflection on {focus_area}",
+                    experiences=recent_experiences,
+                    depth="deep"
+                )
+                
+                if reflection and reflection.strip():
+                    # Store this as a significant reflection
+                    self.reflect_on_experience(
+                        f"deep identity reflection: {reflection}",
+                        {"type": "llm_identity_reflection", "focus": focus_area}
+                    )
+                    
+                    logging.info(f"[SelfModel] 🧠 LLM identity reflection: {reflection[:100]}...")
+                    return reflection.strip()
+            
+            # Fallback to existing introspection
+            return self.introspect(f"reflect on my {focus_area}")
+            
+        except Exception as e:
+            logging.error(f"[SelfModel] ❌ Error in LLM identity reflection: {e}")
+            return self.introspect(f"reflect on my {focus_area}")
+    
+    def _extract_belief_from_analysis(self, analysis: str, original_statement: str) -> Optional[str]:
+        """
+        🧠 Helper: Extract actionable belief from LLM analysis
+        """
+        try:
+            # Simple extraction - in production this could be more sophisticated
+            analysis_lower = analysis.lower()
+            
+            # Look for belief statements in the analysis
+            belief_patterns = [
+                "i believe", "i think", "i should", "i value", "it's important",
+                "i accept", "i agree", "this suggests"
+            ]
+            
+            for pattern in belief_patterns:
+                if pattern in analysis_lower:
+                    # Extract the sentence containing the pattern
+                    sentences = analysis.split('.')
+                    for sentence in sentences:
+                        if pattern in sentence.lower():
+                            # Clean up the belief statement
+                            belief = sentence.strip()
+                            if len(belief) > 10 and len(belief) < 200:  # Reasonable length
+                                return belief
+            
+            # Fallback: use key concepts from original statement
+            if any(word in original_statement.lower() for word in ['important', 'value', 'believe']):
+                return f"Consideration from conversation: {original_statement[:100]}"
+            
+            return None
+            
+        except Exception as e:
+            logging.error(f"[SelfModel] ❌ Error extracting belief: {e}")
+            return None
     
     def introspect(self, query: str) -> str:
         """
@@ -963,6 +1143,43 @@ class SelfModel:
         # Adjust confidence based on successful reflections
         if self.last_reflection and self.last_reflection.confidence > 0.8:
             self.confidence_level = min(1.0, self.confidence_level + 0.005)
+        
+        # 🧠 NEW: Update consciousness context for LLM
+        if LLM_AVAILABLE:
+            self._update_consciousness_context()
+    
+    def _update_consciousness_context(self):
+        """
+        🧠 NEW: Update consciousness context with current self-model state
+        """
+        try:
+            identity_context = {
+                "identity_formation_stage": getattr(self, 'identity_formation_stage', 'established'),
+                "confidence_level": round(self.confidence_level, 2),
+                "self_awareness_level": round(self.self_awareness_level, 2),
+                "current_mood": self.current_mood,
+                "energy_level": round(self.energy_level, 2),
+                "total_reflections": self.total_reflections,
+                "identity_components_count": len(self.identity_components),
+                "core_identity": [comp.name for comp in self.identity_components.values() if comp.strength > 0.7],
+                "top_values": list(sorted(self.self_knowledge.values.items(), key=lambda x: x[1], reverse=True)[:3]),
+                "recent_reflections": len([r for r in self.self_reflections 
+                                         if (datetime.now() - r.timestamp).total_seconds() < 3600])
+            }
+            
+            # Add blank slate specific context
+            if hasattr(self, 'blank_slate_mode') and self.blank_slate_mode:
+                identity_context.update({
+                    "blank_slate_mode": True,
+                    "milestones_achieved": sum(1 for m in getattr(self, 'identity_milestones_reached', {}).values() 
+                                             if isinstance(m, dict) and m.get('achieved', False)),
+                    "personality_traits_emerging": getattr(self, 'personality_traits_emerging', {})
+                })
+            
+            update_consciousness_context({"self_model": identity_context})
+            
+        except Exception as e:
+            logging.error(f"[SelfModel] ❌ Error updating consciousness context: {e}")
     
     def _save_self_model(self):
         """Save self-model to persistent storage"""
