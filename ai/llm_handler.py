@@ -13,6 +13,7 @@ from datetime import datetime
 
 # Import all the new modules
 try:
+    # Try relative imports first (when run from ai/ directory)
     from consciousness_tokenizer import (
         consciousness_tokenizer, 
         tokenize_consciousness_for_llm,
@@ -45,9 +46,44 @@ try:
         analyze_text_semantic_full
     )
     NEW_MODULES_AVAILABLE = True
-except ImportError as e:
-    print(f"[LLMHandler] ❌ New modules not available: {e}")
-    NEW_MODULES_AVAILABLE = False
+except ImportError:
+    try:
+        # Try absolute imports (when run from main directory)
+        from ai.consciousness_tokenizer import (
+            consciousness_tokenizer, 
+            tokenize_consciousness_for_llm,
+            get_consciousness_summary_for_llm,
+            update_consciousness_tokens
+        )
+        from ai.llm_budget_monitor import (
+            budget_monitor,
+            check_llm_budget_before_request,
+            log_llm_usage,
+            get_budget_status,
+            estimate_tokens_from_text
+        )
+        from ai.belief_analyzer import (
+            belief_analyzer,
+            analyze_user_text_for_beliefs,
+            get_user_belief_summary,
+            get_active_belief_contradictions
+        )
+        from ai.personality_state import (
+            personality_state,
+            analyze_user_text_for_personality_adaptation,
+            get_personality_for_response,
+            get_personality_modifiers_for_llm
+        )
+        from ai.semantic_tagging import (
+            semantic_tagger,
+            analyze_content_semantics,
+            get_semantic_tags_for_llm,
+            analyze_text_semantic_full
+        )
+        NEW_MODULES_AVAILABLE = True
+    except ImportError as e:
+        print(f"[LLMHandler] ❌ New modules not available: {e}")
+        NEW_MODULES_AVAILABLE = False
 
 # Import existing components
 try:
@@ -55,12 +91,21 @@ try:
     FUSION_LLM_AVAILABLE = True
 except ImportError:
     try:
-        from chat import generate_response_streaming
-        FUSION_LLM_AVAILABLE = False
-        print("[LLMHandler] ⚠️ Using fallback LLM - fusion not available")
+        from ai.chat_enhanced_smart_with_fusion import generate_response_streaming_with_intelligent_fusion
+        FUSION_LLM_AVAILABLE = True
     except ImportError:
-        FUSION_LLM_AVAILABLE = False
-        print("[LLMHandler] ❌ No LLM modules available")
+        try:
+            from chat import generate_response_streaming
+            FUSION_LLM_AVAILABLE = False
+            print("[LLMHandler] ⚠️ Using fallback LLM - fusion not available")
+        except ImportError:
+            try:
+                from ai.chat import generate_response_streaming
+                FUSION_LLM_AVAILABLE = False
+                print("[LLMHandler] ⚠️ Using fallback LLM - fusion not available")
+            except ImportError:
+                FUSION_LLM_AVAILABLE = False
+                print("[LLMHandler] ❌ No LLM modules available")
 
 try:
     from global_workspace import global_workspace
@@ -72,8 +117,18 @@ try:
     from subjective_experience import subjective_experience
     CONSCIOUSNESS_AVAILABLE = True
 except ImportError:
-    CONSCIOUSNESS_AVAILABLE = False
-    print("[LLMHandler] ⚠️ Consciousness architecture not fully available")
+    try:
+        from ai.global_workspace import global_workspace
+        from ai.emotion import emotion_engine
+        from ai.motivation import motivation_system
+        from ai.inner_monologue import inner_monologue
+        from ai.temporal_awareness import temporal_awareness
+        from ai.self_model import self_model
+        from ai.subjective_experience import subjective_experience
+        CONSCIOUSNESS_AVAILABLE = True
+    except ImportError:
+        CONSCIOUSNESS_AVAILABLE = False
+        print("[LLMHandler] ⚠️ Consciousness architecture not fully available")
 
 class LLMHandler:
     """Centralized LLM handler with full consciousness integration"""
