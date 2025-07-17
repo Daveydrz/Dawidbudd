@@ -359,6 +359,30 @@ def generate_response_streaming(question, username, lang=DEFAULT_LANG):
         if follow_ups:
             follow_up_text = f"\nMight be worth asking: {follow_ups[0]}" if len(follow_ups) > 0 else ""
         
+        # ✅ NEW: Consciousness Token Compression & Budget Management
+        consciousness_context = {}
+        personality_context = ""
+        try:
+            from ai.consciousness_tokenizer import compress_consciousness_for_llm
+            from ai.llm_budget_monitor import prepare_llm_context_with_budget
+            
+            # Build consciousness context from current state
+            consciousness_context = {
+                'emotional_state': 'friendly and helpful',
+                'personality_traits': ['friendly', 'casual', 'supportive'],
+                'memory_types': ['recent conversation', 'personal details'] if context else [],
+                'temporal_focus': 'present moment',
+                'relationship_context': 'trusted friend' if use_name else 'new interaction'
+            }
+            
+            # Personality context for tokenization
+            personality_context = "friendly and approachable personality with casual and relaxed interaction style"
+            
+            print(f"[ChatStream] 🧠 Applying consciousness tokenization and budget management...")
+            
+        except ImportError as e:
+            print(f"[ChatStream] ⚠️ Consciousness features not available: {e}")
+        
         # Create enhanced system message
         context_text = f"Chat History & What I Remember:\n{context}" if context else ""
         
