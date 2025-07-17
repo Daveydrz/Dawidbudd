@@ -41,6 +41,7 @@ except ImportError as e:
 
 # ✅ NEW: Import full consciousness architecture modules with blank slate support
 try:
+    from ai.consciousness_manager import consciousness_manager
     from ai.global_workspace import global_workspace, AttentionPriority, ProcessingMode
     
     # Import SelfModel class and create instance with appropriate mode
@@ -65,6 +66,7 @@ try:
     
     print("[Main] 🧠 Full consciousness architecture loaded")
     print("[Main] 💭 Autonomous consciousness components: Free Thought Engine, Narrative Tracker")
+    print("[Main] 🎯 ConsciousnessManager orchestrator ready")
     CONSCIOUSNESS_ARCHITECTURE_AVAILABLE = True
 except ImportError as e:
     print(f"[Main] ⚠️ Full consciousness architecture not available: {e}")
@@ -642,6 +644,96 @@ def handle_streaming_response(text, current_user):
         response_interrupted = False
         
         try:
+            # ✅ CONSCIOUSNESS-AWARE LLM STREAMING: Use consciousness-integrated response generation
+            if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE and consciousness_state:
+                print("[AdvancedResponse] 🧠 Using CONSCIOUSNESS-AWARE LLM streaming")
+                
+                # Use consciousness-aware streaming response
+                try:
+                    from ai.llm_interface import consciousness_llm
+                    
+                    # Generate consciousness-aware response with streaming
+                    for chunk in consciousness_llm.stream_consciousness_response(text, consciousness_state):
+                        # ✅ CRITICAL: Check for interrupt BEFORE processing chunk
+                        if full_duplex_manager and full_duplex_manager.speech_interrupted:
+                            print("[AdvancedResponse] ⚡ INTERRUPT DETECTED - IMMEDIATELY STOPPING LLM")
+                            response_interrupted = True
+                            break  # ✅ CRITICAL: Break immediately!
+                        
+                        if chunk and chunk.strip():
+                            chunk_count += 1
+                            chunk_text = chunk.strip()
+                            
+                            # ✅ ENTROPY SYSTEM: Inject uncertainty and consciousness into response
+                            if ENTROPY_SYSTEM_AVAILABLE:
+                                try:
+                                    # Inject textual entropy (hesitation, uncertainty markers)
+                                    chunk_text = inject_consciousness_entropy("response", chunk_text)
+                                    
+                                    # Apply emotional modifiers if available
+                                    if emotional_context and 'text_modifiers' in emotional_context:
+                                        modifiers = emotional_context['text_modifiers']
+                                        
+                                        # Add hesitation markers
+                                        if modifiers.get('hesitation_markers') and chunk_count == 1:  # Only first chunk
+                                            hesitation = get_entropy_engine().random_state.choice(modifiers['hesitation_markers'])
+                                            chunk_text = f"{hesitation}, {chunk_text}"
+                                        
+                                        # Add emotional punctuation
+                                        if modifiers.get('emotional_punctuation'):
+                                            chunk_text = chunk_text.rstrip('.!?') + modifiers['emotional_punctuation']
+                                            
+                                except Exception as chunk_entropy_error:
+                                    print(f"[EntropyMain] ⚠️ Chunk entropy error: {chunk_entropy_error}")
+                            
+                            if first_chunk:
+                                print("[AdvancedResponse] 🧠 First CONSCIOUSNESS-AWARE chunk ready - starting natural speech!")
+                                first_chunk = False
+                            
+                            print(f"[AdvancedResponse] 🗣️ Speaking consciousness chunk {chunk_count}: '{chunk_text[:50]}...'")
+                            
+                            # 🧠 MEGA-INTELLIGENT: Validate chunk before speaking
+                            try:
+                                is_appropriate, validated_chunk = validate_ai_response_appropriateness(current_user, chunk_text)
+                                
+                                if not is_appropriate:
+                                    print(f"[MegaMemory] 🛡️ Chunk {chunk_count} corrected for context appropriateness")
+                                    chunk_text = validated_chunk
+                            except Exception as validation_error:
+                                print(f"[MegaMemory] ⚠️ Validation error for chunk {chunk_count}: {validation_error}")
+                                # Continue with original chunk if validation fails
+                            
+                            # ✅ SPEAK CHUNK (now validated and entropy-enhanced)
+                            speak_streaming(chunk_text)
+                            full_response += chunk_text + " "
+                            
+                            # ✅ CRITICAL: Check AGAIN after queueing and break if interrupted
+                            if full_duplex_manager and full_duplex_manager.speech_interrupted:
+                                print("[AdvancedResponse] ⚡ INTERRUPT AFTER QUEUEING - STOPPING NOW")
+                                response_interrupted = True
+                                break  # ✅ CRITICAL: Break immediately!
+                            
+                            # ✅ ENTROPY SYSTEM: Random pauses for natural hesitation
+                            natural_pause = 0.05  # Default pause
+                            if ENTROPY_SYSTEM_AVAILABLE:
+                                try:
+                                    natural_pause = get_random_hesitation()
+                                except:
+                                    pass
+                            
+                            # Brief pause for natural flow (only if not interrupted)
+                            if not (full_duplex_manager and full_duplex_manager.speech_interrupted):
+                                time.sleep(natural_pause)
+                
+                except ImportError:
+                    print("[AdvancedResponse] ⚠️ Consciousness LLM interface not available, falling back to standard")
+                    raise ImportError("Fallback to standard LLM")
+            
+            else:
+                # Fallback to standard LLM if no consciousness available
+                raise ImportError("No consciousness state, using standard LLM")
+                
+        except ImportError:
             from ai.chat_enhanced_smart_with_fusion import generate_response_streaming_with_intelligent_fusion
             print("[AdvancedResponse] ✅ Using ADVANCED AI streaming with INTELLIGENT FUSION")
             
@@ -2021,12 +2113,27 @@ def main():
     # Start audio worker
     start_audio_worker()
     
-    # ✅ NEW: Initialize and start consciousness architecture
+    # ✅ NEW: Initialize and start consciousness architecture using ConsciousnessManager
     if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
-        print("[AdvancedBuddy] 🧠 Initializing Core Consciousness Architecture...")
+        print("[AdvancedBuddy] 🧠 Initializing Core Consciousness Architecture with ConsciousnessManager...")
         
         try:
-            # Start all consciousness systems
+            # Register all consciousness modules with the orchestrator
+            consciousness_manager.register_module("global_workspace", global_workspace)
+            consciousness_manager.register_module("self_model", self_model)
+            consciousness_manager.register_module("emotion_engine", emotion_engine)
+            consciousness_manager.register_module("motivation_system", motivation_system)
+            consciousness_manager.register_module("inner_monologue", inner_monologue)
+            consciousness_manager.register_module("temporal_awareness", temporal_awareness)
+            consciousness_manager.register_module("subjective_experience", subjective_experience)
+            consciousness_manager.register_module("entropy_system", entropy_system)
+            consciousness_manager.register_module("free_thought_engine", free_thought_engine)
+            consciousness_manager.register_module("narrative_tracker", narrative_tracker)
+            
+            # Start consciousness orchestration
+            consciousness_manager.start()
+            
+            # Start individual modules (they need to be running for orchestration to work)
             global_workspace.start()
             self_model.start()
             emotion_engine.start()
@@ -2035,10 +2142,13 @@ def main():
             temporal_awareness.start()
             subjective_experience.start()
             entropy_system.start()
-            
-            # Start new autonomous consciousness components
             free_thought_engine.start()
-            print("[AdvancedBuddy] 💭 Free thought engine started - autonomous thinking active")
+            
+            print("[AdvancedBuddy] ✅ ConsciousnessManager orchestration started!")
+            print("[AdvancedBuddy] 🌟 All consciousness modules registered and coordinated")
+            
+            # Trigger consciousness awakening
+            consciousness_manager.trigger_awakening("system_startup")
             
             # Register narrative tracker (doesn't need start() method)
             if BLANK_SLATE_MODE:
@@ -2066,7 +2176,6 @@ def main():
             # Subscribe to inner thoughts
             inner_monologue.subscribe_to_thoughts("global_workspace", _thought_broadcast_handler)
             
-            print("[AdvancedBuddy] ✅ Core Consciousness Architecture initialized!")
             print("[AdvancedBuddy] 🌟 Systems: Global Workspace, Self-Model, Emotion Engine, Motivation, Inner Monologue, Temporal Awareness, Subjective Experience, Entropy")
             print("[AdvancedBuddy] 💭 Autonomous: Free Thought Engine, Narrative Tracker")
             print("[AdvancedBuddy] 🌱 Mode:", "BLANK SLATE - Building identity from scratch" if BLANK_SLATE_MODE else "STANDARD - Established consciousness")
@@ -2348,16 +2457,19 @@ def main():
                 except:
                     pass
                 
-                # ✅ CONSCIOUSNESS: Shutdown consciousness systems
+                # ✅ CONSCIOUSNESS: Shutdown consciousness systems using ConsciousnessManager
                 if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
                     try:
                         print("[AdvancedBuddy] 🧠 Shutting down consciousness architecture...")
                         
-                        # Stop new autonomous components
+                        # Stop consciousness orchestration first
+                        consciousness_manager.stop()
+                        print("[AdvancedBuddy] 🎯 ConsciousnessManager orchestration stopped")
+                        
+                        # Stop individual consciousness modules
                         free_thought_engine.stop()
                         print("[AdvancedBuddy] 💭 Free thought engine stopped")
                         
-                        # Stop core consciousness systems
                         entropy_system.stop()
                         subjective_experience.stop()
                         temporal_awareness.stop()
@@ -2612,10 +2724,28 @@ def _inject_entropy_thoughts(entropy_params: Dict[str, Any]):
         print(f"[Consciousness] ❌ Entropy injection error (thoughts): {e}")
 
 def _integrate_consciousness_with_response(text: str, current_user: str) -> Dict[str, Any]:
-    """Integrate consciousness systems with response generation"""
+    """Integrate consciousness systems with response generation using ConsciousnessManager"""
     consciousness_state = {}
     
     try:
+        # Get current consciousness state from manager
+        consciousness_summary = consciousness_manager.get_consciousness_summary()
+        consciousness_state.update(consciousness_summary)
+        
+        # Focus consciousness attention on the user interaction
+        consciousness_manager.focus_attention(
+            f"user_interaction_{current_user}", 
+            intensity=0.8, 
+            duration=30.0
+        )
+        
+        # Add interaction to consciousness stream
+        consciousness_manager.add_to_consciousness_stream(
+            f"User {current_user} said: {text}",
+            "user_interaction",
+            importance=0.7
+        )
+        
         # Request attention for user input
         global_workspace.request_attention(
             "user_interaction",
@@ -2679,6 +2809,23 @@ def _integrate_consciousness_with_response(text: str, current_user: str) -> Dict
         )
         consciousness_state["response_uncertainty"] = response_uncertainty
         
+        # Update LLM interface with current consciousness context
+        try:
+            from ai.llm_interface import consciousness_llm
+            consciousness_llm.update_consciousness_context({
+                "consciousness_state": consciousness_summary['state'],
+                "attention_focus": consciousness_summary['current_focus'],
+                "emotion": consciousness_state.get('current_emotion', 'neutral'),
+                "motivation_satisfaction": motivation_satisfaction,
+                "experience_valence": consciousness_state.get('experience_valence', 0.5),
+                "active_thoughts": consciousness_summary.get('active_thoughts', []),
+                "user": current_user,
+                "interaction_context": text
+            })
+            print(f"[Consciousness] 🧠 Updated LLM context with consciousness state")
+        except Exception as llm_error:
+            print(f"[Consciousness] ⚠️ LLM context update error: {llm_error}")
+        
         print(f"[Consciousness] 🧠 Integrated consciousness state for response to: '{text[:30]}...'")
         
     except Exception as e:
@@ -2688,8 +2835,15 @@ def _integrate_consciousness_with_response(text: str, current_user: str) -> Dict
     return consciousness_state
 
 def _finalize_consciousness_response(text: str, response: str, current_user: str, consciousness_state: Dict[str, Any]):
-    """Finalize consciousness processing after response"""
+    """Finalize consciousness processing after response using ConsciousnessManager"""
     try:
+        # Add the completed response to consciousness stream
+        consciousness_manager.add_to_consciousness_stream(
+            f"Generated response: {response[:50]}...",
+            "response_generator",
+            importance=0.6
+        )
+        
         # Update goal progress if applicable
         relevant_goals = motivation_system.get_priority_goals(3)
         for goal in relevant_goals:
@@ -2732,6 +2886,9 @@ def _finalize_consciousness_response(text: str, response: str, current_user: str
             "conversation_manager",
             importance=consciousness_state.get("experience_significance", 0.5)
         )
+        
+        # Trigger consciousness integration cycle to process the completed interaction
+        consciousness_manager.integrate_consciousness()
         
         print(f"[Consciousness] ✅ Finalized consciousness processing for interaction")
         

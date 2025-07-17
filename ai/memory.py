@@ -18,14 +18,20 @@ except ImportError as e:
     print(f"[Memory] ⚠️ Entropy system not available: {e}")
     ENTROPY_AVAILABLE = False
 
-# ✅ NEW: Import LLM interface for consciousness-driven memory processing
-try:
-    from ai.llm_interface import llm_consolidate_memory, llm_self_reflection, update_consciousness_context
+# ✅ NEW: LLM interface for consciousness-driven memory processing (avoid circular import)
+LLM_AVAILABLE = False  # Will be set by llm_interface when available
+_llm_consolidate_memory = None
+_llm_self_reflection = None
+_update_consciousness_context = None
+
+def set_llm_interface_functions(consolidate_fn, reflect_fn, context_fn):
+    """Set LLM interface functions to avoid circular import"""
+    global LLM_AVAILABLE, _llm_consolidate_memory, _llm_self_reflection, _update_consciousness_context
     LLM_AVAILABLE = True
-    print("[Memory] 🧠 LLM interface available for conscious memory processing")
-except ImportError as e:
-    LLM_AVAILABLE = False
-    print(f"[Memory] ⚠️ LLM interface not available: {e}")
+    _llm_consolidate_memory = consolidate_fn
+    _llm_self_reflection = reflect_fn
+    _update_consciousness_context = context_fn
+    print("[Memory] 🧠 LLM interface functions registered for conscious memory processing")
 
 # Enhanced settings with fallbacks
 try:
