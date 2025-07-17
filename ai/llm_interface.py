@@ -370,6 +370,17 @@ Consider my current emotional state, thoughts, goals, and memories when respondi
 # Global instance for consciousness modules to use
 consciousness_llm = ConsciousnessLLM()
 
+# Register LLM functions with memory module to avoid circular import
+try:
+    from . import memory
+    memory.set_llm_interface_functions(
+        consciousness_llm.consolidate_memory,
+        consciousness_llm.generate_self_reflection, 
+        consciousness_llm.update_consciousness_context
+    )
+except ImportError:
+    pass
+
 # Convenience functions for modules
 def llm_emotional_response(trigger: str, current_emotion: str, context: Dict[str, Any] = None) -> str:
     """Convenience function for emotion module"""
