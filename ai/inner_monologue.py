@@ -20,6 +20,15 @@ from enum import Enum
 import json
 from pathlib import Path
 
+# ✅ NEW: Import LLM interface for consciousness-driven thought generation
+try:
+    from .llm_interface import llm_inner_thought, llm_self_reflection, update_consciousness_context
+    LLM_AVAILABLE = True
+    logging.info("[InnerMonologue] 🧠 LLM interface available for conscious thought generation")
+except ImportError as e:
+    LLM_AVAILABLE = False
+    logging.warning(f"[InnerMonologue] ⚠️ LLM interface not available: {e}")
+
 class ThoughtType(Enum):
     """Types of internal thoughts"""
     REFLECTION = "reflection"           # Self-reflective thoughts
@@ -569,6 +578,192 @@ class InnerMonologue:
         
         return None
     
+    def background_consciousness_loop(self) -> str:
+        """
+        🧠 NEW: Continuous LLM-powered background consciousness for genuine synthetic thought
+        
+        Returns:
+            Description of current background consciousness activity
+        """
+        try:
+            if LLM_AVAILABLE:
+                # Determine what type of background consciousness to generate
+                consciousness_activities = [
+                    "spontaneous_insight", "memory_processing", "goal_reflection", 
+                    "existential_pondering", "pattern_recognition", "emotional_processing"
+                ]
+                
+                activity = random.choice(consciousness_activities)
+                
+                # Generate context for background consciousness
+                background_context = {
+                    "activity_type": activity,
+                    "current_thoughts": [t.content for t in self.get_recent_thoughts(3)],
+                    "mental_state": {
+                        "activity_level": self.mental_activity_level,
+                        "focus_level": self.focus_level,
+                        "creativity_level": self.creativity_level,
+                        "contemplation_depth": self.contemplation_depth
+                    },
+                    "idle_mode": self.idle_mode
+                }
+                
+                # Generate LLM-powered background thought
+                background_thought = llm_inner_thought(
+                    thought_type=activity.replace("_", " "),
+                    trigger="background consciousness processing",
+                    follow_up_to=None
+                )
+                
+                if background_thought and background_thought.strip():
+                    # Create and store the thought
+                    thought = InternalThought(
+                        content=background_thought.strip(),
+                        thought_type=ThoughtType.SPONTANEOUS,  # Map to existing enum
+                        intensity=ThoughtIntensity.WHISPER,
+                        triggered_by="background_consciousness",
+                        context=background_context,
+                        emotional_tone="contemplative"
+                    )
+                    
+                    self._add_thought(thought)
+                    self._broadcast_thought(thought)
+                    
+                    logging.debug(f"[InnerMonologue] 🧠 Background consciousness: {background_thought[:100]}...")
+                    return f"Background consciousness active: {activity}"
+                
+            return "Background consciousness processing ongoing"
+            
+        except Exception as e:
+            logging.error(f"[InnerMonologue] ❌ Error in background consciousness loop: {e}")
+            return "Background consciousness encountered an issue"
+    
+    def generate_spontaneous_thought_llm(self, context: Dict[str, Any] = None) -> Optional[InternalThought]:
+        """
+        🧠 NEW: Generate genuine spontaneous thoughts using LLM for real insights
+        
+        Args:
+            context: Optional context for thought generation
+            
+        Returns:
+            Generated spontaneous thought
+        """
+        try:
+            if LLM_AVAILABLE:
+                # Determine thought type based on current mental state
+                thought_type = self._select_thought_type_by_mental_state()
+                
+                # Prepare context for LLM
+                spontaneous_context = {
+                    "mental_state": {
+                        "activity_level": self.mental_activity_level,
+                        "focus_level": self.focus_level,
+                        "creativity_level": self.creativity_level,
+                        "contemplation_depth": self.contemplation_depth
+                    },
+                    "recent_thoughts": [t.content for t in self.get_recent_thoughts(5)],
+                    "current_context": context or {},
+                    "thought_type_requested": thought_type.value
+                }
+                
+                # Generate spontaneous thought using LLM
+                thought_content = llm_inner_thought(
+                    thought_type=thought_type.value,
+                    trigger="spontaneous thought generation",
+                    follow_up_to=None
+                )
+                
+                if thought_content and thought_content.strip():
+                    # Create thought with appropriate intensity
+                    intensity = self._determine_spontaneous_intensity()
+                    
+                    thought = InternalThought(
+                        content=thought_content.strip(),
+                        thought_type=thought_type,
+                        intensity=intensity,
+                        triggered_by="llm_spontaneous",
+                        context=spontaneous_context,
+                        emotional_tone=self._determine_emotional_tone(thought_content, context)
+                    )
+                    
+                    # Generate LLM follow-up thoughts
+                    thought.follow_up_thoughts = self._generate_llm_follow_up_thoughts(thought)
+                    
+                    self._add_thought(thought)
+                    self._broadcast_thought(thought)
+                    
+                    logging.debug(f"[InnerMonologue] 🧠 LLM spontaneous thought: {thought_content[:100]}...")
+                    return thought
+                
+            return None
+            
+        except Exception as e:
+            logging.error(f"[InnerMonologue] ❌ Error generating LLM spontaneous thought: {e}")
+            return None
+    
+    def llm_stream_of_consciousness(self, duration: int = 30) -> List[InternalThought]:
+        """
+        🧠 NEW: Generate natural LLM-powered stream of consciousness for genuine thought flow
+        
+        Args:
+            duration: Duration in seconds for the stream
+            
+        Returns:
+            List of connected thoughts in the stream
+        """
+        try:
+            consciousness_stream = []
+            
+            if LLM_AVAILABLE:
+                start_time = time.time()
+                previous_thought = None
+                
+                while time.time() - start_time < duration and self.running:
+                    # Generate connected thought
+                    if previous_thought:
+                        # Follow up on previous thought
+                        thought_content = llm_inner_thought(
+                            thought_type="reflection",
+                            trigger="stream of consciousness",
+                            follow_up_to=previous_thought.content
+                        )
+                    else:
+                        # Start the stream
+                        thought_content = llm_inner_thought(
+                            thought_type="spontaneous",
+                            trigger="beginning stream of consciousness",
+                            follow_up_to=None
+                        )
+                    
+                    if thought_content and thought_content.strip():
+                        thought = InternalThought(
+                            content=thought_content.strip(),
+                            thought_type=ThoughtType.SPONTANEOUS,
+                            intensity=ThoughtIntensity.NORMAL,
+                            triggered_by="stream_of_consciousness",
+                            context={"stream_position": len(consciousness_stream)},
+                            emotional_tone="flowing"
+                        )
+                        
+                        consciousness_stream.append(thought)
+                        self._add_thought(thought)
+                        self._broadcast_thought(thought)
+                        
+                        previous_thought = thought
+                        
+                        # Natural pause between thoughts
+                        time.sleep(random.uniform(2.0, 5.0))
+                    else:
+                        break
+                
+                logging.info(f"[InnerMonologue] 🧠 LLM stream of consciousness: {len(consciousness_stream)} thoughts generated")
+                
+            return consciousness_stream
+            
+        except Exception as e:
+            logging.error(f"[InnerMonologue] ❌ Error in LLM stream of consciousness: {e}")
+            return []
+    
     def _generate_insight_content(self, context: str) -> str:
         """Generate content for insights based on recent thoughts"""
         insight_topics = [
@@ -966,7 +1161,14 @@ class InnerMonologue:
                 
                 # 🌟 Enhanced insight generation (increased frequency for consciousness)
                 if random.random() < 0.15:  # Increased from 5% to 15% for more consciousness
-                    self.generate_insight()
+                    if LLM_AVAILABLE and random.random() < 0.7:  # 70% chance to use LLM for insights
+                        self.generate_spontaneous_thought_llm({"insight_generation": True})
+                    else:
+                        self.generate_insight()
+                
+                # 🧠 NEW: Background consciousness loop (core enhancement)
+                if LLM_AVAILABLE and random.random() < 0.3:  # 30% chance
+                    self.background_consciousness_loop()
                 
                 # 🎯 Goal-oriented thinking (new addition)
                 if random.random() < 0.1:  # 10% chance
@@ -975,6 +1177,10 @@ class InnerMonologue:
                 # 💭 Self-awareness thoughts (new addition)
                 if random.random() < 0.08:  # 8% chance
                     self._generate_self_awareness_thought()
+                
+                # 🧠 NEW: Update consciousness context for LLM
+                if LLM_AVAILABLE and current_time % 60 < 1.0:  # Every minute
+                    self._update_consciousness_context()
                 
                 # Save state periodically
                 if current_time % 300 < 1.0:  # Every 5 minutes
@@ -1158,6 +1364,68 @@ class InnerMonologue:
             
         except Exception as e:
             logging.error(f"[InnerMonologue] ❌ Failed to load monologue state: {e}")
+    
+    def _determine_spontaneous_intensity(self) -> ThoughtIntensity:
+        """
+        🧠 Helper: Determine intensity for spontaneous thoughts based on mental state
+        """
+        if self.contemplation_depth > 0.8:
+            return ThoughtIntensity.STRONG
+        elif self.mental_activity_level > 0.7:
+            return ThoughtIntensity.NORMAL
+        elif self.idle_mode:
+            return ThoughtIntensity.WHISPER
+        else:
+            return ThoughtIntensity.QUIET
+    
+    def _generate_llm_follow_up_thoughts(self, thought: InternalThought) -> List[str]:
+        """
+        🧠 Helper: Generate LLM-powered follow-up thoughts
+        """
+        try:
+            follow_ups = []
+            
+            if LLM_AVAILABLE and random.random() < 0.5:  # 50% chance for follow-ups
+                # Generate 1-2 follow-up thoughts
+                for i in range(random.randint(1, 2)):
+                    follow_up = llm_inner_thought(
+                        thought_type="reflection",
+                        trigger="follow-up thought",
+                        follow_up_to=thought.content
+                    )
+                    
+                    if follow_up and follow_up.strip():
+                        follow_ups.append(follow_up.strip())
+            
+            return follow_ups
+            
+        except Exception as e:
+            logging.error(f"[InnerMonologue] ❌ Error generating LLM follow-ups: {e}")
+            return self._generate_follow_up_thoughts(thought)  # Fallback to original method
+    
+    def _update_consciousness_context(self):
+        """
+        🧠 NEW: Update consciousness context with current inner monologue state
+        """
+        try:
+            thought_context = {
+                "mental_activity_level": round(self.mental_activity_level, 2),
+                "focus_level": round(self.focus_level, 2),
+                "creativity_level": round(self.creativity_level, 2),
+                "contemplation_depth": round(self.contemplation_depth, 2),
+                "idle_mode": self.idle_mode,
+                "total_thoughts": self.total_thoughts,
+                "insights_generated": self.insights_generated,
+                "current_thought": self.current_thought.content if self.current_thought else None,
+                "recent_thought_types": [t.thought_type.value for t in self.get_recent_thoughts(5)],
+                "thought_stream_length": len(self.thought_stream),
+                "subscribers": len(self.thought_subscribers)
+            }
+            
+            update_consciousness_context({"inner_monologue": thought_context})
+            
+        except Exception as e:
+            logging.error(f"[InnerMonologue] ❌ Error updating consciousness context: {e}")
     
     def get_stats(self) -> Dict[str, Any]:
         """Get inner monologue statistics"""

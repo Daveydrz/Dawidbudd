@@ -18,6 +18,15 @@ except ImportError as e:
     print(f"[Memory] ⚠️ Entropy system not available: {e}")
     ENTROPY_AVAILABLE = False
 
+# ✅ NEW: Import LLM interface for consciousness-driven memory processing
+try:
+    from ai.llm_interface import llm_consolidate_memory, llm_self_reflection, update_consciousness_context
+    LLM_AVAILABLE = True
+    print("[Memory] 🧠 LLM interface available for conscious memory processing")
+except ImportError as e:
+    LLM_AVAILABLE = False
+    print(f"[Memory] ⚠️ LLM interface not available: {e}")
+
 # Enhanced settings with fallbacks
 try:
     from config import (ENHANCED_CONVERSATION_MEMORY, CONVERSATION_MEMORY_LENGTH, 
