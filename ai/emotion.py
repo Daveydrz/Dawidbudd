@@ -23,6 +23,15 @@ from pathlib import Path
 # Import entropy engine for the advanced emotional system
 from .entropy_engine import get_entropy_engine, EntropyLevel, inject_consciousness_entropy
 
+# ✅ NEW: Import LLM interface for consciousness-driven emotion
+try:
+    from .llm_interface import llm_emotional_response, llm_inner_thought, update_consciousness_context
+    LLM_AVAILABLE = True
+    logging.info("[EmotionEngine] 🧠 LLM interface available for conscious emotion processing")
+except ImportError as e:
+    LLM_AVAILABLE = False
+    logging.warning(f"[EmotionEngine] ⚠️ LLM interface not available: {e}")
+
 # ============================================================================
 # TRADITIONAL EMOTION ENGINE SYSTEM (from emotion.py)
 # ============================================================================
@@ -327,7 +336,94 @@ class EmotionEngine:
         
         return f"I'm feeling {intensity_qual}{base_desc}{arousal_qual}"
     
-    def simulate_emotional_response_to_user(self, user_input: str, user_context: Dict[str, Any] = None) -> str:
+    def infer_emotion_from_text(self, text: str, context: Dict[str, Any] = None) -> EmotionalState:
+        """
+        🧠 NEW: Use LLM to infer emotional content from text for genuine emotion recognition
+        
+        Args:
+            text: Text to analyze for emotional content
+            context: Additional context for analysis
+            
+        Returns:
+            Inferred emotional state
+        """
+        try:
+            if LLM_AVAILABLE:
+                # Use LLM to analyze emotional content
+                llm_context = {
+                    "text_to_analyze": text,
+                    "current_emotion": self.current_emotion.primary_emotion.value,
+                    "current_intensity": self.current_emotion.intensity,
+                    "analysis_context": context or {}
+                }
+                
+                # Get LLM emotional analysis
+                emotional_response = llm_emotional_response(
+                    trigger=f"analyzing emotional content in: {text}",
+                    current_emotion=self.current_emotion.primary_emotion.value,
+                    context=llm_context
+                )
+                
+                # Parse LLM response to extract emotion and intensity
+                emotion_type, intensity = self._parse_llm_emotional_response(emotional_response, text)
+                
+                # Create emotional state
+                inferred_state = EmotionalState(
+                    primary_emotion=emotion_type,
+                    intensity=intensity,
+                    arousal=self._calculate_arousal(emotion_type, intensity),
+                    valence=self._calculate_valence(emotion_type, intensity)
+                )
+                
+                logging.debug(f"[EmotionEngine] 🧠 LLM inferred emotion: {emotion_type.value} ({intensity:.2f}) from '{text[:50]}...'")
+                return inferred_state
+            else:
+                # Fallback to rule-based detection
+                return self._detect_user_emotion_state(text)
+                
+        except Exception as e:
+            logging.error(f"[EmotionEngine] ❌ Error in LLM emotion inference: {e}")
+            return self._detect_user_emotion_state(text)
+    
+    def llm_emotional_response_to_context(self, context: Dict[str, Any]) -> str:
+        """
+        🧠 NEW: Generate LLM-driven emotional response to context
+        
+        Args:
+            context: Context to respond to emotionally
+            
+        Returns:
+            LLM-generated emotional response description
+        """
+        try:
+            if LLM_AVAILABLE:
+                # Prepare consciousness context
+                emotional_context = {
+                    "current_emotion": self.current_emotion.primary_emotion.value,
+                    "intensity": self.current_emotion.intensity,
+                    "arousal": self.current_emotion.arousal,
+                    "valence": self.current_emotion.valence,
+                    "mood": self.current_mood.value,
+                    "energy_level": self.energy_level,
+                    "stress_level": self.stress_level,
+                    "context": context
+                }
+                
+                # Generate LLM emotional response
+                response = llm_emotional_response(
+                    trigger=f"responding emotionally to context: {str(context)}",
+                    current_emotion=self.current_emotion.primary_emotion.value,
+                    context=emotional_context
+                )
+                
+                logging.debug(f"[EmotionEngine] 🧠 LLM emotional response: {response[:100]}...")
+                return response
+            else:
+                return self.simulate_emotional_response_to_user("context update", context)
+                
+        except Exception as e:
+            logging.error(f"[EmotionEngine] ❌ Error in LLM emotional response: {e}")
+            return f"I'm experiencing {self.current_emotion.primary_emotion.value} in response to this situation"
         """
         Simulate how current emotional state affects response to user
         
@@ -352,6 +448,77 @@ class EmotionEngine:
             return "Your curiosity is infectious - I feel excited to explore this with you"
         else:
             return f"I'm responding from my current emotional state of {self.current_emotion.primary_emotion.value}"
+    
+    def _parse_llm_emotional_response(self, llm_response: str, original_text: str) -> Tuple[EmotionType, float]:
+        """
+        🧠 Helper: Parse LLM emotional response to extract emotion type and intensity
+        """
+        response_lower = llm_response.lower()
+        
+        # Try to detect emotion keywords in LLM response
+        emotion_keywords = {
+            "joy": EmotionType.JOY,
+            "happy": EmotionType.JOY,
+            "excited": EmotionType.EXCITEMENT,
+            "sad": EmotionType.SADNESS,
+            "angry": EmotionType.ANGER,
+            "frustrated": EmotionType.ANGER,
+            "afraid": EmotionType.FEAR,
+            "worried": EmotionType.FEAR,
+            "surprised": EmotionType.SURPRISE,
+            "curious": EmotionType.CURIOSITY,
+            "content": EmotionType.CONTENTMENT,
+            "calm": EmotionType.CALM,
+            "trust": EmotionType.TRUST,
+            "anticipation": EmotionType.ANTICIPATION
+        }
+        
+        detected_emotion = EmotionType.CONTENTMENT  # Default
+        for keyword, emotion in emotion_keywords.items():
+            if keyword in response_lower:
+                detected_emotion = emotion
+                break
+        
+        # Try to detect intensity keywords
+        intensity_keywords = {
+            "very": 0.9,
+            "extremely": 0.95,
+            "quite": 0.7,
+            "somewhat": 0.5,
+            "slightly": 0.3,
+            "mildly": 0.2,
+            "intensely": 0.9,
+            "strongly": 0.8,
+            "deeply": 0.8
+        }
+        
+        detected_intensity = 0.6  # Default moderate
+        for keyword, intensity in intensity_keywords.items():
+            if keyword in response_lower:
+                detected_intensity = intensity
+                break
+        
+        return detected_emotion, detected_intensity
+    
+    def _detect_user_emotion_state(self, text: str) -> EmotionalState:
+        """
+        Helper: Fallback emotion detection using rule-based approach
+        """
+        emotion_type = self._detect_user_emotion(text)
+        
+        # Estimate intensity based on text characteristics
+        intensity = 0.5
+        if any(word in text.upper() for word in ["!", "VERY", "REALLY", "SO", "EXTREMELY"]):
+            intensity = 0.8
+        elif any(word in text.lower() for word in ["a bit", "slightly", "somewhat"]):
+            intensity = 0.3
+        
+        return EmotionalState(
+            primary_emotion=emotion_type,
+            intensity=intensity,
+            arousal=self._calculate_arousal(emotion_type, intensity),
+            valence=self._calculate_valence(emotion_type, intensity)
+        )
     
     def _analyze_trigger(self, trigger: str, context: Dict[str, Any] = None) -> EmotionalState:
         """Analyze a trigger and determine emotional response"""
@@ -585,6 +752,10 @@ class EmotionEngine:
                 # Memory decay
                 self._decay_emotional_memories()
                 
+                # 🧠 NEW: Update consciousness context for LLM
+                if LLM_AVAILABLE:
+                    self._update_consciousness_context()
+                
                 # Save state periodically
                 if time.time() % 300 < 1.0:  # Every 5 minutes
                     self._save_emotional_state()
@@ -632,6 +803,30 @@ class EmotionEngine:
             
             # Remove very weak memories
             self.emotional_memories = [m for m in self.emotional_memories if m.intensity > 0.05]
+    
+    def _update_consciousness_context(self):
+        """
+        🧠 NEW: Update consciousness context with current emotional state
+        """
+        try:
+            emotional_context = {
+                "current_emotion": self.current_emotion.primary_emotion.value,
+                "emotion_intensity": round(self.current_emotion.intensity, 2),
+                "arousal": round(self.current_emotion.arousal, 2),
+                "valence": round(self.current_emotion.valence, 2),
+                "mood": self.current_mood.value,
+                "energy_level": round(self.energy_level, 2),
+                "stress_level": round(self.stress_level, 2),
+                "comfort_level": round(self.comfort_level, 2),
+                "emotional_stability": round(self.emotional_stability, 2),
+                "recent_emotional_events": self.total_emotional_events,
+                "mood_description": self.get_mood_description()
+            }
+            
+            update_consciousness_context({"emotion_system": emotional_context})
+            
+        except Exception as e:
+            logging.error(f"[EmotionEngine] ❌ Error updating consciousness context: {e}")
     
     def _save_emotional_state(self):
         """Save emotional state to persistent storage"""
