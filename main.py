@@ -63,6 +63,9 @@ try:
     from ai.free_thought_engine import free_thought_engine, FreeThoughtType
     from ai.narrative_tracker import narrative_tracker, NarrativeEvent, NarrativeSignificance
     
+    # Import consciousness manager for orchestration
+    from ai.consciousness_manager import consciousness_manager
+    
     print("[Main] 🧠 Full consciousness architecture loaded")
     print("[Main] 💭 Autonomous consciousness components: Free Thought Engine, Narrative Tracker")
     CONSCIOUSNESS_ARCHITECTURE_AVAILABLE = True
@@ -2027,6 +2030,7 @@ def main():
         
         try:
             # Start all consciousness systems
+            consciousness_manager.start()
             global_workspace.start()
             self_model.start()
             emotion_engine.start()
