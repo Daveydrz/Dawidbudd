@@ -1,0 +1,30 @@
+{
+  "beliefs": [
+    {
+      "id": "belief_1752795191024_0",
+      "content": "interested in learning about ai consciousness.",
+      "belief_type": "BeliefType.PERSONAL",
+      "certainty": "BeliefCertainty.MODERATE",
+      "source": "text_extraction",
+      "timestamp": "2025-07-17T23:33:11.024806",
+      "user": "pipeline_test_user",
+      "context": {},
+      "supporting_evidence": [
+        "Hello! I am interested in learning about AI consciousness."
+      ],
+      "contradictions": [],
+      "confidence_score": 0.7,
+      "last_confirmed": "2025-07-17T23:33:11.024816",
+      "tags": [
+        "personal"
+      ]
+    }
+  ],
+  "contradictions": [],
+  "last_updated": "2025-07-17T23:33:11.025619",
+  "metadata": {
+    "total_beliefs": 1,
+    "total_contradictions": 0,
+    "unresolved_contradictions": 0
+  }
+}

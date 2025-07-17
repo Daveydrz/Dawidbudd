@@ -70,6 +70,32 @@ except ImportError as e:
     print(f"[Main] ⚠️ Full consciousness architecture not available: {e}")
     CONSCIOUSNESS_ARCHITECTURE_AVAILABLE = False
 
+# ✅ NEW: Import consciousness-integrated modules
+try:
+    from ai.llm_handler import (
+        llm_handler,
+        process_user_input_with_consciousness,
+        generate_consciousness_integrated_response,
+        get_llm_session_statistics
+    )
+    print("[Main] 🧠 Consciousness-integrated LLM handler loaded")
+    CONSCIOUSNESS_LLM_AVAILABLE = True
+except ImportError as e:
+    print(f"[Main] ⚠️ Consciousness LLM handler not available: {e}")
+    CONSCIOUSNESS_LLM_AVAILABLE = False
+
+try:
+    from ai.consciousness_tokenizer import tokenize_consciousness_for_llm
+    from ai.llm_budget_monitor import get_budget_status
+    from ai.belief_analyzer import get_active_belief_contradictions
+    from ai.personality_state import get_personality_summary_for_user
+    from ai.semantic_tagging import analyze_content_semantics
+    print("[Main] 🧠 Individual consciousness modules loaded")
+    CONSCIOUSNESS_MODULES_AVAILABLE = True
+except ImportError as e:
+    print(f"[Main] ⚠️ Individual consciousness modules not available: {e}")
+    CONSCIOUSNESS_MODULES_AVAILABLE = False
+
 from voice.voice_manager_instance import voice_manager
 from voice.manager_names import UltraIntelligentNameManager
 
@@ -460,6 +486,20 @@ elif ENTROPY_SYSTEM_AVAILABLE:
 else:
     print(f"[AdvancedBuddy] ⚠️ Basic Consciousness: Limited Features")
 
+# ✅ NEW: Consciousness Integration Status Display
+if CONSCIOUSNESS_LLM_AVAILABLE:
+    print(f"[AdvancedBuddy] 🧠 CONSCIOUSNESS-INTEGRATED LLM: ACTIVE")
+    print(f"[AdvancedBuddy] 🏷️ Semantic Analysis: REAL-TIME")
+    print(f"[AdvancedBuddy] 🧠 Belief Tracking: CONTRADICTION DETECTION")
+    print(f"[AdvancedBuddy] 🎭 Personality Adaptation: DYNAMIC")
+    print(f"[AdvancedBuddy] 💰 Budget Monitoring: COST TRACKING")
+    print(f"[AdvancedBuddy] 🎯 Consciousness Tokenizer: CONTEXT INTEGRATION")
+elif CONSCIOUSNESS_MODULES_AVAILABLE:
+    print(f"[AdvancedBuddy] 🧠 Consciousness Modules: PARTIALLY AVAILABLE")
+    print(f"[AdvancedBuddy] 🔧 Individual components loaded separately")
+else:
+    print(f"[AdvancedBuddy] ⚠️ Basic Consciousness: Limited Features")
+
 # Global state - Enhanced with advanced features
 current_user = SYSTEM_USER
 conversation_active = False
@@ -633,20 +673,18 @@ def handle_streaming_response(text, current_user):
             speak_streaming(f"Today is {brisbane_time['date']}.")
             return
         
-        # ✅ ADVANCED AI: Natural conversation flow with VOICE-IDENTIFIED USER
-        print(f"[AdvancedResponse] 🧠 Starting ADVANCED AI LLM streaming for VOICE USER: {current_user}")
-        
-        full_response = ""
-        chunk_count = 0
-        first_chunk = True
-        response_interrupted = False
-        
+        # ✅ NEW: Try consciousness-integrated LLM handler first
         try:
-            from ai.chat_enhanced_smart_with_fusion import generate_response_streaming_with_intelligent_fusion
-            print("[AdvancedResponse] ✅ Using ADVANCED AI streaming with INTELLIGENT FUSION")
+            from ai.llm_handler import generate_consciousness_integrated_response
+            print("[AdvancedResponse] 🧠 Using CONSCIOUSNESS-INTEGRATED LLM HANDLER")
             
-            # ✅ ADVANCED: Process LLM chunks with IMMEDIATE interrupt breaking
-            for chunk in generate_response_streaming_with_intelligent_fusion(text, current_user, DEFAULT_LANG):
+            full_response = ""
+            chunk_count = 0
+            first_chunk = True
+            response_interrupted = False
+            
+            # ✅ CONSCIOUSNESS: Process LLM chunks with FULL consciousness integration
+            for chunk in generate_consciousness_integrated_response(text, current_user):
                 # ✅ CRITICAL: Check for interrupt BEFORE processing chunk
                 if full_duplex_manager and full_duplex_manager.speech_interrupted:
                     print("[AdvancedResponse] ⚡ INTERRUPT DETECTED - IMMEDIATELY STOPPING LLM")
@@ -656,6 +694,67 @@ def handle_streaming_response(text, current_user):
                 if chunk and chunk.strip():
                     chunk_count += 1
                     chunk_text = chunk.strip()
+                    
+                    if first_chunk:
+                        print("[AdvancedResponse] 🎭 First CONSCIOUSNESS chunk ready - starting natural speech!")
+                        first_chunk = False
+                    
+                    print(f"[AdvancedResponse] 🗣️ Speaking chunk {chunk_count}: '{chunk_text[:50]}...'")
+                    
+                    # 🧠 MEGA-INTELLIGENT: Validate chunk before speaking
+                    try:
+                        is_appropriate, validated_chunk = validate_ai_response_appropriateness(current_user, chunk_text)
+                        
+                        if not is_appropriate:
+                            print(f"[MegaMemory] 🛡️ Chunk {chunk_count} corrected for context appropriateness")
+                            chunk_text = validated_chunk
+                    except Exception as validation_error:
+                        print(f"[MegaMemory] ⚠️ Validation error for chunk {chunk_count}: {validation_error}")
+                        # Continue with original chunk if validation fails
+                    
+                    # ✅ SPEAK CHUNK (now validated and consciousness-enhanced)
+                    speak_streaming(chunk_text)
+                    full_response += chunk_text + " "
+                    
+                    # ✅ CRITICAL: Check AGAIN after queueing and break if interrupted
+                    if full_duplex_manager and full_duplex_manager.speech_interrupted:
+                        print("[AdvancedResponse] ⚡ INTERRUPT AFTER QUEUEING - STOPPING NOW")
+                        response_interrupted = True
+                        break  # ✅ CRITICAL: Break immediately!
+                    
+                    # Brief pause for natural flow (only if not interrupted)
+                    if not (full_duplex_manager and full_duplex_manager.speech_interrupted):
+                        time.sleep(0.05)
+            
+            print(f"[AdvancedResponse] ✅ CONSCIOUSNESS-INTEGRATED response complete - {chunk_count} segments")
+            
+        except ImportError as import_error:
+            print(f"[AdvancedResponse] ⚠️ Consciousness handler not available: {import_error}")
+            print("[AdvancedResponse] 🔄 Falling back to ADVANCED AI streaming")
+        
+            # ✅ FALLBACK: Advanced AI Natural conversation flow with VOICE-IDENTIFIED USER
+            print(f"[AdvancedResponse] 🧠 Starting ADVANCED AI LLM streaming for VOICE USER: {current_user}")
+            
+            full_response = ""
+            chunk_count = 0
+            first_chunk = True
+            response_interrupted = False
+            
+            try:
+                from ai.chat_enhanced_smart_with_fusion import generate_response_streaming_with_intelligent_fusion
+                print("[AdvancedResponse] ✅ Using ADVANCED AI streaming with INTELLIGENT FUSION")
+                
+                # ✅ ADVANCED: Process LLM chunks with IMMEDIATE interrupt breaking
+                for chunk in generate_response_streaming_with_intelligent_fusion(text, current_user, DEFAULT_LANG):
+                    # ✅ CRITICAL: Check for interrupt BEFORE processing chunk
+                    if full_duplex_manager and full_duplex_manager.speech_interrupted:
+                        print("[AdvancedResponse] ⚡ INTERRUPT DETECTED - IMMEDIATELY STOPPING LLM")
+                        response_interrupted = True
+                        break  # ✅ CRITICAL: Break immediately!
+                    
+                    if chunk and chunk.strip():
+                        chunk_count += 1
+                        chunk_text = chunk.strip()
                     
                     # ✅ ENTROPY SYSTEM: Inject uncertainty and consciousness into response
                     if ENTROPY_SYSTEM_AVAILABLE:
