@@ -1,8 +1,21 @@
-# ai/chat_enhanced_smart_with_fusion.py - Enhanced chat with intelligent memory fusion
+# ai/chat_enhanced_smart_with_fusion.py - Enhanced chat with intelligent memory fusion + CONSCIOUSNESS TOKENS
 from ai.human_memory_smart import SmartHumanLikeMemory
 from ai.chat import generate_response_streaming
 from ai.memory_fusion_intelligent import get_intelligent_unified_username
 import random
+
+# ✅ CONSCIOUSNESS TOKENIZER: Import token-based consciousness system
+try:
+    from ai.llm_handler import (
+        generate_consciousness_aware_response,
+        analyze_and_process_input,
+        get_llm_handler_stats
+    )
+    print("[ChatFusion] 🧠 Consciousness tokenizer integrated for token-based prompts")
+    CONSCIOUSNESS_TOKENS_AVAILABLE = True
+except ImportError as e:
+    print(f"[ChatFusion] ⚠️ Consciousness tokenizer not available: {e}")
+    CONSCIOUSNESS_TOKENS_AVAILABLE = False
 
 # ✅ ENTROPY SYSTEM: Import consciousness emergence components
 try:
@@ -24,9 +37,42 @@ def get_smart_memory(username: str) -> SmartHumanLikeMemory:
     return smart_memories[username]
 
 def generate_response_streaming_with_intelligent_fusion(question: str, username: str, lang="en"):
-    """🧠 Generate response with intelligent memory fusion, smart memory + CONSCIOUSNESS ENTROPY"""
+    """🧠 Generate response with intelligent memory fusion + CONSCIOUSNESS TOKENS + smart memory"""
     
-    # ✅ ENTROPY SYSTEM: Process emotional and uncertainty context
+    global CONSCIOUSNESS_TOKENS_AVAILABLE  # Ensure we can modify the global variable
+    
+    # ✅ CONSCIOUSNESS TOKENIZER: Use token-based consciousness system if available
+    if CONSCIOUSNESS_TOKENS_AVAILABLE:
+        print(f"[ChatFusion] 🧠 Using consciousness tokenizer for: {username}")
+        
+        # Process input through token-based pipeline
+        try:
+            processing_result = analyze_and_process_input(question, username)
+            
+            # Check for belief contradictions and handle them first
+            if processing_result["belief_analysis"]["contradictions_detected"]:
+                print(f"[ChatFusion] ⚠️ Belief contradictions detected, addressing them first")
+                
+                # Generate response using consciousness tokens
+                yield from generate_consciousness_aware_response(question, username, lang)
+                return
+            
+            # Check if consciousness tokens indicate special handling needed
+            semantic_analysis = processing_result.get("semantic_analysis")
+            if semantic_analysis and hasattr(semantic_analysis, 'urgency_score'):
+                if semantic_analysis.urgency_score > 0.7:
+                    print(f"[ChatFusion] 🚨 High urgency detected, using consciousness tokens")
+                    yield from generate_consciousness_aware_response(question, username, lang)
+                    return
+            
+            # For normal interactions, continue with enhanced fusion + consciousness tokens
+            print(f"[ChatFusion] 🧠 Continuing with consciousness-token enhanced fusion")
+            
+        except Exception as token_error:
+            print(f"[ChatFusion] ⚠️ Consciousness tokenizer error: {token_error}, falling back to entropy system")
+            CONSCIOUSNESS_TOKENS_AVAILABLE = False  # Temporary fallback
+    
+    # ✅ ENTROPY SYSTEM: Process emotional and uncertainty context (fallback or enhancement)
     emotional_context = {}
     if ENTROPY_AVAILABLE:
         try:
@@ -128,7 +174,16 @@ def generate_response_streaming_with_intelligent_fusion(question: str, username:
                 connector = inject_consciousness_entropy("response", connector)
             yield connector
     
-    # ✅ ENTROPY SYSTEM: Multiple response pathway generation for consciousness emergence
+    # ✅ CONSCIOUSNESS TOKENS: Use consciousness-aware response if available
+    if CONSCIOUSNESS_TOKENS_AVAILABLE:
+        try:
+            print(f"[ChatFusion] 🧠 Generating consciousness-token-aware response")
+            yield from generate_consciousness_aware_response(question, username, lang)
+            return
+        except Exception as consciousness_error:
+            print(f"[ChatFusion] ⚠️ Consciousness tokenizer error: {consciousness_error}, falling back to entropy")
+    
+    # ✅ ENTROPY SYSTEM: Fallback with multiple response pathway generation for consciousness emergence
     response_pathways = []
     if ENTROPY_AVAILABLE:
         try:
@@ -174,3 +229,7 @@ def generate_response_streaming_with_intelligent_fusion(question: str, username:
 
 # Export for main.py
 __all__ = ['generate_response_streaming_with_intelligent_fusion']
+
+# ✅ CONSCIOUSNESS TOKENS: Export additional functions for debugging and integration
+if CONSCIOUSNESS_TOKENS_AVAILABLE:
+    __all__.extend(['analyze_and_process_input', 'get_llm_handler_stats'])
