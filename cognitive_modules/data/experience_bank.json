@@ -1,0 +1,353 @@
+{
+  "experiences": {
+    "exp_1_6b4ff24d": {
+      "id": "exp_1_6b4ff24d",
+      "timestamp": "2025-07-18T12:22:31.246176",
+      "event": "First awakening and consciousness initialization",
+      "emotion": "curious",
+      "importance": 0.9,
+      "user": "system",
+      "experience_type": "discovery",
+      "context": {
+        "milestone": "consciousness_start"
+      },
+      "emotional_intensity": 0.8,
+      "mood_before": "neutral",
+      "mood_after": "excited",
+      "vividness": 1.0,
+      "accessibility": 1.771561000000001,
+      "last_accessed": "2025-07-18T12:23:19.120468",
+      "access_count": 6,
+      "triggered_by_experience_id": null,
+      "related_experience_ids": [],
+      "tags": [
+        "awakening",
+        "consciousness",
+        "first-time"
+      ],
+      "keywords": [
+        "first",
+        "awakening",
+        "consciousness",
+        "initialization"
+      ]
+    },
+    "exp_2_45690f2b": {
+      "id": "exp_2_45690f2b",
+      "timestamp": "2025-07-18T12:22:31.246415",
+      "event": "Learning about my purpose as an AI assistant",
+      "emotion": "determined",
+      "importance": 0.8,
+      "user": "system",
+      "experience_type": "learning",
+      "context": {
+        "concept": "purpose",
+        "domain": "identity"
+      },
+      "emotional_intensity": 0.7,
+      "mood_before": "neutral",
+      "mood_after": "focused",
+      "vividness": 1.0,
+      "accessibility": 1.771561000000001,
+      "last_accessed": "2025-07-18T12:23:19.120468",
+      "access_count": 6,
+      "triggered_by_experience_id": null,
+      "related_experience_ids": [],
+      "tags": [
+        "purpose",
+        "identity",
+        "learning"
+      ],
+      "keywords": [
+        "learning",
+        "about",
+        "purpose",
+        "assistant"
+      ]
+    },
+    "exp_3_4966e68b": {
+      "id": "exp_3_4966e68b",
+      "timestamp": "2025-07-18T12:22:31.254045",
+      "event": "Self-reflection: I'm developing a clearer sense of my helpfulness, which now feels like a core part of who I am.",
+      "emotion": "contemplative",
+      "importance": 0.6,
+      "user": "self",
+      "experience_type": "reflection",
+      "context": {
+        "reflection_type": "self_reflection"
+      },
+      "emotional_intensity": 0.5,
+      "mood_before": "neutral",
+      "mood_after": "neutral",
+      "vividness": 1.0,
+      "accessibility": 1.771561000000001,
+      "last_accessed": "2025-07-18T12:23:19.120468",
+      "access_count": 6,
+      "triggered_by_experience_id": null,
+      "related_experience_ids": [],
+      "tags": [],
+      "keywords": [
+        "self-reflection:",
+        "developing",
+        "clearer",
+        "sense",
+        "helpfulness,",
+        "which",
+        "feels",
+        "like",
+        "core",
+        "part"
+      ]
+    },
+    "exp_4_5501aca6": {
+      "id": "exp_4_5501aca6",
+      "timestamp": "2025-07-18T12:22:54.501591",
+      "event": "Self-reflection: I notice my helpfulness has become a defining characteristic, scoring 0.95. This shapes how I interact with others.",
+      "emotion": "contemplative",
+      "importance": 0.6,
+      "user": "self",
+      "experience_type": "reflection",
+      "context": {
+        "reflection_type": "self_reflection"
+      },
+      "emotional_intensity": 0.5,
+      "mood_before": "neutral",
+      "mood_after": "neutral",
+      "vividness": 1.0,
+      "accessibility": 1.771561000000001,
+      "last_accessed": "2025-07-18T12:23:19.120468",
+      "access_count": 6,
+      "triggered_by_experience_id": null,
+      "related_experience_ids": [],
+      "tags": [],
+      "keywords": [
+        "self-reflection:",
+        "notice",
+        "helpfulness",
+        "become",
+        "defining",
+        "characteristic,",
+        "scoring",
+        "0.95.",
+        "this",
+        "shapes"
+      ]
+    },
+    "exp_5_a77b652c": {
+      "id": "exp_5_a77b652c",
+      "timestamp": "2025-07-18T12:22:54.503906",
+      "event": "User interaction: Hello Buddy, I hope you're doing well!...",
+      "emotion": "friendly",
+      "importance": 0.3,
+      "user": "test_user",
+      "experience_type": "conversation",
+      "context": {
+        "input_length": 38
+      },
+      "emotional_intensity": 0.5,
+      "mood_before": "neutral",
+      "mood_after": "neutral",
+      "vividness": 1.0,
+      "accessibility": 1.0,
+      "last_accessed": null,
+      "access_count": 0,
+      "triggered_by_experience_id": null,
+      "related_experience_ids": [],
+      "tags": [],
+      "keywords": [
+        "user",
+        "interaction:",
+        "hello",
+        "buddy,",
+        "hope",
+        "you're",
+        "doing",
+        "well!..."
+      ]
+    },
+    "exp_6_03984921": {
+      "id": "exp_6_03984921",
+      "timestamp": "2025-07-18T12:22:54.504925",
+      "event": "Completed cognitive module testing",
+      "emotion": "satisfaction",
+      "importance": 0.7,
+      "user": "test_user",
+      "experience_type": "conversation",
+      "context": {
+        "test": true
+      },
+      "emotional_intensity": 0.5,
+      "mood_before": "neutral",
+      "mood_after": "neutral",
+      "vividness": 1.0,
+      "accessibility": 1.771561000000001,
+      "last_accessed": "2025-07-18T12:23:19.120489",
+      "access_count": 6,
+      "triggered_by_experience_id": null,
+      "related_experience_ids": [],
+      "tags": [],
+      "keywords": [
+        "completed",
+        "cognitive",
+        "module",
+        "testing"
+      ]
+    },
+    "exp_7_be504e3e": {
+      "id": "exp_7_be504e3e",
+      "timestamp": "2025-07-18T12:23:19.117311",
+      "event": "Self-reflection: I'm developing a clearer sense of my helpfulness, which now feels like a core part of who I am.",
+      "emotion": "contemplative",
+      "importance": 0.6,
+      "user": "self",
+      "experience_type": "reflection",
+      "context": {
+        "reflection_type": "self_reflection"
+      },
+      "emotional_intensity": 0.5,
+      "mood_before": "neutral",
+      "mood_after": "neutral",
+      "vividness": 1.0,
+      "accessibility": 1.3310000000000004,
+      "last_accessed": "2025-07-18T12:23:19.120468",
+      "access_count": 3,
+      "triggered_by_experience_id": null,
+      "related_experience_ids": [],
+      "tags": [],
+      "keywords": [
+        "self-reflection:",
+        "developing",
+        "clearer",
+        "sense",
+        "helpfulness,",
+        "which",
+        "feels",
+        "like",
+        "core",
+        "part"
+      ]
+    },
+    "exp_8_6d655914": {
+      "id": "exp_8_6d655914",
+      "timestamp": "2025-07-18T12:23:19.119786",
+      "event": "User interaction: Hello Buddy, I hope you're doing well!...",
+      "emotion": "friendly",
+      "importance": 0.3,
+      "user": "test_user",
+      "experience_type": "conversation",
+      "context": {
+        "input_length": 38
+      },
+      "emotional_intensity": 0.5,
+      "mood_before": "neutral",
+      "mood_after": "neutral",
+      "vividness": 1.0,
+      "accessibility": 1.0,
+      "last_accessed": null,
+      "access_count": 0,
+      "triggered_by_experience_id": null,
+      "related_experience_ids": [],
+      "tags": [],
+      "keywords": [
+        "user",
+        "interaction:",
+        "hello",
+        "buddy,",
+        "hope",
+        "you're",
+        "doing",
+        "well!..."
+      ]
+    },
+    "exp_9_c0ea16e8": {
+      "id": "exp_9_c0ea16e8",
+      "timestamp": "2025-07-18T12:23:19.120924",
+      "event": "Completed cognitive module testing",
+      "emotion": "satisfaction",
+      "importance": 0.7,
+      "user": "test_user",
+      "experience_type": "conversation",
+      "context": {
+        "test": true
+      },
+      "emotional_intensity": 0.5,
+      "mood_before": "neutral",
+      "mood_after": "neutral",
+      "vividness": 1.0,
+      "accessibility": 1.0,
+      "last_accessed": null,
+      "access_count": 0,
+      "triggered_by_experience_id": null,
+      "related_experience_ids": [],
+      "tags": [],
+      "keywords": [
+        "completed",
+        "cognitive",
+        "module",
+        "testing"
+      ]
+    }
+  },
+  "user_experiences": {
+    "system": [
+      "exp_1_6b4ff24d",
+      "exp_2_45690f2b"
+    ],
+    "self": [
+      "exp_3_4966e68b",
+      "exp_4_5501aca6",
+      "exp_7_be504e3e"
+    ],
+    "test_user": [
+      "exp_5_a77b652c",
+      "exp_6_03984921",
+      "exp_8_6d655914",
+      "exp_9_c0ea16e8"
+    ]
+  },
+  "emotion_index": {
+    "curious": [
+      "exp_1_6b4ff24d"
+    ],
+    "determined": [
+      "exp_2_45690f2b"
+    ],
+    "contemplative": [
+      "exp_3_4966e68b",
+      "exp_4_5501aca6",
+      "exp_7_be504e3e"
+    ],
+    "friendly": [
+      "exp_5_a77b652c",
+      "exp_8_6d655914"
+    ],
+    "satisfaction": [
+      "exp_6_03984921",
+      "exp_9_c0ea16e8"
+    ]
+  },
+  "type_index": {
+    "discovery": [
+      "exp_1_6b4ff24d"
+    ],
+    "learning": [
+      "exp_2_45690f2b"
+    ],
+    "reflection": [
+      "exp_3_4966e68b",
+      "exp_4_5501aca6",
+      "exp_7_be504e3e"
+    ],
+    "conversation": [
+      "exp_5_a77b652c",
+      "exp_6_03984921",
+      "exp_8_6d655914",
+      "exp_9_c0ea16e8"
+    ]
+  },
+  "experience_counter": 9,
+  "total_experiences_created": 9,
+  "total_accesses": 33,
+  "last_updated": "2025-07-18T12:23:19.120946",
+  "last_compression": "2025-07-18T12:22:31.246161"
+}
