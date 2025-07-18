@@ -731,7 +731,7 @@ def handle_streaming_response(text, current_user):
         except ImportError as import_error:
             print(f"[AdvancedResponse] ⚠️ Consciousness handler not available: {import_error}")
             print("[AdvancedResponse] 🔄 Falling back to ADVANCED AI streaming")
-        
+            
             # ✅ FALLBACK: Advanced AI Natural conversation flow with VOICE-IDENTIFIED USER
             print(f"[AdvancedResponse] 🧠 Starting ADVANCED AI LLM streaming for VOICE USER: {current_user}")
             
@@ -816,13 +816,13 @@ def handle_streaming_response(text, current_user):
                     # Brief pause for natural flow (only if not interrupted)
                     if not (full_duplex_manager and full_duplex_manager.speech_interrupted):
                         time.sleep(natural_pause)
-        
-        except (ConnectionError, ConnectionAbortedError, OSError) as conn_err:
-            print(f"[AdvancedResponse] 🔌 Connection interrupted: {conn_err}")
-            response_interrupted = True
             
-        except ImportError:
-            print("[AdvancedResponse] ⚠️ Advanced streaming not available, using enhanced fallback")
+            except (ConnectionError, ConnectionAbortedError, OSError) as conn_err:
+                print(f"[AdvancedResponse] 🔌 Connection interrupted: {conn_err}")
+                response_interrupted = True
+                
+            except ImportError:
+                print("[AdvancedResponse] ⚠️ Advanced streaming not available, using enhanced fallback")
             response = generate_response(text, current_user, DEFAULT_LANG)
             
             # 🧠 MEGA-INTELLIGENT: Validate complete response before speaking
