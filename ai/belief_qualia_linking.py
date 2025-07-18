@@ -74,10 +74,22 @@ class BeliefQualiaLinker:
                 
                 # Load qualia markers
                 for marker_data in data.get('qualia_markers', []):
+                    try:
+                        qualia_type = QualiaType(marker_data['qualia_type'])
+                    except (ValueError, KeyError):
+                        # Handle legacy format or invalid enum
+                        qualia_type = QualiaType.EMOTIONAL
+                    
+                    try:
+                        intensity = QualiaIntensity(marker_data['intensity'])
+                    except (ValueError, KeyError):
+                        # Handle legacy format or invalid enum
+                        intensity = QualiaIntensity.MODERATE
+                    
                     marker = QualiaMarker(
                         qualia_id=marker_data['qualia_id'],
-                        qualia_type=QualiaType(marker_data['qualia_type']),
-                        intensity=QualiaIntensity(marker_data['intensity']),
+                        qualia_type=qualia_type,
+                        intensity=intensity,
                         emotional_valence=marker_data['emotional_valence'],
                         cognitive_clarity=marker_data['cognitive_clarity'],
                         temporal_duration=marker_data['temporal_duration'],

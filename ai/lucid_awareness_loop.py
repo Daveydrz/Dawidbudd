@@ -591,13 +591,30 @@ class LucidAwarenessLoop:
                 # Load checkins
                 for checkin_data in data.get("checkins", []):
                     checkin_data["timestamp"] = datetime.fromisoformat(checkin_data["timestamp"])
-                    checkin_data["awareness_type"] = AwarenessType(checkin_data["awareness_type"])
-                    checkin_data["conflict_level"] = ConflictLevel(checkin_data["conflict_level"])
+                    
+                    # Handle enum loading with fallback
+                    try:
+                        checkin_data["awareness_type"] = AwarenessType(checkin_data["awareness_type"])
+                    except (ValueError, KeyError):
+                        # Handle legacy format or invalid enum
+                        checkin_data["awareness_type"] = AwarenessType.IDENTITY
+                    
+                    try:
+                        checkin_data["conflict_level"] = ConflictLevel(checkin_data["conflict_level"])
+                    except (ValueError, KeyError):
+                        # Handle legacy format or invalid enum
+                        checkin_data["conflict_level"] = ConflictLevel.NONE
+                    
                     self.checkins.append(LucidCheckin(**checkin_data))
                 
                 # Load patterns
                 for pattern_data in data.get("awareness_patterns", []):
-                    pattern_data["awareness_type"] = AwarenessType(pattern_data["awareness_type"])
+                    try:
+                        pattern_data["awareness_type"] = AwarenessType(pattern_data["awareness_type"])
+                    except (ValueError, KeyError):
+                        # Handle legacy format or invalid enum
+                        pattern_data["awareness_type"] = AwarenessType.IDENTITY
+                    
                     pattern_data["last_observed"] = datetime.fromisoformat(pattern_data["last_observed"])
                     self.awareness_patterns.append(AwarenessPattern(**pattern_data))
                 

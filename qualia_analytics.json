@@ -41,12 +41,23 @@
       ],
       "context": "testing",
       "user_id": "test_user"
+    },
+    {
+      "timestamp": "2025-07-18T15:59:00.730090",
+      "dominant_qualia": null,
+      "emotional_valence": 0.0,
+      "cognitive_clarity": 0.0,
+      "intensity": null,
+      "active_qualia_count": 0,
+      "qualia_types": [],
+      "context": "verification",
+      "user_id": "test_user"
     }
   ],
   "trends": [],
   "patterns": [],
-  "last_updated": "2025-07-18T10:36:35.971890",
-  "total_snapshots": 3,
+  "last_updated": "2025-07-18T15:59:00.730140",
+  "total_snapshots": 4,
   "total_trends": 0,
   "total_patterns": 0
 }
