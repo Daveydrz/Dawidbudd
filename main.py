@@ -779,7 +779,7 @@ def handle_streaming_response(text, current_user):
                 response_interrupted = False
                 
                 # ✅ CONSCIOUSNESS: Process LLM chunks with FULL consciousness integration + TOKEN OPTIMIZATION
-                for chunk in generate_consciousness_integrated_response(text, current_user):
+                for chunk in generate_consciousness_integrated_response(text, current_user, context=cognitive_prompt_injection):
                     # ✅ CRITICAL: Check for interrupt BEFORE processing chunk
                     if full_duplex_manager and full_duplex_manager.speech_interrupted:
                         print("[AdvancedResponse] ⚡ INTERRUPT DETECTED - IMMEDIATELY STOPPING LLM")
@@ -875,7 +875,7 @@ def handle_streaming_response(text, current_user):
                 print("[AdvancedResponse] ✅ Using ADVANCED AI streaming with INTELLIGENT FUSION")
                 
                 # ✅ ADVANCED: Process LLM chunks with IMMEDIATE interrupt breaking
-                for chunk in generate_response_streaming_with_intelligent_fusion(text, current_user, DEFAULT_LANG):
+                for chunk in generate_response_streaming_with_intelligent_fusion(text, current_user, DEFAULT_LANG, context=cognitive_prompt_injection):
                     # ✅ CRITICAL: Check for interrupt BEFORE processing chunk
                     if full_duplex_manager and full_duplex_manager.speech_interrupted:
                         print("[AdvancedResponse] ⚡ INTERRUPT DETECTED - IMMEDIATELY STOPPING LLM")
