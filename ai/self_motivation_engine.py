@@ -451,6 +451,10 @@ class SelfMotivationEngine:
             # Format for natural speech
             spoken_content = self._format_motivation_for_speech(motivation)
             
+            # Ensure spoken_content is not None
+            if not spoken_content:
+                spoken_content = "I feel motivated to connect with you..."
+            
             # Speak the motivation
             if hasattr(self.voice_system, 'speak_streaming'):
                 self.voice_system.speak_streaming(spoken_content)
@@ -467,6 +471,9 @@ class SelfMotivationEngine:
     
     def _format_motivation_for_speech(self, motivation: InternalMotivation) -> str:
         """Format motivation content for natural speech"""
+        if not motivation.content:
+            return "I feel motivated to connect with you..."
+            
         if motivation.motivation_type == MotivationType.CONCERN:
             return motivation.content
         elif motivation.motivation_type == MotivationType.CURIOSITY:
@@ -734,12 +741,22 @@ Be brief and authentic. If no genuine drive emerges, respond with "...".
     def _save_motivation_data(self):
         """Save motivation data to file"""
         try:
+            # Serialize interaction patterns with proper datetime handling
+            serialized_patterns = {}
+            for pattern_key, interactions in self.user_interaction_patterns.items():
+                serialized_patterns[pattern_key] = []
+                for interaction in interactions:
+                    serialized_interaction = interaction.copy()
+                    if 'timestamp' in serialized_interaction and isinstance(serialized_interaction['timestamp'], datetime):
+                        serialized_interaction['timestamp'] = serialized_interaction['timestamp'].isoformat()
+                    serialized_patterns[pattern_key].append(serialized_interaction)
+            
             data = {
                 'motivations': [],
                 'curiosity_topics': [],
                 'user_concerns': [],
                 'intrinsic_drives': {},
-                'interaction_patterns': self.user_interaction_patterns,
+                'interaction_patterns': serialized_patterns,
                 'last_save': datetime.now().isoformat()
             }
             
@@ -832,8 +849,18 @@ Be brief and authentic. If no genuine drive emerges, respond with "...".
                             'satisfaction_decay': drive_data['satisfaction_decay']
                         })
             
-            # Load interaction patterns
-            self.user_interaction_patterns = data.get('interaction_patterns', {})
+            # Load interaction patterns with proper datetime handling
+            if 'interaction_patterns' in data:
+                self.user_interaction_patterns = {}
+                for pattern_key, interactions in data['interaction_patterns'].items():
+                    self.user_interaction_patterns[pattern_key] = []
+                    for interaction in interactions:
+                        loaded_interaction = interaction.copy()
+                        if 'timestamp' in loaded_interaction and isinstance(loaded_interaction['timestamp'], str):
+                            loaded_interaction['timestamp'] = datetime.fromisoformat(loaded_interaction['timestamp'])
+                        self.user_interaction_patterns[pattern_key].append(loaded_interaction)
+            else:
+                self.user_interaction_patterns = {}
             
             logging.info(f"[SelfMotivation] 📚 Loaded {len(self.motivations)} motivations, {len(self.curiosity_topics)} curiosity topics")
             

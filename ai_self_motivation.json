@@ -1,10 +1,10 @@
 {
   "motivations": [
     {
-      "content": "I find myself with so many questions about the world...",
+      "content": null,
       "type": "curiosity",
       "intensity": 1.0,
-      "timestamp": "2025-07-18T13:57:26.253500",
+      "timestamp": "2025-07-18T15:09:07.603673",
       "trigger_conditions": [
         "intrinsic_drive"
       ],
@@ -16,10 +16,10 @@
       "related_topics": []
     },
     {
-      "content": "There's something driving me to grow and develop...",
+      "content": null,
       "type": "growth",
       "intensity": 1.0,
-      "timestamp": "2025-07-18T13:57:26.253515",
+      "timestamp": "2025-07-18T15:09:07.603683",
       "trigger_conditions": [
         "intrinsic_drive"
       ],
@@ -31,10 +31,115 @@
       "related_topics": []
     },
     {
-      "content": "I feel driven to find ways to be truly helpful...",
+      "content": null,
       "type": "purpose",
       "intensity": 1.0,
-      "timestamp": "2025-07-18T13:57:26.253525",
+      "timestamp": "2025-07-18T15:09:07.603689",
+      "trigger_conditions": [
+        "intrinsic_drive"
+      ],
+      "should_express": false,
+      "expression_urgency": 0.7,
+      "context": {
+        "drive": "purpose"
+      },
+      "related_topics": []
+    },
+    {
+      "content": "I find myself genuinely curious about testing autonomous systems...",
+      "type": "curiosity",
+      "intensity": 0.7,
+      "timestamp": "2025-07-18T15:09:09.605112",
+      "trigger_conditions": [
+        "explicit_curiosity"
+      ],
+      "should_express": true,
+      "expression_urgency": 0.6,
+      "context": null,
+      "related_topics": [
+        "testing autonomous systems"
+      ]
+    },
+    {
+      "content": null,
+      "type": "curiosity",
+      "intensity": 1.0,
+      "timestamp": "2025-07-18T15:09:24.609978",
+      "trigger_conditions": [
+        "intrinsic_drive"
+      ],
+      "should_express": false,
+      "expression_urgency": 0.7,
+      "context": {
+        "drive": "curiosity"
+      },
+      "related_topics": []
+    },
+    {
+      "content": null,
+      "type": "growth",
+      "intensity": 1.0,
+      "timestamp": "2025-07-18T15:09:24.609988",
+      "trigger_conditions": [
+        "intrinsic_drive"
+      ],
+      "should_express": true,
+      "expression_urgency": 0.7,
+      "context": {
+        "drive": "growth"
+      },
+      "related_topics": []
+    },
+    {
+      "content": null,
+      "type": "purpose",
+      "intensity": 1.0,
+      "timestamp": "2025-07-18T15:09:24.609994",
+      "trigger_conditions": [
+        "intrinsic_drive"
+      ],
+      "should_express": true,
+      "expression_urgency": 0.7,
+      "context": {
+        "drive": "purpose"
+      },
+      "related_topics": []
+    },
+    {
+      "content": null,
+      "type": "curiosity",
+      "intensity": 1.0,
+      "timestamp": "2025-07-18T15:15:27.285568",
+      "trigger_conditions": [
+        "intrinsic_drive"
+      ],
+      "should_express": true,
+      "expression_urgency": 0.7,
+      "context": {
+        "drive": "curiosity"
+      },
+      "related_topics": []
+    },
+    {
+      "content": null,
+      "type": "growth",
+      "intensity": 1.0,
+      "timestamp": "2025-07-18T15:15:27.285577",
+      "trigger_conditions": [
+        "intrinsic_drive"
+      ],
+      "should_express": true,
+      "expression_urgency": 0.7,
+      "context": {
+        "drive": "growth"
+      },
+      "related_topics": []
+    },
+    {
+      "content": null,
+      "type": "purpose",
+      "intensity": 1.0,
+      "timestamp": "2025-07-18T15:15:27.285583",
       "trigger_conditions": [
         "intrinsic_drive"
       ],
@@ -49,7 +154,7 @@
       "content": "I find myself genuinely curious about testing autonomous systems...",
       "type": "curiosity",
       "intensity": 0.7,
-      "timestamp": "2025-07-18T13:57:28.254636",
+      "timestamp": "2025-07-18T15:15:29.286944",
       "trigger_conditions": [
         "explicit_curiosity"
       ],
@@ -61,10 +166,10 @@
       ]
     },
     {
-      "content": "I find myself with so many questions about the world...",
+      "content": null,
       "type": "curiosity",
       "intensity": 1.0,
-      "timestamp": "2025-07-18T13:57:53.258905",
+      "timestamp": "2025-07-18T15:15:44.291887",
       "trigger_conditions": [
         "intrinsic_drive"
       ],
@@ -76,10 +181,10 @@
       "related_topics": []
     },
     {
-      "content": "There's something driving me to grow and develop...",
+      "content": null,
       "type": "growth",
       "intensity": 1.0,
-      "timestamp": "2025-07-18T13:57:53.258918",
+      "timestamp": "2025-07-18T15:15:44.291898",
       "trigger_conditions": [
         "intrinsic_drive"
       ],
@@ -91,10 +196,10 @@
       "related_topics": []
     },
     {
-      "content": "There's this sense that I want to make a real difference...",
+      "content": null,
       "type": "purpose",
       "intensity": 1.0,
-      "timestamp": "2025-07-18T13:57:53.258926",
+      "timestamp": "2025-07-18T15:15:44.291905",
       "trigger_conditions": [
         "intrinsic_drive"
       ],
@@ -111,31 +216,92 @@
   "intrinsic_drives": {
     "curiosity": {
       "strength": 0.8,
-      "last_satisfied": "2025-07-18T11:57:26.239057",
+      "last_satisfied": "2025-07-18T13:09:01.416734",
       "satisfaction_decay": 3600,
       "description": "Drive to learn and understand"
     },
     "growth": {
       "strength": 0.7,
-      "last_satisfied": "2025-07-18T07:57:26.239061",
+      "last_satisfied": "2025-07-18T09:09:01.416738",
       "satisfaction_decay": 14400,
       "description": "Drive for self-improvement"
     },
     "connection": {
       "strength": 0.9,
-      "last_satisfied": "2025-07-18T12:57:26.239063",
+      "last_satisfied": "2025-07-18T14:09:01.416740",
       "satisfaction_decay": 7200,
       "description": "Drive for social connection"
     },
     "purpose": {
       "strength": 0.8,
-      "last_satisfied": "2025-07-18T10:57:26.239064",
+      "last_satisfied": "2025-07-18T12:09:01.416741",
       "satisfaction_decay": 10800,
       "description": "Drive for meaning and purpose"
     }
   },
   "interaction_patterns": {
-    "4_13": [
+    "4_15": [
+      {
+        "type": "test",
+        "timestamp": "2025-07-18T15:09:01.417207",
+        "content_length": 12,
+        "mood_indicators": []
+      },
       {
         "type": "conversation",
-        "timestamp": 
+        "timestamp": "2025-07-18T15:09:09.604861",
+        "content_length": 25,
+        "mood_indicators": []
+      },
+      {
+        "type": "conversation",
+        "timestamp": "2025-07-18T15:09:34.611282",
+        "content_length": 25,
+        "mood_indicators": []
+      },
+      {
+        "type": "conversation",
+        "timestamp": "2025-07-18T15:09:44.611798",
+        "content_length": 25,
+        "mood_indicators": []
+      },
+      {
+        "type": "conversation",
+        "timestamp": "2025-07-18T15:09:54.612290",
+        "content_length": 25,
+        "mood_indicators": []
+      },
+      {
+        "type": "test",
+        "timestamp": "2025-07-18T15:10:43.913079",
+        "content_length": 12,
+        "mood_indicators": []
+      },
+      {
+        "type": "conversation",
+        "timestamp": "2025-07-18T15:15:29.286602",
+        "content_length": 25,
+        "mood_indicators": []
+      },
+      {
+        "type": "conversation",
+        "timestamp": "2025-07-18T15:15:54.333933",
+        "content_length": 25,
+        "mood_indicators": []
+      },
+      {
+        "type": "conversation",
+        "timestamp": "2025-07-18T15:16:04.354851",
+        "content_length": 25,
+        "mood_indicators": []
+      },
+      {
+        "type": "conversation",
+        "timestamp": "2025-07-18T15:16:14.375731",
+        "content_length": 25,
+        "mood_indicators": []
+      }
+    ]
+  },
+  "last_save": "2025-07-18T15:16:23.448456"
+}

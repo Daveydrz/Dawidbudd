@@ -708,18 +708,23 @@ class CalendarMonitorSystem:
             
             # Serialize recent interaction history
             cutoff = datetime.now() - timedelta(days=30)
-            recent_interactions = [
-                {
-                    'type': i['type'],
-                    'timestamp': i['timestamp'].isoformat(),
-                    'context': i['context'],
-                    'day_of_week': i['day_of_week'],
-                    'hour': i['hour'],
-                    'minute': i['minute']
-                }
-                for i in self.interaction_history
-                if i['timestamp'] > cutoff
-            ]
+            recent_interactions = []
+            for i in self.interaction_history:
+                # Handle both datetime objects and string timestamps
+                timestamp = i['timestamp']
+                if isinstance(timestamp, str):
+                    timestamp = datetime.fromisoformat(timestamp)
+                
+                if timestamp > cutoff:
+                    recent_interactions.append({
+                        'type': i['type'],
+                        'timestamp': timestamp.isoformat(),
+                        'context': i['context'],
+                        'day_of_week': i['day_of_week'],
+                        'hour': i['hour'],
+                        'minute': i['minute']
+                    })
+            
             data['interaction_history'] = recent_interactions
             
             with open(self.save_path, 'w') as f:

@@ -140,6 +140,7 @@ class EnvironmentalAwarenessModule:
         # Consciousness integration
         self.consciousness_modules = {}
         self.voice_system = None
+        self.llm_handler = None
         self.audio_system = None
         
         # Threading
@@ -182,6 +183,10 @@ class EnvironmentalAwarenessModule:
     def register_voice_system(self, voice_system: Any):
         """Register voice system for prosody analysis"""
         self.voice_system = voice_system
+    
+    def register_llm_handler(self, llm_handler: Any):
+        """Register LLM handler for enhanced analysis"""
+        self.llm_handler = llm_handler
     
     def register_audio_system(self, audio_system: Any):
         """Register audio system for voice analysis"""
