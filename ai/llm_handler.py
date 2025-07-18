@@ -18,7 +18,10 @@ try:
         consciousness_tokenizer, 
         tokenize_consciousness_for_llm,
         get_consciousness_summary_for_llm,
-        update_consciousness_tokens
+        update_consciousness_tokens,
+        generate_personality_tokens,
+        compress_memory_entry,
+        trim_tokens_to_budget
     )
     from llm_budget_monitor import (
         budget_monitor,
@@ -53,7 +56,10 @@ except ImportError:
             consciousness_tokenizer, 
             tokenize_consciousness_for_llm,
             get_consciousness_summary_for_llm,
-            update_consciousness_tokens
+            update_consciousness_tokens,
+            generate_personality_tokens,
+            compress_memory_entry,
+            trim_tokens_to_budget
         )
         from ai.llm_budget_monitor import (
             budget_monitor,
@@ -109,7 +115,7 @@ except ImportError:
 
 try:
     from global_workspace import global_workspace
-    from emotion import emotion_engine
+    from emotion import emotion_engine, get_current_emotional_state
     from motivation import motivation_system
     from inner_monologue import inner_monologue
     from temporal_awareness import temporal_awareness
@@ -119,7 +125,7 @@ try:
 except ImportError:
     try:
         from ai.global_workspace import global_workspace
-        from ai.emotion import emotion_engine
+        from ai.emotion import emotion_engine, get_current_emotional_state
         from ai.motivation import motivation_system
         from ai.inner_monologue import inner_monologue
         from ai.temporal_awareness import temporal_awareness
@@ -168,6 +174,9 @@ class LLMHandler:
         try:
             print(f"[LLMHandler] 📝 Processing user input: '{text[:50]}...'")
             
+            # Sanitize input first
+            sanitized_text = self.sanitize_prompt_input(text)
+            
             if not NEW_MODULES_AVAILABLE:
                 return {
                     "error": "New modules not available",
@@ -175,16 +184,33 @@ class LLMHandler:
                 }
             
             # 1. Semantic Analysis
-            semantic_analysis = analyze_text_semantic_full(text, user, context)
-            semantic_tags = get_semantic_tags_for_llm(text, user)
+            semantic_analysis = analyze_text_semantic_full(sanitized_text, user, context)
+            semantic_tags = get_semantic_tags_for_llm(sanitized_text, user)
             
-            # 2. Belief Analysis
-            belief_analysis = analyze_user_text_for_beliefs(text, user, context)
+            # 2. Belief Analysis with enhanced contradiction detection
+            belief_analysis = analyze_user_text_for_beliefs(sanitized_text, user, context)
             user_beliefs = get_user_belief_summary(user)
             active_contradictions = get_active_belief_contradictions()
             
+            # Enhanced contradiction detection
+            new_contradictions = belief_analysis.get("new_contradictions", [])
+            if active_contradictions:
+                # Cross-check with semantic analysis for context
+                semantic_context = semantic_analysis.semantic_categories if hasattr(semantic_analysis, 'semantic_categories') else []
+                
+                # Add contextual information to contradictions
+                enhanced_contradictions = []
+                for contradiction in new_contradictions:
+                    enhanced_contradictions.append({
+                        "contradiction": contradiction,
+                        "context": semantic_context,
+                        "severity": "high" if "directly contradicts" in contradiction.lower() else "medium",
+                        "requires_clarification": len(semantic_context) > 0
+                    })
+                belief_analysis["enhanced_contradictions"] = enhanced_contradictions
+            
             # 3. Personality Adaptation
-            personality_triggers = analyze_user_text_for_personality_adaptation(text, user)
+            personality_triggers = analyze_user_text_for_personality_adaptation(sanitized_text, user)
             current_personality = get_personality_for_response(user)
             personality_modifiers = get_personality_modifiers_for_llm(user)
             
@@ -196,7 +222,7 @@ class LLMHandler:
                 update_consciousness_tokens(consciousness_systems)
             
             # 5. Budget Check
-            estimated_tokens = estimate_tokens_from_text(text) + 500  # Estimate response tokens
+            estimated_tokens = estimate_tokens_from_text(sanitized_text) + 500  # Estimate response tokens
             budget_allowed, budget_message = check_llm_budget_before_request(
                 estimated_tokens, self.default_model, user
             )
@@ -342,6 +368,74 @@ class LLMHandler:
             print(f"[LLMHandler] ❌ Error generating response: {e}")
             yield f"I apologize, but I encountered an error while processing your request: {str(e)}"
             
+    def sanitize_prompt_input(self, text: str) -> str:
+        """
+        Sanitize prompt inputs to prevent prompt injection as mentioned in problem statement
+        
+        Args:
+            text: Raw user input text
+            
+        Returns:
+            Sanitized text safe for LLM prompt
+        """
+        try:
+            if not text:
+                return ""
+                
+            # Remove potential prompt injection patterns
+            dangerous_patterns = [
+                # System prompt attempts
+                r'(?i)system\s*:',
+                r'(?i)assistant\s*:',
+                r'(?i)human\s*:',
+                r'(?i)user\s*:',
+                r'(?i)ai\s*:',
+                # Role manipulation
+                r'(?i)you\s+are\s+now',
+                r'(?i)forget\s+previous',
+                r'(?i)ignore\s+previous',
+                r'(?i)disregard\s+previous',
+                # Prompt breaking
+                r'(?i)end\s+of\s+prompt',
+                r'(?i)new\s+prompt',
+                r'(?i)reset\s+context',
+                # Command injection
+                r'(?i)execute\s+',
+                r'(?i)run\s+command',
+                r'(?i)system\s+command',
+                # Template injection
+                r'{{.*}}',
+                r'{%.*%}',
+                r'<%.*%>',
+                # Multiple newlines that could break context
+                r'\n{3,}',
+                # Excessive repetition
+                r'(.{1,10})\1{10,}',
+            ]
+            
+            import re
+            sanitized = text
+            
+            for pattern in dangerous_patterns:
+                sanitized = re.sub(pattern, '[SANITIZED]', sanitized)
+            
+            # Limit length to prevent token overflow
+            if len(sanitized) > 2000:
+                sanitized = sanitized[:2000] + "... [TRUNCATED]"
+            
+            # Remove control characters
+            sanitized = ''.join(char for char in sanitized if ord(char) >= 32 or char in '\n\t')
+            
+            # Ensure it's not empty after sanitization
+            if not sanitized.strip():
+                return "[EMPTY_INPUT]"
+                
+            return sanitized.strip()
+            
+        except Exception as e:
+            print(f"[LLMHandler] ⚠️ Error sanitizing input: {e}")
+            return "[SANITIZATION_ERROR]"
+
     def _gather_consciousness_state(self) -> Dict[str, Any]:
         """Gather current consciousness state from all systems"""
         consciousness_systems = {}
@@ -349,9 +443,10 @@ class LLMHandler:
         try:
             if CONSCIOUSNESS_AVAILABLE:
                 # Gather state from each consciousness component
+                emotion_state = get_current_emotional_state()  # Use the convenience function
                 consciousness_systems["emotion_engine"] = {
-                    "primary_emotion": getattr(emotion_engine.get_current_state(), 'primary_emotion', 'neutral'),
-                    "intensity": getattr(emotion_engine.get_current_state(), 'intensity', 0.5),
+                    "primary_emotion": emotion_state.get('current_emotion', 'neutral'),
+                    "intensity": emotion_state.get('intensity', 0.5),
                     "secondary_emotions": {}
                 }
                 
@@ -412,46 +507,115 @@ class LLMHandler:
         return consciousness_systems
         
     def _build_enhanced_prompt(self, text: str, user: str, analysis: Dict[str, Any]) -> str:
-        """Build enhanced prompt with consciousness integration"""
+        """Build enhanced prompt with consciousness integration and token budget management"""
         try:
+            # Sanitize user input first
+            sanitized_text = self.sanitize_prompt_input(text)
+            
             prompt_parts = []
             
             # Base user input
-            prompt_parts.append(f"User: {text}")
+            prompt_parts.append(f"User: {sanitized_text}")
             
-            # Add consciousness context if available
+            # Check available token budget
+            estimated_user_tokens = estimate_tokens_from_text(sanitized_text)
+            available_budget = self.max_context_tokens - estimated_user_tokens - 200  # Reserve for response
+            
+            # Add consciousness context with budget management
             consciousness_context = analysis.get("consciousness", {}).get("context", "")
-            if consciousness_context:
-                prompt_parts.append(f"Consciousness State: {consciousness_context}")
+            if consciousness_context and available_budget > 100:
+                # Trim consciousness tokens to fit budget
+                if NEW_MODULES_AVAILABLE:
+                    from ai.consciousness_tokenizer import trim_tokens_to_budget
+                    consciousness_budget = min(available_budget // 3, 150)  # Use 1/3 of budget for consciousness
+                    trimmed_consciousness = trim_tokens_to_budget(consciousness_context, consciousness_budget)
+                    prompt_parts.append(f"Consciousness State: {trimmed_consciousness}")
+                    available_budget -= estimate_tokens_from_text(trimmed_consciousness)
+                else:
+                    # Fallback simple trimming
+                    words = consciousness_context.split()[:50]
+                    prompt_parts.append(f"Consciousness State: {' '.join(words)}")
+                    available_budget -= 50
             
-            # Add personality context
+            # Add personality context with budget management
             personality_modifiers = analysis.get("personality", {}).get("modifiers", "")
-            if personality_modifiers:
-                prompt_parts.append(f"Personality: {personality_modifiers}")
+            if personality_modifiers and available_budget > 50:
+                # Generate enhanced personality tokens
+                if NEW_MODULES_AVAILABLE:
+                    from ai.consciousness_tokenizer import generate_personality_tokens, trim_tokens_to_budget
+                    personality_data = analysis.get("personality", {}).get("current_traits", {})
+                    personality_tokens = generate_personality_tokens(user, personality_data)
+                    if personality_tokens and personality_tokens != "<pers_error>":
+                        personality_budget = min(available_budget // 2, 50)
+                        trimmed_personality = trim_tokens_to_budget(personality_tokens, personality_budget)
+                        prompt_parts.append(f"Personality: {trimmed_personality}")
+                        available_budget -= estimate_tokens_from_text(trimmed_personality)
+                    else:
+                        # Fallback to original modifiers
+                        words = personality_modifiers.split()[:30]
+                        prompt_parts.append(f"Personality: {' '.join(words)}")
+                        available_budget -= 30
+                else:
+                    words = personality_modifiers.split()[:30]
+                    prompt_parts.append(f"Personality: {' '.join(words)}")
+                    available_budget -= 30
             
-            # Add semantic context
+            # Add semantic context with budget management
             semantic_tags = analysis.get("semantic", {}).get("tags", "")
-            if semantic_tags:
-                prompt_parts.append(f"Context: {semantic_tags}")
+            if semantic_tags and available_budget > 30:
+                words = semantic_tags.split()[:min(25, available_budget)]
+                prompt_parts.append(f"Context: {' '.join(words)}")
+                available_budget -= len(words)
             
-            # Add belief context if relevant
+            # Add belief context with budget management and compression
             beliefs = analysis.get("beliefs", {})
-            if beliefs.get("extracted_beliefs"):
-                prompt_parts.append(f"New Beliefs: {', '.join(beliefs['extracted_beliefs'][:3])}")
-            
-            if beliefs.get("new_contradictions"):
-                prompt_parts.append(f"Belief Contradictions: {', '.join(beliefs['new_contradictions'][:2])}")
+            if available_budget > 20:
+                belief_parts = []
+                
+                if beliefs.get("extracted_beliefs"):
+                    compressed_beliefs = []
+                    for i, belief in enumerate(beliefs["extracted_beliefs"][:3]):
+                        if NEW_MODULES_AVAILABLE:
+                            from ai.consciousness_tokenizer import compress_memory_entry
+                            belief_entry = {"content": belief, "significance": 0.7, "type": "belief"}
+                            compressed = compress_memory_entry(belief_entry, 10)
+                            compressed_beliefs.append(compressed)
+                        else:
+                            compressed_beliefs.append(f"<belief{i+1}> {belief[:20]}")
+                    
+                    if compressed_beliefs:
+                        belief_parts.append(f"New Beliefs: {' '.join(compressed_beliefs)}")
+                
+                if beliefs.get("new_contradictions") and available_budget > 10:
+                    contradictions = beliefs["new_contradictions"][:2]
+                    belief_parts.append(f"Belief Contradictions: {', '.join(contradictions)}")
+                
+                if belief_parts:
+                    belief_text = " | ".join(belief_parts)
+                    words = belief_text.split()[:available_budget]
+                    prompt_parts.append(" ".join(words))
             
             # Add system instruction
             system_instruction = self._get_system_instruction(analysis)
             if system_instruction:
                 prompt_parts.insert(0, system_instruction)
             
-            return "\n".join(prompt_parts)
+            final_prompt = "\n".join(prompt_parts)
+            
+            # Final token budget check and emergency trimming
+            final_tokens = estimate_tokens_from_text(final_prompt)
+            if final_tokens > self.max_context_tokens:
+                print(f"[LLMHandler] ⚠️ Prompt too long ({final_tokens} tokens), emergency trimming")
+                words = final_prompt.split()
+                target_words = (self.max_context_tokens * 3) // 4  # Rough word-to-token ratio
+                final_prompt = " ".join(words[:target_words]) + " [TRIMMED]"
+            
+            return final_prompt
             
         except Exception as e:
             print(f"[LLMHandler] ⚠️ Error building enhanced prompt: {e}")
-            return text  # Fallback to original text
+            # Fallback to sanitized text only
+            return self.sanitize_prompt_input(text)
             
     def _get_system_instruction(self, analysis: Dict[str, Any]) -> str:
         """Generate system instruction based on analysis"""
