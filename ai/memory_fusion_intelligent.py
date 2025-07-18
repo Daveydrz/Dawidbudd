@@ -100,6 +100,78 @@ SCORING GUIDE:
 Analyze ONLY the actual data provided. Do not invent details."""
 
         try:
+            # ✅ TOKEN OPTIMIZATION: Use optimized LLM function
+            from ai.llm_optimized import analyze_user_similarity_optimized
+            
+            # Use the optimized function instead of full prompt
+            similarity, reasoning = analyze_user_similarity_optimized(user1_profile, user2_profile)
+            
+            print(f"[IntelligentFusion] 🎯 Optimized Analysis Results:")
+            print(f"  👥 Users: {user1} ↔ {user2}")
+            print(f"  📊 Similarity: {similarity:.2f}")
+            print(f"  🧠 Reasoning: {reasoning}")
+            
+            return similarity, reasoning
+            
+        except ImportError:
+            print(f"[IntelligentFusion] ⚠️ Optimized function not available, using fallback")
+            # Fallback to original method
+            return self._analyze_similarity_fallback(user1_profile, user2_profile)
+        except Exception as e:
+            print(f"[IntelligentFusion] ❌ Optimized analysis error: {e}")
+            return self._analyze_similarity_fallback(user1_profile, user2_profile)
+    
+    def _analyze_similarity_fallback(self, user1_profile: str, user2_profile: str) -> Tuple[float, str]:
+        """Fallback to original LLM analysis method"""
+        try:
+            # Original implementation
+            analysis_prompt = f"""You are an expert memory analyst. Analyze if these two user profiles belong to the same person.
+
+Current Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+User Profile 1:
+{user1_profile}
+
+User Profile 2:
+{user2_profile}
+
+ANALYSIS CRITERIA:
+1. Personal relationships (husband/wife names, family members)
+2. Preferences and interests (pets, activities, food) 
+3. Life circumstances (work, living situation, health)
+4. Username patterns (Anonymous_XXX vs real names)
+5. Semantic similarities (francesco/frank, dogs/puppies)
+6. Timeline consistency and contradictions
+7. Emotional patterns and context
+
+IDENTITY INDICATORS:
+- Same person: Shared unique personal details, relationship names, consistent preferences
+- Anonymous transition: Anonymous_XXX usernames later revealing real name
+- Nickname variations: Francesco/Frank, Michael/Mike, etc.
+- Different persons: Contradictory relationships, incompatible life details
+
+CRITICAL: Only mention details that actually exist in the profiles above.
+Do NOT fabricate or assume information not present in the data.
+
+Respond in this JSON format:
+{{
+  "similarity_score": 0.0,
+  "confidence": "low",
+  "reasoning": "Based on actual profile analysis",
+  "key_matches": [],
+  "contradictions": [],
+  "recommendation": "keep_separate"
+}}
+
+SCORING GUIDE:
+- 0.9-1.0: Definitely same person (unique shared details)
+- 0.7-0.89: Highly likely same person (multiple strong matches)
+- 0.5-0.69: Possibly same person (some matches, investigation needed)
+- 0.3-0.49: Unlikely same person (few or weak matches)
+- 0.0-0.29: Different persons (contradictions or no matches)
+
+Analyze ONLY the actual data provided. Do not invent details."""
+
             # Get LLM analysis with reduced timeout
             messages = [
                 {"role": "system", "content": "You are an expert identity analyst. Analyze ONLY the actual data provided in user profiles. Never fabricate or assume information not present. Respond with precise JSON analysis based solely on the given data."},
@@ -115,16 +187,15 @@ Analyze ONLY the actual data provided. Do not invent details."""
             if analysis:
                 similarity = float(analysis.get("similarity_score", 0.0))
                 confidence = analysis.get("confidence", "unknown")
-                reasoning = analysis.get("reasoning", "LLM analysis")
+                reasoning = analysis.get("reasoning", "Fallback LLM analysis")
                 key_matches = analysis.get("key_matches", [])
                 contradictions = analysis.get("contradictions", [])
                 recommendation = analysis.get("recommendation", "investigate")
                 
                 # ✅ VALIDATION FIX: Verify matches exist in actual data
-                validated_matches = self._validate_key_matches(key_matches, user1_data, user2_data)
+                validated_matches = self._validate_key_matches(key_matches, {}, {})
                 
-                print(f"[IntelligentFusion] 🎯 LLM Analysis Results:")
-                print(f"  👥 Users: {user1} ↔ {user2}")
+                print(f"[IntelligentFusion] 🎯 Fallback Analysis Results:")
                 print(f"  📊 Similarity: {similarity:.2f}")
                 print(f"  🎯 Confidence: {confidence}")
                 print(f"  🧠 Reasoning: {reasoning}")
@@ -141,10 +212,10 @@ Analyze ONLY the actual data provided. Do not invent details."""
                 return similarity, reasoning
             
         except Exception as e:
-            print(f"[IntelligentFusion] ❌ LLM analysis error: {e}")
+            print(f"[IntelligentFusion] ❌ Fallback analysis error: {e}")
         
-        # Fallback to basic analysis
-        return self._basic_similarity_fallback(user1, user2)
+        # Final fallback to basic analysis
+        return self._basic_similarity_fallback("", "")
     
     def _has_sufficient_data(self, user1_data: Dict, user2_data: Dict) -> bool:
         """✅ Check if users have sufficient data for meaningful comparison"""

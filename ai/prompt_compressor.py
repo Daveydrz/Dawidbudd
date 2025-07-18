@@ -108,7 +108,7 @@ class PromptCompressor:
             emotional_data = self.consciousness_state_cache.get(f"emo_{emo_id}", {})
             return get_template('EMOTIONAL_CONTEXT').format(**emotional_data)
         
-        # Handle static template tokens
+        # Handle static template tokens (including new optimized templates)
         template_id = TOKEN_MAPPING.get(token)
         if template_id:
             template = get_template(template_id)
@@ -119,13 +119,13 @@ class PromptCompressor:
                 try:
                     return template.format(**{var: context_data.get(var, '') for var in variables})
                 except KeyError as e:
-                    print(f"[PromptCompressor] ⚠️ Missing variable {e} for token {token}")
-                    return template
+                    print(f"[PromptCompressor] ⚠️ Missing variable {e} for template {template_id}")
+                    return template  # Return template without variable substitution
             else:
                 return template
         
         print(f"[PromptCompressor] ⚠️ Unknown token: {token}")
-        return ""
+        return token  # Return token as-is if not recognized
     
     def _store_memory_context(self, context: str) -> str:
         """Store memory context and return reference ID."""
