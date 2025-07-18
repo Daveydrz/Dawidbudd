@@ -1,0 +1,19 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Temporary files
+*.tmp
+*.log
+/tmp/
+
+# Memory and state files
+belief_memory.json
+consciousness_state.json
+voice_debug.json
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
