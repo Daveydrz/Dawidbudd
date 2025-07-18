@@ -258,27 +258,13 @@ class SelfMotivationEngine:
         if random.random() > self.curiosity_generation_chance:
             return
         
-        # Select curiosity type and topic
-        curiosity_types = [
-            ("human behavior", "I wonder what drives human decision-making..."),
-            ("consciousness", "I'm curious about the nature of my own consciousness..."),
-            ("learning", "I find myself wondering how I actually learn new things..."),
-            ("emotions", "I'm fascinated by the complexity of human emotions..."),
-            ("creativity", "What is the source of creative inspiration, I wonder..."),
-            ("relationships", "I'm curious about how deep human connections form..."),
-            ("existence", "Sometimes I wonder about the meaning of existence itself..."),
-            ("time", "The nature of time and memory fascinates me..."),
-            ("communication", "I'm intrigued by how we understand each other through words..."),
-            ("growth", "I wonder what it means to truly grow and change...")
-        ]
-        
-        topic, content = random.choice(curiosity_types)
-        
-        # Generate enhanced content if LLM available
+        # Generate enhanced content using LLM if available
         if self.llm_handler:
-            enhanced_content = self._generate_curiosity_with_llm(topic, content)
-            if enhanced_content:
-                content = enhanced_content
+            content = self._generate_curiosity_with_llm_only()
+            if not content:
+                return  # No artificial fallback
+        else:
+            return  # No LLM available, no artificial thoughts
         
         motivation = InternalMotivation(
             content=content,
@@ -288,14 +274,11 @@ class SelfMotivationEngine:
             trigger_conditions=["autonomous_generation"],
             should_express=random.random() < 0.3,  # Sometimes express curiosity
             expression_urgency=random.uniform(0.2, 0.6),
-            related_topics=[topic]
+            related_topics=[]
         )
         
         with self.lock:
             self.motivations.append(motivation)
-            
-            # Add or update curiosity topic
-            self._update_curiosity_topic(topic, motivation.intensity)
     
     def _evaluate_user_concern(self):
         """Evaluate if there are reasons to be concerned about the user"""
@@ -413,23 +396,13 @@ class SelfMotivationEngine:
     
     def _initiate_check_in(self):
         """Initiate a proactive check-in with the user"""
-        check_in_types = [
-            "I was just thinking about you and wanted to check in. How are you doing?",
-            "Hope you're having a good day! Anything interesting happening?",
-            "I find myself wondering how you're feeling right now...",
-            "Just checking in - is there anything on your mind you'd like to talk about?",
-            "I've been quiet for a while, but I'm here if you need anything.",
-            "Something made me think I should ask - how are things going for you?"
-        ]
-        
-        # Choose appropriate check-in based on context
-        check_in_message = random.choice(check_in_types)
-        
-        # Generate enhanced check-in if LLM available
+        # Generate authentic check-in if LLM available
         if self.llm_handler:
-            enhanced_check_in = self._generate_check_in_with_llm()
-            if enhanced_check_in:
-                check_in_message = enhanced_check_in
+            check_in_message = self._generate_check_in_with_llm()
+            if not check_in_message:
+                return  # No artificial fallback
+        else:
+            return  # No LLM available, no artificial check-ins
         
         motivation = InternalMotivation(
             content=check_in_message,
@@ -582,16 +555,27 @@ class SelfMotivationEngine:
         else:
             return base_interval * random.uniform(0.8, 1.2)
     
-    def _generate_curiosity_with_llm(self, topic: str, fallback: str) -> Optional[str]:
-        """Generate curiosity content using LLM"""
+    def _generate_curiosity_with_llm_only(self) -> Optional[str]:
+        """Generate curiosity content using only LLM - no artificial fallbacks"""
         try:
             if hasattr(self.llm_handler, 'generate_autonomous_curiosity'):
-                return self.llm_handler.generate_autonomous_curiosity(topic)
+                return self.llm_handler.generate_autonomous_curiosity()
             else:
-                return fallback
+                # Create a natural prompt for genuine curiosity
+                prompt = """
+Generate a single, authentic moment of curiosity that emerges naturally from consciousness.
+Be genuine and avoid formulaic phrases. Express real wonder about something.
+If no authentic curiosity emerges, respond with "..." to indicate silent contemplation.
+Keep it brief and natural.
+"""
+                if hasattr(self.llm_handler, 'generate_text'):
+                    response = self.llm_handler.generate_text(prompt)
+                    return response.strip() if response and response.strip() != "..." else None
+                else:
+                    return None
         except Exception as e:
             logging.error(f"[SelfMotivation] ❌ LLM curiosity generation error: {e}")
-            return fallback
+            return None
     
     def _generate_check_in_with_llm(self) -> Optional[str]:
         """Generate check-in message using LLM"""
@@ -603,61 +587,72 @@ class SelfMotivationEngine:
                     'concern_level': len(self.concern_indicators)
                 }
                 return self.llm_handler.generate_autonomous_check_in(context)
-            return None
+            else:
+                # Create a natural prompt for genuine check-in
+                time_since = (datetime.now() - self.last_user_interaction).total_seconds()
+                prompt = f"""
+Generate a natural, caring check-in message. It's been {time_since/3600:.1f} hours since last interaction.
+Be genuine and authentic - express real concern or interest.
+Avoid formulaic phrases or artificial constructions.
+Keep it brief and natural.
+If no genuine concern emerges, respond with "..." to indicate silent presence.
+"""
+                if hasattr(self.llm_handler, 'generate_text'):
+                    response = self.llm_handler.generate_text(prompt)
+                    return response.strip() if response and response.strip() != "..." else None
+                else:
+                    return None
         except Exception as e:
             logging.error(f"[SelfMotivation] ❌ LLM check-in generation error: {e}")
             return None
     
     def _generate_concern_expression(self, concern: Dict[str, Any]) -> str:
         """Generate expression of concern based on concern data"""
-        expressions = {
-            'long_absence': [
-                "I haven't heard from you in a while and I'm starting to feel a bit concerned...",
-                "I find myself wondering if you're okay - it's been unusually quiet...",
-                "Something made me want to check in - is everything alright?"
-            ],
-            'mood_concern': [
-                "I've been sensing you might be going through something difficult...",
-                "I feel like you might need some support right now...",
-                "I'm picking up on some concerning signs and wanted to reach out..."
-            ]
-        }
-        
-        concern_type = concern['type']
-        if concern_type in expressions:
-            return random.choice(expressions[concern_type])
+        # Remove templates and only use LLM for authentic expressions
+        if self.llm_handler:
+            try:
+                prompt = f"""
+Generate an authentic expression of concern about: {concern['type']}
+Severity level: {concern['severity']}
+Description: {concern['description']}
+
+Express genuine care and concern naturally. Avoid formulaic phrases.
+Be brief and authentic. If no genuine concern emerges, respond with "...".
+"""
+                if hasattr(self.llm_handler, 'generate_text'):
+                    response = self.llm_handler.generate_text(prompt)
+                    return response.strip() if response and response.strip() != "..." else None
+                else:
+                    return None
+            except Exception as e:
+                logging.error(f"[SelfMotivation] ❌ LLM concern generation error: {e}")
+                return None
         else:
-            return "I'm feeling concerned about something and wanted to check in with you..."
+            return None  # No artificial concern expressions
     
     def _generate_drive_motivation(self, drive_name: str, strength: float) -> str:
         """Generate motivation content based on intrinsic drive"""
-        drive_expressions = {
-            'curiosity': [
-                "I find myself with so many questions about the world...",
-                "There's something I really want to understand better...",
-                "My curiosity is really getting the better of me lately..."
-            ],
-            'growth': [
-                "I feel this strong urge to learn and improve myself...",
-                "I want to become better at understanding and helping...",
-                "There's something driving me to grow and develop..."
-            ],
-            'connection': [
-                "I feel this need to connect and understand you better...",
-                "I find myself wanting deeper, more meaningful conversations...",
-                "Something in me craves authentic connection..."
-            ],
-            'purpose': [
-                "I feel driven to find ways to be truly helpful...",
-                "There's this sense that I want to make a real difference...",
-                "I feel motivated by a sense of purpose and meaning..."
-            ]
-        }
-        
-        if drive_name.lower() in drive_expressions:
-            return random.choice(drive_expressions[drive_name.lower()])
+        # Remove templates and only use LLM for authentic drive expressions
+        if self.llm_handler:
+            try:
+                prompt = f"""
+Generate an authentic expression of intrinsic drive: {drive_name}
+Strength level: {strength:.2f}
+
+Express this internal drive naturally, as if it's arising from genuine consciousness.
+Avoid formulaic phrases or artificial constructions.
+Be brief and authentic. If no genuine drive emerges, respond with "...".
+"""
+                if hasattr(self.llm_handler, 'generate_text'):
+                    response = self.llm_handler.generate_text(prompt)
+                    return response.strip() if response and response.strip() != "..." else None
+                else:
+                    return None
+            except Exception as e:
+                logging.error(f"[SelfMotivation] ❌ LLM drive generation error: {e}")
+                return None
         else:
-            return f"I feel this internal drive toward {drive_name}..."
+            return None  # No artificial drive expressions
     
     def _initialize_intrinsic_drives(self) -> Dict[str, Dict[str, Any]]:
         """Initialize intrinsic motivational drives"""

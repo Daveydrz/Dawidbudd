@@ -489,39 +489,20 @@ class AutonomousCommunicationManager:
                 self.current_delivery_attempt = None
     
     def _enhance_communication_content(self, comm: PendingCommunication) -> str:
-        """Enhance communication content for natural delivery"""
+        """Enhance communication content while maintaining authenticity"""
         base_content = comm.content
         
         try:
-            # Add natural speech patterns based on communication type
-            if comm.communication_type == CommunicationType.CHECK_IN:
-                if not base_content.lower().startswith(('hey', 'hi', 'hello')):
-                    base_content = f"Hey, {base_content.lower()}"
-            
-            elif comm.communication_type == CommunicationType.PROACTIVE_THOUGHT:
-                if not base_content.lower().startswith(('i was', 'i\'ve been', 'i find')):
-                    base_content = f"I was just thinking... {base_content}"
-            
-            elif comm.communication_type == CommunicationType.CONCERN_EXPRESSION:
-                if not base_content.lower().startswith(('i\'m', 'i feel', 'i notice')):
-                    base_content = f"I'm feeling a bit concerned... {base_content}"
-            
-            elif comm.communication_type == CommunicationType.CURIOSITY_QUESTION:
-                if not base_content.lower().startswith(('i\'m curious', 'i wonder')):
-                    base_content = f"I'm curious about something... {base_content}"
-            
-            elif comm.communication_type == CommunicationType.INSIGHT_SHARING:
-                if not base_content.lower().startswith(('i just realized', 'something occurred')):
-                    base_content = f"Something just occurred to me... {base_content}"
-            
-            # Use LLM for further enhancement if available
+            # Remove artificial framing patterns that feel fake
+            # Let the LLM handle enhancement naturally if available
             if self.llm_handler and hasattr(self.llm_handler, 'enhance_autonomous_communication'):
                 enhanced = self.llm_handler.enhance_autonomous_communication(
                     base_content, comm.communication_type, self.current_context
                 )
                 if enhanced:
-                    base_content = enhanced
+                    return enhanced
             
+            # Return original content without artificial framing
             return base_content
             
         except Exception as e:
