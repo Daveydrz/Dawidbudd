@@ -7,16 +7,7 @@
     "attention_scatter": 0.1,
     "coherence_pressure": 0.7
   },
-  "recent_events": [
-    {
-      "timestamp": "2025-07-17T17:59:55.650391",
-      "entropy_type": "emotional_flux",
-      "intensity": 0.2801378092074445,
-      "target_system": "emotion_engine",
-      "effect_description": "Subtly introducing natural mood fluctuations",
-      "duration": "0:00:30"
-    }
-  ],
+  "recent_events": [],
   "entropy_patterns": {
     "response_variation": {
       "pattern_id": "response_variation",
@@ -118,5 +109,5 @@
       "existential_doubt": 0
     }
   },
-  "last_updated": "2025-07-17T18:00:00.659676"
+  "last_updated": "2025-07-18T10:38:52.496894"
 }

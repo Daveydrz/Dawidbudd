@@ -1,10 +1,10 @@
 {
   "current_emotion": {
     "primary_emotion": "contentment",
-    "intensity": 0.10236921925630303,
-    "arousal": 0.3898880985550971,
-    "valence": 0.06067147540614555,
-    "timestamp": "2025-07-18T08:23:53.252290"
+    "intensity": 0.07875998082970806,
+    "arousal": 0.3921740101093202,
+    "valence": 0.04695596603877032,
+    "timestamp": "2025-07-18T10:38:49.496034"
   },
   "current_mood": "neutral",
   "physiological": {
@@ -87,7 +87,7 @@
         0.36
       ],
       "confidence": 1.0,
-      "occurrences": 32
+      "occurrences": 33
     },
     "said:": {
       "trigger_pattern": "said:",
@@ -97,7 +97,7 @@
         0.36
       ],
       "confidence": 1.0,
-      "occurrences": 31
+      "occurrences": 32
     },
     "today?": {
       "trigger_pattern": "today?",
@@ -407,7 +407,7 @@
         0.432
       ],
       "confidence": 0.3,
-      "occurrences": 3
+      "occurrences": 4
     },
     "cooking.": {
       "trigger_pattern": "cooking.",
@@ -1306,8 +1306,8 @@
         0.046677792448653305,
         0.07001668867297996
       ],
-      "confidence": 0.3,
-      "occurrences": 0
+      "confidence": 0.4,
+      "occurrences": 1
     },
     "complex": {
       "trigger_pattern": "complex",
@@ -1358,12 +1358,92 @@
       ],
       "confidence": 0.3,
       "occurrences": 0
+    },
+    "test_cognitive_integration": {
+      "trigger_pattern": "test_cognitive_integration",
+      "typical_response": "contentment",
+      "intensity_range": [
+        0.05041639083624912,
+        0.07562458625437367
+      ],
+      "confidence": 0.3,
+      "occurrences": 0
+    },
+    "hello!": {
+      "trigger_pattern": "hello!",
+      "typical_response": "contentment",
+      "intensity_range": [
+        0.05041639083624912,
+        0.07562458625437367
+      ],
+      "confidence": 0.3,
+      "occurrences": 0
+    },
+    "excited": {
+      "trigger_pattern": "excited",
+      "typical_response": "contentment",
+      "intensity_range": [
+        0.05041639083624912,
+        0.07562458625437367
+      ],
+      "confidence": 0.3,
+      "occurrences": 0
+    },
+    "learning": {
+      "trigger_pattern": "learning",
+      "typical_response": "contentment",
+      "intensity_range": [
+        0.05041639083624912,
+        0.07562458625437367
+      ],
+      "confidence": 0.3,
+      "occurrences": 0
+    },
+    "machine": {
+      "trigger_pattern": "machine",
+      "typical_response": "contentment",
+      "intensity_range": [
+        0.05041639083624912,
+        0.07562458625437367
+      ],
+      "confidence": 0.3,
+      "occurrences": 0
+    },
+    "learning.": {
+      "trigger_pattern": "learning.",
+      "typical_response": "contentment",
+      "intensity_range": [
+        0.05041639083624912,
+        0.07562458625437367
+      ],
+      "confidence": 0.3,
+      "occurrences": 0
+    },
+    "help": {
+      "trigger_pattern": "help",
+      "typical_response": "contentment",
+      "intensity_range": [
+        0.05041639083624912,
+        0.07562458625437367
+      ],
+      "confidence": 0.3,
+      "occurrences": 0
+    },
+    "consciousness?": {
+      "trigger_pattern": "consciousness?",
+      "typical_response": "contentment",
+      "intensity_range": [
+        0.05041639083624912,
+        0.07562458625437367
+      ],
+      "confidence": 0.3,
+      "occurrences": 0
     }
   },
   "metrics": {
-    "total_emotional_events": 46,
+    "total_emotional_events": 47,
     "mood_changes": 4,
     "memory_count": 1
   },
-  "last_updated": "2025-07-18T08:24:08.254818"
+  "last_updated": "2025-07-18T10:38:57.495552"
 }

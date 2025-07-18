@@ -233,12 +233,8 @@ class CognitiveIntegrator:
             return text
         
         try:
-            # Get user memory for context
-            memory = get_user_memory(user_id)
-            context = memory.get_contextual_memory_for_response()
-            
-            # Apply corrections using memory context
-            corrected = self.memory_corrector.correct_with_context(text, context)
+            # Apply corrections using memory context and beliefs
+            corrected, corrections = self.memory_corrector.correct_with_belief_context(text, user_id)
             
             if corrected != text:
                 logging.debug(f"[CognitiveIntegrator] 🔧 Input corrected: '{text}' → '{corrected}'")
