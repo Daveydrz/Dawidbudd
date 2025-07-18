@@ -3,8 +3,8 @@
     {
       "id": "belief_1752840734363_0",
       "content": "change the world",
-      "belief_type": "BeliefType.PERSONAL",
-      "certainty": "BeliefCertainty.MODERATE",
+      "belief_type": "personal",
+      "certainty": "moderate",
       "source": "text_extraction",
       "timestamp": "2025-07-18T12:12:14.363604",
       "user": "test_user",
@@ -22,8 +22,8 @@
     {
       "id": "belief_1752840734364_1",
       "content": "ai will change the world",
-      "belief_type": "BeliefType.OPINION",
-      "certainty": "BeliefCertainty.MODERATE",
+      "belief_type": "opinion",
+      "certainty": "moderate",
       "source": "text_extraction",
       "timestamp": "2025-07-18T12:12:14.364034",
       "user": "test_user",
@@ -40,7 +40,7 @@
     }
   ],
   "contradictions": [],
-  "last_updated": "2025-07-18T12:12:14.364496",
+  "last_updated": "2025-07-18T15:28:37.389680",
   "metadata": {
     "total_beliefs": 2,
     "total_contradictions": 0,

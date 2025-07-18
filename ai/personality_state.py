@@ -179,11 +179,17 @@ class PersonalityState:
                         traits = {}
                         for trait_name, trait_data in profile_data.get('traits', {}).items():
                             trait = PersonalityTrait(trait_name)
+                            
+                            # Handle enum conversion - support both old format and new format
+                            adaptation_level_str = trait_data.get('adaptation_level', 'stable')
+                            if adaptation_level_str.startswith('AdaptationLevel.'):
+                                adaptation_level_str = adaptation_level_str.split('.')[1].lower()
+                            
                             trait_state = TraitState(
                                 trait=trait,
                                 base_value=trait_data.get('base_value', 0.5),
                                 current_value=trait_data.get('current_value', 0.5),
-                                adaptation_level=AdaptationLevel(trait_data.get('adaptation_level', 'stable')),
+                                adaptation_level=AdaptationLevel(adaptation_level_str),
                                 last_adaptation=trait_data.get('last_adaptation', ''),
                                 adaptation_triggers=trait_data.get('adaptation_triggers', []),
                                 context_modifiers=trait_data.get('context_modifiers', {}),
@@ -192,10 +198,15 @@ class PersonalityState:
                             )
                             traits[trait] = trait_state
                             
+                        # Handle enum conversion for context
+                        context_str = profile_data.get('context', 'casual')
+                        if context_str.startswith('PersonalityContext.'):
+                            context_str = context_str.split('.')[1].lower()
+                        
                         profile = PersonalityProfile(
                             profile_id=profile_data.get('profile_id', ''),
                             user=profile_data.get('user', ''),
-                            context=PersonalityContext(profile_data.get('context', 'casual')),
+                            context=PersonalityContext(context_str),
                             traits=traits,
                             created_at=profile_data.get('created_at', ''),
                             last_updated=profile_data.get('last_updated', ''),
@@ -220,9 +231,11 @@ class PersonalityState:
             for profile in self.profiles.values():
                 traits_data = {}
                 for trait, trait_state in profile.traits.items():
-                    traits_data[trait.value] = asdict(trait_state)
-                    # Convert trait enum back to value for serialization
-                    traits_data[trait.value]['trait'] = trait.value
+                    trait_dict = asdict(trait_state)
+                    # Convert enum values to their string values
+                    trait_dict['trait'] = trait.value
+                    trait_dict['adaptation_level'] = trait_state.adaptation_level.value
+                    traits_data[trait.value] = trait_dict
                     
                 profile_data = asdict(profile)
                 profile_data['traits'] = traits_data
@@ -240,7 +253,7 @@ class PersonalityState:
             }
             
             with open(self.personality_file, 'w') as f:
-                json.dump(data, f, indent=2, default=str)
+                json.dump(data, f, indent=2)
                 
         except Exception as e:
             print(f"[PersonalityState] ❌ Error saving personality state: {e}")

@@ -264,7 +264,7 @@ TRAINING_PHRASES = [
 
 # ==== LLM SETTINGS ====
 KOBOLD_URL = "http://localhost:5001/v1/chat/completions"
-MAX_TOKENS = 80
+MAX_TOKENS = 300
 TEMPERATURE = 0.7
 
 # ==== VOICE TRAINING MODES ====
