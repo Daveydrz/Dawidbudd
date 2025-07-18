@@ -282,6 +282,72 @@ Examples:
 Return only valid JSON array:"""
 
         try:
+            # ✅ TOKEN OPTIMIZATION: Use optimized event detection
+            from ai.llm_optimized import detect_events_optimized
+            
+            events = detect_events_optimized(text, current_date)
+            
+            # Validate and enhance events
+            validated_events = []
+            for event in events:
+                if self._validate_event(event):
+                    enhanced_event = self._enhance_event(event)
+                    validated_events.append(enhanced_event)
+            
+            print(f"[SmartMemory] 🧠 Optimized detected {len(validated_events)} events from: '{text}'")
+            return validated_events
+            
+        except ImportError:
+            print(f"[SmartMemory] ⚠️ Optimized detection not available, using fallback")
+            return self._detect_events_fallback(text, current_date)
+        except Exception as e:
+            print(f"[SmartMemory] ❌ Optimized detection error: {e}")
+            return self._detect_events_fallback(text, current_date)
+    
+    def _detect_events_fallback(self, text: str, current_date: str) -> List[Dict]:
+        """Fallback to original LLM event detection"""
+        
+        current_time = datetime.now().strftime('%H:%M')
+        
+        # Smart prompt for event detection (original)
+        detection_prompt = f"""You are a smart memory assistant. Analyze this user message and extract any events, appointments, or life situations that should be remembered.
+
+Current date: {current_date}
+Current time: {current_time}
+User message: "{text}"
+
+Extract events in this exact JSON format (return empty array if no events):
+[
+  {{
+    "type": "appointment|life_event|highlight",
+    "topic": "brief_description",
+    "date": "YYYY-MM-DD",
+    "time": "HH:MM" or null,
+    "emotion": "happy|excited|stressful|sensitive|casual|supportive",
+    "priority": "high|medium|low",
+    "original_text": "{text}"
+  }}
+.]
+
+Guidelines:
+- "appointment": Time-specific events (dentist, meeting, class)
+- "life_event": Emotional/social events (birthdays, visits, funerals)  
+- "highlight": General feelings/thoughts to remember
+- Calculate dates: tomorrow = {(datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')}
+- Be smart about natural language: "going to Emily's tomorrow, it's her birthday" = birthday visit
+- Emotion should match the event type
+- Priority: high=urgent/sensitive, medium=social/fun, low=routine
+- ONLY extract if it's a REAL event or emotional state worth remembering
+- DO NOT extract casual conversation, greetings, or questions
+
+Examples:
+"I have dentist tomorrow at 2PM" → appointment, dentist, tomorrow, 14:00, stressful, medium
+"Going to Emily's tomorrow, it's her birthday" → life_event, Emily's birthday visit, tomorrow, happy, medium
+"I'm really stressed about work" → highlight, work stress, today, supportive, low
+
+Return only valid JSON array:"""
+
+        try:
             # Get LLM response
             messages = [
                 {"role": "system", "content": "You are a precise JSON extraction assistant. Return only valid JSON arrays. Extract ONLY real events, appointments, or emotional states worth remembering."},
@@ -303,15 +369,14 @@ Return only valid JSON array:"""
                         enhanced_event = self._enhance_event(event)
                         validated_events.append(enhanced_event)
                 
-                print(f"[SmartMemory] 🧠 LLM detected {len(validated_events)} events from: '{text}'")
+                print(f"[SmartMemory] 🧠 Fallback detected {len(validated_events)} events from: '{text}'")
                 return validated_events
             
         except Exception as e:
-            print(f"[SmartMemory] ⚠️ LLM detection error: {e}")
-            # Fallback to simple regex for critical patterns
-            return self._fallback_detection(text)
+            print(f"[SmartMemory] ⚠️ Fallback detection error: {e}")
         
-        return []
+        # Final fallback to simple regex
+        return self._fallback_detection(current_date, text)
     
     def _extract_json_from_response(self, response: str) -> Optional[str]:
         """Extract JSON array from LLM response"""
@@ -358,11 +423,10 @@ Return only valid JSON array:"""
         
         return enhanced
     
-    def _fallback_detection(self, text: str) -> List[Dict]:
+    def _fallback_detection(self, current_date: str, text: str) -> List[Dict]:
         """Simple fallback detection for critical patterns"""
         events = []
         text_lower = text.lower()
-        current_date = datetime.now().strftime('%Y-%m-%d')
         tomorrow_date = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
         
         # Only critical patterns with time

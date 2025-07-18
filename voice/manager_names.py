@@ -197,11 +197,36 @@ Respond with ONLY the extracted name or "NONE". No explanations, no other text.
 <|im_end|>"""
 
     def extract_name(self, text: str) -> Optional[str]:
-        """🤖 Use KoboldCPP + Hermes-2-Pro to extract name"""
+        """🤖 Use optimized LLM with token compression"""
         
         print(f"[KoboldExtractor] 🤖 Analyzing: '{text}'")
         
         try:
+            # Use the new optimized name extraction
+            from ai.llm_optimized import extract_name_optimized
+            
+            result = extract_name_optimized(text)
+            
+            if result:
+                # Additional validation using existing strict validation
+                if self._validate_extracted_name(result):
+                    print(f"[KoboldExtractor] ✅ VALIDATED: {result}")
+                    return result
+                else:
+                    print(f"[KoboldExtractor] 🛡️ VALIDATION FAILED: {result}")
+                    return None
+            
+            return None
+            
+        except Exception as e:
+            print(f"[KoboldExtractor] ❌ Error: {e}")
+            # Fallback to original method if optimized version fails
+            return self._extract_name_fallback(text)
+    
+    def _extract_name_fallback(self, text: str) -> Optional[str]:
+        """Fallback to original extraction method"""
+        try:
+            # Original implementation for fallback
             prompt = f"""{self.system_prompt}
 <|im_start|>user
 Text: "{text}"
@@ -236,7 +261,7 @@ Is this person introducing themselves by stating their own name? Extract the nam
                 result = response.json()
                 generated_text = result.get("results", [{}])[0].get("text", "").strip()
                 
-                print(f"[KoboldExtractor] 🤖 Hermes-2-Pro response: '{generated_text}'")
+                print(f"[KoboldExtractor] 🤖 Fallback response: '{generated_text}'")
                 
                 if generated_text.upper() == "NONE" or not generated_text:
                     return None
@@ -244,17 +269,17 @@ Is this person introducing themselves by stating their own name? Extract the nam
                 name = self._clean_hermes_response(generated_text)
                 
                 if name and self._validate_extracted_name(name):
-                    print(f"[KoboldExtractor] ✅ VALIDATED: {name}")
+                    print(f"[KoboldExtractor] ✅ FALLBACK VALIDATED: {name}")
                     return name
                 else:
-                    print(f"[KoboldExtractor] 🛡️ INVALID: {name}")
+                    print(f"[KoboldExtractor] 🛡️ FALLBACK INVALID: {name}")
                     return None
             else:
-                print(f"[KoboldExtractor] ❌ API Error: {response.status_code}")
+                print(f"[KoboldExtractor] ❌ Fallback API Error: {response.status_code}")
                 return None
                 
         except Exception as e:
-            print(f"[KoboldExtractor] ❌ Error: {e}")
+            print(f"[KoboldExtractor] ❌ Fallback Error: {e}")
             return None
     
     def _clean_hermes_response(self, response: str) -> Optional[str]:
