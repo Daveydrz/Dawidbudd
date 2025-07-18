@@ -110,15 +110,24 @@ try:
     from ai.self_model_updater import SelfModelUpdater
     from ai.goal_reasoning import GoalReasoning
     from ai.motivation_reasoner import MotivationReasoner
-    from ai.cognitive_integration import cognitive_integrator
     from ai.cognitive_debug_logger import cognitive_debug_logger
+    
+    # ✅ NEW: Import persistent cognitive modules
+    from cognitive_modules.integration import cognitive_integrator
     print("[Main] 🧠 All self-awareness components loaded")
-    print("[Main] 🚀 Cognitive integrator loaded")
+    print("[Main] 🚀 Persistent cognitive integrator loaded")
     print("[Main] 📊 Cognitive debug logger loaded")
     SELF_AWARENESS_COMPONENTS_AVAILABLE = True
 except ImportError as e:
     print(f"[Main] ⚠️ Self-awareness components not available: {e}")
-    SELF_AWARENESS_COMPONENTS_AVAILABLE = False
+    # Fallback to old cognitive integration if available
+    try:
+        from ai.cognitive_integration import cognitive_integrator
+        print("[Main] 🔄 Using fallback cognitive integrator")
+        SELF_AWARENESS_COMPONENTS_AVAILABLE = True
+    except ImportError as e2:
+        print(f"[Main] ❌ No cognitive integrator available: {e2}")
+        SELF_AWARENESS_COMPONENTS_AVAILABLE = False
 
 from voice.voice_manager_instance import voice_manager
 from voice.manager_names import UltraIntelligentNameManager

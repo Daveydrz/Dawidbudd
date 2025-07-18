@@ -1,12 +1,12 @@
 {
   "beliefs": [
     {
-      "id": "belief_1752835244439_0",
+      "id": "belief_1752840734363_0",
       "content": "change the world",
       "belief_type": "BeliefType.PERSONAL",
       "certainty": "BeliefCertainty.MODERATE",
       "source": "text_extraction",
-      "timestamp": "2025-07-18T10:40:44.439574",
+      "timestamp": "2025-07-18T12:12:14.363604",
       "user": "test_user",
       "context": {},
       "supporting_evidence": [
@@ -14,18 +14,18 @@
       ],
       "contradictions": [],
       "confidence_score": 0.6,
-      "last_confirmed": "2025-07-18T10:40:44.439583",
+      "last_confirmed": "2025-07-18T12:12:14.363614",
       "tags": [
         "personal"
       ]
     },
     {
-      "id": "belief_1752835244439_1",
+      "id": "belief_1752840734364_1",
       "content": "ai will change the world",
       "belief_type": "BeliefType.OPINION",
       "certainty": "BeliefCertainty.MODERATE",
       "source": "text_extraction",
-      "timestamp": "2025-07-18T10:40:44.439995",
+      "timestamp": "2025-07-18T12:12:14.364034",
       "user": "test_user",
       "context": {},
       "supporting_evidence": [
@@ -33,14 +33,14 @@
       ],
       "contradictions": [],
       "confidence_score": 0.7,
-      "last_confirmed": "2025-07-18T10:40:44.440003",
+      "last_confirmed": "2025-07-18T12:12:14.364041",
       "tags": [
         "opinion"
       ]
     }
   ],
   "contradictions": [],
-  "last_updated": "2025-07-18T10:40:44.440444",
+  "last_updated": "2025-07-18T12:12:14.364496",
   "metadata": {
     "total_beliefs": 2,
     "total_contradictions": 0,
