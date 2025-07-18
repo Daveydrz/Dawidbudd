@@ -1,8 +1,8 @@
 {
   "profiles": [
     {
-      "profile_id": "test_user_casual",
-      "user": "test_user",
+      "profile_id": "integration_test_casual",
+      "user": "integration_test",
       "context": "casual",
       "traits": {
         "friendliness": {
@@ -10,7 +10,7 @@
           "base_value": 0.8,
           "current_value": 0.8,
           "adaptation_level": "AdaptationLevel.STABLE",
-          "last_adaptation": "2025-07-18T10:00:46.491441",
+          "last_adaptation": "2025-07-18T10:09:26.268429",
           "adaptation_triggers": [],
           "context_modifiers": 0.0,
           "stability_score": 1.0,
@@ -19,10 +19,12 @@
         "formality": {
           "trait": "formality",
           "base_value": 0.4,
-          "current_value": 0.4,
-          "adaptation_level": "AdaptationLevel.STABLE",
-          "last_adaptation": "2025-07-18T10:00:46.491451",
-          "adaptation_triggers": [],
+          "current_value": 0.30000000000000004,
+          "adaptation_level": "AdaptationLevel.SLIGHT",
+          "last_adaptation": "2025-07-18T10:09:26.269654",
+          "adaptation_triggers": [
+            "user_casual_language"
+          ],
           "context_modifiers": 0.0,
           "stability_score": 1.0,
           "user_feedback_score": 0.5
@@ -32,7 +34,7 @@
           "base_value": 0.7,
           "current_value": 0.7,
           "adaptation_level": "AdaptationLevel.STABLE",
-          "last_adaptation": "2025-07-18T10:00:46.491457",
+          "last_adaptation": "2025-07-18T10:09:26.268445",
           "adaptation_triggers": [],
           "context_modifiers": 0.0,
           "stability_score": 1.0,
@@ -43,7 +45,7 @@
           "base_value": 0.6,
           "current_value": 0.6,
           "adaptation_level": "AdaptationLevel.STABLE",
-          "last_adaptation": "2025-07-18T10:00:46.491462",
+          "last_adaptation": "2025-07-18T10:09:26.268448",
           "adaptation_triggers": [],
           "context_modifiers": 0.0,
           "stability_score": 1.0,
@@ -54,7 +56,7 @@
           "base_value": 0.8,
           "current_value": 0.8,
           "adaptation_level": "AdaptationLevel.STABLE",
-          "last_adaptation": "2025-07-18T10:00:46.491467",
+          "last_adaptation": "2025-07-18T10:09:26.268451",
           "adaptation_triggers": [],
           "context_modifiers": 0.0,
           "stability_score": 1.0,
@@ -65,7 +67,7 @@
           "base_value": 0.5,
           "current_value": 0.5,
           "adaptation_level": "AdaptationLevel.STABLE",
-          "last_adaptation": "2025-07-18T10:00:46.491472",
+          "last_adaptation": "2025-07-18T10:09:26.268453",
           "adaptation_triggers": [],
           "context_modifiers": 0.0,
           "stability_score": 1.0,
@@ -76,7 +78,171 @@
           "base_value": 0.9,
           "current_value": 0.9,
           "adaptation_level": "AdaptationLevel.STABLE",
-          "last_adaptation": "2025-07-18T10:00:46.491476",
+          "last_adaptation": "2025-07-18T10:09:26.268456",
+          "adaptation_triggers": [],
+          "context_modifiers": 0.0,
+          "stability_score": 1.0,
+          "user_feedback_score": 0.5
+        },
+        "patience": {
+          "trait": "patience",
+          "base_value": 0.7,
+          "current_value": 0.7999999999999999,
+          "adaptation_level": "AdaptationLevel.SLIGHT",
+          "last_adaptation": "2025-07-18T10:09:26.269020",
+          "adaptation_triggers": [
+            "user_requests_help"
+          ],
+          "context_modifiers": 0.0,
+          "stability_score": 1.0,
+          "user_feedback_score": 0.5
+        },
+        "supportiveness": {
+          "trait": "supportiveness",
+          "base_value": 0.8,
+          "current_value": 0.9,
+          "adaptation_level": "AdaptationLevel.SLIGHT",
+          "last_adaptation": "2025-07-18T10:09:26.269011",
+          "adaptation_triggers": [
+            "user_requests_help"
+          ],
+          "context_modifiers": 0.0,
+          "stability_score": 1.0,
+          "user_feedback_score": 0.5
+        },
+        "playfulness": {
+          "trait": "playfulness",
+          "base_value": 0.5,
+          "current_value": 0.5,
+          "adaptation_level": "AdaptationLevel.STABLE",
+          "last_adaptation": "2025-07-18T10:09:26.268464",
+          "adaptation_triggers": [],
+          "context_modifiers": 0.0,
+          "stability_score": 1.0,
+          "user_feedback_score": 0.5
+        }
+      },
+      "created_at": "2025-07-18T10:09:26.268466",
+      "last_updated": "2025-07-18T10:09:26.269665",
+      "interaction_count": 2,
+      "adaptation_history": [
+        {
+          "timestamp": "2025-07-18T10:09:26.269023",
+          "trigger": "user_requests_help",
+          "intensity": 1.0,
+          "adaptations": [
+            {
+              "trait": "supportiveness",
+              "old_value": 0.8,
+              "new_value": 0.9,
+              "change": 0.09999999999999998,
+              "trigger": "user_requests_help"
+            },
+            {
+              "trait": "patience",
+              "old_value": 0.7,
+              "new_value": 0.7999999999999999,
+              "change": 0.09999999999999998,
+              "trigger": "user_requests_help"
+            }
+          ],
+          "context": "casual"
+        },
+        {
+          "timestamp": "2025-07-18T10:09:26.269661",
+          "trigger": "user_casual_language",
+          "intensity": 1.0,
+          "adaptations": [
+            {
+              "trait": "formality",
+              "old_value": 0.4,
+              "new_value": 0.30000000000000004,
+              "change": 0.09999999999999998,
+              "trigger": "user_casual_language"
+            }
+          ],
+          "context": "casual"
+        }
+      ],
+      "effectiveness_score": 0.5
+    },
+    {
+      "profile_id": "e2e_test_casual",
+      "user": "e2e_test",
+      "context": "casual",
+      "traits": {
+        "friendliness": {
+          "trait": "friendliness",
+          "base_value": 0.8,
+          "current_value": 0.8,
+          "adaptation_level": "AdaptationLevel.STABLE",
+          "last_adaptation": "2025-07-18T10:09:26.271969",
+          "adaptation_triggers": [],
+          "context_modifiers": 0.0,
+          "stability_score": 1.0,
+          "user_feedback_score": 0.5
+        },
+        "formality": {
+          "trait": "formality",
+          "base_value": 0.4,
+          "current_value": 0.4,
+          "adaptation_level": "AdaptationLevel.STABLE",
+          "last_adaptation": "2025-07-18T10:09:26.271976",
+          "adaptation_triggers": [],
+          "context_modifiers": 0.0,
+          "stability_score": 1.0,
+          "user_feedback_score": 0.5
+        },
+        "enthusiasm": {
+          "trait": "enthusiasm",
+          "base_value": 0.7,
+          "current_value": 0.7,
+          "adaptation_level": "AdaptationLevel.STABLE",
+          "last_adaptation": "2025-07-18T10:09:26.271979",
+          "adaptation_triggers": [],
+          "context_modifiers": 0.0,
+          "stability_score": 1.0,
+          "user_feedback_score": 0.5
+        },
+        "humor": {
+          "trait": "humor",
+          "base_value": 0.6,
+          "current_value": 0.6,
+          "adaptation_level": "AdaptationLevel.STABLE",
+          "last_adaptation": "2025-07-18T10:09:26.271982",
+          "adaptation_triggers": [],
+          "context_modifiers": 0.0,
+          "stability_score": 1.0,
+          "user_feedback_score": 0.5
+        },
+        "empathy": {
+          "trait": "empathy",
+          "base_value": 0.8,
+          "current_value": 0.8,
+          "adaptation_level": "AdaptationLevel.STABLE",
+          "last_adaptation": "2025-07-18T10:09:26.271984",
+          "adaptation_triggers": [],
+          "context_modifiers": 0.0,
+          "stability_score": 1.0,
+          "user_feedback_score": 0.5
+        },
+        "assertiveness": {
+          "trait": "assertiveness",
+          "base_value": 0.5,
+          "current_value": 0.5,
+          "adaptation_level": "AdaptationLevel.STABLE",
+          "last_adaptation": "2025-07-18T10:09:26.271986",
+          "adaptation_triggers": [],
+          "context_modifiers": 0.0,
+          "stability_score": 1.0,
+          "user_feedback_score": 0.5
+        },
+        "curiosity": {
+          "trait": "curiosity",
+          "base_value": 0.9,
+          "current_value": 0.9,
+          "adaptation_level": "AdaptationLevel.STABLE",
+          "last_adaptation": "2025-07-18T10:09:26.271989",
           "adaptation_triggers": [],
           "context_modifiers": 0.0,
           "stability_score": 1.0,
@@ -87,7 +253,7 @@
           "base_value": 0.7,
           "current_value": 0.7,
           "adaptation_level": "AdaptationLevel.STABLE",
-          "last_adaptation": "2025-07-18T10:00:46.491479",
+          "last_adaptation": "2025-07-18T10:09:26.271991",
           "adaptation_triggers": [],
           "context_modifiers": 0.0,
           "stability_score": 1.0,
@@ -98,7 +264,7 @@
           "base_value": 0.8,
           "current_value": 0.8,
           "adaptation_level": "AdaptationLevel.STABLE",
-          "last_adaptation": "2025-07-18T10:00:46.491481",
+          "last_adaptation": "2025-07-18T10:09:26.271993",
           "adaptation_triggers": [],
           "context_modifiers": 0.0,
           "stability_score": 1.0,
@@ -109,15 +275,15 @@
           "base_value": 0.5,
           "current_value": 0.5,
           "adaptation_level": "AdaptationLevel.STABLE",
-          "last_adaptation": "2025-07-18T10:00:46.491483",
+          "last_adaptation": "2025-07-18T10:09:26.271995",
           "adaptation_triggers": [],
           "context_modifiers": 0.0,
           "stability_score": 1.0,
           "user_feedback_score": 0.5
         }
       },
-      "created_at": "2025-07-18T10:00:46.491486",
-      "last_updated": "2025-07-18T10:00:46.491487",
+      "created_at": "2025-07-18T10:09:26.271998",
+      "last_updated": "2025-07-18T10:09:26.272000",
       "interaction_count": 0,
       "adaptation_history": [],
       "effectiveness_score": 0.5
@@ -135,9 +301,9 @@
     "supportiveness": 0.8,
     "playfulness": 0.5
   },
-  "last_updated": "2025-07-18T10:00:46.491649",
+  "last_updated": "2025-07-18T10:09:26.272287",
   "metadata": {
-    "total_profiles": 1,
-    "total_adaptations": 0
+    "total_profiles": 2,
+    "total_adaptations": 2
   }
 }
