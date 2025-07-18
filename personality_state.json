@@ -1,17 +1,19 @@
 {
   "profiles": [
     {
-      "profile_id": "final_test_user_casual",
-      "user": "final_test_user",
+      "profile_id": "test_user_casual",
+      "user": "test_user",
       "context": "casual",
       "traits": {
         "friendliness": {
           "trait": "friendliness",
           "base_value": 0.8,
-          "current_value": 0.8,
-          "adaptation_level": "AdaptationLevel.STABLE",
-          "last_adaptation": "2025-07-17T23:36:04.571723",
-          "adaptation_triggers": [],
+          "current_value": 0.9,
+          "adaptation_level": "AdaptationLevel.SLIGHT",
+          "last_adaptation": "2025-07-18T00:17:51.745859",
+          "adaptation_triggers": [
+            "user_positive_feedback"
+          ],
           "context_modifiers": 0.0,
           "stability_score": 1.0,
           "user_feedback_score": 0.5
@@ -21,7 +23,7 @@
           "base_value": 0.4,
           "current_value": 0.4,
           "adaptation_level": "AdaptationLevel.STABLE",
-          "last_adaptation": "2025-07-17T23:36:04.571734",
+          "last_adaptation": "2025-07-18T00:17:51.745408",
           "adaptation_triggers": [],
           "context_modifiers": 0.0,
           "stability_score": 1.0,
@@ -32,7 +34,7 @@
           "base_value": 0.7,
           "current_value": 0.7,
           "adaptation_level": "AdaptationLevel.STABLE",
-          "last_adaptation": "2025-07-17T23:36:04.571739",
+          "last_adaptation": "2025-07-18T00:17:51.745412",
           "adaptation_triggers": [],
           "context_modifiers": 0.0,
           "stability_score": 1.0,
@@ -41,10 +43,12 @@
         "humor": {
           "trait": "humor",
           "base_value": 0.6,
-          "current_value": 0.6,
-          "adaptation_level": "AdaptationLevel.STABLE",
-          "last_adaptation": "2025-07-17T23:36:04.571741",
-          "adaptation_triggers": [],
+          "current_value": 0.7,
+          "adaptation_level": "AdaptationLevel.SLIGHT",
+          "last_adaptation": "2025-07-18T00:17:51.747082",
+          "adaptation_triggers": [
+            "user_makes_joke"
+          ],
           "context_modifiers": 0.0,
           "stability_score": 1.0,
           "user_feedback_score": 0.5
@@ -54,7 +58,7 @@
           "base_value": 0.8,
           "current_value": 0.8,
           "adaptation_level": "AdaptationLevel.STABLE",
-          "last_adaptation": "2025-07-17T23:36:04.571744",
+          "last_adaptation": "2025-07-18T00:17:51.745417",
           "adaptation_triggers": [],
           "context_modifiers": 0.0,
           "stability_score": 1.0,
@@ -65,7 +69,7 @@
           "base_value": 0.5,
           "current_value": 0.5,
           "adaptation_level": "AdaptationLevel.STABLE",
-          "last_adaptation": "2025-07-17T23:36:04.571746",
+          "last_adaptation": "2025-07-18T00:17:51.745420",
           "adaptation_triggers": [],
           "context_modifiers": 0.0,
           "stability_score": 1.0,
@@ -76,7 +80,7 @@
           "base_value": 0.9,
           "current_value": 0.9,
           "adaptation_level": "AdaptationLevel.STABLE",
-          "last_adaptation": "2025-07-17T23:36:04.571749",
+          "last_adaptation": "2025-07-18T00:17:51.745422",
           "adaptation_triggers": [],
           "context_modifiers": 0.0,
           "stability_score": 1.0,
@@ -85,10 +89,14 @@
         "patience": {
           "trait": "patience",
           "base_value": 0.7,
-          "current_value": 0.7,
-          "adaptation_level": "AdaptationLevel.STABLE",
-          "last_adaptation": "2025-07-17T23:36:04.571752",
-          "adaptation_triggers": [],
+          "current_value": 0.9999999999999999,
+          "adaptation_level": "AdaptationLevel.SLIGHT",
+          "last_adaptation": "2025-07-18T00:17:51.863352",
+          "adaptation_triggers": [
+            "user_requests_help",
+            "user_requests_help",
+            "user_requests_help"
+          ],
           "context_modifiers": 0.0,
           "stability_score": 1.0,
           "user_feedback_score": 0.5
@@ -96,10 +104,245 @@
         "supportiveness": {
           "trait": "supportiveness",
           "base_value": 0.8,
+          "current_value": 1.0,
+          "adaptation_level": "AdaptationLevel.SLIGHT",
+          "last_adaptation": "2025-07-18T00:17:51.746509",
+          "adaptation_triggers": [
+            "user_positive_feedback",
+            "user_requests_help"
+          ],
+          "context_modifiers": 0.0,
+          "stability_score": 1.0,
+          "user_feedback_score": 0.5
+        },
+        "playfulness": {
+          "trait": "playfulness",
+          "base_value": 0.5,
+          "current_value": 0.6,
+          "adaptation_level": "AdaptationLevel.SLIGHT",
+          "last_adaptation": "2025-07-18T00:17:51.747093",
+          "adaptation_triggers": [
+            "user_makes_joke"
+          ],
+          "context_modifiers": 0.0,
+          "stability_score": 1.0,
+          "user_feedback_score": 0.5
+        }
+      },
+      "created_at": "2025-07-18T00:17:51.745431",
+      "last_updated": "2025-07-18T00:17:51.863358",
+      "interaction_count": 5,
+      "adaptation_history": [
+        {
+          "timestamp": "2025-07-18T00:17:51.745871",
+          "trigger": "user_positive_feedback",
+          "intensity": 1.0,
+          "adaptations": [
+            {
+              "trait": "friendliness",
+              "old_value": 0.8,
+              "new_value": 0.9,
+              "change": 0.09999999999999998,
+              "trigger": "user_positive_feedback"
+            },
+            {
+              "trait": "supportiveness",
+              "old_value": 0.8,
+              "new_value": 0.9,
+              "change": 0.09999999999999998,
+              "trigger": "user_positive_feedback"
+            }
+          ],
+          "context": "casual"
+        },
+        {
+          "timestamp": "2025-07-18T00:17:51.746522",
+          "trigger": "user_requests_help",
+          "intensity": 1.0,
+          "adaptations": [
+            {
+              "trait": "supportiveness",
+              "old_value": 0.9,
+              "new_value": 1.0,
+              "change": 0.09999999999999998,
+              "trigger": "user_requests_help"
+            },
+            {
+              "trait": "patience",
+              "old_value": 0.7,
+              "new_value": 0.7999999999999999,
+              "change": 0.09999999999999998,
+              "trigger": "user_requests_help"
+            }
+          ],
+          "context": "casual"
+        },
+        {
+          "timestamp": "2025-07-18T00:17:51.747097",
+          "trigger": "user_makes_joke",
+          "intensity": 1.0,
+          "adaptations": [
+            {
+              "trait": "humor",
+              "old_value": 0.6,
+              "new_value": 0.7,
+              "change": 0.09999999999999998,
+              "trigger": "user_makes_joke"
+            },
+            {
+              "trait": "playfulness",
+              "old_value": 0.5,
+              "new_value": 0.6,
+              "change": 0.09999999999999998,
+              "trigger": "user_makes_joke"
+            }
+          ],
+          "context": "casual"
+        },
+        {
+          "timestamp": "2025-07-18T00:17:51.862325",
+          "trigger": "user_requests_help",
+          "intensity": 1.0,
+          "adaptations": [
+            {
+              "trait": "patience",
+              "old_value": 0.7999999999999999,
+              "new_value": 0.8999999999999999,
+              "change": 0.09999999999999998,
+              "trigger": "user_requests_help"
+            }
+          ],
+          "context": "casual"
+        },
+        {
+          "timestamp": "2025-07-18T00:17:51.863356",
+          "trigger": "user_requests_help",
+          "intensity": 1.0,
+          "adaptations": [
+            {
+              "trait": "patience",
+              "old_value": 0.8999999999999999,
+              "new_value": 0.9999999999999999,
+              "change": 0.09999999999999998,
+              "trigger": "user_requests_help"
+            }
+          ],
+          "context": "casual"
+        }
+      ],
+      "effectiveness_score": 0.5
+    },
+    {
+      "profile_id": "pipeline_test_user_casual",
+      "user": "pipeline_test_user",
+      "context": "casual",
+      "traits": {
+        "friendliness": {
+          "trait": "friendliness",
+          "base_value": 0.8,
+          "current_value": 0.9,
+          "adaptation_level": "AdaptationLevel.SLIGHT",
+          "last_adaptation": "2025-07-18T00:17:52.180599",
+          "adaptation_triggers": [
+            "user_positive_feedback"
+          ],
+          "context_modifiers": 0.0,
+          "stability_score": 1.0,
+          "user_feedback_score": 0.5
+        },
+        "formality": {
+          "trait": "formality",
+          "base_value": 0.4,
+          "current_value": 0.20000000000000004,
+          "adaptation_level": "AdaptationLevel.SLIGHT",
+          "last_adaptation": "2025-07-18T00:17:52.078489",
+          "adaptation_triggers": [
+            "user_casual_language",
+            "user_casual_language"
+          ],
+          "context_modifiers": 0.0,
+          "stability_score": 1.0,
+          "user_feedback_score": 0.5
+        },
+        "enthusiasm": {
+          "trait": "enthusiasm",
+          "base_value": 0.7,
+          "current_value": 0.7,
+          "adaptation_level": "AdaptationLevel.STABLE",
+          "last_adaptation": "2025-07-18T00:17:51.873719",
+          "adaptation_triggers": [],
+          "context_modifiers": 0.0,
+          "stability_score": 1.0,
+          "user_feedback_score": 0.5
+        },
+        "humor": {
+          "trait": "humor",
+          "base_value": 0.6,
+          "current_value": 0.6,
+          "adaptation_level": "AdaptationLevel.STABLE",
+          "last_adaptation": "2025-07-18T00:17:51.873722",
+          "adaptation_triggers": [],
+          "context_modifiers": 0.0,
+          "stability_score": 1.0,
+          "user_feedback_score": 0.5
+        },
+        "empathy": {
+          "trait": "empathy",
+          "base_value": 0.8,
           "current_value": 0.8,
           "adaptation_level": "AdaptationLevel.STABLE",
-          "last_adaptation": "2025-07-17T23:36:04.571754",
+          "last_adaptation": "2025-07-18T00:17:51.873725",
           "adaptation_triggers": [],
+          "context_modifiers": 0.0,
+          "stability_score": 1.0,
+          "user_feedback_score": 0.5
+        },
+        "assertiveness": {
+          "trait": "assertiveness",
+          "base_value": 0.5,
+          "current_value": 0.5,
+          "adaptation_level": "AdaptationLevel.STABLE",
+          "last_adaptation": "2025-07-18T00:17:51.873727",
+          "adaptation_triggers": [],
+          "context_modifiers": 0.0,
+          "stability_score": 1.0,
+          "user_feedback_score": 0.5
+        },
+        "curiosity": {
+          "trait": "curiosity",
+          "base_value": 0.9,
+          "current_value": 0.9,
+          "adaptation_level": "AdaptationLevel.STABLE",
+          "last_adaptation": "2025-07-18T00:17:51.873729",
+          "adaptation_triggers": [],
+          "context_modifiers": 0.0,
+          "stability_score": 1.0,
+          "user_feedback_score": 0.5
+        },
+        "patience": {
+          "trait": "patience",
+          "base_value": 0.7,
+          "current_value": 0.8999999999999999,
+          "adaptation_level": "AdaptationLevel.SLIGHT",
+          "last_adaptation": "2025-07-18T00:17:52.181640",
+          "adaptation_triggers": [
+            "user_requests_help",
+            "user_requests_help"
+          ],
+          "context_modifiers": 0.0,
+          "stability_score": 1.0,
+          "user_feedback_score": 0.5
+        },
+        "supportiveness": {
+          "trait": "supportiveness",
+          "base_value": 0.8,
+          "current_value": 1.0,
+          "adaptation_level": "AdaptationLevel.SLIGHT",
+          "last_adaptation": "2025-07-18T00:17:52.180606",
+          "adaptation_triggers": [
+            "user_requests_help",
+            "user_positive_feedback"
+          ],
           "context_modifiers": 0.0,
           "stability_score": 1.0,
           "user_feedback_score": 0.5
@@ -109,17 +352,107 @@
           "base_value": 0.5,
           "current_value": 0.5,
           "adaptation_level": "AdaptationLevel.STABLE",
-          "last_adaptation": "2025-07-17T23:36:04.571756",
+          "last_adaptation": "2025-07-18T00:17:51.873736",
           "adaptation_triggers": [],
           "context_modifiers": 0.0,
           "stability_score": 1.0,
           "user_feedback_score": 0.5
         }
       },
-      "created_at": "2025-07-17T23:36:04.571758",
-      "last_updated": "2025-07-17T23:36:04.571759",
-      "interaction_count": 0,
-      "adaptation_history": [],
+      "created_at": "2025-07-18T00:17:51.873739",
+      "last_updated": "2025-07-18T00:17:52.181646",
+      "interaction_count": 5,
+      "adaptation_history": [
+        {
+          "timestamp": "2025-07-18T00:17:51.874761",
+          "trigger": "user_casual_language",
+          "intensity": 1.0,
+          "adaptations": [
+            {
+              "trait": "formality",
+              "old_value": 0.4,
+              "new_value": 0.30000000000000004,
+              "change": 0.09999999999999998,
+              "trigger": "user_casual_language"
+            }
+          ],
+          "context": "casual"
+        },
+        {
+          "timestamp": "2025-07-18T00:17:52.077284",
+          "trigger": "user_requests_help",
+          "intensity": 1.0,
+          "adaptations": [
+            {
+              "trait": "supportiveness",
+              "old_value": 0.8,
+              "new_value": 0.9,
+              "change": 0.09999999999999998,
+              "trigger": "user_requests_help"
+            },
+            {
+              "trait": "patience",
+              "old_value": 0.7,
+              "new_value": 0.7999999999999999,
+              "change": 0.09999999999999998,
+              "trigger": "user_requests_help"
+            }
+          ],
+          "context": "casual"
+        },
+        {
+          "timestamp": "2025-07-18T00:17:52.078494",
+          "trigger": "user_casual_language",
+          "intensity": 1.0,
+          "adaptations": [
+            {
+              "trait": "formality",
+              "old_value": 0.30000000000000004,
+              "new_value": 0.20000000000000004,
+              "change": 0.1,
+              "trigger": "user_casual_language"
+            }
+          ],
+          "context": "casual"
+        },
+        {
+          "timestamp": "2025-07-18T00:17:52.180608",
+          "trigger": "user_positive_feedback",
+          "intensity": 1.0,
+          "adaptations": [
+            {
+              "trait": "friendliness",
+              "old_value": 0.8,
+              "new_value": 0.9,
+              "change": 0.09999999999999998,
+              "trigger": "user_positive_feedback"
+            },
+            {
+              "trait": "supportiveness",
+              "old_value": 0.9,
+              "new_value": 1.0,
+              "change": 0.09999999999999998,
+              "trigger": "user_positive_feedback"
+            }
+          ],
+          "context": "casual"
+        },
+        {
+          "timestamp": "2025-07-18T00:17:52.181644",
+          "trigger": "user_requests_help",
+          "intensity": 1.0,
+          "adaptations": [
+            {
+              "trait": "patience",
+              "old_value": 0.7999999999999999,
+              "new_value": 0.8999999999999999,
+              "change": 0.09999999999999998,
+              "trigger": "user_requests_help"
+            }
+          ],
+          "context": "casual"
+        }
+      ],
       "effectiveness_score": 0.5
     }
   ],
@@ -135,9 +468,9 @@
     "supportiveness": 0.8,
     "playfulness": 0.5
   },
-  "last_updated": "2025-07-17T23:36:04.571921",
+  "last_updated": "2025-07-18T00:17:52.181964",
   "metadata": {
-    "total_profiles": 1,
-    "total_adaptations": 0
+    "total_profiles": 2,
+    "total_adaptations": 10
   }
 }
