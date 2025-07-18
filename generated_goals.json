@@ -2,7 +2,7 @@
   "goals": [
     {
       "goal_id": "emotion_curiosity_0",
-      "description": "Learn more about learning",
+      "description": "Explore learning in depth",
       "goal_type": "GoalType.SHORT_TERM",
       "priority": "GoalPriority.MEDIUM",
       "source": "GoalSource.EMOTION_DRIVEN",
@@ -20,8 +20,8 @@
         "curiosity"
       ],
       "value_alignment": {},
-      "creation_timestamp": "2025-07-18T10:29:47.142895",
-      "target_completion": "2025-07-19T10:29:47.142899",
+      "creation_timestamp": "2025-07-18T10:36:35.977995",
+      "target_completion": "2025-07-19T10:36:35.978000",
       "progress": 0.0,
       "active": true,
       "completion_actions": [],
@@ -30,7 +30,7 @@
     },
     {
       "goal_id": "belief_knowledge_belief_0",
-      "description": "Validate understanding of learning",
+      "description": "Share insights about learning",
       "goal_type": "GoalType.LONG_TERM",
       "priority": "GoalPriority.MEDIUM",
       "source": "GoalSource.BELIEF_DRIVEN",
@@ -47,8 +47,8 @@
       ],
       "emotional_drivers": [],
       "value_alignment": {},
-      "creation_timestamp": "2025-07-18T10:29:47.142923",
-      "target_completion": "2025-07-25T10:29:47.142925",
+      "creation_timestamp": "2025-07-18T10:36:35.978022",
+      "target_completion": "2025-07-25T10:36:35.978025",
       "progress": 0.0,
       "active": true,
       "completion_actions": [],
@@ -57,7 +57,7 @@
     },
     {
       "goal_id": "value_learning_0",
-      "description": "Learn from every interaction",
+      "description": "Expand knowledge base",
       "goal_type": "GoalType.ASPIRATIONAL",
       "priority": "GoalPriority.MEDIUM",
       "source": "GoalSource.VALUE_DRIVEN",
@@ -66,17 +66,17 @@
         "strength: 0.9"
       ],
       "success_criteria": [
-        "Acquire new knowledge",
-        "Demonstrate understanding",
-        "Apply learning effectively"
+        "Make progress toward goal",
+        "Take concrete actions",
+        "Achieve desired outcome"
       ],
       "related_beliefs": [],
       "emotional_drivers": [],
       "value_alignment": {
         "learning": 0.9
       },
-      "creation_timestamp": "2025-07-18T10:29:47.142941",
-      "target_completion": "2025-08-17T10:29:47.142942",
+      "creation_timestamp": "2025-07-18T10:36:35.978040",
+      "target_completion": "2025-08-17T10:36:35.978042",
       "progress": 0.0,
       "active": true,
       "completion_actions": [],
@@ -84,6 +84,6 @@
       "context": "learning context"
     }
   ],
-  "last_updated": "2025-07-18T10:29:47.143025",
+  "last_updated": "2025-07-18T10:36:35.978123",
   "total_goals": 3
 }

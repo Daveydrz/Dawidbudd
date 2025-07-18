@@ -5,7 +5,7 @@
       "content": "I enjoy programming",
       "source": "BeliefSource.USER_STATEMENT",
       "confidence": 0.7,
-      "timestamp": "2025-07-18T10:29:47.130447",
+      "timestamp": "2025-07-18T10:36:35.973868",
       "context": "personal statement",
       "user_id": "test_user",
       "supporting_evidence": []
@@ -22,7 +22,7 @@
           "content": "I enjoy programming",
           "source": "BeliefSource.USER_STATEMENT",
           "confidence": 0.7,
-          "timestamp": "2025-07-18T10:29:47.130447",
+          "timestamp": "2025-07-18T10:36:35.973868",
           "context": "personal statement",
           "user_id": "test_user",
           "supporting_evidence": []
@@ -30,8 +30,8 @@
       ],
       "strength": "BeliefStrength.STRONG",
       "confidence": 0.7,
-      "first_occurrence": "2025-07-18T10:29:47.130447",
-      "last_reinforcement": "2025-07-18T10:29:47.130447",
+      "first_occurrence": "2025-07-18T10:36:35.973868",
+      "last_reinforcement": "2025-07-18T10:36:35.973868",
       "reinforcement_count": 1,
       "supporting_instances": 1,
       "conflicting_instances": 0,
@@ -50,7 +50,7 @@
       "belief_b722dcc2"
     ]
   },
-  "last_updated": "2025-07-18T10:29:47.130552",
+  "last_updated": "2025-07-18T10:36:35.973961",
   "total_instances": 1,
   "total_refined_beliefs": 1
 }

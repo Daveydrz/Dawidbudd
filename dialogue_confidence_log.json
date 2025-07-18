@@ -10,11 +10,11 @@
         "confidence_expressions: might be"
       ],
       "suggested_strategy": "ClarificationStrategy.OFFER_PARTIAL_ANSWER",
-      "clarification_text": "Here's what I can tell you, though it's partial: {partial_answer}.",
-      "timestamp": "2025-07-18T10:29:47.114704",
+      "clarification_text": "I can provide some information, though it's not complete: {available_info}.",
+      "timestamp": "2025-07-18T10:36:35.966683",
       "resolved": false
     }
   ],
-  "last_updated": "2025-07-18T10:29:47.114728",
+  "last_updated": "2025-07-18T10:36:35.966706",
   "total_instances": 1
 }
