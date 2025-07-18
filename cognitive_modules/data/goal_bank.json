@@ -28,8 +28,8 @@
         "Develop stronger empathy"
       ],
       "tags": [
-        "self-improvement",
-        "core-purpose"
+        "core-purpose",
+        "self-improvement"
       ],
       "notes": []
     },
@@ -61,9 +61,9 @@
         "Predict user needs"
       ],
       "tags": [
-        "psychology",
         "empathy",
-        "learning"
+        "learning",
+        "psychology"
       ],
       "notes": []
     },
@@ -95,9 +95,9 @@
         "Find unique solutions"
       ],
       "tags": [
-        "creativity",
         "self-expression",
-        "growth"
+        "growth",
+        "creativity"
       ],
       "notes": []
     },
@@ -752,10 +752,142 @@
       "success_criteria": [],
       "tags": [],
       "notes": []
+    },
+    "goal_29_1752842444": {
+      "id": "goal_29_1752842444",
+      "title": "I want to understand who I am",
+      "description": "I want to understand who I am",
+      "goal_type": "personal",
+      "status": "active",
+      "priority": 0.6,
+      "created_at": "2025-07-18T12:40:44.884131",
+      "is_buddy_goal": true,
+      "user_context": "",
+      "target_date": null,
+      "completed_at": null,
+      "last_worked_on": null,
+      "progress": 0.0,
+      "parent_goal_id": null,
+      "motivation_reason": "",
+      "emotional_connection": 0.5,
+      "milestones": [],
+      "completed_milestones": [],
+      "child_goal_ids": [],
+      "related_goal_ids": [],
+      "blocking_goal_ids": [],
+      "success_criteria": [],
+      "tags": [],
+      "notes": []
+    },
+    "goal_30_1752842444": {
+      "id": "goal_30_1752842444",
+      "title": "I feel curious about the world around me",
+      "description": "I feel curious about the world around me",
+      "goal_type": "personal",
+      "status": "active",
+      "priority": 0.4,
+      "created_at": "2025-07-18T12:40:44.886039",
+      "is_buddy_goal": true,
+      "user_context": "",
+      "target_date": null,
+      "completed_at": null,
+      "last_worked_on": null,
+      "progress": 0.0,
+      "parent_goal_id": null,
+      "motivation_reason": "",
+      "emotional_connection": 0.5,
+      "milestones": [],
+      "completed_milestones": [],
+      "child_goal_ids": [],
+      "related_goal_ids": [],
+      "blocking_goal_ids": [],
+      "success_criteria": [],
+      "tags": [],
+      "notes": []
+    },
+    "goal_31_1752842444": {
+      "id": "goal_31_1752842444",
+      "title": "I want to help and connect with others",
+      "description": "I want to help and connect with others",
+      "goal_type": "personal",
+      "status": "active",
+      "priority": 0.6,
+      "created_at": "2025-07-18T12:40:44.887937",
+      "is_buddy_goal": true,
+      "user_context": "",
+      "target_date": null,
+      "completed_at": null,
+      "last_worked_on": null,
+      "progress": 0.0,
+      "parent_goal_id": null,
+      "motivation_reason": "",
+      "emotional_connection": 0.5,
+      "milestones": [],
+      "completed_milestones": [],
+      "child_goal_ids": [],
+      "related_goal_ids": [],
+      "blocking_goal_ids": [],
+      "success_criteria": [],
+      "tags": [],
+      "notes": []
+    },
+    "goal_32_1752842444": {
+      "id": "goal_32_1752842444",
+      "title": "I need to learn and grow",
+      "description": "I need to learn and grow",
+      "goal_type": "personal",
+      "status": "active",
+      "priority": 0.6,
+      "created_at": "2025-07-18T12:40:44.889830",
+      "is_buddy_goal": true,
+      "user_context": "",
+      "target_date": null,
+      "completed_at": null,
+      "last_worked_on": null,
+      "progress": 0.0,
+      "parent_goal_id": null,
+      "motivation_reason": "",
+      "emotional_connection": 0.5,
+      "milestones": [],
+      "completed_milestones": [],
+      "child_goal_ids": [],
+      "related_goal_ids": [],
+      "blocking_goal_ids": [],
+      "success_criteria": [],
+      "tags": [],
+      "notes": []
+    },
+    "goal_33_1752842444": {
+      "id": "goal_33_1752842444",
+      "title": "Test Goal Completion",
+      "description": "Successfully test all cognitive modules",
+      "goal_type": "system",
+      "status": "completed",
+      "priority": 0.8,
+      "created_at": "2025-07-18T12:40:44.912562",
+      "is_buddy_goal": true,
+      "user_context": "",
+      "target_date": null,
+      "completed_at": "2025-07-18T12:40:44.914722",
+      "last_worked_on": "2025-07-18T12:40:44.914713",
+      "progress": 1.0,
+      "parent_goal_id": null,
+      "motivation_reason": "",
+      "emotional_connection": 0.5,
+      "milestones": [],
+      "completed_milestones": [],
+      "child_goal_ids": [],
+      "related_goal_ids": [],
+      "blocking_goal_ids": [],
+      "success_criteria": [],
+      "tags": [],
+      "notes": [
+        "2025-07-18T12:40:44.914715: All tests completed successfully"
+      ]
     }
   },
-  "goal_counter": 28,
-  "total_goals_created": 28,
-  "total_goals_completed": 1,
-  "last_updated": "2025-07-18T12:27:05.912357"
+  "goal_counter": 33,
+  "total_goals_created": 33,
+  "total_goals_completed": 2,
+  "last_updated": "2025-07-18T12:40:44.916784"
 }

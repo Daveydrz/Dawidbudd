@@ -16,8 +16,8 @@
       "mood_after": "excited",
       "vividness": 1.0,
       "accessibility": 2.0,
-      "last_accessed": "2025-07-18T12:24:39.202336",
-      "access_count": 8,
+      "last_accessed": "2025-07-18T12:40:44.911109",
+      "access_count": 11,
       "triggered_by_experience_id": null,
       "related_experience_ids": [],
       "tags": [
@@ -49,8 +49,8 @@
       "mood_after": "focused",
       "vividness": 1.0,
       "accessibility": 2.0,
-      "last_accessed": "2025-07-18T12:24:39.202336",
-      "access_count": 8,
+      "last_accessed": "2025-07-18T12:40:44.911109",
+      "access_count": 11,
       "triggered_by_experience_id": null,
       "related_experience_ids": [],
       "tags": [
@@ -81,8 +81,8 @@
       "mood_after": "neutral",
       "vividness": 1.0,
       "accessibility": 2.0,
-      "last_accessed": "2025-07-18T12:24:39.202336",
-      "access_count": 8,
+      "last_accessed": "2025-07-18T12:40:44.911109",
+      "access_count": 11,
       "triggered_by_experience_id": null,
       "related_experience_ids": [],
       "tags": [],
@@ -115,8 +115,8 @@
       "mood_after": "neutral",
       "vividness": 1.0,
       "accessibility": 2.0,
-      "last_accessed": "2025-07-18T12:24:39.202336",
-      "access_count": 8,
+      "last_accessed": "2025-07-18T12:40:44.911109",
+      "access_count": 11,
       "triggered_by_experience_id": null,
       "related_experience_ids": [],
       "tags": [],
@@ -181,8 +181,8 @@
       "mood_after": "neutral",
       "vividness": 1.0,
       "accessibility": 2.0,
-      "last_accessed": "2025-07-18T12:24:39.202367",
-      "access_count": 10,
+      "last_accessed": "2025-07-18T12:40:44.911136",
+      "access_count": 16,
       "triggered_by_experience_id": null,
       "related_experience_ids": [],
       "tags": [],
@@ -208,9 +208,9 @@
       "mood_before": "neutral",
       "mood_after": "neutral",
       "vividness": 1.0,
-      "accessibility": 1.6105100000000008,
-      "last_accessed": "2025-07-18T12:24:39.202336",
-      "access_count": 5,
+      "accessibility": 2.0,
+      "last_accessed": "2025-07-18T12:40:44.911109",
+      "access_count": 8,
       "triggered_by_experience_id": null,
       "related_experience_ids": [],
       "tags": [],
@@ -274,9 +274,9 @@
       "mood_before": "neutral",
       "mood_after": "neutral",
       "vividness": 1.0,
-      "accessibility": 1.4641000000000006,
-      "last_accessed": "2025-07-18T12:24:39.202367",
-      "access_count": 4,
+      "accessibility": 2.0,
+      "last_accessed": "2025-07-18T12:40:44.911136",
+      "access_count": 10,
       "triggered_by_experience_id": null,
       "related_experience_ids": [],
       "tags": [],
@@ -302,9 +302,9 @@
       "mood_before": "neutral",
       "mood_after": "neutral",
       "vividness": 1.0,
-      "accessibility": 1.2100000000000002,
-      "last_accessed": "2025-07-18T12:24:39.202336",
-      "access_count": 2,
+      "accessibility": 1.6105100000000008,
+      "last_accessed": "2025-07-18T12:40:44.911109",
+      "access_count": 5,
       "triggered_by_experience_id": null,
       "related_experience_ids": [],
       "tags": [],
@@ -397,9 +397,9 @@
       "mood_before": "neutral",
       "mood_after": "neutral",
       "vividness": 1.0,
-      "accessibility": 1.0,
-      "last_accessed": null,
-      "access_count": 0,
+      "accessibility": 1.3310000000000004,
+      "last_accessed": "2025-07-18T12:40:44.911109",
+      "access_count": 3,
       "triggered_by_experience_id": null,
       "related_experience_ids": [],
       "tags": [],
@@ -444,6 +444,100 @@
         "buddy,",
         "today?..."
       ]
+    },
+    "exp_15_df92661f": {
+      "id": "exp_15_df92661f",
+      "timestamp": "2025-07-18T12:40:44.904778",
+      "event": "Self-reflection: I'm developing a clearer sense of my empathy, which now feels like a core part of who I am.",
+      "emotion": "contemplative",
+      "importance": 0.6,
+      "user": "self",
+      "experience_type": "reflection",
+      "context": {
+        "reflection_type": "self_reflection"
+      },
+      "emotional_intensity": 0.5,
+      "mood_before": "neutral",
+      "mood_after": "neutral",
+      "vividness": 1.0,
+      "accessibility": 1.3310000000000004,
+      "last_accessed": "2025-07-18T12:40:44.911109",
+      "access_count": 3,
+      "triggered_by_experience_id": null,
+      "related_experience_ids": [],
+      "tags": [],
+      "keywords": [
+        "self-reflection:",
+        "developing",
+        "clearer",
+        "sense",
+        "empathy,",
+        "which",
+        "feels",
+        "like",
+        "core",
+        "part"
+      ]
+    },
+    "exp_16_046e285b": {
+      "id": "exp_16_046e285b",
+      "timestamp": "2025-07-18T12:40:44.910110",
+      "event": "User interaction: Hello Buddy, I hope you're doing well!...",
+      "emotion": "friendly",
+      "importance": 0.3,
+      "user": "test_user",
+      "experience_type": "conversation",
+      "context": {
+        "input_length": 38
+      },
+      "emotional_intensity": 0.5,
+      "mood_before": "neutral",
+      "mood_after": "neutral",
+      "vividness": 1.0,
+      "accessibility": 1.0,
+      "last_accessed": null,
+      "access_count": 0,
+      "triggered_by_experience_id": null,
+      "related_experience_ids": [],
+      "tags": [],
+      "keywords": [
+        "user",
+        "interaction:",
+        "hello",
+        "buddy,",
+        "hope",
+        "you're",
+        "doing",
+        "well!..."
+      ]
+    },
+    "exp_17_dd9564da": {
+      "id": "exp_17_dd9564da",
+      "timestamp": "2025-07-18T12:40:44.911538",
+      "event": "Completed cognitive module testing",
+      "emotion": "satisfaction",
+      "importance": 0.7,
+      "user": "test_user",
+      "experience_type": "conversation",
+      "context": {
+        "test": true
+      },
+      "emotional_intensity": 0.5,
+      "mood_before": "neutral",
+      "mood_after": "neutral",
+      "vividness": 1.0,
+      "accessibility": 1.0,
+      "last_accessed": null,
+      "access_count": 0,
+      "triggered_by_experience_id": null,
+      "related_experience_ids": [],
+      "tags": [],
+      "keywords": [
+        "completed",
+        "cognitive",
+        "module",
+        "testing"
+      ]
     }
   },
   "user_experiences": {
@@ -456,13 +550,16 @@
       "exp_4_5501aca6",
       "exp_7_be504e3e",
       "exp_10_578a9b29",
-      "exp_13_fc6917b0"
+      "exp_13_fc6917b0",
+      "exp_15_df92661f"
     ],
     "test_user": [
       "exp_5_a77b652c",
       "exp_6_03984921",
       "exp_8_6d655914",
-      "exp_9_c0ea16e8"
+      "exp_9_c0ea16e8",
+      "exp_16_046e285b",
+      "exp_17_dd9564da"
     ],
     "test_developer": [
       "exp_11_85c8e2cc",
@@ -484,16 +581,19 @@
       "exp_4_5501aca6",
       "exp_7_be504e3e",
       "exp_10_578a9b29",
-      "exp_13_fc6917b0"
+      "exp_13_fc6917b0",
+      "exp_15_df92661f"
     ],
     "friendly": [
       "exp_5_a77b652c",
       "exp_8_6d655914",
-      "exp_14_b61493c5"
+      "exp_14_b61493c5",
+      "exp_16_046e285b"
     ],
     "satisfaction": [
       "exp_6_03984921",
-      "exp_9_c0ea16e8"
+      "exp_9_c0ea16e8",
+      "exp_17_dd9564da"
     ],
     "concerned": [
       "exp_11_85c8e2cc"
@@ -514,7 +614,8 @@
       "exp_4_5501aca6",
       "exp_7_be504e3e",
       "exp_10_578a9b29",
-      "exp_13_fc6917b0"
+      "exp_13_fc6917b0",
+      "exp_15_df92661f"
     ],
     "conversation": [
       "exp_5_a77b652c",
@@ -523,12 +624,14 @@
       "exp_9_c0ea16e8",
       "exp_11_85c8e2cc",
       "exp_12_9dcb55b7",
-      "exp_14_b61493c5"
+      "exp_14_b61493c5",
+      "exp_16_046e285b",
+      "exp_17_dd9564da"
     ]
   },
-  "experience_counter": 14,
-  "total_experiences_created": 14,
-  "total_accesses": 53,
-  "last_updated": "2025-07-18T12:27:05.921453",
+  "experience_counter": 17,
+  "total_experiences_created": 17,
+  "total_accesses": 89,
+  "last_updated": "2025-07-18T12:40:44.911582",
   "last_compression": "2025-07-18T12:22:31.246161"
 }
