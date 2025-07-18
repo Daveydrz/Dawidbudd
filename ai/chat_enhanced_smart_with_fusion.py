@@ -23,8 +23,24 @@ def get_smart_memory(username: str) -> SmartHumanLikeMemory:
         smart_memories[username] = SmartHumanLikeMemory(username)
     return smart_memories[username]
 
-def generate_response_streaming_with_intelligent_fusion(question: str, username: str, lang="en"):
+def generate_response_streaming_with_intelligent_fusion(question: str, username: str, lang="en", context=None):
     """🧠 Generate response with intelligent memory fusion, smart memory + CONSCIOUSNESS ENTROPY + TOKEN OPTIMIZATION"""
+    
+    # ✅ NEW: Use cognitive context if provided
+    cognitive_context_summary = ""
+    if context and isinstance(context, dict) and "cognitive_state" in context:
+        cognitive_state = context["cognitive_state"]
+        emotion = cognitive_state.get("emotion", "neutral")
+        mood = cognitive_state.get("mood", "neutral")
+        arousal = cognitive_state.get("arousal", 0.5)
+        memory_context = cognitive_state.get("memory_context", "")
+        
+        # Create compact cognitive summary for prompt injection
+        cognitive_context_summary = f"[EMOTION:{emotion}|MOOD:{mood}|AROUSAL:{arousal:.1f}]"
+        if memory_context:
+            cognitive_context_summary += f"[MEMORY:{memory_context[:50]}...]"
+        
+        print(f"[ChatFusion] 🧠 Using cognitive context: {cognitive_context_summary}")
     
     # ✅ TOKEN OPTIMIZATION: Initialize optimization settings
     try:
@@ -178,20 +194,24 @@ def generate_response_streaming_with_intelligent_fusion(question: str, username:
     
     if ENTROPY_AVAILABLE:
         try:
-            # ✅ TOKEN OPTIMIZATION: Create optimized question with consciousness context
+            # ✅ TOKEN OPTIMIZATION: Create optimized question with consciousness context + cognitive context
+            full_consciousness_summary = consciousness_summary
+            if cognitive_context_summary:
+                full_consciousness_summary = f"{consciousness_summary} {cognitive_context_summary}"
+            
             if optimization_level in ["high", "ultra"]:
                 # Ultra-compressed prompt optimization
-                optimized_question = f"{question} {consciousness_summary}"
-                print(f"[ChatFusion] 🏷️ Ultra-optimized prompt: +{len(consciousness_summary)} chars")
+                optimized_question = f"{question} {full_consciousness_summary}"
+                print(f"[ChatFusion] 🏷️ Ultra-optimized prompt: +{len(full_consciousness_summary)} chars")
             elif optimization_level == "medium":
                 # Medium optimization with abbreviated consciousness
-                consciousness_abbreviated = consciousness_summary[:50] + "..." if len(consciousness_summary) > 50 else consciousness_summary
+                consciousness_abbreviated = full_consciousness_summary[:50] + "..." if len(full_consciousness_summary) > 50 else full_consciousness_summary
                 optimized_question = f"{question} {consciousness_abbreviated}"
                 print(f"[ChatFusion] 🏷️ Medium-optimized prompt: +{len(consciousness_abbreviated)} chars")
             else:
                 # Standard optimization
-                optimized_question = f"{question} {consciousness_summary}"
-                print(f"[ChatFusion] 🏷️ Standard-optimized prompt: +{len(consciousness_summary)} chars")
+                optimized_question = f"{question} {full_consciousness_summary}"
+                print(f"[ChatFusion] 🏷️ Standard-optimized prompt: +{len(full_consciousness_summary)} chars")
             
             print(f"[ChatFusion] 🌀 Generating multiple consciousness pathways...")
             
@@ -204,9 +224,9 @@ def generate_response_streaming_with_intelligent_fusion(question: str, username:
                 if uncertainty_state.value in ["uncertain", "confused"]:
                     # Generate uncertainty-flavored response with optimization
                     if optimization_level == "high":
-                        uncertain_question = f"Uncertain: '{question}' {consciousness_summary[:30]}"
+                        uncertain_question = f"Uncertain: '{question}' {full_consciousness_summary[:30]}"
                     else:
-                        uncertain_question = f"I'm not entirely sure, but regarding '{question}' {consciousness_summary}"
+                        uncertain_question = f"I'm not entirely sure, but regarding '{question}' {full_consciousness_summary}"
                     response_pathways.append(("uncertain", generate_response_streaming(uncertain_question, username, lang)))
             
             # Probabilistic pathway selection
@@ -221,12 +241,16 @@ def generate_response_streaming_with_intelligent_fusion(question: str, username:
         except Exception as pathway_error:
             print(f"[ChatFusion] ⚠️ Pathway generation error: {pathway_error}")
             # Fallback with basic optimization
-            fallback_question = f"{question} {consciousness_summary}" if consciousness_summary else question
+            fallback_question = f"{question} {full_consciousness_summary if 'full_consciousness_summary' in locals() else consciousness_summary}" if consciousness_summary else question
             chosen_generator = generate_response_streaming(fallback_question, username, lang)
     else:
         # No entropy system available - use basic consciousness optimization
-        if consciousness_summary:
-            optimized_question = f"{question} {consciousness_summary}"
+        full_consciousness_summary = consciousness_summary
+        if cognitive_context_summary:
+            full_consciousness_summary = f"{consciousness_summary} {cognitive_context_summary}"
+        
+        if full_consciousness_summary:
+            optimized_question = f"{question} {full_consciousness_summary}"
         chosen_generator = generate_response_streaming(optimized_question, username, lang)
     
     # Step 5: Generate main response with unified memory context + CONSCIOUSNESS ENTROPY + TOKEN OPTIMIZATION
