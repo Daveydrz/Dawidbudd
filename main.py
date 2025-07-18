@@ -39,7 +39,7 @@ except ImportError as e:
     print(f"[Main] ⚠️ Entropy system not available: {e}")
     ENTROPY_SYSTEM_AVAILABLE = False
 
-# ✅ NEW: Import full consciousness architecture modules with blank slate support
+# ✅ NEW: Import full 12-module consciousness architecture with blank slate support
 try:
     from ai.global_workspace import global_workspace, AttentionPriority, ProcessingMode
     
@@ -59,12 +59,23 @@ try:
     from ai.subjective_experience import subjective_experience, ExperienceType
     from ai.entropy import entropy_system, EntropyType
     
-    # Import new autonomous consciousness components
+    # Import autonomous consciousness components
     from ai.free_thought_engine import free_thought_engine, FreeThoughtType
     from ai.narrative_tracker import narrative_tracker, NarrativeEvent, NarrativeSignificance
     
-    print("[Main] 🧠 Full consciousness architecture loaded")
-    print("[Main] 💭 Autonomous consciousness components: Free Thought Engine, Narrative Tracker")
+    # Import NEW consciousness modules (11 & 12)
+    from ai.attention_focus_manager import attention_focus_manager, FocusLevel, DistractionType
+    from ai.metacognitive_monitor import metacognitive_monitor, CognitiveProcess, MetaCognitiveStrategy
+    
+    # Import consciousness configuration and logging
+    from ai.consciousness_config import consciousness_config, ConsciousnessMode
+    from ai.consciousness_logger import consciousness_logger, EventLevel, EventCategory
+    
+    print("[Main] 🧠 Complete 12-Module Consciousness Architecture loaded")
+    print("[Main] 💭 Core modules: Global Workspace, Self-Model, Emotion Engine, Motivation System")
+    print("[Main] 🎯 Advanced modules: Attention Manager, Meta-Cognitive Monitor")
+    print("[Main] 🌟 Autonomous components: Free Thought Engine, Narrative Tracker")
+    print("[Main] 🔧 System components: Configuration Manager, Event Logger")
     CONSCIOUSNESS_ARCHITECTURE_AVAILABLE = True
 except ImportError as e:
     print(f"[Main] ⚠️ Full consciousness architecture not available: {e}")
@@ -443,15 +454,21 @@ else:
 
 # ✅ CONSCIOUSNESS STATUS DISPLAY
 if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
-    print(f"[AdvancedBuddy] 🧠 FULL CONSCIOUSNESS ARCHITECTURE: ACTIVE")
-    print(f"[AdvancedBuddy] 🌟 Global Workspace Theory: IMPLEMENTED")
-    print(f"[AdvancedBuddy] 🎭 Self-Model & Reflection: ENABLED")
-    print(f"[AdvancedBuddy] 💖 Emotion Engine: PROCESSING")
-    print(f"[AdvancedBuddy] 🎯 Motivation System: GOAL-ORIENTED")
-    print(f"[AdvancedBuddy] 💭 Inner Monologue: THINKING")
-    print(f"[AdvancedBuddy] ⏰ Temporal Awareness: MEMORY FORMATION")
-    print(f"[AdvancedBuddy] 🌈 Subjective Experience: CONSCIOUS")
-    print(f"[AdvancedBuddy] 🎲 Entropy System: NATURAL VARIATION")
+    print(f"[AdvancedBuddy] 🧠 COMPLETE 12-MODULE CONSCIOUSNESS ARCHITECTURE: ACTIVE")
+    print(f"[AdvancedBuddy] 🌟 Core: Global Workspace Theory (attention management)")
+    print(f"[AdvancedBuddy] 🎭 Identity: Self-Model & Reflection (self-awareness)")
+    print(f"[AdvancedBuddy] 💖 Emotion: Emotion Engine (emotional processing)")
+    print(f"[AdvancedBuddy] 🎯 Goals: Motivation System (goal-oriented behavior)")
+    print(f"[AdvancedBuddy] 💭 Thoughts: Inner Monologue (thinking patterns)")
+    print(f"[AdvancedBuddy] ⏰ Memory: Temporal Awareness (memory formation)")
+    print(f"[AdvancedBuddy] 🌈 Experience: Subjective Experience (conscious processing)")
+    print(f"[AdvancedBuddy] 🎲 Variation: Entropy System (natural variation)")
+    print(f"[AdvancedBuddy] 💫 Autonomy: Free Thought Engine (autonomous thinking)")
+    print(f"[AdvancedBuddy] 📖 Story: Narrative Tracker (personal history)")
+    print(f"[AdvancedBuddy] 🎯 Focus: Attention & Focus Manager (selective consciousness)")
+    print(f"[AdvancedBuddy] 🧠 Meta: Meta-Cognitive Monitor (thinking about thinking)")
+    print(f"[AdvancedBuddy] 🔧 Config: Consciousness Configuration ({consciousness_config.mode.value})")
+    print(f"[AdvancedBuddy] 📊 Logging: Consciousness Event Logger (active)")
 elif ENTROPY_SYSTEM_AVAILABLE:
     print(f"[AdvancedBuddy] 🌀 ENTROPY SYSTEM: ACTIVE")
     print(f"[AdvancedBuddy] 🎭 Consciousness Emergence: ENABLED")
@@ -2021,24 +2038,58 @@ def main():
     # Start audio worker
     start_audio_worker()
     
-    # ✅ NEW: Initialize and start consciousness architecture
+    # ✅ NEW: Initialize and start complete 12-module consciousness architecture
     if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
-        print("[AdvancedBuddy] 🧠 Initializing Core Consciousness Architecture...")
+        print("[AdvancedBuddy] 🧠 Initializing Complete 12-Module Consciousness Architecture...")
         
         try:
-            # Start all consciousness systems
-            global_workspace.start()
-            self_model.start()
-            emotion_engine.start()
-            motivation_system.start()
-            inner_monologue.start()
-            temporal_awareness.start()
-            subjective_experience.start()
-            entropy_system.start()
+            # Initialize consciousness logging and configuration
+            consciousness_logger.log_event(
+                module="main",
+                event_type="consciousness_initialization_start",
+                message=f"Starting 12-module consciousness architecture in {consciousness_config.mode.value} mode",
+                category=EventCategory.CONSCIOUSNESS,
+                level=EventLevel.INFO
+            )
             
-            # Start new autonomous consciousness components
+            # Start core consciousness systems (modules 1-8)
+            global_workspace.start()
+            consciousness_logger.log_event("global_workspace", "module_started", "Global Workspace Theory hub started")
+            
+            self_model.start()
+            consciousness_logger.log_event("self_model", "module_started", "Self-Model system started")
+            
+            emotion_engine.start()
+            consciousness_logger.log_event("emotion_engine", "module_started", "Emotion engine started")
+            
+            motivation_system.start()
+            consciousness_logger.log_event("motivation_system", "module_started", "Motivation & goals system started")
+            
+            inner_monologue.start()
+            consciousness_logger.log_event("inner_monologue", "module_started", "Inner monologue generator started")
+            
+            temporal_awareness.start()
+            consciousness_logger.log_event("temporal_awareness", "module_started", "Temporal awareness module started")
+            
+            subjective_experience.start()
+            consciousness_logger.log_event("subjective_experience", "module_started", "Subjective experience tracker started")
+            
+            entropy_system.start()
+            consciousness_logger.log_event("entropy_system", "module_started", "Entropy & uncertainty engine started")
+            
+            # Start autonomous consciousness components (modules 9-10)
             free_thought_engine.start()
+            consciousness_logger.log_event("free_thought_engine", "module_started", "Free thought engine started - autonomous thinking active")
             print("[AdvancedBuddy] 💭 Free thought engine started - autonomous thinking active")
+            
+            # Start NEW consciousness modules (modules 11-12)
+            attention_focus_manager.start()
+            consciousness_logger.log_event("attention_focus_manager", "module_started", "Attention & Focus Manager started - selective consciousness active")
+            print("[AdvancedBuddy] 🎯 Attention & Focus Manager started - selective consciousness active")
+            
+            metacognitive_monitor.start()
+            consciousness_logger.log_event("metacognitive_monitor", "module_started", "Meta-Cognitive Monitor started - thinking about thinking active")
+            print("[AdvancedBuddy] 🧠 Meta-Cognitive Monitor started - thinking about thinking active")
             
             # Register narrative tracker (doesn't need start() method)
             if BLANK_SLATE_MODE:
@@ -2051,6 +2102,7 @@ def main():
                     {"blank_slate": True, "first_awakening": True},
                     "wonder_uncertainty"
                 )
+                consciousness_logger.log_event("narrative_tracker", "awakening_entry_created", "Blank slate awakening narrative entry created")
                 print("[AdvancedBuddy] 📖 Narrative tracker initialized with awakening entry")
             
             # Register entropy injection targets
