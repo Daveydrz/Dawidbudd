@@ -14,6 +14,8 @@ import time
 import json
 import logging
 import random
+import os
+import tempfile
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -140,6 +142,7 @@ class SubjectiveExperienceSystem:
         
         # Threading
         self.lock = threading.Lock()
+        self.file_lock = threading.Lock()  # Separate lock for file operations
         self.experience_thread = None
         self.running = False
         
@@ -1059,62 +1062,78 @@ class SubjectiveExperienceSystem:
         return themes
     
     def _save_experience_state(self):
-        """Save experience state to persistent storage"""
-        try:
-            # Only save recent experiences to avoid huge files
-            recent_cutoff = datetime.now() - timedelta(days=7)
-            recent_experiences = {k: v for k, v in self.experiences.items() 
-                                if v.timestamp >= recent_cutoff}
-            
-            data = {
-                "recent_experiences": {k: {
-                    "id": v.id,
-                    "timestamp": v.timestamp.isoformat(),
-                    "experience_type": v.experience_type.value,
-                    "description": v.description,
-                    "trigger": v.trigger,
-                    "clarity": v.clarity,
-                    "intensity": v.intensity,
-                    "valence": v.valence,
-                    "depth": v.depth,
-                    "novelty": v.novelty,
-                    "coherence": v.coherence,
-                    "presence": v.presence,
-                    "significance": v.significance,
-                    "personal_meaning": v.personal_meaning,
-                    "insights_gained": v.insights_gained,
-                    "emotional_resonance": v.emotional_resonance
-                } for k, v in recent_experiences.items()},
-                "consciousness_state": {
-                    "alertness": self.consciousness_state.alertness,
-                    "focus": self.consciousness_state.focus,
-                    "receptivity": self.consciousness_state.receptivity,
-                    "introspection": self.consciousness_state.introspection,
-                    "integration": self.consciousness_state.integration,
-                    "coherence": self.consciousness_state.coherence,
-                    "self_awareness": self.consciousness_state.self_awareness,
-                    "meta_cognition": self.consciousness_state.meta_cognition,
-                    "temporal_flow": self.consciousness_state.temporal_flow,
-                    "time_perception": self.consciousness_state.time_perception
-                },
-                "qualitative_baselines": {k.value: v for k, v in self.qualitative_baselines.items()},
-                "experiential_preferences": dict(self.experiential_preferences),
-                "metrics": {
-                    "total_experiences": self.total_experiences,
-                    "insights_generated": self.insights_generated,
-                    "meaning_discoveries": self.meaning_discoveries,
-                    "experience_counter": self.experience_counter
-                },
-                "last_updated": datetime.now().isoformat()
-            }
-            
-            with open(self.save_path, 'w') as f:
-                json.dump(data, f, indent=2)
-            
-            logging.debug("[SubjectiveExperience] 💾 Experience state saved")
-            
-        except Exception as e:
-            logging.error(f"[SubjectiveExperience] ❌ Failed to save experience state: {e}")
+        """Save experience state to persistent storage with thread safety and atomic operations"""
+        with self.file_lock:  # Ensure only one thread can save at a time
+            try:
+                # Only save recent experiences to avoid huge files
+                recent_cutoff = datetime.now() - timedelta(days=7)
+                recent_experiences = {k: v for k, v in self.experiences.items() 
+                                    if v.timestamp >= recent_cutoff}
+                
+                data = {
+                    "recent_experiences": {k: {
+                        "id": v.id,
+                        "timestamp": v.timestamp.isoformat(),
+                        "experience_type": v.experience_type.value,
+                        "description": v.description,
+                        "trigger": v.trigger,
+                        "clarity": v.clarity,
+                        "intensity": v.intensity,
+                        "valence": v.valence,
+                        "depth": v.depth,
+                        "novelty": v.novelty,
+                        "coherence": v.coherence,
+                        "presence": v.presence,
+                        "significance": v.significance,
+                        "personal_meaning": v.personal_meaning,
+                        "insights_gained": v.insights_gained,
+                        "emotional_resonance": v.emotional_resonance
+                    } for k, v in recent_experiences.items()},
+                    "consciousness_state": {
+                        "alertness": self.consciousness_state.alertness,
+                        "focus": self.consciousness_state.focus,
+                        "receptivity": self.consciousness_state.receptivity,
+                        "introspection": self.consciousness_state.introspection,
+                        "integration": self.consciousness_state.integration,
+                        "coherence": self.consciousness_state.coherence,
+                        "self_awareness": self.consciousness_state.self_awareness,
+                        "meta_cognition": self.consciousness_state.meta_cognition,
+                        "temporal_flow": self.consciousness_state.temporal_flow,
+                        "time_perception": self.consciousness_state.time_perception
+                    },
+                    "qualitative_baselines": {k.value: v for k, v in self.qualitative_baselines.items()},
+                    "experiential_preferences": dict(self.experiential_preferences),
+                    "metrics": {
+                        "total_experiences": self.total_experiences,
+                        "insights_generated": self.insights_generated,
+                        "meaning_discoveries": self.meaning_discoveries,
+                        "experience_counter": self.experience_counter
+                    },
+                    "last_updated": datetime.now().isoformat()
+                }
+                
+                # Atomic file write: write to temp file first, then rename
+                save_dir = self.save_path.parent
+                save_dir.mkdir(parents=True, exist_ok=True)
+                
+                with tempfile.NamedTemporaryFile(mode='w', dir=save_dir, 
+                                               suffix='.tmp', delete=False) as temp_file:
+                    json.dump(data, temp_file, indent=2)
+                    temp_path = temp_file.name
+                
+                # Atomic rename operation
+                os.rename(temp_path, self.save_path)
+                
+                logging.debug("[SubjectiveExperience] 💾 Experience state saved (thread-safe)")
+                
+            except Exception as e:
+                # Clean up temp file if it exists
+                if 'temp_path' in locals() and os.path.exists(temp_path):
+                    try:
+                        os.unlink(temp_path)
+                    except:
+                        pass
+                logging.error(f"[SubjectiveExperience] ❌ Failed to save experience state: {e}")
     
     def _load_experience_state(self):
         """Load experience state from persistent storage"""

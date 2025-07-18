@@ -13,6 +13,8 @@ import threading
 import time
 import json
 import logging
+import os
+import tempfile
 from typing import Dict, List, Any, Optional, Set
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timedelta
@@ -101,6 +103,7 @@ class SelfModel:
         
         # Threading
         self.lock = threading.Lock()
+        self.file_lock = threading.Lock()  # Separate lock for file operations
         self.reflection_thread = None
         self.running = False
         
@@ -1170,47 +1173,63 @@ class SelfModel:
             self.confidence_level = min(1.0, self.confidence_level + 0.005)
     
     def _save_self_model(self):
-        """Save self-model to persistent storage"""
-        try:
-            # Convert identity components with proper datetime serialization
-            identity_data = {}
-            for k, v in self.identity_components.items():
-                component_dict = asdict(v)
-                # Convert datetime to ISO string
-                if 'last_updated' in component_dict:
-                    component_dict['last_updated'] = component_dict['last_updated'].isoformat()
-                identity_data[k] = component_dict
-            
-            data = {
-                "identity_components": identity_data,
-                "self_knowledge": {
-                    "strengths": list(self.self_knowledge.strengths),
-                    "weaknesses": list(self.self_knowledge.weaknesses),
-                    "preferences": dict(self.self_knowledge.preferences),
-                    "beliefs": dict(self.self_knowledge.beliefs),
-                    "values": dict(self.self_knowledge.values)
-                },
-                "current_state": {
-                    "mood": self.current_mood,
-                    "energy_level": self.energy_level,
-                    "confidence_level": self.confidence_level,
-                    "self_awareness_level": self.self_awareness_level
-                },
-                "metrics": {
-                    "total_reflections": self.total_reflections,
-                    "identity_changes": self.identity_changes
-                },
-                "last_updated": datetime.now().isoformat()
-            }
-            
-            with open(self.save_path, 'w') as f:
-                json.dump(data, f, indent=2)
-            
-            self.last_save = datetime.now()
-            logging.debug("[SelfModel] 💾 Self-model saved")
-            
-        except Exception as e:
-            logging.error(f"[SelfModel] ❌ Failed to save self-model: {e}")
+        """Save self-model to persistent storage with thread safety and atomic operations"""
+        with self.file_lock:  # Ensure only one thread can save at a time
+            try:
+                # Convert identity components with proper datetime serialization
+                identity_data = {}
+                for k, v in self.identity_components.items():
+                    component_dict = asdict(v)
+                    # Convert datetime to ISO string
+                    if 'last_updated' in component_dict:
+                        component_dict['last_updated'] = component_dict['last_updated'].isoformat()
+                    identity_data[k] = component_dict
+                
+                data = {
+                    "identity_components": identity_data,
+                    "self_knowledge": {
+                        "strengths": list(self.self_knowledge.strengths),
+                        "weaknesses": list(self.self_knowledge.weaknesses),
+                        "preferences": dict(self.self_knowledge.preferences),
+                        "beliefs": dict(self.self_knowledge.beliefs),
+                        "values": dict(self.self_knowledge.values)
+                    },
+                    "current_state": {
+                        "mood": self.current_mood,
+                        "energy_level": self.energy_level,
+                        "confidence_level": self.confidence_level,
+                        "self_awareness_level": self.self_awareness_level
+                    },
+                    "metrics": {
+                        "total_reflections": self.total_reflections,
+                        "identity_changes": self.identity_changes
+                    },
+                    "last_updated": datetime.now().isoformat()
+                }
+                
+                # Atomic file write: write to temp file first, then rename
+                save_dir = self.save_path.parent
+                save_dir.mkdir(parents=True, exist_ok=True)
+                
+                with tempfile.NamedTemporaryFile(mode='w', dir=save_dir, 
+                                               suffix='.tmp', delete=False) as temp_file:
+                    json.dump(data, temp_file, indent=2)
+                    temp_path = temp_file.name
+                
+                # Atomic rename operation
+                os.rename(temp_path, self.save_path)
+                
+                self.last_save = datetime.now()
+                logging.debug("[SelfModel] 💾 Self-model saved (thread-safe)")
+                
+            except Exception as e:
+                # Clean up temp file if it exists
+                if 'temp_path' in locals() and os.path.exists(temp_path):
+                    try:
+                        os.unlink(temp_path)
+                    except:
+                        pass
+                logging.error(f"[SelfModel] ❌ Failed to save self-model: {e}")
     
     def _load_self_model(self):
         """Load self-model from persistent storage"""

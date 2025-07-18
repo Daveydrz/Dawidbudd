@@ -962,7 +962,18 @@ def handle_streaming_response(text, current_user):
                 
             except ImportError:
                 print("[AdvancedResponse] ⚠️ Advanced streaming not available, using enhanced fallback")
-            response = generate_response(text, current_user, DEFAULT_LANG)
+                # Inject cognitive context into fallback LLM call
+                enhanced_text = text
+                if cognitive_prompt_injection and "cognitive_state" in cognitive_prompt_injection:
+                    cognitive_state = cognitive_prompt_injection["cognitive_state"]
+                    emotion = cognitive_state.get("emotion", "neutral")
+                    mood = cognitive_state.get("mood", "neutral")
+                    # Create context-aware prompt for basic LLM
+                    context_prefix = f"[Current emotional state: {emotion}, mood: {mood}] "
+                    enhanced_text = context_prefix + text
+                    print(f"[AdvancedResponse] 🧠 Injected cognitive context into fallback: {emotion}/{mood}")
+                
+                response = generate_response(enhanced_text, current_user, DEFAULT_LANG)
             
             # 🧠 MEGA-INTELLIGENT: Validate complete response before speaking
             try:
