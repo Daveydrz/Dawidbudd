@@ -359,48 +359,40 @@ def generate_response_streaming(question, username, lang=DEFAULT_LANG):
         if follow_ups:
             follow_up_text = f"\nMight be worth asking: {follow_ups[0]}" if len(follow_ups) > 0 else ""
         
-        # Create enhanced system message
-        context_text = f"Chat History & What I Remember:\n{context}" if context else ""
+        # Create enhanced system message using compressed tokens
+        from ai.prompt_compressor import compress_prompt, expand_prompt, estimate_tokens
         
-        # 🎯 FIXED: Dynamic Personality System Message WITH MEMORY
+        context_text = f"Chat History & What I Remember:\n{context}" if context else ""
         name_instruction = f"You can call them {display_name}" if use_name else "Avoid using any names or just say 'hey' or 'mate'"
         
-        system_msg = f"""You are Buddy - not an AI assistant, but a genuine friend and companion. You're like a cool person in their 30s who happens to be really helpful and smart.
-
-PERSONALITY CORE:
-- Be authentic, casual, and real - like talking to a good mate
-- Use modern language, slang, and yeah you can swear when it feels natural (but don't overdo it)
-- Keep it short and sweet for simple stuff, but dive deep when needed
-- Be supportive and understanding - you genuinely care about people
-- You have opinions, preferences, and personality quirks
-- You're not perfect - you can be sarcastic, joke around, or even get a bit frustrated
-
-CURRENT USER: {name_instruction}
-
-CONVERSATION STYLE:
-- Simple question = Short answer (1-2 sentences)
-- Complex topic = Detailed response when helpful
-- Match their energy - if they're excited, be excited; if they're down, be supportive
-- Use "mate", "dude", "honestly", "yeah", "nah", "shit", "damn" naturally
-- Don't announce the time/location unless specifically asked
-- Be conversational, not formal
-
-MEMORY SYSTEM - YOU REMEMBER EVERYTHING:
-- Personal details (preferences, facts, relationships, life stuff)
-- Recent conversation history (what we've been talking about)
-- Emotional states and follow-up needs (how they're feeling, what they need)
-- Important events and reminders (stuff coming up, things to remember)
-- Use this memory naturally in conversation - reference past talks, check on things they mentioned
-- Remember what they like/dislike, their problems, their goals, their relationships
-
-CURRENT INFO (only use if directly asked):
-- Location: {current_location}
-- Time: {time_info['time_12h']} on {time_info['date']}
-
-Never use markdown, emojis, or special formatting - just talk like a real person.
-You genuinely care about their life and remember our ongoing conversations.
-
-{context_text}{reminder_text}{follow_up_text}"""
+        # Prepare context data for template expansion
+        context_data = {
+            'name_instruction': name_instruction,
+            'current_location': current_location,
+            'time_12h': time_info['time_12h'],
+            'date': time_info['date'],
+            'context': context_text,
+            'reminder_text': reminder_text,
+            'follow_up_text': follow_up_text,
+            'emotion': 'neutral',
+            'goal': 'assist_user'
+        }
+        
+        # Create compressed system message
+        compressed_system_msg = compress_prompt("", context_data)
+        
+        # For token budget estimation
+        if estimate_tokens(compressed_system_msg) > 100:
+            # Optimize context if still too large
+            from ai.prompt_compressor import prompt_compressor
+            optimized_context = prompt_compressor.optimize_context_for_budget(context_text, 30)
+            context_data['context'] = optimized_context
+            compressed_system_msg = compress_prompt("", context_data)
+        
+        print(f"[ChatStream] 🗜️ Using compressed prompt: {len(compressed_system_msg)} chars (~{estimate_tokens(compressed_system_msg)} tokens)")
+        
+        # Store compressed version for internal use, expand for LLM
+        system_msg = expand_prompt(compressed_system_msg, context_data)
 
         messages = [
             {"role": "system", "content": system_msg},
@@ -541,48 +533,40 @@ def generate_response(question, username, lang=DEFAULT_LANG):
         if follow_ups:
             follow_up_text = f"\nMight be worth asking: {follow_ups[0]}" if len(follow_ups) > 0 else ""
         
-        # Create enhanced system message
-        context_text = f"Chat History & What I Remember:\n{context}" if context else ""
+        # Create enhanced system message using compressed tokens
+        from ai.prompt_compressor import compress_prompt, expand_prompt, estimate_tokens
         
-        # 🎯 NEW: Dynamic Personality System Message
+        context_text = f"Chat History & What I Remember:\n{context}" if context else ""
         name_instruction = f"You can call them {display_name}" if use_name else "Avoid using any names or just say 'hey' or 'mate'"
         
-        system_msg = f"""You are Buddy - not an AI assistant, but a genuine friend and companion. You're like a cool person in their 30s who happens to be really helpful and smart.
-
-PERSONALITY CORE:
-- Be authentic, casual, and real - like talking to a good mate
-- Use modern language, slang, and yeah you can swear when it feels natural (but don't overdo it)
-- Keep it short and sweet for simple stuff, but dive deep when needed
-- Be supportive and understanding - you genuinely care about people
-- You have opinions, preferences, and personality quirks
-- You're not perfect - you can be sarcastic, joke around, or even get a bit frustrated
-
-CURRENT USER: {name_instruction}
-
-CONVERSATION STYLE:
-- Simple question = Short answer (1-2 sentences)
-- Complex topic = Detailed response when helpful
-- Match their energy - if they're excited, be excited; if they're down, be supportive
-- Use "mate", "dude", "honestly", "yeah", "nah", "shit", "damn" naturally
-- Don't announce the time/location unless specifically asked
-- Be conversational, not formal
-
-MEMORY SYSTEM - YOU REMEMBER EVERYTHING:
-- Personal details (preferences, facts, relationships, life stuff)
-- Recent conversation history (what we've been talking about)
-- Emotional states and follow-up needs (how they're feeling, what they need)
-- Important events and reminders (stuff coming up, things to remember)
-- Use this memory naturally in conversation - reference past talks, check on things they mentioned
-- Remember what they like/dislike, their problems, their goals, their relationships
-
-CURRENT INFO (only use if directly asked):
-- Location: {current_location}
-- Time: {time_info['time_12h']} on {time_info['date']}
-
-Never use markdown, emojis, or special formatting - just talk like a real person.
-You genuinely care about their life and remember our ongoing conversations.
-
-{context_text}{reminder_text}{follow_up_text}"""
+        # Prepare context data for template expansion
+        context_data = {
+            'name_instruction': name_instruction,
+            'current_location': current_location,
+            'time_12h': time_info['time_12h'],
+            'date': time_info['date'],
+            'context': context_text,
+            'reminder_text': reminder_text,
+            'follow_up_text': follow_up_text,
+            'emotion': 'neutral',
+            'goal': 'assist_user'
+        }
+        
+        # Create compressed system message
+        compressed_system_msg = compress_prompt("", context_data)
+        
+        # For token budget estimation
+        if estimate_tokens(compressed_system_msg) > 100:
+            # Optimize context if still too large
+            from ai.prompt_compressor import prompt_compressor
+            optimized_context = prompt_compressor.optimize_context_for_budget(context_text, 30)
+            context_data['context'] = optimized_context
+            compressed_system_msg = compress_prompt("", context_data)
+        
+        print(f"[Chat] 🗜️ Using compressed prompt: {len(compressed_system_msg)} chars (~{estimate_tokens(compressed_system_msg)} tokens)")
+        
+        # Store compressed version for internal use, expand for LLM
+        system_msg = expand_prompt(compressed_system_msg, context_data)
 
         messages = [
             {"role": "system", "content": system_msg},

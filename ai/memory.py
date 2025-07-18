@@ -400,7 +400,7 @@ class UserMemorySystem:
         return contexts
     
     def get_contextual_memory_for_response(self) -> str:
-        """🧠 Get memory context optimized for appropriate responses + PROBABILISTIC RETRIEVAL"""
+        """🧠 Get memory context optimized for appropriate responses + PROBABILISTIC RETRIEVAL + TOKEN COMPRESSION"""
         context_parts = []
         
         # ✅ ENTROPY SYSTEM: Probabilistic memory retrieval instead of always best match
@@ -410,7 +410,7 @@ class UserMemorySystem:
             uncertainty_value = uncertainty_state.value if uncertainty_state else "normal"
             print(f"[Memory] 🌀 Probabilistic memory retrieval - uncertainty: {uncertainty_value}")
         
-        # Recent personal facts with entity awareness + PROBABILISTIC SELECTION
+        # Recent personal facts with entity awareness + PROBABILISTIC SELECTION (COMPRESSED)
         all_facts = list(self.personal_facts.values())
         if ENTROPY_AVAILABLE and len(all_facts) > 4:
             # Don't always pick the most recent - inject uncertainty
@@ -425,7 +425,7 @@ class UserMemorySystem:
             
             # Probabilistic selection of facts
             selected_facts = []
-            for _ in range(min(4, len(all_facts))):
+            for _ in range(min(3, len(all_facts))):  # Reduced from 4 to 3 for compression
                 if all_facts:
                     selected_fact = probabilistic_select(all_facts, fact_weights)
                     if selected_fact and selected_fact not in selected_facts:
@@ -436,15 +436,18 @@ class UserMemorySystem:
                         fact_weights.pop(fact_index)
             recent_facts = selected_facts
         else:
-            recent_facts = all_facts[-4:]
+            recent_facts = all_facts[-3:]  # Reduced from 4 to 3
         
         for fact in recent_facts:
-            # ✅ ENTROPY SYSTEM: Memory "drift" - occasionally misremember details
+            # ✅ COMPRESSED: Shorter fact representation
             fact_text = f"{fact.key.replace('_', ' ')}: {fact.value}"
+            if len(fact_text) > 50:  # Truncate long facts
+                fact_text = fact_text[:47] + "..."
+            
             if ENTROPY_AVAILABLE and entropy_engine.random_state.random() < 0.1:  # 10% chance of drift
                 # Inject slight uncertainty into memory recall
-                uncertainty_markers = ["I think ", "I believe ", "if I remember correctly, "]
-                marker = probabilistic_select(uncertainty_markers + [""])
+                uncertainty_markers = ["I think ", "I believe ", ""]
+                marker = probabilistic_select(uncertainty_markers)
                 if marker:
                     fact_text = marker + fact_text.lower()
             
@@ -452,9 +455,9 @@ class UserMemorySystem:
                 context_parts.append(fact_text)
             else:
                 status_value = fact.current_status.value if fact.current_status else "unknown"
-                context_parts.append(f"Former {fact_text} (Status: {status_value})")
+                context_parts.append(f"Former {fact_text} ({status_value})")
         
-        # Critical entity statuses with UNCERTAIN RECALL
+        # Critical entity statuses with UNCERTAIN RECALL (COMPRESSED)
         all_entities = list(self.entity_memories.values())
         critical_entities = [entity for entity in all_entities if entity.emotional_significance > 0.7]
         
@@ -465,21 +468,23 @@ class UserMemorySystem:
             for entity in critical_entities:
                 if entropy_engine.random_state.random() < mention_probability:
                     entities_to_mention.append(entity)
-            critical_entities = entities_to_mention
+            critical_entities = entities_to_mention[:2]  # Limit to 2 for compression
+        else:
+            critical_entities = critical_entities[:2]  # Limit to 2
         
         for entity in critical_entities:
             status_value = entity.status.value if entity.status else "unknown"
             status_desc = f"{entity.name} ({entity.entity_type}): {status_value}"
             if entity.status == EntityStatus.DECEASED:
-                status_desc += " - Handle with sensitivity"
+                status_desc += " - sensitive"  # Compressed warning
             
             # ✅ ENTROPY SYSTEM: Occasional false memory associations
             if ENTROPY_AVAILABLE and entropy_engine.random_state.random() < 0.05:  # 5% chance
-                status_desc += " (uncertain about details)"
+                status_desc += " (uncertain)"
             
             context_parts.append(status_desc)
         
-        # Recent emotional states with entity connections + UNCERTAIN RECALL
+        # Recent emotional states with entity connections + UNCERTAIN RECALL (COMPRESSED)
         if self.emotional_history:
             if ENTROPY_AVAILABLE:
                 # Don't always recall the most recent emotion - sometimes confusion
@@ -494,20 +499,21 @@ class UserMemorySystem:
             else:
                 recent_emotion = self.emotional_history[-1]
             
-            emotion_context = f"Recent emotion: {recent_emotion.emotion} - {recent_emotion.context}"
+            # ✅ COMPRESSED: Shorter emotion context
+            emotion_context = f"Recent: {recent_emotion.emotion} - {recent_emotion.context[:30]}..."
             if recent_emotion.trigger_entities:
-                emotion_context += f" (Related to: {', '.join(recent_emotion.trigger_entities)})"
+                emotion_context += f" (re: {', '.join(recent_emotion.trigger_entities[:2])})"  # Limit entities
             
             # ✅ ENTROPY SYSTEM: Uncertainty about emotional memories
             uncertainty_state = entropy_engine.get_uncertainty_state() if ENTROPY_AVAILABLE else None
             if ENTROPY_AVAILABLE and uncertainty_state and uncertainty_state.value == "uncertain":
-                emotion_context = "I'm not entirely sure, but " + emotion_context.lower()
+                emotion_context = "Unsure: " + emotion_context.lower()
             
             context_parts.append(emotion_context)
         
-        # Active life events with ongoing effects + MEMORY DRIFT
+        # Active life events with ongoing effects + MEMORY DRIFT (COMPRESSED)
         all_events = list(self.life_events.values())
-        if ENTROPY_AVAILABLE and len(all_events) > 3:
+        if ENTROPY_AVAILABLE and len(all_events) > 2:  # Reduced from 3 to 2
             # Probabilistic event selection with emphasis on emotional impact
             event_weights = []
             for event in all_events:
@@ -520,7 +526,7 @@ class UserMemorySystem:
             remaining_events = all_events.copy()
             remaining_weights = event_weights.copy()
             
-            for _ in range(min(3, len(all_events))):
+            for _ in range(min(2, len(all_events))):  # Reduced from 3 to 2
                 if remaining_events:
                     selected_event = probabilistic_select(remaining_events, remaining_weights)
                     if selected_event:
@@ -530,41 +536,48 @@ class UserMemorySystem:
                         remaining_weights.pop(event_index)
             recent_events = selected_events
         else:
-            recent_events = all_events[-3:]
+            recent_events = all_events[-2:]  # Reduced from 3 to 2
         
         for event in recent_events:
             if event.ongoing_effects:
-                event_desc = f"Recent event: {event.description} - Ongoing: {', '.join(event.ongoing_effects)}"
+                # ✅ COMPRESSED: Shorter event description
+                event_desc = f"Event: {event.description[:40]}... - Effects: {', '.join(event.ongoing_effects[:2])}"
                 
                 # ✅ ENTROPY SYSTEM: Occasional confusion about event timeline
                 if ENTROPY_AVAILABLE and entropy_engine.random_state.random() < 0.08:  # 8% chance
-                    timeline_confusion = ["I think it was recent", "sometime ago", "not sure when exactly"]
+                    timeline_confusion = ["recent", "ago", "unsure when"]
                     confusion = probabilistic_select(timeline_confusion)
-                    event_desc = event_desc.replace("Recent event:", f"Event ({confusion}):")
+                    event_desc = event_desc.replace("Event:", f"Event ({confusion}):")
                 
                 context_parts.append(event_desc)
         
-        # ✅ ENTROPY SYSTEM: Random memory association (false memories)
-        if ENTROPY_AVAILABLE and entropy_engine.random_state.random() < 0.03:  # 3% chance
+        # ✅ ENTROPY SYSTEM: Random memory association (false memories) - COMPRESSED
+        if ENTROPY_AVAILABLE and entropy_engine.random_state.random() < 0.02:  # Reduced from 3% to 2%
             false_memory_fragments = [
-                "Something about music preferences",
-                "Mentioned something about travel",
-                "Had thoughts about food or restaurants",
-                "Discussed weather or seasons",
-                "Talked about work or daily routine"
+                "Music preferences",
+                "Travel thoughts", 
+                "Food/restaurant talk",
+                "Weather discussion",
+                "Work routine"
             ]
             false_memory = probabilistic_select(false_memory_fragments)
-            context_parts.append(f"(Vague recollection: {false_memory})")
-            print(f"[Memory] 🌀 False memory association injected: {false_memory}")
+            context_parts.append(f"(Vague: {false_memory})")
+            print(f"[Memory] 🌀 False memory: {false_memory}")
         
         result = "\n".join(context_parts) if context_parts else ""
+        
+        # ✅ TOKEN COMPRESSION: Limit total memory context size
+        from ai.prompt_compressor import prompt_compressor
+        if len(result) > 300:  # Keep memory context under 300 chars (~75 tokens)
+            result = prompt_compressor.optimize_context_for_budget(result, 75)
         
         # ✅ ENTROPY SYSTEM: Overall memory confidence uncertainty
         if ENTROPY_AVAILABLE and result:
             consciousness_score = entropy_engine.get_consciousness_metrics()['consciousness_score']
-            if consciousness_score > 0.6 and entropy_engine.random_state.random() < 0.1:  # High consciousness = more uncertainty
-                result = "Note: Memory recall has some uncertainty.\n" + result
+            if consciousness_score > 0.6 and entropy_engine.random_state.random() < 0.05:  # Reduced from 10% to 5%
+                result = "Note: Memory uncertain.\n" + result
         
+        print(f"[Memory] 🗜️ Compressed memory context: {len(result)} chars")
         return result
     
     # Enhanced extraction methods with entity awareness
@@ -1092,50 +1105,56 @@ def add_to_conversation_history(username, user_message, ai_response):
             print(f"[MegaMemory] ❌ Enhanced memory error: {e}")
 
 def get_conversation_context(username):
-    """🧠 Get MEGA-INTELLIGENT conversation context"""
+    """🧠 Get MEGA-INTELLIGENT conversation context with TOKEN COMPRESSION"""
     try:
         context_parts = []
         
         if username in conversation_history and conversation_history[username]:
             history = conversation_history[username]
             
-            context_length = CONVERSATION_CONTEXT_LENGTH if ENHANCED_CONVERSATION_MEMORY else 2
+            # ✅ COMPRESSED: Reduced context length for token optimization
+            context_length = min(CONVERSATION_CONTEXT_LENGTH if ENHANCED_CONVERSATION_MEMORY else 2, 6)  # Max 6 exchanges
             recent_exchanges = history[-context_length:]
             
             if (CONVERSATION_SUMMARY_ENABLED and 
                 len(history) > CONVERSATION_SUMMARY_THRESHOLD):
                 summary = summarize_old_conversation(history)
                 if summary:
-                    context_parts.append(f"Conversation summary: {summary}")
+                    # ✅ COMPRESSED: Shorter summary
+                    context_parts.append(f"Earlier: {summary}")
                     context_parts.append("")
             
             for exchange in recent_exchanges:
-                user_msg = exchange["user"][:120]
-                ai_msg = exchange["assistant"][:120]
+                # ✅ COMPRESSED: Truncate messages for token optimization
+                user_msg = exchange["user"][:80]  # Reduced from 120 to 80
+                ai_msg = exchange["assistant"][:80]  # Reduced from 120 to 80
                 context_parts.append(f"Human: {user_msg}")
                 context_parts.append(f"Assistant: {ai_msg}")
         
-        # 🧠 MEGA-INTELLIGENT: Enhanced memory context
+        # 🧠 MEGA-INTELLIGENT: Enhanced memory context (COMPRESSED)
         memory = get_user_memory(username)
         memory_context = memory.get_contextual_memory_for_response()
         follow_ups = memory.get_follow_up_questions()
         
         if memory_context:
-            context_parts.append(f"\n🧠 MEGA-INTELLIGENT Memory Context for {username}:")
+            context_parts.append(f"\n🧠 Memory for {username}:")
             context_parts.append(memory_context)
         
-        if follow_ups:
-            context_parts.append(f"\nSuggested follow-up questions:")
-            context_parts.extend(follow_ups)
+        if follow_ups and len(follow_ups) > 0:  # Only add if there are follow-ups
+            context_parts.append(f"\nSuggested follow-up:")
+            context_parts.extend(follow_ups[:1])  # Only include first follow-up for compression
         
         full_context = "\n".join(context_parts)
         
-        if CONTEXT_COMPRESSION_ENABLED and len(full_context) > MAX_CONTEXT_TOKENS * 4:
-            full_context = full_context[:MAX_CONTEXT_TOKENS * 4]
-            full_context += "\n[Context trimmed for optimization]"
+        # ✅ TOKEN COMPRESSION: Strict context optimization
+        from ai.prompt_compressor import prompt_compressor
+        max_context_tokens = 50  # Significantly reduced from MAX_CONTEXT_TOKENS * 4
+        if len(full_context) > max_context_tokens * 4:
+            full_context = prompt_compressor.optimize_context_for_budget(full_context, max_context_tokens)
+            full_context += "\n[Context optimized for speed]"
         
         if DEBUG and ENHANCED_CONVERSATION_MEMORY:
-            print(f"[MegaMemory] 🧠 MEGA-INTELLIGENT context generated")
+            print(f"[MegaMemory] 🧠 COMPRESSED context: {len(full_context)} chars")
         
         return full_context
         
