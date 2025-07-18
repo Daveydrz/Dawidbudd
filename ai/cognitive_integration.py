@@ -306,7 +306,7 @@ class CognitiveIntegrator:
         """Process beliefs and link to qualia"""
         try:
             # Extract beliefs from text
-            beliefs = belief_analyzer.analyze_user_text_for_beliefs(text, user_id)
+            beliefs = belief_analyzer.analyze_text_for_beliefs(text, user_id)
             
             # Create qualia linkings for emotional content
             if self.belief_qualia_linker:
@@ -339,7 +339,7 @@ class CognitiveIntegrator:
         """Update personality and motivation systems"""
         try:
             # Update personality based on interaction
-            personality_triggers = personality_state.analyze_user_text_for_personality_adaptation(text, user_id)
+            personality_triggers = personality_state.analyze_user_text_for_triggers(text, user_id)
             
             # Process motivation and goals
             goals = []
@@ -375,7 +375,11 @@ class CognitiveIntegrator:
             
             # Get internal state verbalization
             if self.state_verbalizer:
-                internal_state = self.state_verbalizer.generate_internal_state_description()
+                internal_state = self.state_verbalizer.verbalize_internal_state(
+                    {"current_state": "processing_user_input", "context": text[:50]},
+                    {"user_id": user_id, "emotional_state": "engaged"},
+                    f"User {user_id} interaction: {text[:30]}..."
+                )
                 if internal_state and internal_state != "None":
                     thoughts.append(internal_state)
             

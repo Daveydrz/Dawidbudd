@@ -108,7 +108,7 @@ try:
     from ai.qualia_analytics import QualiaAnalytics
     from ai.belief_memory_refiner import BeliefMemoryRefiner
     from ai.self_model_updater import SelfModelUpdater
-    from ai.goal_reasoning import GoalReasoning
+    from ai.goal_reasoning import GoalReasoner
     from ai.motivation_reasoner import MotivationReasoner
     from ai.cognitive_debug_logger import cognitive_debug_logger
     
@@ -2472,7 +2472,7 @@ def main():
             qualia_analytics = QualiaAnalytics()
             belief_memory_refiner = BeliefMemoryRefiner()
             self_model_updater = SelfModelUpdater()
-            goal_reasoning = GoalReasoning()
+            goal_reasoning = GoalReasoner()
             motivation_reasoner = MotivationReasoner()
             
             print("[AdvancedBuddy] ✅ Self-Awareness Components initialized!")

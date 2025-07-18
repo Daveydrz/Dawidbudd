@@ -1216,8 +1216,19 @@ class SelfModel:
                     json.dump(data, temp_file, indent=2)
                     temp_path = temp_file.name
                 
-                # Atomic rename operation
-                os.rename(temp_path, self.save_path)
+                # Handle Windows-specific rename issue
+                try:
+                    # On Windows, need to remove target file first
+                    if os.path.exists(self.save_path):
+                        os.remove(self.save_path)
+                    os.rename(temp_path, self.save_path)
+                except (OSError, FileExistsError):
+                    # Fallback: direct write if rename fails
+                    with open(self.save_path, 'w') as f:
+                        json.dump(data, f, indent=2)
+                    # Clean up temp file
+                    if os.path.exists(temp_path):
+                        os.remove(temp_path)
                 
                 self.last_save = datetime.now()
                 logging.debug("[SelfModel] 💾 Self-model saved (thread-safe)")

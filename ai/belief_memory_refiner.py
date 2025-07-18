@@ -551,10 +551,22 @@ class BeliefMemoryRefiner:
             
             # Load instances
             for instance_data in data.get('instances', []):
+                # Handle both old and new enum formats
+                source_value = instance_data['source']
+                if isinstance(source_value, str) and '.' in source_value:
+                    # Handle old format like 'BeliefSource.USER_STATEMENT'
+                    source_value = source_value.split('.')[-1].lower()
+                
+                try:
+                    source = BeliefSource(source_value)
+                except ValueError:
+                    # Fallback to USER_STATEMENT if invalid
+                    source = BeliefSource.USER_STATEMENT
+                
                 instance = BeliefInstance(
                     instance_id=instance_data['instance_id'],
                     content=instance_data['content'],
-                    source=BeliefSource(instance_data['source']),
+                    source=source,
                     confidence=instance_data['confidence'],
                     timestamp=instance_data['timestamp'],
                     context=instance_data['context'],
@@ -568,10 +580,22 @@ class BeliefMemoryRefiner:
                 # Load instances for this belief
                 instances = []
                 for instance_data in belief_data.get('instances', []):
+                    # Handle both old and new enum formats
+                    source_value = instance_data['source']
+                    if isinstance(source_value, str) and '.' in source_value:
+                        # Handle old format like 'BeliefSource.USER_STATEMENT'
+                        source_value = source_value.split('.')[-1].lower()
+                    
+                    try:
+                        source = BeliefSource(source_value)
+                    except ValueError:
+                        # Fallback to USER_STATEMENT if invalid
+                        source = BeliefSource.USER_STATEMENT
+                    
                     instance = BeliefInstance(
                         instance_id=instance_data['instance_id'],
                         content=instance_data['content'],
-                        source=BeliefSource(instance_data['source']),
+                        source=source,
                         confidence=instance_data['confidence'],
                         timestamp=instance_data['timestamp'],
                         context=instance_data['context'],
@@ -580,12 +604,24 @@ class BeliefMemoryRefiner:
                     )
                     instances.append(instance)
                 
+                # Handle both old and new enum formats for strength
+                strength_value = belief_data['strength']
+                if isinstance(strength_value, str) and '.' in strength_value:
+                    # Handle old format like 'BeliefStrength.WEAK'
+                    strength_value = strength_value.split('.')[-1].lower()
+                
+                try:
+                    strength = BeliefStrength(strength_value)
+                except ValueError:
+                    # Fallback to WEAK if invalid
+                    strength = BeliefStrength.WEAK
+                
                 refined_belief = RefinedBelief(
                     belief_id=belief_data['belief_id'],
                     original_content=belief_data['original_content'],
                     refined_content=belief_data['refined_content'],
                     instances=instances,
-                    strength=BeliefStrength(belief_data['strength']),
+                    strength=strength,
                     confidence=belief_data['confidence'],
                     first_occurrence=belief_data['first_occurrence'],
                     last_reinforcement=belief_data['last_reinforcement'],
@@ -621,8 +657,32 @@ class BeliefMemoryRefiner:
                 'total_refined_beliefs': len(self.refined_beliefs)
             }
             
+            # Convert enum values to their string values for JSON serialization
+            def convert_enums(obj):
+                if hasattr(obj, '__dict__'):
+                    # Handle dataclass objects
+                    result = {}
+                    for k, v in obj.__dict__.items():
+                        if hasattr(v, 'value'):
+                            result[k] = v.value
+                        elif isinstance(v, datetime):
+                            result[k] = v.isoformat()
+                        elif isinstance(v, (list, dict)):
+                            result[k] = v  # Let JSON handle these
+                        else:
+                            result[k] = v
+                    return result
+                elif isinstance(obj, dict):
+                    return {k: (v.value if hasattr(v, 'value') else v) for k, v in obj.items()}
+                elif hasattr(obj, 'value'):
+                    return obj.value
+                elif isinstance(obj, datetime):
+                    return obj.isoformat()
+                else:
+                    return str(obj)
+            
             with open(self.save_path, 'w') as f:
-                json.dump(data, f, indent=2, default=str)
+                json.dump(data, f, indent=2, default=convert_enums)
                 
         except Exception as e:
             print(f"[BeliefMemoryRefiner] ❌ Error saving refiner data: {e}")

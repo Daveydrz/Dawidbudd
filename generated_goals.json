@@ -3,87 +3,30 @@
     {
       "goal_id": "emotion_curiosity_0",
       "description": "Explore learning in depth",
-      "goal_type": "GoalType.SHORT_TERM",
-      "priority": "GoalPriority.MEDIUM",
-      "source": "GoalSource.EMOTION_DRIVEN",
-      "triggering_factors": [
-        "emotion: curiosity",
-        "intensity: 0.8"
-      ],
-      "success_criteria": [
-        "Acquire new knowledge",
-        "Demonstrate understanding",
-        "Apply learning effectively"
-      ],
-      "related_beliefs": [],
-      "emotional_drivers": [
-        "curiosity"
-      ],
-      "value_alignment": {},
-      "creation_timestamp": "2025-07-18T10:36:35.977995",
-      "target_completion": "2025-07-19T10:36:35.978000",
-      "progress": 0.0,
-      "active": true,
-      "completion_actions": [],
-      "obstacles": [],
-      "context": "learning context"
-    },
-    {
-      "goal_id": "belief_knowledge_belief_0",
-      "description": "Share insights about learning",
-      "goal_type": "GoalType.LONG_TERM",
-      "priority": "GoalPriority.MEDIUM",
-      "source": "GoalSource.BELIEF_DRIVEN",
-      "triggering_factors": [
-        "belief: I want to learn more..."
-      ],
-      "success_criteria": [
-        "Acquire new knowledge",
-        "Demonstrate understanding",
-        "Apply learning effectively"
-      ],
-      "related_beliefs": [
-        "I want to learn more"
-      ],
-      "emotional_drivers": [],
-      "value_alignment": {},
-      "creation_timestamp": "2025-07-18T10:36:35.978022",
-      "target_completion": "2025-07-25T10:36:35.978025",
-      "progress": 0.0,
-      "active": true,
-      "completion_actions": [],
-      "obstacles": [],
-      "context": "learning context"
-    },
-    {
-      "goal_id": "value_learning_0",
-      "description": "Expand knowledge base",
-      "goal_type": "GoalType.ASPIRATIONAL",
-      "priority": "GoalPriority.MEDIUM",
-      "source": "GoalSource.VALUE_DRIVEN",
-      "triggering_factors": [
-        "value: learning",
-        "strength: 0.9"
-      ],
-      "success_criteria": [
-        "Make progress toward goal",
-        "Take concrete actions",
-        "Achieve desired outcome"
-      ],
-      "related_beliefs": [],
-      "emotional_drivers": [],
-      "value_alignment": {
-        "learning": 0.9
-      },
-      "creation_timestamp": "2025-07-18T10:36:35.978040",
-      "target_completion": "2025-08-17T10:36:35.978042",
-      "progress": 0.0,
-      "active": true,
-      "completion_actions": [],
-      "obstacles": [],
-      "context": "learning context"
-    }
-  ],
-  "last_updated": "2025-07-18T10:36:35.978123",
-  "total_goals": 3
-}
+      "goal_type": {
+        "_value_": "short_term",
+        "_name_": "SHORT_TERM",
+        "__objclass__": {
+          "_generate_next_value_": {
+            "__module__": "enum",
+            "__name__": "_generate_next_value_",
+            "__qualname__": "Enum._generate_next_value_",
+            "__doc__": "\n        Generate the next value when not given.\n\n        name: the name of the member\n        start: the initial start value or None\n        count: the number of existing members\n        last_values: the list of values assigned\n        ",
+            "__annotations__": {}
+          },
+          "__module__": "ai.goal_reasoning",
+          "__doc__": "Types of goals",
+          "_new_member_": "<built-in method __new__ of type object at 0xa44820>",
+          "_use_args_": false,
+          "_member_names_": [
+            "IMMEDIATE",
+            "SHORT_TERM",
+            "LONG_TERM",
+            "ASPIRATIONAL",
+            "MAINTENANCE"
+          ],
+          "_member_map_": {
+            "IMMEDIATE": {
+              "_value_": "immediate",
+              "_name_": "IMMEDIATE",
+              "__objclass__": 
