@@ -1,0 +1,89 @@
+{
+  "goals": [
+    {
+      "goal_id": "emotion_curiosity_0",
+      "description": "Understand the nuances of learning context",
+      "goal_type": "GoalType.SHORT_TERM",
+      "priority": "GoalPriority.MEDIUM",
+      "source": "GoalSource.EMOTION_DRIVEN",
+      "triggering_factors": [
+        "emotion: curiosity",
+        "intensity: 0.8"
+      ],
+      "success_criteria": [
+        "Acquire new knowledge",
+        "Demonstrate understanding",
+        "Apply learning effectively"
+      ],
+      "related_beliefs": [],
+      "emotional_drivers": [
+        "curiosity"
+      ],
+      "value_alignment": {},
+      "creation_timestamp": "2025-07-18T10:00:46.532918",
+      "target_completion": "2025-07-19T10:00:46.532925",
+      "progress": 0.0,
+      "active": true,
+      "completion_actions": [],
+      "obstacles": [],
+      "context": "learning context"
+    },
+    {
+      "goal_id": "belief_knowledge_belief_0",
+      "description": "Expand knowledge in learning context",
+      "goal_type": "GoalType.LONG_TERM",
+      "priority": "GoalPriority.MEDIUM",
+      "source": "GoalSource.BELIEF_DRIVEN",
+      "triggering_factors": [
+        "belief: I want to learn more..."
+      ],
+      "success_criteria": [
+        "Acquire new knowledge",
+        "Demonstrate understanding",
+        "Apply learning effectively"
+      ],
+      "related_beliefs": [
+        "I want to learn more"
+      ],
+      "emotional_drivers": [],
+      "value_alignment": {},
+      "creation_timestamp": "2025-07-18T10:00:46.532958",
+      "target_completion": "2025-07-25T10:00:46.532960",
+      "progress": 0.0,
+      "active": true,
+      "completion_actions": [],
+      "obstacles": [],
+      "context": "learning context"
+    },
+    {
+      "goal_id": "value_learning_0",
+      "description": "Continuously improve understanding",
+      "goal_type": "GoalType.ASPIRATIONAL",
+      "priority": "GoalPriority.MEDIUM",
+      "source": "GoalSource.VALUE_DRIVEN",
+      "triggering_factors": [
+        "value: learning",
+        "strength: 0.9"
+      ],
+      "success_criteria": [
+        "Show measurable improvement",
+        "Receive positive feedback",
+        "Increase confidence"
+      ],
+      "related_beliefs": [],
+      "emotional_drivers": [],
+      "value_alignment": {
+        "learning": 0.9
+      },
+      "creation_timestamp": "2025-07-18T10:00:46.532977",
+      "target_completion": "2025-08-17T10:00:46.532978",
+      "progress": 0.0,
+      "active": true,
+      "completion_actions": [],
+      "obstacles": [],
+      "context": "learning context"
+    }
+  ],
+  "last_updated": "2025-07-18T10:00:46.533065",
+  "total_goals": 3
+}
