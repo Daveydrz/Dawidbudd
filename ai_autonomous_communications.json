@@ -30,7 +30,7 @@
   ],
   "successful_contexts": {
     "check_in_user_away": 3,
-    "proactive_thought_user_available": 3,
+    "proactive_thought_user_available": 2,
     "emotional_support_post_conversation": 1
   },
   "failed_contexts": {},
@@ -38,5 +38,5 @@
   "last_communication_time": "2025-07-18T15:16:27.296640",
   "current_context": "user_available",
   "user_availability_score": 1.0,
-  "last_save": "2025-07-18T15:16:29.490991"
+  "last_save": "2025-07-18T15:21:00.290158"
 }

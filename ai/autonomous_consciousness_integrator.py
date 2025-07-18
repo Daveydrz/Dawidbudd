@@ -198,7 +198,7 @@ class AutonomousConsciousnessIntegrator:
             self.calendar_monitor.record_interaction("conversation", {
                 'text': text,
                 'user_id': user_id,
-                'timestamp': current_time
+                'timestamp': current_time.isoformat()
             })
             
             # Check for autonomous response triggers

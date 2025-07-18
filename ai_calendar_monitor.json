@@ -1,6 +1,80 @@
 {
   "events": [],
   "patterns": [],
-  "interaction_history": [],
-  "last_save": "2025-07-18T15:17:05.209590"
+  "interaction_history": [
+    {
+      "type": "conversation",
+      "timestamp": "2025-07-18T15:19:35.738106",
+      "context": {
+        "text": "Hello, how are you?",
+        "user_id": "test_user",
+        "timestamp": "2025-07-18T15:19:35.738089"
+      },
+      "day_of_week": 4,
+      "hour": 15,
+      "minute": 19
+    },
+    {
+      "type": "voice_analysis",
+      "timestamp": "2025-07-18T15:20:00.283761",
+      "context": {
+        "stress_level": 0.3,
+        "energy_level": 0.5,
+        "emotional_indicators": [],
+        "text": "Hello, how are you doing?"
+      },
+      "day_of_week": 4,
+      "hour": 15,
+      "minute": 20
+    },
+    {
+      "type": "conversation",
+      "timestamp": "2025-07-18T15:20:00.283768",
+      "context": {
+        "text": "Hello, how are you doing?",
+        "user_id": "test_user",
+        "timestamp": "2025-07-18T15:20:00.283697"
+      },
+      "day_of_week": 4,
+      "hour": 15,
+      "minute": 20
+    },
+    {
+      "type": "conversation",
+      "timestamp": "2025-07-18T15:20:25.290513",
+      "context": {
+        "text": "Test interaction at 10.0s",
+        "user_id": "test_user",
+        "timestamp": "2025-07-18T15:20:25.290488"
+      },
+      "day_of_week": 4,
+      "hour": 15,
+      "minute": 20
+    },
+    {
+      "type": "conversation",
+      "timestamp": "2025-07-18T15:20:35.291093",
+      "context": {
+        "text": "Test interaction at 20.0s",
+        "user_id": "test_user",
+        "timestamp": "2025-07-18T15:20:35.291077"
+      },
+      "day_of_week": 4,
+      "hour": 15,
+      "minute": 20
+    },
+    {
+      "type": "conversation",
+      "timestamp": "2025-07-18T15:20:45.291603",
+      "context": {
+        "text": "Test interaction at 30.0s",
+        "user_id": "test_user",
+        "timestamp": "2025-07-18T15:20:45.291588"
+      },
+      "day_of_week": 4,
+      "hour": 15,
+      "minute": 20
+    }
+  ],
+  "last_save": "2025-07-18T15:20:52.292269"
 }
