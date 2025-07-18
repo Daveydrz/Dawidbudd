@@ -219,9 +219,10 @@ class AutonomousConsciousnessIntegrator:
         ]
         
         for module in modules:
-            # Register consciousness modules
-            for name, consciousness_module in self.consciousness_modules.items():
-                module.register_consciousness_module(name, consciousness_module)
+            # Register consciousness modules (if available)
+            if self.consciousness_modules:
+                for name, consciousness_module in self.consciousness_modules.items():
+                    module.register_consciousness_module(name, consciousness_module)
             
             # Register voice system
             if self.voice_system:

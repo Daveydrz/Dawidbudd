@@ -339,10 +339,16 @@ class EnvironmentalAwarenessModule:
             if hasattr(audio_data, '__len__') and len(audio_data) > 0:
                 pitch_data = self._extract_pitch(audio_data)
                 if NUMPY_AVAILABLE:
-                    volume_level = float(np.mean(np.abs(audio_data)))
+                    # Ensure we have a numpy array and it's not empty
+                    if not isinstance(audio_data, np.ndarray):
+                        audio_data = np.array(audio_data)
+                    if len(audio_data) > 0:
+                        volume_level = float(np.mean(np.abs(audio_data)))
+                    else:
+                        volume_level = 0.5
                 else:
                     # Simple volume calculation without numpy
-                    volume_level = sum(abs(x) for x in audio_data) / len(audio_data) if audio_data else 0.5
+                    volume_level = sum(abs(x) for x in audio_data) / len(audio_data) if (audio_data is not None and len(audio_data) > 0) else 0.5
             else:
                 pitch_data = []
                 volume_level = 0.5
@@ -357,7 +363,7 @@ class EnvironmentalAwarenessModule:
             
             # Estimate speaking pace (words per minute)
             word_count = len(text.split())
-            audio_duration = len(audio_data) / 16000 if audio_data and hasattr(audio_data, '__len__') else 1.0
+            audio_duration = len(audio_data) / 16000 if (audio_data is not None and hasattr(audio_data, '__len__') and len(audio_data) > 0) else 1.0
             pace_wpm = (word_count / max(audio_duration, 0.1)) * 60 if audio_duration > 0 else 150.0
             
             # Detect emotional indicators
@@ -444,7 +450,7 @@ class EnvironmentalAwarenessModule:
                     max_period = 200  # ~80Hz at 16kHz
                     
                     search_range = autocorr[min_period:max_period]
-                    if len(search_range) > 0:
+                    if len(search_range) > 0 and np.any(search_range):
                         peak_idx = np.argmax(search_range) + min_period
                         pitch = 16000 / peak_idx  # Convert to Hz
                         return [float(pitch)]
