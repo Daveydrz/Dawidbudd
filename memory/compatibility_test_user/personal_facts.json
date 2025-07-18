@@ -1,0 +1,14 @@
+{
+  "preferences_favorite_color": {
+    "category": "preferences",
+    "key": "favorite_color",
+    "value": "blue",
+    "confidence": 0.9,
+    "date_learned": "2025-07-18 06:24:40",
+    "last_mentioned": "2025-07-18 06:24:40",
+    "source_context": "User mentioned loving blue",
+    "emotional_weight": 0.3,
+    "current_status": "current",
+    "related_entities": []
+  }
+}
