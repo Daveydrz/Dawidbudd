@@ -552,7 +552,7 @@ def get_user_belief_summary(user: str) -> Dict[str, Any]:
     """Get belief summary for a user"""
     return belief_analyzer.get_belief_summary_for_user(user)
 
-def get_active_belief_contradictions() -> List[Dict[str, Any]]:
+def get_active_belief_contradictions(user_id: str = None) -> List[Dict[str, Any]]:
     """Get all active contradictions"""
     contradictions = belief_analyzer.get_active_contradictions()
     return [

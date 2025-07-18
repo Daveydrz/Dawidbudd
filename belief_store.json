@@ -1,29 +1,48 @@
 {
   "beliefs": [
     {
-      "id": "belief_1752833366271_0",
-      "content": "what artificial intelligence?",
-      "belief_type": "BeliefType.FACTUAL",
+      "id": "belief_1752835244439_0",
+      "content": "change the world",
+      "belief_type": "BeliefType.PERSONAL",
       "certainty": "BeliefCertainty.MODERATE",
       "source": "text_extraction",
-      "timestamp": "2025-07-18T10:09:26.271678",
-      "user": "e2e_test",
+      "timestamp": "2025-07-18T10:40:44.439574",
+      "user": "test_user",
       "context": {},
       "supporting_evidence": [
-        "What is artificial intelligence?"
+        "I believe AI will change the world"
       ],
       "contradictions": [],
       "confidence_score": 0.6,
-      "last_confirmed": "2025-07-18T10:09:26.271688",
+      "last_confirmed": "2025-07-18T10:40:44.439583",
       "tags": [
-        "factual"
+        "personal"
+      ]
+    },
+    {
+      "id": "belief_1752835244439_1",
+      "content": "ai will change the world",
+      "belief_type": "BeliefType.OPINION",
+      "certainty": "BeliefCertainty.MODERATE",
+      "source": "text_extraction",
+      "timestamp": "2025-07-18T10:40:44.439995",
+      "user": "test_user",
+      "context": {},
+      "supporting_evidence": [
+        "I believe AI will change the world"
+      ],
+      "contradictions": [],
+      "confidence_score": 0.7,
+      "last_confirmed": "2025-07-18T10:40:44.440003",
+      "tags": [
+        "opinion"
       ]
     }
   ],
   "contradictions": [],
-  "last_updated": "2025-07-18T10:09:26.271773",
+  "last_updated": "2025-07-18T10:40:44.440444",
   "metadata": {
-    "total_beliefs": 1,
+    "total_beliefs": 2,
     "total_contradictions": 0,
     "unresolved_contradictions": 0
   }

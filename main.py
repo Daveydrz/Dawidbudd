@@ -110,7 +110,11 @@ try:
     from ai.self_model_updater import SelfModelUpdater
     from ai.goal_reasoning import GoalReasoning
     from ai.motivation_reasoner import MotivationReasoner
+    from ai.cognitive_integration import cognitive_integrator
+    from ai.cognitive_debug_logger import cognitive_debug_logger
     print("[Main] 🧠 All self-awareness components loaded")
+    print("[Main] 🚀 Cognitive integrator loaded")
+    print("[Main] 📊 Cognitive debug logger loaded")
     SELF_AWARENESS_COMPONENTS_AVAILABLE = True
 except ImportError as e:
     print(f"[Main] ⚠️ Self-awareness components not available: {e}")
@@ -556,6 +560,21 @@ def get_mic_feeding_state():
 def handle_streaming_response(text, current_user):
     """✅ ENHANCED: Smart streaming with ADVANCED AI ASSISTANT features + VOICE-BASED IDENTITY + FULL CONSCIOUSNESS"""
     print(f"🚨🚨🚨 [CRITICAL_DEBUG] handle_streaming_response called with text='{text}', user='{current_user}' 🚨🚨🚨")
+    
+    # ✅ NEW: Start cognitive debug logging
+    interaction_id = None
+    start_time = time.time()
+    if SELF_AWARENESS_COMPONENTS_AVAILABLE:
+        try:
+            interaction_id = cognitive_debug_logger.start_interaction(text, current_user)
+            cognitive_debug_logger.log_processing_stage("input_processing", "Starting response generation", {
+                "input_length": len(text),
+                "user_id": current_user,
+                "timestamp": datetime.now().isoformat()
+            })
+        except Exception as debug_error:
+            print(f"[AdvancedResponse] ⚠️ Debug logging error: {debug_error}")
+    
     try:
         print(f"[AdvancedResponse] 🎭 Starting ADVANCED AI streaming for: '{text}'")
         
@@ -637,6 +656,8 @@ def handle_streaming_response(text, current_user):
         
         # ✅ CONSCIOUSNESS INTEGRATION: Initialize consciousness state
         consciousness_state = {}
+        cognitive_prompt_injection = {}
+        
         if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
             try:
                 consciousness_state = _integrate_consciousness_with_response(text, current_user)
@@ -644,6 +665,56 @@ def handle_streaming_response(text, current_user):
                       f"satisfaction={consciousness_state.get('motivation_satisfaction', 0):.2f}")
             except Exception as consciousness_error:
                 print(f"[AdvancedResponse] ⚠️ Consciousness integration error: {consciousness_error}")
+        
+        # ✅ NEW: Cognitive integration for real-time state injection
+        if SELF_AWARENESS_COMPONENTS_AVAILABLE:
+            try:
+                cognitive_start_time = time.time()
+                cognitive_prompt_injection = cognitive_integrator.process_user_input(text, current_user)
+                cognitive_processing_time = time.time() - cognitive_start_time
+                
+                print(f"[AdvancedResponse] 🧠 Cognitive state integrated: {len(cognitive_prompt_injection)} keys")
+                
+                # Log cognitive module usage
+                if interaction_id:
+                    cognitive_debug_logger.log_cognitive_module_usage(
+                        "cognitive_integrator",
+                        {"text": text, "user": current_user},
+                        cognitive_prompt_injection,
+                        cognitive_processing_time
+                    )
+                    
+                    # Log prompt modifications if cognitive data was injected
+                    if cognitive_prompt_injection and "cognitive_state" in cognitive_prompt_injection:
+                        cognitive_debug_logger.log_prompt_modification(
+                            "consciousness_injection",
+                            len(text),
+                            len(text) + len(str(cognitive_prompt_injection)),
+                            cognitive_prompt_injection.get("cognitive_state", {})
+                        )
+                
+                # Check if Buddy should express internal state
+                should_express, expression = cognitive_integrator.should_express_internal_state()
+                if should_express and expression:
+                    print(f"[AdvancedResponse] 💭 Internal state expression: {expression[:50]}...")
+                    
+                    # Log internal state expression
+                    if interaction_id:
+                        cognitive_debug_logger.log_consciousness_event(
+                            "internal_state_expression",
+                            "Buddy expressing internal thoughts/feelings",
+                            {"expression": expression[:100], "trigger": "cognitive_state_check"}
+                        )
+                        cognitive_debug_logger.finish_interaction(expression, time.time() - start_time)
+                    
+                    speak_streaming(expression)
+                    return  # Express internal state instead of regular response
+                    
+            except Exception as cognitive_error:
+                print(f"[AdvancedResponse] ⚠️ Cognitive integration error: {cognitive_error}")
+                if interaction_id:
+                    cognitive_debug_logger.log_error("cognitive_integration", str(cognitive_error))
+                cognitive_prompt_injection = {}
         
         # ✅ ENTROPY INTEGRATION: Process emotional context
         emotional_context = {}
@@ -930,11 +1001,37 @@ def handle_streaming_response(text, current_user):
                     except Exception as consciousness_finalize_error:
                         print(f"[AdvancedResponse] ⚠️ Consciousness finalization error: {consciousness_finalize_error}")
                 
+                # ✅ NEW: Finalize debug logging
+                if interaction_id and SELF_AWARENESS_COMPONENTS_AVAILABLE:
+                    try:
+                        total_time = time.time() - start_time
+                        cognitive_debug_logger.log_performance_metric("total_response_time", total_time, "seconds")
+                        cognitive_debug_logger.log_performance_metric("chunk_count", chunk_count, "chunks")
+                        
+                        # Log response modulations that were applied
+                        if cognitive_prompt_injection.get("response_modulation"):
+                            cognitive_debug_logger.log_response_modulation(
+                                "cognitive_modulation",
+                                cognitive_prompt_injection["response_modulation"],
+                                ["consciousness_integration", "emotional_modulation"]
+                            )
+                        
+                        cognitive_debug_logger.finish_interaction(full_response.strip(), total_time)
+                        print(f"[AdvancedResponse] 📊 Debug logged: {total_time:.3f}s, {chunk_count} chunks")
+                    except Exception as debug_final_error:
+                        print(f"[AdvancedResponse] ⚠️ Debug finalization error: {debug_final_error}")
+                
             else:
                 print("[AdvancedResponse] ❌ No response generated")
+                if interaction_id and SELF_AWARENESS_COMPONENTS_AVAILABLE:
+                    cognitive_debug_logger.log_error("response_generation", "No response generated")
+                    cognitive_debug_logger.finish_interaction("", time.time() - start_time)
                 speak_streaming("I'm sorry, I didn't generate a proper response.")
         else:
             print("[AdvancedResponse] ⚡ Response was INTERRUPTED - skipping completion")
+            if interaction_id and SELF_AWARENESS_COMPONENTS_AVAILABLE:
+                cognitive_debug_logger.log_consciousness_event("response_interrupted", "Response generation was interrupted")
+                cognitive_debug_logger.finish_interaction("[INTERRUPTED]", time.time() - start_time)
             
             # ✅ CRITICAL: Emergency cleanup after interrupt
             try:
@@ -2231,6 +2328,14 @@ def main():
             
             # Initial consciousness state setup
             _initialize_consciousness_state(current_user)
+            
+            # ✅ NEW: Start cognitive integrator
+            if SELF_AWARENESS_COMPONENTS_AVAILABLE:
+                try:
+                    cognitive_integrator.start()
+                    print("[AdvancedBuddy] 🚀 Cognitive integrator started - real-time consciousness integration active")
+                except Exception as e:
+                    print(f"[AdvancedBuddy] ❌ Cognitive integrator startup error: {e}")
             
         except Exception as e:
             print(f"[AdvancedBuddy] ❌ Consciousness initialization error: {e}")

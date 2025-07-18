@@ -365,6 +365,26 @@ class GlobalWorkspace:
             "module_activity": dict(self.module_activity),
             "attention_history_length": len(self.attention_history)
         }
+    
+    def get_processing_mode(self) -> str:
+        """Get current processing mode"""
+        if self.current_focus:
+            return self.current_focus.processing_mode.value
+        return ProcessingMode.UNCONSCIOUS.value
+    
+    def get_consciousness_state(self) -> Dict[str, Any]:
+        """Get current consciousness state from global workspace"""
+        with self.attention_lock:
+            current_focus = self.current_focus
+            return {
+                "attention_focus": current_focus.module if current_focus else None,
+                "processing_mode": current_focus.processing_mode.value if current_focus else ProcessingMode.UNCONSCIOUS.value,
+                "active_contents": len(self.working_memory),
+                "attention_priority": current_focus.priority.value if current_focus else "none",
+                "working_memory_keys": list(self.working_memory.keys()),
+                "attention_switches": self.attention_switches,
+                "is_conscious": current_focus.processing_mode == ProcessingMode.CONSCIOUS if current_focus else False
+            }
 
 # Global instance
 global_workspace = GlobalWorkspace()

@@ -202,6 +202,39 @@ class EmotionEngine:
             logging.error(f"[EmotionEngine] ❌ Error processing trigger: {e}")
             return self.current_emotion
     
+    def process_external_stimulus(self, stimulus: str, context: Dict[str, Any] = None) -> EmotionalState:
+        """
+        Process external stimulus and update emotional state (alias for process_emotional_trigger)
+        
+        Args:
+            stimulus: Description of external stimulus
+            context: Additional context about the stimulus
+            
+        Returns:
+            Updated emotional state
+        """
+        return self.process_emotional_trigger(stimulus, context)
+    
+    def get_current_state(self) -> Dict[str, Any]:
+        """
+        Get current emotional state as a dictionary
+        
+        Returns:
+            Dictionary containing current emotional state
+        """
+        with self.lock:
+            return {
+                "primary_emotion": self.current_emotion.primary_emotion.value,
+                "intensity": self.current_emotion.intensity,
+                "arousal": self.current_emotion.arousal,
+                "valence": self.current_emotion.valence,
+                "mood": self.current_mood.value,
+                "timestamp": self.current_emotion.timestamp.isoformat(),
+                "total_events": self.total_emotional_events,
+                "mood_changes": self.mood_changes,
+                "last_mood_change": self.last_mood_change.isoformat() if self.last_mood_change else None
+            }
+
     def get_emotional_modulation(self, content_type: str = "response") -> Dict[str, float]:
         """
         Get emotional modulation factors for response generation
