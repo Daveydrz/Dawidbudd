@@ -1,0 +1,26 @@
+{
+  "pet_adoption_1752819862": {
+    "event_type": "pet_adoption",
+    "description": "Got a new cat",
+    "entities_involved": [
+      "Fluffy"
+    ],
+    "emotional_impact": 0.8,
+    "date_occurred": "2025-07-18 06:24:22",
+    "date_learned": "2025-07-18 06:24:22",
+    "ongoing_effects": [],
+    "follow_up_contexts": []
+  },
+  "pet_adoption_1752819880": {
+    "event_type": "pet_adoption",
+    "description": "Got a new cat",
+    "entities_involved": [
+      "Fluffy"
+    ],
+    "emotional_impact": 0.8,
+    "date_occurred": "2025-07-18 06:24:40",
+    "date_learned": "2025-07-18 06:24:40",
+    "ongoing_effects": [],
+    "follow_up_contexts": []
+  }
+}
