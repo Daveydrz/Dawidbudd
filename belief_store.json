@@ -1,29 +1,88 @@
 {
   "beliefs": [
     {
-      "id": "belief_1752833366271_0",
-      "content": "what artificial intelligence?",
+      "id": "belief_1752834577147_0",
+      "content": "a software developer and i live in brisbane. i really like python programming.",
+      "belief_type": "BeliefType.PERSONAL",
+      "certainty": "BeliefCertainty.MODERATE",
+      "source": "text_extraction",
+      "timestamp": "2025-07-18T10:29:37.147643",
+      "user": "test_user",
+      "context": {},
+      "supporting_evidence": [
+        "I am a software developer and I live in Brisbane. I really like Python programming."
+      ],
+      "contradictions": [],
+      "confidence_score": 0.7,
+      "last_confirmed": "2025-07-18T10:29:37.147652",
+      "tags": [
+        "personal",
+        "location",
+        "technology"
+      ]
+    },
+    {
+      "id": "belief_1752834577147_1",
+      "content": "in brisbane. i really like python programming.",
+      "belief_type": "BeliefType.PERSONAL",
+      "certainty": "BeliefCertainty.MODERATE",
+      "source": "text_extraction",
+      "timestamp": "2025-07-18T10:29:37.147786",
+      "user": "test_user",
+      "context": {},
+      "supporting_evidence": [
+        "I am a software developer and I live in Brisbane. I really like Python programming."
+      ],
+      "contradictions": [],
+      "confidence_score": 0.7,
+      "last_confirmed": "2025-07-18T10:29:37.147793",
+      "tags": [
+        "personal"
+      ]
+    },
+    {
+      "id": "belief_1752834577525_0",
+      "content": "hello! how you?",
       "belief_type": "BeliefType.FACTUAL",
       "certainty": "BeliefCertainty.MODERATE",
       "source": "text_extraction",
-      "timestamp": "2025-07-18T10:09:26.271678",
-      "user": "e2e_test",
+      "timestamp": "2025-07-18T10:29:37.525842",
+      "user": "pipeline_test_user",
       "context": {},
       "supporting_evidence": [
-        "What is artificial intelligence?"
+        "Hello! How are you?"
       ],
       "contradictions": [],
       "confidence_score": 0.6,
-      "last_confirmed": "2025-07-18T10:09:26.271688",
+      "last_confirmed": "2025-07-18T10:29:37.525854",
+      "tags": [
+        "factual"
+      ]
+    },
+    {
+      "id": "belief_1752834577833_0",
+      "content": "thanks! that really helpful.",
+      "belief_type": "BeliefType.FACTUAL",
+      "certainty": "BeliefCertainty.MODERATE",
+      "source": "text_extraction",
+      "timestamp": "2025-07-18T10:29:37.833546",
+      "user": "pipeline_test_user",
+      "context": {},
+      "supporting_evidence": [
+        "Thanks! That was really helpful."
+      ],
+      "contradictions": [],
+      "confidence_score": 0.7,
+      "last_confirmed": "2025-07-18T10:29:37.833570",
       "tags": [
         "factual"
       ]
     }
   ],
   "contradictions": [],
-  "last_updated": "2025-07-18T10:09:26.271773",
+  "last_updated": "2025-07-18T10:29:37.833745",
   "metadata": {
-    "total_beliefs": 1,
+    "total_beliefs": 4,
     "total_contradictions": 0,
     "unresolved_contradictions": 0
   }

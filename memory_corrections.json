@@ -7,7 +7,7 @@
       "confidence": 0.9,
       "timestamp": "2025-07-18T09:59:41.400961",
       "belief_context": "test_user",
-      "frequency_count": 2
+      "frequency_count": 3
     }
   },
   "belief_contexts": {
@@ -79,5 +79,5 @@
     "write": "right",
     "wrote": "rote"
   },
-  "last_updated": "2025-07-18T10:00:46.384134"
+  "last_updated": "2025-07-18T10:29:46.980727"
 }

@@ -2,7 +2,7 @@
   "goals": [
     {
       "goal_id": "emotion_curiosity_0",
-      "description": "Understand the nuances of learning context",
+      "description": "Learn more about learning",
       "goal_type": "GoalType.SHORT_TERM",
       "priority": "GoalPriority.MEDIUM",
       "source": "GoalSource.EMOTION_DRIVEN",
@@ -20,8 +20,8 @@
         "curiosity"
       ],
       "value_alignment": {},
-      "creation_timestamp": "2025-07-18T10:00:46.532918",
-      "target_completion": "2025-07-19T10:00:46.532925",
+      "creation_timestamp": "2025-07-18T10:29:47.142895",
+      "target_completion": "2025-07-19T10:29:47.142899",
       "progress": 0.0,
       "active": true,
       "completion_actions": [],
@@ -30,7 +30,7 @@
     },
     {
       "goal_id": "belief_knowledge_belief_0",
-      "description": "Expand knowledge in learning context",
+      "description": "Validate understanding of learning",
       "goal_type": "GoalType.LONG_TERM",
       "priority": "GoalPriority.MEDIUM",
       "source": "GoalSource.BELIEF_DRIVEN",
@@ -47,8 +47,8 @@
       ],
       "emotional_drivers": [],
       "value_alignment": {},
-      "creation_timestamp": "2025-07-18T10:00:46.532958",
-      "target_completion": "2025-07-25T10:00:46.532960",
+      "creation_timestamp": "2025-07-18T10:29:47.142923",
+      "target_completion": "2025-07-25T10:29:47.142925",
       "progress": 0.0,
       "active": true,
       "completion_actions": [],
@@ -57,7 +57,7 @@
     },
     {
       "goal_id": "value_learning_0",
-      "description": "Continuously improve understanding",
+      "description": "Learn from every interaction",
       "goal_type": "GoalType.ASPIRATIONAL",
       "priority": "GoalPriority.MEDIUM",
       "source": "GoalSource.VALUE_DRIVEN",
@@ -66,17 +66,17 @@
         "strength: 0.9"
       ],
       "success_criteria": [
-        "Show measurable improvement",
-        "Receive positive feedback",
-        "Increase confidence"
+        "Acquire new knowledge",
+        "Demonstrate understanding",
+        "Apply learning effectively"
       ],
       "related_beliefs": [],
       "emotional_drivers": [],
       "value_alignment": {
         "learning": 0.9
       },
-      "creation_timestamp": "2025-07-18T10:00:46.532977",
-      "target_completion": "2025-08-17T10:00:46.532978",
+      "creation_timestamp": "2025-07-18T10:29:47.142941",
+      "target_completion": "2025-08-17T10:29:47.142942",
       "progress": 0.0,
       "active": true,
       "completion_actions": [],
@@ -84,6 +84,6 @@
       "context": "learning context"
     }
   ],
-  "last_updated": "2025-07-18T10:00:46.533065",
+  "last_updated": "2025-07-18T10:29:47.143025",
   "total_goals": 3
 }
