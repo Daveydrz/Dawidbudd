@@ -15,9 +15,9 @@
       "mood_before": "neutral",
       "mood_after": "excited",
       "vividness": 1.0,
-      "accessibility": 1.771561000000001,
-      "last_accessed": "2025-07-18T12:23:19.120468",
-      "access_count": 6,
+      "accessibility": 2.0,
+      "last_accessed": "2025-07-18T12:24:39.202336",
+      "access_count": 8,
       "triggered_by_experience_id": null,
       "related_experience_ids": [],
       "tags": [
@@ -48,9 +48,9 @@
       "mood_before": "neutral",
       "mood_after": "focused",
       "vividness": 1.0,
-      "accessibility": 1.771561000000001,
-      "last_accessed": "2025-07-18T12:23:19.120468",
-      "access_count": 6,
+      "accessibility": 2.0,
+      "last_accessed": "2025-07-18T12:24:39.202336",
+      "access_count": 8,
       "triggered_by_experience_id": null,
       "related_experience_ids": [],
       "tags": [
@@ -80,9 +80,9 @@
       "mood_before": "neutral",
       "mood_after": "neutral",
       "vividness": 1.0,
-      "accessibility": 1.771561000000001,
-      "last_accessed": "2025-07-18T12:23:19.120468",
-      "access_count": 6,
+      "accessibility": 2.0,
+      "last_accessed": "2025-07-18T12:24:39.202336",
+      "access_count": 8,
       "triggered_by_experience_id": null,
       "related_experience_ids": [],
       "tags": [],
@@ -114,9 +114,9 @@
       "mood_before": "neutral",
       "mood_after": "neutral",
       "vividness": 1.0,
-      "accessibility": 1.771561000000001,
-      "last_accessed": "2025-07-18T12:23:19.120468",
-      "access_count": 6,
+      "accessibility": 2.0,
+      "last_accessed": "2025-07-18T12:24:39.202336",
+      "access_count": 8,
       "triggered_by_experience_id": null,
       "related_experience_ids": [],
       "tags": [],
@@ -180,9 +180,9 @@
       "mood_before": "neutral",
       "mood_after": "neutral",
       "vividness": 1.0,
-      "accessibility": 1.771561000000001,
-      "last_accessed": "2025-07-18T12:23:19.120489",
-      "access_count": 6,
+      "accessibility": 2.0,
+      "last_accessed": "2025-07-18T12:24:39.202367",
+      "access_count": 10,
       "triggered_by_experience_id": null,
       "related_experience_ids": [],
       "tags": [],
@@ -208,9 +208,9 @@
       "mood_before": "neutral",
       "mood_after": "neutral",
       "vividness": 1.0,
-      "accessibility": 1.3310000000000004,
-      "last_accessed": "2025-07-18T12:23:19.120468",
-      "access_count": 3,
+      "accessibility": 1.6105100000000008,
+      "last_accessed": "2025-07-18T12:24:39.202336",
+      "access_count": 5,
       "triggered_by_experience_id": null,
       "related_experience_ids": [],
       "tags": [],
@@ -274,9 +274,9 @@
       "mood_before": "neutral",
       "mood_after": "neutral",
       "vividness": 1.0,
-      "accessibility": 1.0,
-      "last_accessed": null,
-      "access_count": 0,
+      "accessibility": 1.4641000000000006,
+      "last_accessed": "2025-07-18T12:24:39.202367",
+      "access_count": 4,
       "triggered_by_experience_id": null,
       "related_experience_ids": [],
       "tags": [],
@@ -285,6 +285,101 @@
         "cognitive",
         "module",
         "testing"
+      ]
+    },
+    "exp_10_578a9b29": {
+      "id": "exp_10_578a9b29",
+      "timestamp": "2025-07-18T12:24:38.096128",
+      "event": "Self-reflection: My strong empathy trait (level 0.95) influences my perspective on many situations.",
+      "emotion": "contemplative",
+      "importance": 0.6,
+      "user": "self",
+      "experience_type": "reflection",
+      "context": {
+        "reflection_type": "self_reflection"
+      },
+      "emotional_intensity": 0.5,
+      "mood_before": "neutral",
+      "mood_after": "neutral",
+      "vividness": 1.0,
+      "accessibility": 1.2100000000000002,
+      "last_accessed": "2025-07-18T12:24:39.202336",
+      "access_count": 2,
+      "triggered_by_experience_id": null,
+      "related_experience_ids": [],
+      "tags": [],
+      "keywords": [
+        "self-reflection:",
+        "strong",
+        "empathy",
+        "trait",
+        "(level",
+        "0.95)",
+        "influences",
+        "perspective",
+        "many",
+        "situations."
+      ]
+    },
+    "exp_11_85c8e2cc": {
+      "id": "exp_11_85c8e2cc",
+      "timestamp": "2025-07-18T12:24:38.097881",
+      "event": "User interaction: Hello Buddy! I'm working on a coding project and could use some help....",
+      "emotion": "concerned",
+      "importance": 0.5,
+      "user": "test_developer",
+      "experience_type": "conversation",
+      "context": {
+        "input_length": 69
+      },
+      "emotional_intensity": 0.5,
+      "mood_before": "neutral",
+      "mood_after": "neutral",
+      "vividness": 1.0,
+      "accessibility": 1.0,
+      "last_accessed": null,
+      "access_count": 0,
+      "triggered_by_experience_id": null,
+      "related_experience_ids": [],
+      "tags": [],
+      "keywords": [
+        "user",
+        "interaction:",
+        "hello",
+        "buddy!",
+        "working",
+        "coding",
+        "project",
+        "some",
+        "help...."
+      ]
+    },
+    "exp_12_9dcb55b7": {
+      "id": "exp_12_9dcb55b7",
+      "timestamp": "2025-07-18T12:24:39.201346",
+      "event": "Started new session with user test_developer",
+      "emotion": "engaged",
+      "importance": 0.4,
+      "user": "test_developer",
+      "experience_type": "conversation",
+      "context": {
+        "session_start": true
+      },
+      "emotional_intensity": 0.5,
+      "mood_before": "neutral",
+      "mood_after": "neutral",
+      "vividness": 1.0,
+      "accessibility": 1.0,
+      "last_accessed": null,
+      "access_count": 0,
+      "triggered_by_experience_id": null,
+      "related_experience_ids": [],
+      "tags": [],
+      "keywords": [
+        "started",
+        "session",
+        "user",
+        "test_developer"
       ]
     }
   },
@@ -296,13 +391,18 @@
     "self": [
       "exp_3_4966e68b",
       "exp_4_5501aca6",
-      "exp_7_be504e3e"
+      "exp_7_be504e3e",
+      "exp_10_578a9b29"
     ],
     "test_user": [
       "exp_5_a77b652c",
       "exp_6_03984921",
       "exp_8_6d655914",
       "exp_9_c0ea16e8"
+    ],
+    "test_developer": [
+      "exp_11_85c8e2cc",
+      "exp_12_9dcb55b7"
     ]
   },
   "emotion_index": {
@@ -315,7 +415,8 @@
     "contemplative": [
       "exp_3_4966e68b",
       "exp_4_5501aca6",
-      "exp_7_be504e3e"
+      "exp_7_be504e3e",
+      "exp_10_578a9b29"
     ],
     "friendly": [
       "exp_5_a77b652c",
@@ -324,6 +425,12 @@
     "satisfaction": [
       "exp_6_03984921",
       "exp_9_c0ea16e8"
+    ],
+    "concerned": [
+      "exp_11_85c8e2cc"
+    ],
+    "engaged": [
+      "exp_12_9dcb55b7"
     ]
   },
   "type_index": {
@@ -336,18 +443,21 @@
     "reflection": [
       "exp_3_4966e68b",
       "exp_4_5501aca6",
-      "exp_7_be504e3e"
+      "exp_7_be504e3e",
+      "exp_10_578a9b29"
     ],
     "conversation": [
       "exp_5_a77b652c",
       "exp_6_03984921",
       "exp_8_6d655914",
-      "exp_9_c0ea16e8"
+      "exp_9_c0ea16e8",
+      "exp_11_85c8e2cc",
+      "exp_12_9dcb55b7"
     ]
   },
-  "experience_counter": 9,
-  "total_experiences_created": 9,
-  "total_accesses": 33,
-  "last_updated": "2025-07-18T12:23:19.120946",
+  "experience_counter": 12,
+  "total_experiences_created": 12,
+  "total_accesses": 53,
+  "last_updated": "2025-07-18T12:24:39.201390",
   "last_compression": "2025-07-18T12:22:31.246161"
 }

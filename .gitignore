@@ -35,3 +35,7 @@ security_events.log
 *.tmp
 *.temp
 /tmp/
+
+# Cognitive modules data files (contain personal/session data)
+cognitive_modules/data/
+!cognitive_modules/data/.gitkeep
