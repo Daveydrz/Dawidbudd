@@ -1,10 +1,10 @@
 {
   "current_emotion": {
     "primary_emotion": "contentment",
-    "intensity": 0.173625106649344,
-    "arousal": 0.3834723324718652,
-    "valence": 0.09916617201062891,
-    "timestamp": "2025-07-17T20:29:53.703993"
+    "intensity": 0.10236921925630303,
+    "arousal": 0.3898880985550971,
+    "valence": 0.06067147540614555,
+    "timestamp": "2025-07-18T08:23:53.252290"
   },
   "current_mood": "neutral",
   "physiological": {
@@ -87,7 +87,7 @@
         0.36
       ],
       "confidence": 1.0,
-      "occurrences": 31
+      "occurrences": 32
     },
     "said:": {
       "trigger_pattern": "said:",
@@ -167,7 +167,7 @@
         0.432
       ],
       "confidence": 0.5,
-      "occurrences": 2
+      "occurrences": 3
     },
     "great.": {
       "trigger_pattern": "great.",
@@ -407,7 +407,7 @@
         0.432
       ],
       "confidence": 0.3,
-      "occurrences": 2
+      "occurrences": 3
     },
     "cooking.": {
       "trigger_pattern": "cooking.",
@@ -1288,12 +1288,82 @@
       ],
       "confidence": 0.3,
       "occurrences": 0
+    },
+    "helping": {
+      "trigger_pattern": "helping",
+      "typical_response": "contentment",
+      "intensity_range": [
+        0.046677792448653305,
+        0.07001668867297996
+      ],
+      "confidence": 0.3,
+      "occurrences": 0
+    },
+    "understand": {
+      "trigger_pattern": "understand",
+      "typical_response": "contentment",
+      "intensity_range": [
+        0.046677792448653305,
+        0.07001668867297996
+      ],
+      "confidence": 0.3,
+      "occurrences": 0
+    },
+    "complex": {
+      "trigger_pattern": "complex",
+      "typical_response": "contentment",
+      "intensity_range": [
+        0.046677792448653305,
+        0.07001668867297996
+      ],
+      "confidence": 0.3,
+      "occurrences": 0
+    },
+    "concepts": {
+      "trigger_pattern": "concepts",
+      "typical_response": "contentment",
+      "intensity_range": [
+        0.046677792448653305,
+        0.07001668867297996
+      ],
+      "confidence": 0.3,
+      "occurrences": 0
+    },
+    "curious": {
+      "trigger_pattern": "curious",
+      "typical_response": "contentment",
+      "intensity_range": [
+        0.046677792448653305,
+        0.07001668867297996
+      ],
+      "confidence": 0.3,
+      "occurrences": 0
+    },
+    "their": {
+      "trigger_pattern": "their",
+      "typical_response": "contentment",
+      "intensity_range": [
+        0.046677792448653305,
+        0.07001668867297996
+      ],
+      "confidence": 0.3,
+      "occurrences": 0
+    },
+    "perspective": {
+      "trigger_pattern": "perspective",
+      "typical_response": "contentment",
+      "intensity_range": [
+        0.046677792448653305,
+        0.07001668867297996
+      ],
+      "confidence": 0.3,
+      "occurrences": 0
     }
   },
   "metrics": {
-    "total_emotional_events": 45,
+    "total_emotional_events": 46,
     "mood_changes": 4,
     "memory_count": 1
   },
-  "last_updated": "2025-07-17T20:35:00.720002"
+  "last_updated": "2025-07-18T08:24:08.254818"
 }
