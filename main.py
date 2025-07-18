@@ -2623,6 +2623,14 @@ def main():
                     print("[AdvancedBuddy] 🛑 Stopping microphone worker...")
                     set_mic_feeding_state(False)
                     set_conversation_state(False)
+                    
+                    # Reset voice detection system for next conversation
+                    try:
+                        full_duplex_manager.reset_conversation_session()
+                        print("[AdvancedBuddy] ✅ Voice detection system reset for next session")
+                    except Exception as e:
+                        print(f"[AdvancedBuddy] ⚠️ Could not reset voice system: {e}")
+                    
                     mic_thread.join(timeout=3.0)
                     
                     print(f"[AdvancedBuddy] 👂 Ready! Say '{wake_word}' to start...")

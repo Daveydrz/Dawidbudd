@@ -202,17 +202,23 @@ class EmotionEngine:
             logging.error(f"[EmotionEngine] ❌ Error processing trigger: {e}")
             return self.current_emotion
     
-    def process_external_stimulus(self, stimulus: str, context: Dict[str, Any] = None) -> EmotionalState:
+    def process_external_stimulus(self, stimulus: str, context: Dict[str, Any] = None, intensity: float = 0.5) -> EmotionalState:
         """
         Process external stimulus and update emotional state (alias for process_emotional_trigger)
         
         Args:
             stimulus: Description of external stimulus
             context: Additional context about the stimulus
+            intensity: Intensity of the stimulus (0.0 to 1.0), defaults to 0.5
             
         Returns:
             Updated emotional state
         """
+        # Add intensity to context if provided
+        if context is None:
+            context = {}
+        context['intensity'] = intensity
+        
         return self.process_emotional_trigger(stimulus, context)
     
     def get_current_state(self) -> Dict[str, Any]:

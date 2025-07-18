@@ -643,6 +643,34 @@ class FullDuplexManager:
             
         except Exception as e:
             print(f"[FullDuplex] Force reset error: {e}")
+    
+    def reset_conversation_session(self):
+        """Reset voice detection system between conversations to prevent stuck states"""
+        try:
+            # Reset conversation state
+            self.force_reset_to_waiting()
+            
+            # Reset voice analyzer state if available
+            try:
+                from audio.voice_analyzer import voice_analyzer
+                voice_analyzer.reset_conversation_state()
+                print("[FullDuplex] ✅ Voice analyzer state reset")
+            except Exception as e:
+                print(f"[FullDuplex] ⚠️ Could not reset voice analyzer: {e}")
+                
+            # Reset smart detection if available
+            try:
+                from audio.smart_detection_manager import smart_detector
+                if hasattr(smart_detector, 'reset_session'):
+                    smart_detector.reset_session()
+                    print("[FullDuplex] ✅ Smart detection state reset")
+            except Exception as e:
+                print(f"[FullDuplex] ⚠️ Could not reset smart detection: {e}")
+                
+            print("[FullDuplex] 🔄 Full conversation session reset complete")
+            
+        except Exception as e:
+            print(f"[FullDuplex] ❌ Session reset error: {e}")
 
     def _noise_tracker(self):
         """Track noise levels"""
