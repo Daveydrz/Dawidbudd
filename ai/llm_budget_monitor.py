@@ -428,8 +428,21 @@ def get_budget_status() -> Dict[str, Any]:
     return budget_monitor.get_current_budget_status()
 
 def estimate_tokens_from_text(text: str) -> int:
-    """Rough estimation of tokens from text (approximately 4 chars per token)"""
-    return max(1, len(text) // 4)
+    """
+    Rough estimation of tokens from text
+    Delegates to dedicated token_budget module for better accuracy
+    """
+    try:
+        # Use dedicated token budget module for better accuracy
+        from ai.token_budget import estimate_tokens_from_text as dedicated_estimate
+        return dedicated_estimate(text)
+        
+    except ImportError:
+        # Fallback to original simple estimation
+        return max(1, len(text) // 4)
+    except Exception as e:
+        print(f"[LLMBudgetMonitor] ❌ Error using dedicated token estimator: {e}")
+        return max(1, len(text) // 4)
 
 if __name__ == "__main__":
     # Test the budget monitor

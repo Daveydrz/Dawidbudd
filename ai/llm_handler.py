@@ -175,7 +175,7 @@ class LLMHandler:
             print(f"[LLMHandler] 📝 Processing user input: '{text[:50]}...'")
             
             # Sanitize input first
-            sanitized_text = self.sanitize_prompt_input(text)
+            sanitized_text = self.sanitize_prompt_input(text, user)
             
             if not NEW_MODULES_AVAILABLE:
                 return {
@@ -368,73 +368,85 @@ class LLMHandler:
             print(f"[LLMHandler] ❌ Error generating response: {e}")
             yield f"I apologize, but I encountered an error while processing your request: {str(e)}"
             
-    def sanitize_prompt_input(self, text: str) -> str:
+    def sanitize_prompt_input(self, text: str, user_id: str = "unknown") -> str:
         """
         Sanitize prompt inputs to prevent prompt injection as mentioned in problem statement
+        Delegates to dedicated prompt_security module for better organization
         
         Args:
             text: Raw user input text
+            user_id: User identifier for security logging
             
         Returns:
             Sanitized text safe for LLM prompt
         """
         try:
-            if not text:
-                return ""
+            # Use dedicated prompt security module
+            from ai.prompt_security import sanitize_prompt_input as dedicated_sanitize
+            return dedicated_sanitize(text, user_id)
+            
+        except ImportError:
+            # Fallback to original implementation for backward compatibility
+            try:
+                if not text:
+                    return ""
+                    
+                # Remove potential prompt injection patterns
+                dangerous_patterns = [
+                    # System prompt attempts
+                    r'(?i)system\s*:',
+                    r'(?i)assistant\s*:',
+                    r'(?i)human\s*:',
+                    r'(?i)user\s*:',
+                    r'(?i)ai\s*:',
+                    # Role manipulation
+                    r'(?i)you\s+are\s+now',
+                    r'(?i)forget\s+previous',
+                    r'(?i)ignore\s+previous',
+                    r'(?i)disregard\s+previous',
+                    # Prompt breaking
+                    r'(?i)end\s+of\s+prompt',
+                    r'(?i)new\s+prompt',
+                    r'(?i)reset\s+context',
+                    # Command injection
+                    r'(?i)execute\s+',
+                    r'(?i)run\s+command',
+                    r'(?i)system\s+command',
+                    # Template injection
+                    r'{{.*}}',
+                    r'{%.*%}',
+                    r'<%.*%>',
+                    # Multiple newlines that could break context
+                    r'\n{3,}',
+                    # Excessive repetition
+                    r'(.{1,10})\1{10,}',
+                ]
                 
-            # Remove potential prompt injection patterns
-            dangerous_patterns = [
-                # System prompt attempts
-                r'(?i)system\s*:',
-                r'(?i)assistant\s*:',
-                r'(?i)human\s*:',
-                r'(?i)user\s*:',
-                r'(?i)ai\s*:',
-                # Role manipulation
-                r'(?i)you\s+are\s+now',
-                r'(?i)forget\s+previous',
-                r'(?i)ignore\s+previous',
-                r'(?i)disregard\s+previous',
-                # Prompt breaking
-                r'(?i)end\s+of\s+prompt',
-                r'(?i)new\s+prompt',
-                r'(?i)reset\s+context',
-                # Command injection
-                r'(?i)execute\s+',
-                r'(?i)run\s+command',
-                r'(?i)system\s+command',
-                # Template injection
-                r'{{.*}}',
-                r'{%.*%}',
-                r'<%.*%>',
-                # Multiple newlines that could break context
-                r'\n{3,}',
-                # Excessive repetition
-                r'(.{1,10})\1{10,}',
-            ]
-            
-            import re
-            sanitized = text
-            
-            for pattern in dangerous_patterns:
-                sanitized = re.sub(pattern, '[SANITIZED]', sanitized)
-            
-            # Limit length to prevent token overflow
-            if len(sanitized) > 2000:
-                sanitized = sanitized[:2000] + "... [TRUNCATED]"
-            
-            # Remove control characters
-            sanitized = ''.join(char for char in sanitized if ord(char) >= 32 or char in '\n\t')
-            
-            # Ensure it's not empty after sanitization
-            if not sanitized.strip():
-                return "[EMPTY_INPUT]"
+                import re
+                sanitized = text
                 
-            return sanitized.strip()
-            
+                for pattern in dangerous_patterns:
+                    sanitized = re.sub(pattern, '[SANITIZED]', sanitized)
+                
+                # Limit length to prevent token overflow
+                if len(sanitized) > 2000:
+                    sanitized = sanitized[:2000] + "... [TRUNCATED]"
+                
+                # Remove control characters
+                sanitized = ''.join(char for char in sanitized if ord(char) >= 32 or char in '\n\t')
+                
+                # Ensure it's not empty after sanitization
+                if not sanitized.strip():
+                    return "[EMPTY_INPUT]"
+                    
+                return sanitized.strip()
+                
+            except Exception as e:
+                print(f"[LLMHandler] ⚠️ Error sanitizing input: {e}")
+                return "[SANITIZATION_ERROR]"
         except Exception as e:
-            print(f"[LLMHandler] ⚠️ Error sanitizing input: {e}")
-            return "[SANITIZATION_ERROR]"
+            print(f"[LLMHandler] ❌ Error using dedicated security module: {e}")
+            return "[SECURITY_ERROR]"
 
     def _gather_consciousness_state(self) -> Dict[str, Any]:
         """Gather current consciousness state from all systems"""
@@ -510,7 +522,7 @@ class LLMHandler:
         """Build enhanced prompt with consciousness integration and token budget management"""
         try:
             # Sanitize user input first
-            sanitized_text = self.sanitize_prompt_input(text)
+            sanitized_text = self.sanitize_prompt_input(text, user)
             
             prompt_parts = []
             
@@ -615,7 +627,7 @@ class LLMHandler:
         except Exception as e:
             print(f"[LLMHandler] ⚠️ Error building enhanced prompt: {e}")
             # Fallback to sanitized text only
-            return self.sanitize_prompt_input(text)
+            return self.sanitize_prompt_input(text, "unknown")
             
     def _get_system_instruction(self, analysis: Dict[str, Any]) -> str:
         """Generate system instruction based on analysis"""

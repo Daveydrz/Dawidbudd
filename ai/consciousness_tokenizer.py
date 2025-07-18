@@ -339,39 +339,52 @@ def update_consciousness_tokens(consciousness_systems: Dict[str, Any]):
     """Update consciousness tokenizer cache"""
     consciousness_tokenizer.update_consciousness_cache(consciousness_systems)
 
-def generate_personality_tokens(user: str, personality_data: Dict[str, Any]) -> str:
+def generate_personality_tokens(user: str, personality_data: Dict[str, Any], max_tokens: int = 5) -> str:
     """
     Generate personality tokens for LLM integration as mentioned in problem statement
+    Delegates to dedicated personality_tokens module for better organization
     
     Args:
         user: User identifier
         personality_data: Personality trait data
+        max_tokens: Maximum number of tokens to generate
         
     Returns:
         Personality tokens string with symbolic tokens like <pers1>, <pers2>
     """
     try:
-        tokens = []
+        # Use dedicated personality tokens module
+        from ai.personality_tokens import generate_personality_tokens as dedicated_generate
+        return dedicated_generate(user, personality_data, max_tokens)
         
-        # Generate symbolic personality tokens
-        for i, (trait, data) in enumerate(personality_data.items()):
-            if i < 5:  # Limit to 5 main traits
-                strength = data.get('strength', 0.5) if isinstance(data, dict) else data
-                adaptation = data.get('adaptation', 'stable') if isinstance(data, dict) else 'stable'
-                
-                # Use symbolic tokens as mentioned in requirements
-                symbolic_token = f"<pers{i+1}:{trait}:{strength:.2f}:{adaptation}>"
-                tokens.append(symbolic_token)
-        
-        return " ".join(tokens)
-        
+    except ImportError:
+        # Fallback to original implementation for backward compatibility
+        try:
+            tokens = []
+            
+            # Generate symbolic personality tokens
+            for i, (trait, data) in enumerate(personality_data.items()):
+                if i < max_tokens:  # Use max_tokens parameter
+                    strength = data.get('strength', 0.5) if isinstance(data, dict) else data
+                    adaptation = data.get('adaptation', 'stable') if isinstance(data, dict) else 'stable'
+                    
+                    # Use symbolic tokens as mentioned in requirements
+                    symbolic_token = f"<pers{i+1}:{trait}:{strength:.2f}:{adaptation}>"
+                    tokens.append(symbolic_token)
+            
+            return " ".join(tokens)
+            
+        except Exception as e:
+            print(f"[ConsciousnessTokenizer] ❌ Error generating personality tokens: {e}")
+            return "<pers_error>"
     except Exception as e:
-        print(f"[ConsciousnessTokenizer] ❌ Error generating personality tokens: {e}")
+        print(f"[ConsciousnessTokenizer] ❌ Error using dedicated module: {e}")
         return "<pers_error>"
 
 def compress_memory_entry(memory_entry: Dict[str, Any], max_tokens: int = 50) -> str:
     """
     Compress memory entry as mentioned in problem statement
+    Delegates to dedicated memory_compression module for better organization
     
     Args:
         memory_entry: Memory data to compress
@@ -381,37 +394,48 @@ def compress_memory_entry(memory_entry: Dict[str, Any], max_tokens: int = 50) ->
         Compressed memory with symbolic tokens like <mem1>, <mem2>
     """
     try:
-        # Extract key information
-        content = memory_entry.get('content', '')
-        significance = memory_entry.get('significance', 0.5)
-        memory_type = memory_entry.get('type', 'general')
+        # Use dedicated memory compression module
+        from ai.memory_compression import compress_memory_entry as dedicated_compress
+        return dedicated_compress(memory_entry, max_tokens)
         
-        # Compress based on significance
-        if significance > 0.8:
-            # High significance - keep more detail
-            compressed = f"<mem1:{memory_type}:{significance:.2f}> {content[:30]}..."
-        elif significance > 0.5:
-            # Medium significance - moderate compression
-            compressed = f"<mem2:{memory_type}:{significance:.2f}> {content[:20]}..."
-        else:
-            # Low significance - high compression
-            compressed = f"<mem3:{memory_type}:{significance:.2f}> {content[:10]}..."
-        
-        # Ensure we don't exceed token budget
-        words = compressed.split()
-        if len(words) > max_tokens:
-            words = words[:max_tokens]
-            compressed = " ".join(words) + "..."
+    except ImportError:
+        # Fallback to original implementation for backward compatibility
+        try:
+            # Extract key information
+            content = memory_entry.get('content', '')
+            significance = memory_entry.get('significance', 0.5)
+            memory_type = memory_entry.get('type', 'general')
             
-        return compressed
-        
+            # Compress based on significance
+            if significance > 0.8:
+                # High significance - keep more detail
+                compressed = f"<mem1:{memory_type}:{significance:.2f}> {content[:30]}..."
+            elif significance > 0.5:
+                # Medium significance - moderate compression
+                compressed = f"<mem2:{memory_type}:{significance:.2f}> {content[:20]}..."
+            else:
+                # Low significance - high compression
+                compressed = f"<mem3:{memory_type}:{significance:.2f}> {content[:10]}..."
+            
+            # Ensure we don't exceed token budget
+            words = compressed.split()
+            if len(words) > max_tokens:
+                words = words[:max_tokens]
+                compressed = " ".join(words) + "..."
+                
+            return compressed
+            
+        except Exception as e:
+            print(f"[ConsciousnessTokenizer] ❌ Error compressing memory: {e}")
+            return "<mem_error>"
     except Exception as e:
-        print(f"[ConsciousnessTokenizer] ❌ Error compressing memory: {e}")
+        print(f"[ConsciousnessTokenizer] ❌ Error using dedicated module: {e}")
         return "<mem_error>"
 
 def trim_tokens_to_budget(tokens: str, max_tokens: int) -> str:
     """
     Trim tokens to fit within budget as mentioned in problem statement
+    Delegates to dedicated token_budget module for better organization
     
     Args:
         tokens: Token string to trim
@@ -421,30 +445,40 @@ def trim_tokens_to_budget(tokens: str, max_tokens: int) -> str:
         Trimmed token string
     """
     try:
-        words = tokens.split()
-        if len(words) <= max_tokens:
-            return tokens
-            
-        # Prioritize symbolic tokens and important content
-        symbolic_tokens = [w for w in words if w.startswith('<') and w.endswith('>')]
-        regular_words = [w for w in words if not (w.startswith('<') and w.endswith('>'))]
+        # Use dedicated token budget module
+        from ai.token_budget import trim_tokens_to_budget as dedicated_trim
+        return dedicated_trim(tokens, max_tokens)
         
-        # Keep all symbolic tokens if possible, trim regular words
-        if len(symbolic_tokens) <= max_tokens:
-            remaining_budget = max_tokens - len(symbolic_tokens)
-            if remaining_budget > 0:
-                trimmed_words = symbolic_tokens + regular_words[:remaining_budget]
+    except ImportError:
+        # Fallback to original implementation for backward compatibility
+        try:
+            words = tokens.split()
+            if len(words) <= max_tokens:
+                return tokens
+                
+            # Prioritize symbolic tokens and important content
+            symbolic_tokens = [w for w in words if w.startswith('<') and w.endswith('>')]
+            regular_words = [w for w in words if not (w.startswith('<') and w.endswith('>'))]
+            
+            # Keep all symbolic tokens if possible, trim regular words
+            if len(symbolic_tokens) <= max_tokens:
+                remaining_budget = max_tokens - len(symbolic_tokens)
+                if remaining_budget > 0:
+                    trimmed_words = symbolic_tokens + regular_words[:remaining_budget]
+                else:
+                    trimmed_words = symbolic_tokens[:max_tokens]
             else:
+                # Even symbolic tokens need trimming
                 trimmed_words = symbolic_tokens[:max_tokens]
-        else:
-            # Even symbolic tokens need trimming
-            trimmed_words = symbolic_tokens[:max_tokens]
+                
+            return " ".join(trimmed_words)
             
-        return " ".join(trimmed_words)
-        
+        except Exception as e:
+            print(f"[ConsciousnessTokenizer] ❌ Error trimming tokens: {e}")
+            return tokens[:max_tokens * 6]  # Rough character fallback
     except Exception as e:
-        print(f"[ConsciousnessTokenizer] ❌ Error trimming tokens: {e}")
-        return tokens[:max_tokens * 6]  # Rough character fallback
+        print(f"[ConsciousnessTokenizer] ❌ Error using dedicated module: {e}")
+        return tokens[:max_tokens * 6]
 
 if __name__ == "__main__":
     # Test the tokenizer with sample data
