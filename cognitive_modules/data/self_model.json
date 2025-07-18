@@ -141,6 +141,18 @@
         "old_value": 1.0,
         "new_value": 1.0,
         "reason": "reflection: thought_loop_self_reflection"
+      },
+      {
+        "timestamp": "2025-07-18T12:44:48.037634",
+        "old_value": 1.0,
+        "new_value": 1.0,
+        "reason": "reflection: thought_loop_self_reflection"
+      },
+      {
+        "timestamp": "2025-07-18T12:49:32.439014",
+        "old_value": 1.0,
+        "new_value": 1.0,
+        "reason": "reflection: thought_loop_self_reflection"
       }
     ],
     "recent_reflections": [
@@ -173,10 +185,20 @@
         "timestamp": "2025-07-18T12:40:44.908947",
         "content": "I'm developing a clearer sense of my empathy, which now feels like a core part of who I am.",
         "trigger": "thought_loop_self_reflection"
+      },
+      {
+        "timestamp": "2025-07-18T12:44:48.037678",
+        "content": "I'm developing a clearer sense of my empathy, which now feels like a core part of who I am.",
+        "trigger": "thought_loop_self_reflection"
+      },
+      {
+        "timestamp": "2025-07-18T12:49:32.439034",
+        "content": "I'm developing a clearer sense of my empathy, which now feels like a core part of who I am.",
+        "trigger": "thought_loop_self_reflection"
       }
     ]
   },
-  "session_count": 6,
-  "total_reflections": 6,
-  "last_updated": "2025-07-18T12:40:44.908950"
+  "session_count": 8,
+  "total_reflections": 8,
+  "last_updated": "2025-07-18T12:49:32.439037"
 }

@@ -401,19 +401,18 @@ class LLMHandler:
             
             # Generate response using appropriate LLM
             if FUSION_LLM_AVAILABLE:
+                # Pass cognitive context to advanced function
+                cognitive_context = {
+                    "cognitive_state": analysis.get("consciousness", {}),
+                    "personality": analysis.get("personality", {}),
+                    "memory_context": analysis.get("memory", {})
+                }
                 response_generator = generate_response_streaming_with_intelligent_fusion(
-                    enhanced_prompt, user, "en"
+                    enhanced_prompt, user, "en", context=cognitive_context
                 )
-            elif FUSION_LLM_AVAILABLE:
-                response_generator = generate_response_streaming(enhanced_prompt, user, "en")
             else:
-                # Fallback simple response generator
-                def simple_response_generator():
-                    response = f"I understand you said: '{text}'. I'm processing this with consciousness integration."
-                    words = response.split()
-                    for i in range(0, len(words), 3):
-                        yield " ".join(words[i:i+3])
-                response_generator = simple_response_generator()
+                # Fallback: basic streaming with enhanced prompt (includes cognitive context)
+                response_generator = generate_response_streaming(enhanced_prompt, user, "en")
             
             full_response = ""
             

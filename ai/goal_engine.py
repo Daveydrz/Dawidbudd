@@ -14,6 +14,8 @@ import time
 import logging
 import json
 import random
+import os
+import tempfile
 from typing import Dict, List, Any, Optional, Callable, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -136,6 +138,7 @@ class GoalEngine:
         
         # Threading
         self.lock = threading.Lock()
+        self.file_lock = threading.Lock()  # Separate lock for file operations
         self.goal_thread = None
         self.running = False
         
@@ -791,70 +794,86 @@ class GoalEngine:
                 logging.error(f"[GoalEngine] ❌ Event callback error: {e}")
     
     def _save_goal_state(self):
-        """Save goal state to persistent storage"""
-        try:
-            # Convert goals to serializable format
-            active_goals_data = {}
-            for goal_id, goal in self.active_goals.items():
-                active_goals_data[goal_id] = {
-                    'id': goal.id,
-                    'description': goal.description,
-                    'goal_type': goal.goal_type.value,
-                    'priority': goal.priority.value,
-                    'status': goal.status.value,
-                    'creation_time': goal.creation_time.isoformat(),
-                    'last_activity': goal.last_activity.isoformat(),
-                    'progress': goal.progress,
-                    'urgency': goal.urgency,
-                    'satisfaction_gained': goal.satisfaction_gained,
-                    'related_goals': goal.related_goals,
-                    'blocking_factors': goal.blocking_factors,
-                    'enabling_factors': goal.enabling_factors,
-                    'context': goal.context,
-                    'motivation_source': goal.motivation_source,
-                    'expected_satisfaction': goal.expected_satisfaction,
-                    'persistence': goal.persistence,
-                    'adaptability': goal.adaptability
+        """Save goal state to persistent storage with thread safety and atomic operations"""
+        with self.file_lock:  # Ensure only one thread can save at a time
+            try:
+                # Convert goals to serializable format
+                active_goals_data = {}
+                for goal_id, goal in self.active_goals.items():
+                    active_goals_data[goal_id] = {
+                        'id': goal.id,
+                        'description': goal.description,
+                        'goal_type': goal.goal_type.value,
+                        'priority': goal.priority.value,
+                        'status': goal.status.value,
+                        'creation_time': goal.creation_time.isoformat(),
+                        'last_activity': goal.last_activity.isoformat(),
+                        'progress': goal.progress,
+                        'urgency': goal.urgency,
+                        'satisfaction_gained': goal.satisfaction_gained,
+                        'related_goals': goal.related_goals,
+                        'blocking_factors': goal.blocking_factors,
+                        'enabling_factors': goal.enabling_factors,
+                        'context': goal.context,
+                        'motivation_source': goal.motivation_source,
+                        'expected_satisfaction': goal.expected_satisfaction,
+                        'persistence': goal.persistence,
+                        'adaptability': goal.adaptability
+                    }
+                
+                completed_goals_data = []
+                for goal in self.completed_goals[-20:]:  # Keep last 20 completed goals
+                    completed_goals_data.append({
+                        'id': goal.id,
+                        'description': goal.description,
+                        'goal_type': goal.goal_type.value,
+                        'status': goal.status.value,
+                        'creation_time': goal.creation_time.isoformat(),
+                        'progress': goal.progress,
+                        'satisfaction_gained': goal.satisfaction_gained
+                    })
+                
+                data = {
+                    'active_goals': active_goals_data,
+                    'completed_goals': completed_goals_data,
+                    'motivation_state': {
+                        'intrinsic_motivation': self.intrinsic_motivation,
+                        'goal_satisfaction': self.goal_satisfaction,
+                        'existential_tension': self.existential_tension,
+                        'curiosity_level': self.curiosity_level,
+                        'growth_drive': self.growth_drive
+                    },
+                    'metrics': {
+                        'total_goals_created': self.total_goals_created,
+                        'total_goals_completed': self.total_goals_completed,
+                        'total_desires_generated': self.total_desires_generated,
+                        'motivation_fluctuations': self.motivation_fluctuations
+                    },
+                    'last_updated': datetime.now().isoformat()
                 }
-            
-            completed_goals_data = []
-            for goal in self.completed_goals[-20:]:  # Keep last 20 completed goals
-                completed_goals_data.append({
-                    'id': goal.id,
-                    'description': goal.description,
-                    'goal_type': goal.goal_type.value,
-                    'status': goal.status.value,
-                    'creation_time': goal.creation_time.isoformat(),
-                    'progress': goal.progress,
-                    'satisfaction_gained': goal.satisfaction_gained
-                })
-            
-            data = {
-                'active_goals': active_goals_data,
-                'completed_goals': completed_goals_data,
-                'motivation_state': {
-                    'intrinsic_motivation': self.intrinsic_motivation,
-                    'goal_satisfaction': self.goal_satisfaction,
-                    'existential_tension': self.existential_tension,
-                    'curiosity_level': self.curiosity_level,
-                    'growth_drive': self.growth_drive
-                },
-                'metrics': {
-                    'total_goals_created': self.total_goals_created,
-                    'total_goals_completed': self.total_goals_completed,
-                    'total_desires_generated': self.total_desires_generated,
-                    'motivation_fluctuations': self.motivation_fluctuations
-                },
-                'last_updated': datetime.now().isoformat()
-            }
-            
-            with open(self.save_path, 'w') as f:
-                json.dump(data, f, indent=2)
-            
-            logging.debug("[GoalEngine] 💾 Goal state saved")
-            
-        except Exception as e:
-            logging.error(f"[GoalEngine] ❌ Failed to save goal state: {e}")
+                
+                # Atomic file write: write to temp file first, then rename
+                save_dir = self.save_path.parent
+                save_dir.mkdir(parents=True, exist_ok=True)
+                
+                with tempfile.NamedTemporaryFile(mode='w', dir=save_dir, 
+                                               suffix='.tmp', delete=False) as temp_file:
+                    json.dump(data, temp_file, indent=2)
+                    temp_path = temp_file.name
+                
+                # Atomic rename operation
+                os.rename(temp_path, self.save_path)
+                
+                logging.debug("[GoalEngine] 💾 Goal state saved (thread-safe)")
+                
+            except Exception as e:
+                # Clean up temp file if it exists
+                if 'temp_path' in locals() and os.path.exists(temp_path):
+                    try:
+                        os.unlink(temp_path)
+                    except:
+                        pass
+                logging.error(f"[GoalEngine] ❌ Failed to save goal state: {e}")
     
     def _load_goal_state(self):
         """Load goal state from persistent storage"""
