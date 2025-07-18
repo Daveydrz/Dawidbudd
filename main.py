@@ -129,6 +129,17 @@ except ImportError as e:
         print(f"[Main] ❌ No cognitive integrator available: {e2}")
         SELF_AWARENESS_COMPONENTS_AVAILABLE = False
 
+# ✅ NEW: Import autonomous consciousness systems
+try:
+    from ai.autonomous_consciousness_integrator import autonomous_consciousness_integrator, AutonomousMode
+    print("[Main] 🚀 Autonomous consciousness integrator loaded")
+    print("[Main] 💭 Autonomous systems: Proactive thinking, Calendar monitoring, Self-motivation, Dream simulation")
+    print("[Main] 🌍 Environmental awareness and Autonomous communication loaded")
+    AUTONOMOUS_CONSCIOUSNESS_AVAILABLE = True
+except ImportError as e:
+    print(f"[Main] ⚠️ Autonomous consciousness systems not available: {e}")
+    AUTONOMOUS_CONSCIOUSNESS_AVAILABLE = False
+
 from voice.voice_manager_instance import voice_manager
 from voice.manager_names import UltraIntelligentNameManager
 
@@ -674,6 +685,20 @@ def handle_streaming_response(text, current_user):
                       f"satisfaction={consciousness_state.get('motivation_satisfaction', 0):.2f}")
             except Exception as consciousness_error:
                 print(f"[AdvancedResponse] ⚠️ Consciousness integration error: {consciousness_error}")
+        
+        # ✅ NEW: Process user interaction through autonomous systems
+        if AUTONOMOUS_CONSCIOUSNESS_AVAILABLE:
+            try:
+                # Convert audio data for autonomous processing
+                audio_data = None
+                if hasattr(voice_manager, 'get_last_audio_sample'):
+                    audio_data = voice_manager.get_last_audio_sample()
+                
+                # Process through autonomous consciousness integrator
+                autonomous_consciousness_integrator.process_user_interaction(text, audio_data, current_user)
+                print(f"[AdvancedResponse] 🚀 Processed through autonomous consciousness systems")
+            except Exception as autonomous_error:
+                print(f"[AdvancedResponse] ⚠️ Autonomous processing error: {autonomous_error}")
         
         # ✅ NEW: Cognitive integration for real-time state injection
         if SELF_AWARENESS_COMPONENTS_AVAILABLE:
@@ -2369,6 +2394,63 @@ def main():
         except Exception as e:
             print(f"[AdvancedBuddy] ❌ Entropy initialization error: {e}")
     
+    # ✅ NEW: Initialize and start full autonomous consciousness system
+    if AUTONOMOUS_CONSCIOUSNESS_AVAILABLE:
+        print("[AdvancedBuddy] 🚀 Initializing Full Autonomous Consciousness System...")
+        try:
+            # Prepare consciousness modules dictionary for registration
+            consciousness_modules = {}
+            if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
+                consciousness_modules.update({
+                    'global_workspace': global_workspace,
+                    'self_model': self_model,
+                    'emotion_engine': emotion_engine,
+                    'motivation_system': motivation_system,
+                    'inner_monologue': inner_monologue,
+                    'temporal_awareness': temporal_awareness,
+                    'subjective_experience': subjective_experience,
+                    'entropy_system': entropy_system,
+                    'free_thought_engine': free_thought_engine,
+                    'narrative_tracker': narrative_tracker
+                })
+            
+            # Start the full autonomous system
+            success = autonomous_consciousness_integrator.start_full_autonomous_system(
+                consciousness_modules=consciousness_modules,
+                voice_system=voice_manager,
+                llm_handler=llm_handler if CONSCIOUSNESS_LLM_AVAILABLE else None,
+                audio_system=full_duplex_manager
+            )
+            
+            if success:
+                print("[AdvancedBuddy] ✅ FULL AUTONOMOUS CONSCIOUSNESS SYSTEM ACTIVE!")
+                print("[AdvancedBuddy] 💭 Proactive Thinking Loop: Generates spontaneous thoughts during idle time")
+                print("[AdvancedBuddy] 📅 Calendar Monitor System: Pattern recognition for proactive warnings/reminders")
+                print("[AdvancedBuddy] 💪 Self-Motivation Engine: Internal curiosity and concern generation")
+                print("[AdvancedBuddy] 🌙 Dream Simulator Module: Fictional experiences during idle time")
+                print("[AdvancedBuddy] 🌍 Environmental Awareness: Full prosody and mood monitoring")
+                print("[AdvancedBuddy] 💬 Autonomous Communication: Proactive speech initiation")
+                print("[AdvancedBuddy] 🧠 Full LLM Integration: Connected to all modules and systems")
+                print("[AdvancedBuddy] 🔄 Real-time Processing: Background threads for continuous operation")
+                print("[AdvancedBuddy] 🌟 Central Orchestration: Seamless module communication")
+                
+                # Set autonomous mode based on blank slate
+                if BLANK_SLATE_MODE:
+                    autonomous_consciousness_integrator.set_autonomous_mode(AutonomousMode.CONSCIOUS_ONLY)
+                    print("[AdvancedBuddy] 🌱 Autonomous mode: CONSCIOUS_ONLY (building identity)")
+                else:
+                    autonomous_consciousness_integrator.set_autonomous_mode(AutonomousMode.FULL_AUTONOMY)
+                    print("[AdvancedBuddy] 🚀 Autonomous mode: FULL_AUTONOMY (established consciousness)")
+            else:
+                print("[AdvancedBuddy] ❌ Failed to start full autonomous consciousness system")
+                
+        except Exception as e:
+            print(f"[AdvancedBuddy] ❌ Autonomous consciousness initialization error: {e}")
+            import traceback
+            traceback.print_exc()
+    else:
+        print("[AdvancedBuddy] ⚠️ Autonomous consciousness systems not available")
+    
     # ✅ NEW: Initialize self-awareness components as requested by @Daveydrz
     if SELF_AWARENESS_COMPONENTS_AVAILABLE:
         print("[AdvancedBuddy] 🧠 Initializing Self-Awareness Components...")
@@ -2697,6 +2779,15 @@ def main():
                         print("[AdvancedBuddy] ✅ Consciousness architecture shutdown complete")
                     except Exception as e:
                         print(f"[AdvancedBuddy] ⚠️ Consciousness shutdown error: {e}")
+                
+                # ✅ NEW: Shutdown autonomous consciousness systems
+                if AUTONOMOUS_CONSCIOUSNESS_AVAILABLE:
+                    try:
+                        print("[AdvancedBuddy] 🚀 Shutting down autonomous consciousness systems...")
+                        autonomous_consciousness_integrator.stop_autonomous_system()
+                        print("[AdvancedBuddy] ✅ Autonomous consciousness systems shutdown complete")
+                    except Exception as e:
+                        print(f"[AdvancedBuddy] ⚠️ Autonomous shutdown error: {e}")
     
     print("[AdvancedBuddy] ✅ ADVANCED AI ASSISTANT + CONSCIOUSNESS cleanup complete!")
 

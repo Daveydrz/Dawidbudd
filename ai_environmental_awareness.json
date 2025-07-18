@@ -1,0 +1,98 @@
+{
+  "current_mood_state": "neutral",
+  "current_environmental_context": "weekday_busy",
+  "prosody_readings": [
+    {
+      "pitch_mean": 200.0,
+      "pitch_variance": 50.0,
+      "pace_words_per_minute": 120.0,
+      "volume_level": 0.5,
+      "emotional_indicators": [],
+      "stress_level": 0.3,
+      "energy_level": 0.5,
+      "confidence_level": 0.5,
+      "timestamp": "2025-07-18T13:57:28.254480"
+    },
+    {
+      "pitch_mean": 200.0,
+      "pitch_variance": 50.0,
+      "pace_words_per_minute": 120.0,
+      "volume_level": 0.5,
+      "emotional_indicators": [],
+      "stress_level": 0.3,
+      "energy_level": 0.5,
+      "confidence_level": 0.5,
+      "timestamp": "2025-07-18T13:57:38.254988"
+    }
+  ],
+  "mood_trends": [],
+  "environmental_readings": [
+    {
+      "timestamp": "2025-07-18T13:57:26.253814",
+      "context": "weekday_busy",
+      "mood_state": "neutral",
+      "detected_patterns": [
+        "work_hours"
+      ],
+      "intervention_suggested": false,
+      "intervention_type": null,
+      "confidence": 0.8
+    },
+    {
+      "timestamp": "2025-07-18T13:57:53.259233",
+      "context": "weekday_busy",
+      "mood_state": "neutral",
+      "detected_patterns": [
+        "work_hours"
+      ],
+      "intervention_suggested": false,
+      "intervention_type": null,
+      "confidence": 0.8
+    },
+    {
+      "timestamp": "2025-07-18T13:57:56.259097",
+      "context": "weekday_busy",
+      "mood_state": "neutral",
+      "detected_patterns": [
+        "work_hours"
+      ],
+      "intervention_suggested": false,
+      "intervention_type": null,
+      "confidence": 0.8
+    },
+    {
+      "timestamp": "2025-07-18T13:58:23.259387",
+      "context": "weekday_busy",
+      "mood_state": "neutral",
+      "detected_patterns": [
+        "work_hours"
+      ],
+      "intervention_suggested": false,
+      "intervention_type": null,
+      "confidence": 0.8
+    },
+    {
+      "timestamp": "2025-07-18T13:58:26.259253",
+      "context": "weekday_busy",
+      "mood_state": "neutral",
+      "detected_patterns": [
+        "work_hours"
+      ],
+      "intervention_suggested": false,
+      "intervention_type": null,
+      "confidence": 0.8
+    }
+  ],
+  "emotional_baselines": {
+    "stress_baseline": 0.3,
+    "energy_baseline": 0.5,
+    "confidence_baseline": 0.6
+  },
+  "prosody_baselines": {
+    "pitch_mean_baseline": 200.0,
+    "pitch_variance_baseline": 50.0,
+    "pace_baseline": 150.0,
+    "volume_baseline": 0.5
+  },
+  "last_save": "2025-07-18T13:58:36.299238"
+}

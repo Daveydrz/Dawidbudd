@@ -1,0 +1,24 @@
+{
+  "communication_history": [
+    {
+      "content": "I was just thinking... This is a test autonomous communication.",
+      "type": "proactive_thought",
+      "timestamp": "2025-07-18T13:58:11.274934",
+      "success": true,
+      "user_response": null,
+      "context": "user_available",
+      "duration_seconds": 3.600120544433594e-05
+    }
+  ],
+  "successful_contexts": {
+    "check_in_user_away": 3,
+    "proactive_thought_user_available": 3,
+    "emotional_support_post_conversation": 1
+  },
+  "failed_contexts": {},
+  "daily_communication_count": 1,
+  "last_communication_time": "2025-07-18T13:58:11.274931",
+  "current_context": "user_available",
+  "user_availability_score": 1.0,
+  "last_save": "2025-07-18T13:58:38.299848"
+}
