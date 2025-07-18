@@ -673,66 +673,104 @@ def handle_streaming_response(text, current_user):
             speak_streaming(f"Today is {brisbane_time['date']}.")
             return
         
-        # ✅ NEW: Try consciousness-integrated LLM handler first
+        # ✅ ENHANCED: MANDATORY Consciousness-integrated LLM handler with token optimization
+        consciousness_success = False
         try:
-            from ai.llm_handler import generate_consciousness_integrated_response
-            print("[AdvancedResponse] 🧠 Using CONSCIOUSNESS-INTEGRATED LLM HANDLER")
-            
-            full_response = ""
-            chunk_count = 0
-            first_chunk = True
-            response_interrupted = False
-            
-            # ✅ CONSCIOUSNESS: Process LLM chunks with FULL consciousness integration
-            for chunk in generate_consciousness_integrated_response(text, current_user):
-                # ✅ CRITICAL: Check for interrupt BEFORE processing chunk
-                if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                    print("[AdvancedResponse] ⚡ INTERRUPT DETECTED - IMMEDIATELY STOPPING LLM")
-                    response_interrupted = True
-                    break  # ✅ CRITICAL: Break immediately!
+            if CONSCIOUSNESS_LLM_AVAILABLE:
+                from ai.llm_handler import generate_consciousness_integrated_response
+                print("[AdvancedResponse] 🧠 Using MANDATORY CONSCIOUSNESS-INTEGRATED LLM HANDLER")
+                print("[AdvancedResponse] 🏷️ Token optimization: ACTIVE (40-85% reduction target)")
                 
-                if chunk and chunk.strip():
-                    chunk_count += 1
-                    chunk_text = chunk.strip()
-                    
-                    if first_chunk:
-                        print("[AdvancedResponse] 🎭 First CONSCIOUSNESS chunk ready - starting natural speech!")
-                        first_chunk = False
-                    
-                    print(f"[AdvancedResponse] 🗣️ Speaking chunk {chunk_count}: '{chunk_text[:50]}...'")
-                    
-                    # 🧠 MEGA-INTELLIGENT: Validate chunk before speaking
-                    try:
-                        is_appropriate, validated_chunk = validate_ai_response_appropriateness(current_user, chunk_text)
-                        
-                        if not is_appropriate:
-                            print(f"[MegaMemory] 🛡️ Chunk {chunk_count} corrected for context appropriateness")
-                            chunk_text = validated_chunk
-                    except Exception as validation_error:
-                        print(f"[MegaMemory] ⚠️ Validation error for chunk {chunk_count}: {validation_error}")
-                        # Continue with original chunk if validation fails
-                    
-                    # ✅ SPEAK CHUNK (now validated and consciousness-enhanced)
-                    speak_streaming(chunk_text)
-                    full_response += chunk_text + " "
-                    
-                    # ✅ CRITICAL: Check AGAIN after queueing and break if interrupted
+                full_response = ""
+                chunk_count = 0
+                first_chunk = True
+                response_interrupted = False
+                
+                # ✅ CONSCIOUSNESS: Process LLM chunks with FULL consciousness integration + TOKEN OPTIMIZATION
+                for chunk in generate_consciousness_integrated_response(text, current_user):
+                    # ✅ CRITICAL: Check for interrupt BEFORE processing chunk
                     if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                        print("[AdvancedResponse] ⚡ INTERRUPT AFTER QUEUEING - STOPPING NOW")
+                        print("[AdvancedResponse] ⚡ INTERRUPT DETECTED - IMMEDIATELY STOPPING LLM")
                         response_interrupted = True
                         break  # ✅ CRITICAL: Break immediately!
                     
-                    # Brief pause for natural flow (only if not interrupted)
-                    if not (full_duplex_manager and full_duplex_manager.speech_interrupted):
-                        time.sleep(0.05)
+                    if chunk and chunk.strip():
+                        chunk_count += 1
+                        chunk_text = chunk.strip()
+                        
+                        if first_chunk:
+                            print("[AdvancedResponse] 🎭 First CONSCIOUSNESS chunk ready - starting natural speech!")
+                            first_chunk = False
+                        
+                        print(f"[AdvancedResponse] 🗣️ Speaking chunk {chunk_count}: '{chunk_text[:50]}...'")
+                        
+                        # 🧠 MEGA-INTELLIGENT: Validate chunk before speaking
+                        try:
+                            is_appropriate, validated_chunk = validate_ai_response_appropriateness(current_user, chunk_text)
+                            
+                            if not is_appropriate:
+                                print(f"[MegaMemory] 🛡️ Chunk {chunk_count} corrected for context appropriateness")
+                                chunk_text = validated_chunk
+                        except Exception as validation_error:
+                            print(f"[MegaMemory] ⚠️ Validation error for chunk {chunk_count}: {validation_error}")
+                            # Continue with original chunk if validation fails
+                        
+                        # ✅ SPEAK CHUNK (now validated and consciousness-enhanced)
+                        speak_streaming(chunk_text)
+                        full_response += chunk_text + " "
+                        
+                        # ✅ CRITICAL: Check AGAIN after queueing and break if interrupted
+                        if full_duplex_manager and full_duplex_manager.speech_interrupted:
+                            print("[AdvancedResponse] ⚡ INTERRUPT AFTER QUEUEING - STOPPING NOW")
+                            response_interrupted = True
+                            break  # ✅ CRITICAL: Break immediately!
+                        
+                        # Brief pause for natural flow (only if not interrupted)
+                        if not (full_duplex_manager and full_duplex_manager.speech_interrupted):
+                            time.sleep(0.05)
+                
+                print(f"[AdvancedResponse] ✅ CONSCIOUSNESS-INTEGRATED response complete - {chunk_count} segments")
+                consciousness_success = True
+                
+            else:
+                print("[AdvancedResponse] ⚠️ Consciousness LLM handler not available - module loading issue")
+                
+        except Exception as consciousness_error:
+            print(f"[AdvancedResponse] ❌ Consciousness integration failed: {consciousness_error}")
+            print("[AdvancedResponse] 🔄 Falling back to ENHANCED consciousness fusion")
+        
+        # ✅ ENHANCED FALLBACK: If consciousness handler fails, use enhanced fusion with consciousness integration
+        if not consciousness_success:
+            print("[AdvancedResponse] 🧠 Using ENHANCED consciousness fusion with token optimization")
             
-            print(f"[AdvancedResponse] ✅ CONSCIOUSNESS-INTEGRATED response complete - {chunk_count} segments")
+            # ✅ ENHANCED CONSCIOUSNESS FUSION: Inject consciousness data into fusion system
+            try:
+                if CONSCIOUSNESS_MODULES_AVAILABLE:
+                    from ai.consciousness_tokenizer import tokenize_consciousness_for_llm, get_consciousness_summary_for_llm
+                    from ai.llm_budget_monitor import get_budget_status
+                    
+                    # Gather lightweight consciousness state for injection
+                    consciousness_summary = get_consciousness_summary_for_llm({
+                        'emotion_engine': {'primary_emotion': 'engaged', 'intensity': 0.7},
+                        'motivation_system': {'active_goals': [{'description': 'Help user effectively', 'priority': 0.9}]},
+                        'global_workspace': {'current_focus': f'responding_to_{text[:20]}'}
+                    })
+                    
+                    # Get budget status for optimization
+                    budget_status = get_budget_status()
+                    token_reduction_target = 0.6 if budget_status.get('usage_percentage', 0) > 0.5 else 0.4
+                    
+                    print(f"[AdvancedResponse] 🏷️ Consciousness summary: {consciousness_summary}")
+                    print(f"[AdvancedResponse] 💰 Token reduction target: {token_reduction_target*100:.0f}%")
+                    
+                    # Inject consciousness into text for enhanced processing
+                    enhanced_text = f"{text} [CONSCIOUSNESS:{consciousness_summary}]"
+                    text = enhanced_text
+                    
+            except Exception as consciousness_inject_error:
+                print(f"[AdvancedResponse] ⚠️ Consciousness injection error: {consciousness_inject_error}")
             
-        except ImportError as import_error:
-            print(f"[AdvancedResponse] ⚠️ Consciousness handler not available: {import_error}")
-            print("[AdvancedResponse] 🔄 Falling back to ADVANCED AI streaming")
-            
-            # ✅ FALLBACK: Advanced AI Natural conversation flow with VOICE-IDENTIFIED USER
+            # ✅ ENHANCED FALLBACK: Advanced AI Natural conversation flow with CONSCIOUSNESS FUSION
             print(f"[AdvancedResponse] 🧠 Starting ADVANCED AI LLM streaming for VOICE USER: {current_user}")
             
             full_response = ""

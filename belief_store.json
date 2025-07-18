@@ -77,12 +77,31 @@
       "tags": [
         "factual"
       ]
+    },
+    {
+      "id": "belief_1752827403019_0",
+      "content": "hello, how you?",
+      "belief_type": "factual",
+      "certainty": "moderate",
+      "source": "text_extraction",
+      "timestamp": "2025-07-18T08:30:03.019468",
+      "user": "test_user",
+      "context": {},
+      "supporting_evidence": [
+        "Hello, how are you?"
+      ],
+      "contradictions": [],
+      "confidence_score": 0.6,
+      "last_confirmed": "2025-07-18T08:30:03.019478",
+      "tags": [
+        "factual"
+      ]
     }
   ],
   "contradictions": [],
-  "last_updated": "2025-07-18T02:14:15.295058",
+  "last_updated": "2025-07-18T08:30:03.020582",
   "metadata": {
-    "total_beliefs": 4,
+    "total_beliefs": 5,
     "total_contradictions": 0,
     "unresolved_contradictions": 0
   }

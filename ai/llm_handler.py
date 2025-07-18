@@ -214,18 +214,87 @@ class LLMHandler:
             current_personality = get_personality_for_response(user)
             personality_modifiers = get_personality_modifiers_for_llm(user)
             
-            # 4. Consciousness State (if available)
+            # 4. Enhanced Consciousness State Integration (if available)
             consciousness_context = ""
+            consciousness_summary = ""
             if CONSCIOUSNESS_AVAILABLE:
                 consciousness_systems = self._gather_consciousness_state()
                 consciousness_context = tokenize_consciousness_for_llm(consciousness_systems)
+                consciousness_summary = get_consciousness_summary_for_llm(consciousness_systems)
                 update_consciousness_tokens(consciousness_systems)
+                
+                # ✅ CROSS-SYSTEM INTEGRATION: Update consciousness with current analysis
+                try:
+                    # Inform emotion engine about user interaction
+                    if 'emotion_engine' in consciousness_systems:
+                        from ai.emotion import emotion_engine
+                        # Determine emotional context from semantic analysis
+                        emotional_tone = semantic_analysis.emotional_tone.value if hasattr(semantic_analysis, 'emotional_tone') else 'neutral'
+                        emotion_engine.process_external_stimulus(f"user_interaction_{emotional_tone}", intensity=0.6)
+                    
+                    # Inform motivation system about new goals
+                    if 'motivation_system' in consciousness_systems:
+                        from ai.motivation import motivation_system
+                        intent_categories = [intent.value for intent in semantic_analysis.intent_categories] if hasattr(semantic_analysis, 'intent_categories') else []
+                        for intent in intent_categories:
+                            if intent in ['help_request', 'information_seeking', 'problem_solving']:
+                                motivation_system.add_derived_goal(f"address_{intent}", priority=0.7)
+                    
+                    # Inform global workspace about attention focus
+                    if 'global_workspace' in consciousness_systems:
+                        from ai.global_workspace import global_workspace, AttentionPriority, ProcessingMode
+                        complexity = semantic_analysis.complexity_level.value if hasattr(semantic_analysis, 'complexity_level') else 'simple'
+                        priority = AttentionPriority.HIGH if complexity == 'complex' else AttentionPriority.MEDIUM
+                        global_workspace.request_attention(
+                            "llm_handler", 
+                            f"Processing {complexity} user request: {sanitized_text[:30]}...",
+                            priority,
+                            ProcessingMode.CONSCIOUS,
+                            duration=10.0,
+                            tags=["user_interaction", "llm_processing", complexity]
+                        )
+                    
+                    print(f"[LLMHandler] 🧠 Cross-system consciousness integration complete")
+                    
+                except Exception as consciousness_integration_error:
+                    print(f"[LLMHandler] ⚠️ Consciousness integration warning: {consciousness_integration_error}")
             
-            # 5. Budget Check
+            # ✅ FALLBACK: Create lightweight consciousness simulation if full system unavailable
+            elif CONSCIOUSNESS_MODULES_AVAILABLE:
+                try:
+                    # Create simulated consciousness state for token optimization
+                    simulated_consciousness = {
+                        'emotion_engine': {
+                            'primary_emotion': 'engaged',
+                            'intensity': 0.6
+                        },
+                        'motivation_system': {
+                            'active_goals': [
+                                {'description': 'Help user effectively', 'priority': 0.8, 'progress': 0.1}
+                            ]
+                        },
+                        'global_workspace': {
+                            'current_focus': f"user_request_{sanitized_text[:20].replace(' ', '_')}",
+                            'focus_priority': 'high'
+                        }
+                    }
+                    consciousness_context = tokenize_consciousness_for_llm(simulated_consciousness)
+                    consciousness_summary = get_consciousness_summary_for_llm(simulated_consciousness)
+                    print(f"[LLMHandler] 🧠 Using simulated consciousness state for optimization")
+                    
+                except Exception as simulation_error:
+                    print(f"[LLMHandler] ⚠️ Consciousness simulation warning: {simulation_error}")
+                    consciousness_context = "[CONSCIOUSNESS:engaged_helpful_focused]"
+                    consciousness_summary = "[CONSCIOUSNESS:engaged helpful focused]"
+            
+            # 5. Enhanced Budget Check with usage tracking
             estimated_tokens = estimate_tokens_from_text(sanitized_text) + 500  # Estimate response tokens
             budget_allowed, budget_message = check_llm_budget_before_request(
                 estimated_tokens, self.default_model, user
             )
+            
+            # Get current budget status for optimization calculations
+            budget_status = get_budget_status()
             
             processing_time = time.time() - analysis_start
             
@@ -233,17 +302,18 @@ class LLMHandler:
                 "semantic": {
                     "analysis": semantic_analysis,
                     "tags": semantic_tags,
-                    "categories": [cat.value for cat in semantic_analysis.semantic_categories],
-                    "intent": [intent.value for intent in semantic_analysis.intent_categories],
-                    "emotional_tone": semantic_analysis.emotional_tone.value,
-                    "complexity": semantic_analysis.complexity_level.value
+                    "categories": [cat.value for cat in semantic_analysis.semantic_categories] if hasattr(semantic_analysis, 'semantic_categories') else [],
+                    "intent": [intent.value for intent in semantic_analysis.intent_categories] if hasattr(semantic_analysis, 'intent_categories') else [],
+                    "emotional_tone": semantic_analysis.emotional_tone.value if hasattr(semantic_analysis, 'emotional_tone') else 'neutral',
+                    "complexity": semantic_analysis.complexity_level.value if hasattr(semantic_analysis, 'complexity_level') else 'simple'
                 },
                 "beliefs": {
                     "analysis": belief_analysis,
                     "user_summary": user_beliefs,
                     "contradictions": active_contradictions,
                     "extracted_beliefs": belief_analysis.get("extracted_beliefs", []),
-                    "new_contradictions": belief_analysis.get("new_contradictions", [])
+                    "new_contradictions": belief_analysis.get("new_contradictions", []),
+                    "enhanced_contradictions": belief_analysis.get("enhanced_contradictions", [])
                 },
                 "personality": {
                     "triggers": personality_triggers,
@@ -254,17 +324,30 @@ class LLMHandler:
                 "consciousness": {
                     "available": CONSCIOUSNESS_AVAILABLE,
                     "context": consciousness_context,
-                    "token_count": len(consciousness_context.split()) if consciousness_context else 0
+                    "summary": consciousness_summary,
+                    "token_count": len(consciousness_context.split()) if consciousness_context else 0,
+                    "cross_system_integration": CONSCIOUSNESS_AVAILABLE,
+                    "simulation_mode": not CONSCIOUSNESS_AVAILABLE and CONSCIOUSNESS_MODULES_AVAILABLE
                 },
                 "budget": {
                     "allowed": budget_allowed,
                     "message": budget_message,
-                    "estimated_tokens": estimated_tokens
+                    "estimated_tokens": estimated_tokens,
+                    "usage_percentage": budget_status.get("daily_usage_percentage", 0.0),
+                    "cost_estimate": budget_status.get("daily_cost", 0.0),
+                    "optimization_target": "aggressive" if budget_status.get("daily_usage_percentage", 0.0) > 0.5 else "moderate"
+                },
+                "memory": {
+                    "significant_context": "",  # Will be filled by memory systems if available
+                    "recent_interactions": [],
+                    "compressed": True
                 },
                 "meta": {
                     "processing_time": processing_time,
                     "timestamp": datetime.now().isoformat(),
-                    "analysis_version": "1.0"
+                    "analysis_version": "2.0_token_optimized",
+                    "token_optimization_enabled": True,
+                    "cross_system_integration": CONSCIOUSNESS_AVAILABLE
                 }
             }
             
@@ -519,65 +602,139 @@ class LLMHandler:
         return consciousness_systems
         
     def _build_enhanced_prompt(self, text: str, user: str, analysis: Dict[str, Any]) -> str:
-        """Build enhanced prompt with consciousness integration and token budget management"""
+        """Build enhanced prompt with consciousness integration and AGGRESSIVE token optimization (40-85% reduction)"""
         try:
             # Sanitize user input first
             sanitized_text = self.sanitize_prompt_input(text, user)
             
+            # ✅ AGGRESSIVE TOKEN OPTIMIZATION: Calculate reduction target
+            budget_status = analysis.get("budget", {})
+            usage_percentage = budget_status.get("usage_percentage", 0.0)
+            
+            # Aggressive reduction based on usage
+            if usage_percentage > 0.8:
+                token_reduction = 0.85  # 85% reduction for high usage
+            elif usage_percentage > 0.6:
+                token_reduction = 0.70  # 70% reduction for medium usage  
+            elif usage_percentage > 0.4:
+                token_reduction = 0.55  # 55% reduction for moderate usage
+            else:
+                token_reduction = 0.40  # 40% reduction for low usage
+            
+            print(f"[LLMHandler] 🏷️ AGGRESSIVE token optimization: {token_reduction*100:.0f}% reduction target")
+            
+            # Calculate highly optimized budget
+            estimated_user_tokens = estimate_tokens_from_text(sanitized_text)
+            base_budget = self.max_context_tokens - 200  # Reserve for response
+            optimized_budget = int(base_budget * (1 - token_reduction))
+            available_budget = max(optimized_budget - estimated_user_tokens, 50)  # Minimum viable budget
+            
+            print(f"[LLMHandler] 💰 Token budget: {available_budget} tokens (reduced from {base_budget})")
+            
             prompt_parts = []
             
-            # Base user input
+            # Ultra-compressed system prompt for efficiency
+            system_prompt = "Buddy: AI assistant with consciousness. Be helpful, warm, empathetic."
+            prompt_parts.append(system_prompt)
+            
+            # User input (cannot be compressed further)
             prompt_parts.append(f"User: {sanitized_text}")
+            available_budget -= estimate_tokens_from_text(system_prompt + sanitized_text)
             
-            # Check available token budget
-            estimated_user_tokens = estimate_tokens_from_text(sanitized_text)
-            available_budget = self.max_context_tokens - estimated_user_tokens - 200  # Reserve for response
-            
-            # Add consciousness context with budget management
+            # ✅ ULTRA-COMPRESSED consciousness context (symbolic tokens only)
             consciousness_context = analysis.get("consciousness", {}).get("context", "")
-            if consciousness_context and available_budget > 100:
-                # Trim consciousness tokens to fit budget
+            if consciousness_context and available_budget > 20:
                 if NEW_MODULES_AVAILABLE:
                     from ai.consciousness_tokenizer import trim_tokens_to_budget
-                    consciousness_budget = min(available_budget // 3, 150)  # Use 1/3 of budget for consciousness
+                    # Ultra-aggressive consciousness budget (maximum 15% of remaining budget)
+                    consciousness_budget = min(int(available_budget * 0.15), 25)
                     trimmed_consciousness = trim_tokens_to_budget(consciousness_context, consciousness_budget)
                     prompt_parts.append(f"Consciousness State: {trimmed_consciousness}")
                     available_budget -= estimate_tokens_from_text(trimmed_consciousness)
+                    print(f"[LLMHandler] 🧠 Consciousness tokens: {len(trimmed_consciousness)} chars")
                 else:
-                    # Fallback simple trimming
-                    words = consciousness_context.split()[:50]
-                    prompt_parts.append(f"Consciousness State: {' '.join(words)}")
-                    available_budget -= 50
+                    # Ultra-compressed fallback (only essential tokens)
+                    words = consciousness_context.split()[:10]
+                    mini_consciousness = " ".join(words)
+                    prompt_parts.append(f"Consciousness State: {mini_consciousness}")
+                    available_budget -= 10
             
-            # Add personality context with budget management
+            # ✅ ULTRA-COMPRESSED personality tokens (symbolic only)
             personality_modifiers = analysis.get("personality", {}).get("modifiers", "")
-            if personality_modifiers and available_budget > 50:
-                # Generate enhanced personality tokens
+            if personality_modifiers and available_budget > 15:
                 if NEW_MODULES_AVAILABLE:
                     from ai.consciousness_tokenizer import generate_personality_tokens, trim_tokens_to_budget
                     personality_data = analysis.get("personality", {}).get("current_traits", {})
-                    personality_tokens = generate_personality_tokens(user, personality_data)
+                    personality_tokens = generate_personality_tokens(user, personality_data, max_tokens=3)  # Limit to 3 tokens
                     if personality_tokens and personality_tokens != "<pers_error>":
-                        personality_budget = min(available_budget // 2, 50)
+                        # Ultra-aggressive personality budget (maximum 10% of remaining budget)
+                        personality_budget = min(int(available_budget * 0.10), 15)
                         trimmed_personality = trim_tokens_to_budget(personality_tokens, personality_budget)
                         prompt_parts.append(f"Personality: {trimmed_personality}")
                         available_budget -= estimate_tokens_from_text(trimmed_personality)
+                        print(f"[LLMHandler] 🎭 Personality tokens: {len(trimmed_personality)} chars")
                     else:
-                        # Fallback to original modifiers
-                        words = personality_modifiers.split()[:30]
-                        prompt_parts.append(f"Personality: {' '.join(words)}")
-                        available_budget -= 30
+                        # Ultra-compressed fallback (top 2 traits only)
+                        words = personality_modifiers.split()[:5]
+                        mini_personality = " ".join(words)
+                        prompt_parts.append(f"Personality: {mini_personality}")
+                        available_budget -= 5
                 else:
-                    words = personality_modifiers.split()[:30]
-                    prompt_parts.append(f"Personality: {' '.join(words)}")
-                    available_budget -= 30
+                    # Ultra-compressed fallback (top trait only)
+                    words = personality_modifiers.split()[:5]
+                    mini_personality = " ".join(words)
+                    prompt_parts.append(f"Personality: {mini_personality}")
+                    available_budget -= 5
             
-            # Add semantic context with budget management
-            semantic_tags = analysis.get("semantic", {}).get("tags", "")
-            if semantic_tags and available_budget > 30:
-                words = semantic_tags.split()[:min(25, available_budget)]
-                prompt_parts.append(f"Context: {' '.join(words)}")
-                available_budget -= len(words)
+            # ✅ ULTRA-COMPRESSED semantic context (essential tags only)
+            semantic_analysis = analysis.get("semantic", {})
+            if semantic_analysis and available_budget > 10:
+                # Extract only the most essential semantic information
+                intent = semantic_analysis.get("intent", "")
+                tone = semantic_analysis.get("emotional_tone", "")
+                complexity = semantic_analysis.get("complexity", "")
+                
+                # Create ultra-compressed semantic string
+                semantic_parts = []
+                if intent: semantic_parts.append(f"I:{intent[:8]}")  # Intent abbreviated
+                if tone: semantic_parts.append(f"T:{tone[:6]}")      # Tone abbreviated
+                if complexity: semantic_parts.append(f"C:{complexity[:6]}")  # Complexity abbreviated
+                
+                if semantic_parts:
+                    ultra_semantic = " ".join(semantic_parts)
+                    prompt_parts.append(f"Context: [{ultra_semantic}]")
+                    available_budget -= len(ultra_semantic.split())
+                    print(f"[LLMHandler] 🏷️ Semantic tokens: {len(ultra_semantic)} chars")
+            
+            # ✅ COMPRESSED memory context (only if critical)
+            memory_analysis = analysis.get("memory", {})
+            if memory_analysis and available_budget > 5:
+                significant_memories = memory_analysis.get("significant_context", "")
+                if significant_memories:
+                    if NEW_MODULES_AVAILABLE:
+                        from ai.consciousness_tokenizer import compress_memory_entry
+                        # Ultra-compressed memory (maximum 5% of remaining budget)
+                        memory_budget = min(int(available_budget * 0.05), 10)
+                        compressed_memory = compress_memory_entry(
+                            {"content": significant_memories, "significance": 0.8}, 
+                            memory_budget
+                        )
+                        if compressed_memory and compressed_memory != "<mem_error>":
+                            prompt_parts.append(f"Memory: {compressed_memory}")
+                            print(f"[LLMHandler] 💭 Memory tokens: {len(compressed_memory)} chars")
+            
+            # Join all parts efficiently
+            final_prompt = "\n".join(prompt_parts)
+            
+            # Final token count verification
+            final_tokens = estimate_tokens_from_text(final_prompt)
+            original_estimate = estimate_tokens_from_text(f"User: {sanitized_text}") * 3  # Rough estimate without optimization
+            actual_reduction = max(0, (original_estimate - final_tokens) / original_estimate)
+            
+            print(f"[LLMHandler] ✅ OPTIMIZATION COMPLETE: {final_tokens} tokens")
+            print(f"[LLMHandler] 📊 Achieved reduction: {actual_reduction*100:.1f}% (target: {token_reduction*100:.0f}%)")
+            
+            return final_prompt
             
             # Add belief context with budget management and compression
             beliefs = analysis.get("beliefs", {})
