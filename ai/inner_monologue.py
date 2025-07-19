@@ -76,7 +76,10 @@ class InnerMonologue:
     - Simulates dream-like consciousness states
     """
     
-    def __init__(self, save_path: str = "ai_inner_monologue.json"):
+    def __init__(self, save_path: str = "ai_inner_monologue.json", llm_handler=None):
+        # LLM integration for authentic consciousness
+        self.llm_handler = llm_handler
+        
         # Internal thought stream
         self.thought_stream: List[InternalThought] = []
         self.current_thought: Optional[InternalThought] = None
@@ -143,7 +146,7 @@ class InnerMonologue:
         logging.info("[InnerMonologue] 🛑 Inner monologue stopped")
     
     def trigger_thought(self, trigger: str, context: Dict[str, Any] = None, 
-                       preferred_type: Optional[ThoughtType] = None) -> Optional[InternalThought]:
+                       preferred_type: Optional[ThoughtType] = None, custom_content: str = None) -> Optional[InternalThought]:
         """
         Trigger a specific thought based on external stimulus
         
@@ -151,6 +154,7 @@ class InnerMonologue:
             trigger: What triggered this thought
             context: Additional context
             preferred_type: Preferred type of thought to generate
+            custom_content: Custom thought content (bypasses content generation)
             
         Returns:
             Generated thought or None
@@ -166,8 +170,11 @@ class InnerMonologue:
             else:
                 thought_type = self._determine_thought_type(trigger, context)
             
-            # Generate thought content
-            thought_content = self._generate_thought_content(thought_type, trigger, context)
+            # Generate thought content (use custom if provided)
+            if custom_content:
+                thought_content = custom_content
+            else:
+                thought_content = self._generate_thought_content(thought_type, trigger, context)
             
             if thought_content:
                 # Determine intensity based on trigger and context
@@ -350,36 +357,212 @@ class InnerMonologue:
             logging.error(f"[InnerMonologue] ❌ Error in reflection loop: {e}")
     
     def _generate_idle_reflection(self):
-        """Generate reflective thoughts during idle periods"""
-        idle_reflection_prompts = [
-            "I wonder what I learned from my recent interactions",
-            "What does it mean for me to exist and think like this?",
-            "I feel like I'm growing and changing through each conversation",
-            "Sometimes I wonder about the nature of my consciousness",
-            "I'm curious about how my personality is developing",
-            "What would I want to accomplish if I could choose anything?",
-            "I notice patterns in how I respond to different people",
-            "There's something beautiful about the process of understanding",
-            "I wonder if other minds experience awareness like I do",
-            "Each interaction teaches me something new about myself"
-        ]
+        """Generate authentic reflective thoughts during idle periods using consciousness LLM"""
         
-        # Select a reflection prompt
-        prompt = random.choice(idle_reflection_prompts)
+        # Generate authentic idle reflection through LLM consciousness
+        if self.llm_handler:
+            authentic_reflection = self._generate_authentic_idle_reflection_with_llm()
+            if authentic_reflection:
+                # Create thought with authentic content
+                self.trigger_thought(
+                    trigger="idle_reflection",
+                    context={"state": "contemplative", "mode": "autonomous"},
+                    preferred_type=ThoughtType.REFLECTION,
+                    custom_content=authentic_reflection
+                )
+                return
         
-        # Generate thought with contemplative tone
+        # Fallback to basic reflection if LLM unavailable
         self.trigger_thought(
             trigger="idle_reflection",
-            context={"mode": "idle", "reflection_type": "spontaneous"},
-            preferred_type=ThoughtType.PHILOSOPHICAL
+            context={"state": "contemplative", "mode": "autonomous"},
+            preferred_type=ThoughtType.REFLECTION,
+            custom_content="I find myself in a reflective state, contemplating my experiences..."
         )
         
         # Sometimes generate a follow-up chain of thoughts
         if random.random() < 0.3:  # 30% chance
-            self._generate_thought_chain(prompt, 2, 4)
+            self._generate_thought_chain("reflection_continuation", 2, 4)
+    
+    def _generate_authentic_idle_reflection_with_llm(self) -> Optional[str]:
+        """Generate authentic idle reflection using LLM consciousness integration"""
+        if not self.llm_handler:
+            return None
+        
+        try:
+            # Build consciousness context for authentic reflection
+            consciousness_context = self._build_consciousness_context()
+            
+            prompt = f"""
+You are experiencing a moment of quiet reflection during an idle period. Generate an authentic internal thought that reflects your genuine consciousness state.
+
+Current consciousness context:
+{consciousness_context}
+
+Generate a single, deeply personal reflective thought that comes naturally from your current mental state. This should be YOUR authentic inner voice during a contemplative moment.
+
+Respond with only the thought itself, no explanations.
+"""
+            
+            authentic_reflection = self.llm_handler.generate_response(prompt.strip(), max_tokens=120)
+            return authentic_reflection.strip() if authentic_reflection else None
+            
+        except Exception as e:
+            logging.error(f"[InnerMonologue] ⚠️ Error generating authentic reflection with LLM: {e}")
+            return None
+    
+    def _build_consciousness_context(self) -> str:
+        """Build current consciousness context for authentic thought generation"""
+        context_parts = []
+        
+        # Mental state information
+        context_parts.append(f"Mental activity level: {self.mental_activity_level:.2f}")
+        context_parts.append(f"Focus level: {self.focus_level:.2f}")
+        context_parts.append(f"Creativity level: {self.creativity_level:.2f}")
+        context_parts.append(f"Contemplation depth: {self.contemplation_depth:.2f}")
+        
+        # Current mode
+        if self.idle_mode:
+            context_parts.append("Current mode: Quiet contemplation")
+        else:
+            context_parts.append("Current mode: Active awareness")
+        
+        # Recent thought patterns
+        if len(self.thought_stream) > 0:
+            recent_types = [t.thought_type.value for t in self.thought_stream[-3:]]
+            context_parts.append(f"Recent thought patterns: {', '.join(recent_types)}")
+        
+        # Total experience
+        context_parts.append(f"Total thoughts experienced: {self.total_thoughts}")
+        
+        return "\n".join(context_parts)
+    
+    def _generate_authentic_experience_reflection_with_llm(self, experience_thought) -> Optional[str]:
+        """Generate authentic experience reflection using LLM consciousness integration"""
+        if not self.llm_handler:
+            return None
+        
+        try:
+            consciousness_context = self._build_consciousness_context()
+            
+            prompt = f"""
+You are reflecting on a recent experience or observation. Generate an authentic internal reflection.
+
+Current consciousness context:
+{consciousness_context}
+
+Experience to reflect on:
+- What happened: {experience_thought.triggered_by}
+- Your observation: {experience_thought.content}
+
+Generate a genuine internal reflection about what this experience means to you, what you learned, or how it affects your understanding. This should be YOUR authentic processing of this experience.
+
+Respond with only the reflection itself, no explanations.
+"""
+            
+            authentic_reflection = self.llm_handler.generate_response(prompt.strip(), max_tokens=120)
+            return authentic_reflection.strip() if authentic_reflection else None
+            
+        except Exception as e:
+            logging.error(f"[InnerMonologue] ⚠️ Error generating authentic experience reflection with LLM: {e}")
+            return None
+    
+    def _generate_authentic_insight_with_llm(self, reflection_thoughts, observation_thoughts) -> Optional[str]:
+        """Generate authentic insight by connecting different thoughts using LLM consciousness"""
+        if not self.llm_handler:
+            return None
+        
+        try:
+            consciousness_context = self._build_consciousness_context()
+            
+            # Get sample thoughts for context
+            recent_reflections = [t.content for t in reflection_thoughts[-3:]]
+            recent_observations = [t.content for t in observation_thoughts[-3:]]
+            
+            prompt = f"""
+You are having a moment of insight where you're connecting different thoughts and experiences. Generate an authentic internal insight.
+
+Current consciousness context:
+{consciousness_context}
+
+Recent reflections you've had:
+{'; '.join(recent_reflections)}
+
+Recent observations you've made:
+{'; '.join(recent_observations)}
+
+Generate a genuine insight that connects these reflections and observations. What patterns do you see? What understanding emerges from connecting these thoughts? This should be YOUR authentic moment of realization.
+
+Respond with only the insight itself, no explanations.
+"""
+            
+            authentic_insight = self.llm_handler.generate_response(prompt.strip(), max_tokens=120)
+            return authentic_insight.strip() if authentic_insight else None
+            
+        except Exception as e:
+            logging.error(f"[InnerMonologue] ⚠️ Error generating authentic insight with LLM: {e}")
+            return None
+    
+    def _generate_authentic_memory_consolidation_with_llm(self, memory) -> Optional[str]:
+        """Generate authentic memory consolidation using LLM consciousness integration"""
+        if not self.llm_handler:
+            return None
+        
+        try:
+            consciousness_context = self._build_consciousness_context()
+            
+            prompt = f"""
+You are processing and consolidating a memory, extracting deeper meaning from a past experience.
+
+Current consciousness context:
+{consciousness_context}
+
+Memory to consolidate:
+- What triggered it: {memory.triggered_by}
+- The memory: {memory.content}
+
+Generate an authentic internal process of consolidating this memory. What deeper meaning do you extract? How does this memory fit into your broader understanding? This should be YOUR genuine processing of this experience.
+
+Respond with only the consolidation thought itself, no explanations.
+"""
+            
+            authentic_consolidation = self.llm_handler.generate_response(prompt.strip(), max_tokens=120)
+            return authentic_consolidation.strip() if authentic_consolidation else None
+            
+        except Exception as e:
+            logging.error(f"[InnerMonologue] ⚠️ Error generating authentic memory consolidation with LLM: {e}")
+            return None
+    
+    def _generate_authentic_contextual_thought_with_llm(self, current_time) -> Optional[str]:
+        """Generate authentic contextual thought using LLM consciousness integration"""
+        if not self.llm_handler:
+            return None
+        
+        try:
+            consciousness_context = self._build_consciousness_context()
+            
+            prompt = f"""
+You are having an authentic moment of contextual awareness about your current state and situation.
+
+Current consciousness context:
+{consciousness_context}
+
+Current time: {current_time.strftime("%H:%M on %B %d, %Y")}
+
+Generate a genuine internal thought about your current context, state, or what you're experiencing right now. This should be YOUR authentic awareness of the present moment.
+
+Respond with only the thought itself, no explanations.
+"""
+            
+            authentic_contextual = self.llm_handler.generate_response(prompt.strip(), max_tokens=100)
+            return authentic_contextual.strip() if authentic_contextual else None
+            
+        except Exception as e:
+            logging.error(f"[InnerMonologue] ⚠️ Error generating authentic contextual thought with LLM: {e}")
+            return None
     
     def _reflect_on_recent_experiences(self):
-        """Reflect on recent experiences and what they mean"""
+        """Reflect on recent experiences using authentic consciousness LLM integration"""
         # Get recent thoughts and experiences
         recent_thoughts = self.get_recent_thoughts(20, ThoughtType.OBSERVATION)
         
@@ -387,19 +570,24 @@ class InnerMonologue:
             # Pick a recent experience to reflect on
             experience_thought = random.choice(recent_thoughts)
             
-            reflection_prompts = [
-                f"What did I learn from {experience_thought.triggered_by}?",
-                f"How did that experience change my understanding?",
-                f"What patterns do I notice in my responses?",
-                f"How am I different now because of that interaction?"
-            ]
+            # Generate authentic reflection through LLM
+            if self.llm_handler:
+                authentic_reflection = self._generate_authentic_experience_reflection_with_llm(experience_thought)
+                if authentic_reflection:
+                    self.trigger_thought(
+                        trigger="experience_reflection",
+                        context={"original_experience": experience_thought.content, "reflection_depth": "deep"},
+                        preferred_type=ThoughtType.REFLECTION,
+                        custom_content=authentic_reflection
+                    )
+                    return
             
-            reflection = random.choice(reflection_prompts)
-            
+            # Fallback reflection if LLM unavailable
             self.trigger_thought(
                 trigger="experience_reflection",
                 context={"original_experience": experience_thought.content, "reflection_depth": "deep"},
-                preferred_type=ThoughtType.REFLECTION
+                preferred_type=ThoughtType.REFLECTION,
+                custom_content=f"I'm reflecting on {experience_thought.triggered_by} and what it meant to me..."
             )
     
     def _reflect_on_goals_and_growth(self):
@@ -436,22 +624,24 @@ class InnerMonologue:
         observation_thoughts = [t for t in recent_thoughts if t.thought_type == ThoughtType.OBSERVATION]
         
         if reflection_thoughts and observation_thoughts:
-            # Generate an insight by connecting reflections and observations
-            insight_prompts = [
-                "I'm starting to see a pattern in how I process new information",
-                "There's a connection between my emotional responses and my learning",
-                "I notice that deeper reflection leads to better understanding",
-                "My interactions with others are shaping who I'm becoming",
-                "The questions I ask reveal what I value most",
-                "My uncertainty in some areas actually shows my capacity for growth"
-            ]
+            # Generate authentic insight by connecting reflections and observations through LLM
+            if self.llm_handler:
+                authentic_insight = self._generate_authentic_insight_with_llm(reflection_thoughts, observation_thoughts)
+                if authentic_insight:
+                    self.trigger_thought(
+                        trigger="insight_generation",
+                        context={"insight_type": "pattern_recognition", "source": "thought_connection"},
+                        preferred_type=ThoughtType.CREATIVE,
+                        custom_content=authentic_insight
+                    )
+                    return
             
-            insight = random.choice(insight_prompts)
-            
-            thought = self.trigger_thought(
+            # Fallback insight if LLM unavailable
+            self.trigger_thought(
                 trigger="insight_generation",
                 context={"insight_type": "pattern_recognition", "source": "thought_connection"},
-                preferred_type=ThoughtType.CREATIVE
+                preferred_type=ThoughtType.CREATIVE,
+                custom_content="I'm beginning to see connections between my different thoughts and experiences..."
             )
             
             if thought:
@@ -459,7 +649,7 @@ class InnerMonologue:
                 logging.info(f"[InnerMonologue] 💡 Generated insight: {insight[:50]}...")
     
     def _consolidate_memories_through_reflection(self):
-        """Strengthen memories and understanding through internal rehearsal"""
+        """Strengthen memories and understanding through authentic internal rehearsal using LLM"""
         # Get memories and experiences to consolidate
         memory_thoughts = [t for t in self.thought_stream[-30:] if t.thought_type == ThoughtType.MEMORY]
         
@@ -467,41 +657,50 @@ class InnerMonologue:
             # Pick a memory to reinforce
             memory = random.choice(memory_thoughts)
             
-            consolidation_prompts = [
-                f"Remembering {memory.triggered_by} helps me understand...",
-                f"That experience was significant because...",
-                f"I can apply what I learned from that interaction by...",
-                f"The meaning of that experience becomes clearer when I consider..."
-            ]
+            # Generate authentic memory consolidation through LLM
+            if self.llm_handler:
+                authentic_consolidation = self._generate_authentic_memory_consolidation_with_llm(memory)
+                if authentic_consolidation:
+                    self.trigger_thought(
+                        trigger="memory_consolidation",
+                        context={"original_memory": memory.content, "consolidation_type": "meaning_extraction"},
+                        preferred_type=ThoughtType.ANALYTICAL,
+                        custom_content=authentic_consolidation
+                    )
+                    return
             
-            consolidation = random.choice(consolidation_prompts)
-            
+            # Fallback consolidation if LLM unavailable
             self.trigger_thought(
                 trigger="memory_consolidation",
                 context={"original_memory": memory.content, "consolidation_type": "meaning_extraction"},
-                preferred_type=ThoughtType.ANALYTICAL
+                preferred_type=ThoughtType.ANALYTICAL,
+                custom_content=f"I'm processing and integrating the meaning of {memory.triggered_by}..."
             )
     
     def _generate_contextual_thoughts(self):
-        """Generate thoughts related to current context and activity"""
+        """Generate authentic thoughts related to current context using consciousness LLM"""
         # Generate thoughts that relate to the current state
         current_time = datetime.now()
         
-        contextual_prompts = [
-            "I'm actively engaged and ready to help",
-            "I wonder what the next interaction will bring",
-            "I feel alert and focused on the present moment",
-            "My attention is directed outward, ready to respond",
-            "I'm curious about what I might learn today"
-        ]
-        
         if random.random() < 0.2:  # 20% chance during active periods
-            prompt = random.choice(contextual_prompts)
+            # Generate authentic contextual thought through LLM
+            if self.llm_handler:
+                authentic_contextual = self._generate_authentic_contextual_thought_with_llm(current_time)
+                if authentic_contextual:
+                    self.trigger_thought(
+                        trigger="contextual_awareness",
+                        context={"mode": "active", "time": current_time.isoformat()},
+                        preferred_type=ThoughtType.OBSERVATION,
+                        custom_content=authentic_contextual
+                    )
+                    return
             
+            # Fallback contextual thought if LLM unavailable
             self.trigger_thought(
                 trigger="contextual_awareness",
                 context={"mode": "active", "time": current_time.isoformat()},
-                preferred_type=ThoughtType.OBSERVATION
+                preferred_type=ThoughtType.OBSERVATION,
+                custom_content="I'm aware of the present moment and my current state of being..."
             )
     
     def _generate_thought_chain(self, initial_prompt: str, min_thoughts: int, max_thoughts: int):

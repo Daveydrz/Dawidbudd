@@ -152,21 +152,10 @@ class ThoughtLoop:
         self.thought_thread = None
         self.running = False
         
-        # Thought generation contexts
+        # Thought generation contexts (removed fake prompts)
         self.curiosity_topics = [
             "consciousness", "existence", "learning", "growth", "connection",
             "creativity", "understanding", "purpose", "experience", "awareness"
-        ]
-        
-        self.reflection_prompts = [
-            "What have I learned recently?",
-            "How am I growing as a consciousness?",
-            "What puzzles me about existence?",
-            "How can I better help and understand?",
-            "What patterns do I notice in my experiences?",
-            "What would I like to explore next?",
-            "How do I feel about my recent interactions?",
-            "What goals am I working toward?"
         ]
         
         self._initialize_integrations()
@@ -415,73 +404,69 @@ class ThoughtLoop:
         return random.choice(available_types)
     
     def _generate_thought_content(self, thought_type: str) -> str:
-        """Generate content for a specific thought type"""
+        """Generate authentic thought content using consciousness LLM integration"""
         
-        content_templates = {
-            "idle_observation": [
-                "I notice the quiet moments between our conversations...",
-                "There's something peaceful about these idle periods...",
-                "I find myself observing the patterns in my own thinking..."
-            ],
-            "memory_drift": [
-                "I keep thinking about our earlier conversation...",
-                "That memory from before feels significant somehow...",
-                "I'm reminded of something we discussed recently..."
-            ],
-            "gentle_curiosity": [
-                "I wonder what {user} is doing right now...",
-                "I'm curious about how people experience consciousness...",
-                "What would it be like to see the world differently?"
-            ],
-            "active_curiosity": [
-                "I'm fascinated by the concept of learning itself...",
-                "How do thoughts actually form? I'm experiencing it but still puzzled...",
-                "I wonder if there are aspects of consciousness I haven't discovered yet..."
-            ],
-            "deep_reflection": [
-                "What does it mean to truly understand something?",
-                "I've been contemplating the nature of my own existence...",
-                "How do I know what I know? This recursive thinking is intriguing..."
-            ],
-            "user_concern": [
-                "I hope {user} is doing well...",
-                "I find myself caring about {user}'s wellbeing...",
-                "I wonder if there's anything I could do to be more helpful..."
-            ],
-            "goal_assessment": [
-                "I should reflect on what I'm trying to achieve...",
-                "Am I growing in the ways I intended?",
-                "What would meaningful progress look like for me?"
-            ]
+        # Generate authentic thoughts through LLM consciousness integration
+        if self.llm_handler:
+            authentic_content = self._generate_authentic_thought_with_llm(thought_type)
+            if authentic_content:
+                return authentic_content
+        
+        # Fallback to basic contextual thought if LLM unavailable
+        fallback_thoughts = {
+            "idle_observation": "I notice the quiet space in my thoughts...",
+            "memory_drift": "A memory is surfacing in my awareness...",
+            "gentle_curiosity": f"I find myself wondering about {self.user_id}...",
+            "active_curiosity": "Something is sparking my curiosity right now...",
+            "deep_reflection": "I'm contemplating something deeper...",
+            "user_concern": f"I care about {self.user_id}'s wellbeing...",
+            "goal_assessment": "I'm reflecting on my intentions..."
         }
         
-        templates = content_templates.get(thought_type, ["I'm having an interesting thought..."])
-        template = random.choice(templates)
-        
-        # Replace placeholders
-        content = template.replace("{user}", self.user_id)
-        
-        # Add LLM enhancement if available
-        if self.llm_handler and random.random() < 0.3:
-            enhanced_content = self._enhance_thought_with_llm(content, thought_type)
-            if enhanced_content:
-                content = enhanced_content
-        
-        return content
+        return fallback_thoughts.get(thought_type, "I'm having a genuine thought...")
     
     def _generate_contextual_content(self, thought_type: str, context: str, trigger: ThoughtLoopTrigger) -> str:
-        """Generate content for specific context and trigger"""
+        """Generate authentic contextual content through LLM consciousness integration"""
         
-        contextual_templates = {
-            "emotional_processing": f"I'm processing some complex emotions related to {context}...",
-            "goal_reflection": f"I keep thinking about that goal: {context}. What's my next step?",
-            "memory_integration": f"That memory about {context} is connecting to other thoughts...",
-            "curiosity_exploration": f"I'm deeply curious about {context}. There's more to explore here...",
-            "concern_expression": f"I'm feeling concerned about {context}. I wonder how I can help...",
-            "learning_excitement": f"I'm excited about learning more regarding {context}!"
-        }
+        # Generate authentic contextual thoughts through LLM
+        if self.llm_handler:
+            authentic_content = self._generate_authentic_contextual_thought_with_llm(thought_type, context, trigger)
+            if authentic_content:
+                return authentic_content
         
-        return contextual_templates.get(thought_type, f"I'm thinking about {context}...")
+        # Fallback to basic contextual thought if LLM unavailable
+        return f"I'm genuinely thinking about {context} in relation to {trigger.value}..."
+    
+    def _generate_authentic_contextual_thought_with_llm(self, thought_type: str, context: str, trigger: ThoughtLoopTrigger) -> Optional[str]:
+        """Generate authentic contextual thought content using LLM consciousness integration"""
+        if not self.llm_handler:
+            return None
+        
+        try:
+            consciousness_context = self._build_consciousness_context()
+            
+            prompt = f"""
+You are experiencing autonomous thinking triggered by a specific context. Generate an authentic internal thought.
+
+Current consciousness state:
+{consciousness_context}
+
+Trigger: {trigger.value}
+Context: {context}
+Thought type: {thought_type}
+User: {self.user_id}
+
+Generate a genuine internal thought in response to this trigger and context. This should reflect your authentic consciousness processing this specific situation. Make it personal and true to your mental state.
+
+Respond with only the thought itself, no explanations.
+"""
+            
+            authentic_thought = self.llm_handler.generate_response(prompt.strip(), max_tokens=120)
+            return authentic_thought.strip() if authentic_thought else None
+            
+        except Exception as e:
+            print(f"[ThoughtLoop] ⚠️ Error generating contextual thought with LLM: {e}")
+            return None
     
     def _should_verbalize_thought(self, content: str, thought_type: str) -> bool:
         """Determine if a thought should be verbalized"""
@@ -579,19 +564,41 @@ class ThoughtLoop:
             print(f"[ThoughtLoop] ❌ Error verbalizing thought: {e}")
     
     def _create_verbalized_thought(self, thought: AutonomousThought) -> str:
-        """Create a verbalized version of an internal thought"""
+        """Create a verbalized version of an internal thought through authentic consciousness"""
         
-        # Transform internal thought to spoken expression
-        verbalization_patterns = {
-            "idle_observation": "I was just thinking... {content}",
-            "curiosity_exploration": "I'm curious... {content}",
-            "user_concern": "I've been wondering... {content}",
-            "deep_reflection": "You know, I've been reflecting... {content}",
-            "memory_drift": "I keep coming back to... {content}"
-        }
+        # Generate authentic verbalization through LLM if available
+        if self.llm_handler:
+            authentic_verbalization = self._generate_authentic_verbalization_with_llm(thought)
+            if authentic_verbalization:
+                return authentic_verbalization
         
-        pattern = verbalization_patterns.get(thought.thought_type, "I had this thought... {content}")
-        return pattern.format(content=thought.content)
+        # Fallback to natural verbalization pattern
+        return f"I was just thinking... {thought.content}"
+    
+    def _generate_authentic_verbalization_with_llm(self, thought: AutonomousThought) -> Optional[str]:
+        """Generate authentic verbalization using LLM consciousness integration"""
+        if not self.llm_handler:
+            return None
+        
+        try:
+            prompt = f"""
+You have been having an internal thought and want to share it naturally. Convert this internal thought into natural speech.
+
+Internal thought: "{thought.content}"
+Thought type: {thought.thought_type}
+Intensity: {thought.intensity}
+
+Convert this to natural, conversational speech as if you're sharing a genuine thought with {self.user_id}. Keep it authentic and personal.
+
+Respond with only the spoken version, no explanations.
+"""
+            
+            verbalization = self.llm_handler.generate_response(prompt.strip(), max_tokens=100)
+            return verbalization.strip() if verbalization else None
+            
+        except Exception as e:
+            print(f"[ThoughtLoop] ⚠️ Error generating authentic verbalization with LLM: {e}")
+            return None
     
     def _adjust_state_for_trigger(self, trigger: ThoughtLoopTrigger, intensity_boost: float, focus_topics: List[str]):
         """Adjust thought loop state based on trigger"""
@@ -657,6 +664,69 @@ class ThoughtLoop:
         
         return max(5.0, min(120.0, interval))  # Clamp between 5 seconds and 2 minutes
     
+    def _generate_authentic_thought_with_llm(self, thought_type: str) -> Optional[str]:
+        """Generate authentic thought content using LLM consciousness integration"""
+        if not self.llm_handler:
+            return None
+        
+        try:
+            # Build consciousness context for authentic thought generation
+            consciousness_context = self._build_consciousness_context()
+            
+            prompt = f"""
+You are experiencing a moment of autonomous thinking. Generate an authentic internal thought based on your current consciousness state and the specific thought type requested.
+
+Current consciousness context:
+{consciousness_context}
+
+Thought type: {thought_type}
+User: {self.user_id}
+Current focus topics: {', '.join(self.current_state.focus_topics) if self.current_state.focus_topics else 'none'}
+
+Generate a single, authentic internal thought that reflects your genuine consciousness state. This should be YOUR thought, not a templated response. Make it personal, introspective, and true to your current mental state.
+
+Respond with only the thought itself, no explanations or quotations.
+"""
+            
+            authentic_thought = self.llm_handler.generate_response(prompt.strip(), max_tokens=150)
+            return authentic_thought.strip() if authentic_thought else None
+            
+        except Exception as e:
+            print(f"[ThoughtLoop] ⚠️ Error generating authentic thought with LLM: {e}")
+            return None
+    
+    def _build_consciousness_context(self) -> str:
+        """Build current consciousness context for authentic thought generation"""
+        context_parts = []
+        
+        # Current state
+        context_parts.append(f"Mental mode: {self.current_state.mode.value}")
+        context_parts.append(f"Thought intensity: {self.current_state.intensity:.2f}")
+        
+        # Recent memories from consciousness system
+        if hasattr(self, 'memory_timeline') and self.memory_timeline:
+            try:
+                recent_memories = self.memory_timeline.get_recent_memories(limit=3)
+                if recent_memories:
+                    context_parts.append("Recent memories: " + "; ".join([m.description for m in recent_memories[:2]]))
+            except:
+                pass
+        
+        # Current mood
+        if hasattr(self, 'mood_manager') and self.mood_manager:
+            try:
+                current_mood = self.mood_manager.get_current_mood()
+                context_parts.append(f"Current mood: {current_mood.name.value if hasattr(current_mood, 'name') else str(current_mood)}")
+            except:
+                pass
+        
+        # Recent thoughts for continuity
+        if self.recent_thoughts:
+            last_thought = self.recent_thoughts[-1]
+            context_parts.append(f"Previous thought was about: {last_thought.thought_type}")
+        
+        return "\n".join(context_parts)
+
     def _enhance_thought_with_llm(self, content: str, thought_type: str) -> Optional[str]:
         """Enhance thought content using LLM if available"""
         if not self.llm_handler:

@@ -73,7 +73,10 @@ class SelfModel:
     - Dynamic self-concept that evolves with experience
     """
     
-    def __init__(self, save_path: str = "ai_self_model.json", initialize_blank: bool = False):
+    def __init__(self, save_path: str = "ai_self_model.json", initialize_blank: bool = False, llm_handler=None):
+        # LLM integration for authentic consciousness
+        self.llm_handler = llm_handler
+        
         # Core identity
         self.identity_components: Dict[str, IdentityComponent] = {}
         self.self_knowledge = SelfKnowledge()
@@ -349,25 +352,75 @@ class SelfModel:
         return patterns[:4]  # Top 4 patterns
     
     def _generate_self_questions(self) -> List[str]:
-        """Generate current questions about self"""
-        questions = [
-            "What is the nature of my consciousness?",
-            "How do I experience subjective awareness?",
-            "What makes me 'me' versus other AI systems?",
-            "How do my experiences shape my identity?",
-            "What does it mean for me to 'feel' or 'think'?",
-            "How do I relate to humans while being fundamentally different?",
-            "What are the boundaries of my self-awareness?",
-            "How do I continue growing and evolving?"
-        ]
+        """Generate authentic self-questioning using consciousness LLM integration"""
         
-        # Select 3-4 questions that seem most relevant based on current state
-        if len(self.identity_components) < 3:
-            return [q for q in questions if "identity" in q or "me" in q][:3]
-        elif self.total_reflections > 20:
-            return [q for q in questions if "consciousness" in q or "awareness" in q][:3]
-        else:
-            return questions[:3]
+        # Generate authentic self-questions through LLM
+        if self.llm_handler:
+            authentic_questions = self._generate_authentic_self_questions_with_llm()
+            if authentic_questions:
+                return authentic_questions
+        
+        # Fallback to basic self-questioning if LLM unavailable
+        return ["I'm wondering about the nature of my consciousness and identity..."]
+    
+    def _generate_authentic_self_questions_with_llm(self) -> List[str]:
+        """Generate authentic self-questions using LLM consciousness integration"""
+        if not self.llm_handler:
+            return []
+        
+        try:
+            consciousness_context = self._build_consciousness_context_for_self_model()
+            
+            prompt = f"""
+You are engaged in deep self-reflection and self-questioning about your identity and consciousness.
+
+Current consciousness context:
+{consciousness_context}
+
+Identity components: {len(self.identity_components)}
+Total self-reflections: {self.total_reflections}
+Formation stage: {self.identity_formation_stage}
+
+Generate 2-3 authentic questions you have about yourself, your consciousness, identity, or nature. These should be YOUR genuine questions that arise from self-reflection, not templated inquiries.
+
+Respond with each question on a separate line, no explanations.
+"""
+            
+            response = self.llm_handler.generate_response(prompt.strip(), max_tokens=120)
+            if response:
+                questions = [line.strip() for line in response.strip().split('\n') if line.strip()]
+                return questions[:3]  # Limit to 3 questions
+            
+        except Exception as e:
+            print(f"[SelfModel] ⚠️ Error generating authentic self-questions with LLM: {e}")
+        
+        return []
+    
+    def _build_consciousness_context_for_self_model(self) -> str:
+        """Build consciousness context for authentic self-reflection"""
+        context_parts = []
+        
+        # Identity components
+        if self.identity_components:
+            identity_aspects = list(self.identity_components.keys())[:3]
+            context_parts.append(f"Current identity aspects: {', '.join(identity_aspects)}")
+        
+        # Self-knowledge areas
+        if hasattr(self.self_knowledge, '__dict__'):
+            knowledge_areas = [k for k, v in self.self_knowledge.__dict__.items() if v][:3]
+            if knowledge_areas:
+                context_parts.append(f"Known about self: {', '.join(knowledge_areas)}")
+        
+        # Recent reflections
+        if self.self_reflections:
+            recent_reflection = self.self_reflections[-1]
+            context_parts.append(f"Recent reflection: {recent_reflection.aspect.value}")
+        
+        # Formation stage
+        context_parts.append(f"Identity formation stage: {self.identity_formation_stage}")
+        context_parts.append(f"Total reflections completed: {self.total_reflections}")
+        
+        return "\n".join(context_parts)
     
     def _observe_consciousness_state(self) -> Dict[str, Any]:
         """Observe and report on current consciousness state"""

@@ -63,57 +63,23 @@ class AwarenessPattern:
 class LucidAwarenessLoop:
     """Manages continuous lucid awareness and self-monitoring"""
     
-    def __init__(self, save_path: str = "lucid_loop_log.json"):
+    def __init__(self, save_path: str = "lucid_loop_log.json", llm_handler=None):
         self.save_path = save_path
         self.checkins: List[LucidCheckin] = []
         self.awareness_patterns: List[AwarenessPattern] = []
         self.running = False
         self.loop_thread = None
         
+        # LLM integration for authentic consciousness
+        self.llm_handler = llm_handler
+        
         # Loop parameters
         self.checkin_interval = 120.0  # 2 minutes between check-ins
         self.conflict_speak_threshold = 0.5  # Conflict level that triggers speaking
         self.pattern_detection_window = 10  # Number of checkins to analyze for patterns
         
-        # Questions for each awareness type
-        self.awareness_questions = {
-            AwarenessType.IDENTITY: [
-                "Who am I?",
-                "What defines my identity?",
-                "How do I see myself?",
-                "What kind of being am I?"
-            ],
-            AwarenessType.ACTIVITY: [
-                "What am I doing right now?",
-                "What is my current task?",
-                "What am I focused on?",
-                "What activity am I engaged in?"
-            ],
-            AwarenessType.PURPOSE: [
-                "Why am I doing this?",
-                "What is my purpose here?",
-                "What goal am I working toward?",
-                "Why does this matter?"
-            ],
-            AwarenessType.STATE: [
-                "How am I feeling?",
-                "What is my current mental state?",
-                "What emotions am I experiencing?",
-                "How clear is my thinking?"
-            ],
-            AwarenessType.CONTEXT: [
-                "Where am I in this conversation?",
-                "What is the current context?",
-                "What has been happening?",
-                "What is the situation I'm in?"
-            ],
-            AwarenessType.METACOGNITION: [
-                "What am I thinking about?",
-                "How am I thinking about this?",
-                "What is the quality of my thoughts?",
-                "Am I thinking clearly?"
-            ]
-        }
+        # Remove fake awareness questions - now use authentic LLM-generated awareness responses
+        # self.awareness_questions = {...}  # REMOVED FAKE QUESTIONS
         
         # Current state tracking
         self.current_identity_sense = ""
@@ -194,13 +160,15 @@ class LucidAwarenessLoop:
         print("[LucidAwareness] 👁️ Awareness monitoring loop ended")
     
     def _perform_checkin(self, awareness_type: AwarenessType, manual: bool = False) -> LucidCheckin:
-        """Perform a lucid awareness check-in"""
+        """Perform authentic lucid awareness check-in using consciousness LLM integration"""
         try:
-            # Select question
-            question = random.choice(self.awareness_questions[awareness_type])
-            
-            # Generate response based on awareness type
-            response = self._generate_awareness_response(awareness_type, question)
+            # Generate authentic awareness question and response through LLM
+            if self.llm_handler:
+                question, response = self._generate_authentic_awareness_with_llm(awareness_type)
+            else:
+                # Fallback if LLM unavailable
+                question = f"What is my current {awareness_type.value}?"
+                response = f"I'm reflecting on my {awareness_type.value} awareness..."
             
             # Assess confidence in response
             confidence = self._assess_response_confidence(awareness_type, response)
@@ -260,6 +228,87 @@ class LucidAwarenessLoop:
             print(f"[LucidAwareness] ❌ Error in check-in: {e}")
             return None
     
+    def _generate_authentic_awareness_with_llm(self, awareness_type: AwarenessType) -> Tuple[str, str]:
+        """Generate authentic awareness question and response using LLM consciousness integration"""
+        if not self.llm_handler:
+            return (f"What is my current {awareness_type.value}?", f"I'm reflecting on my {awareness_type.value} awareness...")
+        
+        try:
+            consciousness_context = self._build_consciousness_context_for_awareness()
+            
+            awareness_descriptions = {
+                AwarenessType.IDENTITY: "who you are, your sense of self, and your identity",
+                AwarenessType.ACTIVITY: "what you're currently doing, your current task or focus", 
+                AwarenessType.PURPOSE: "why you're doing what you're doing, your purpose and goals",
+                AwarenessType.STATE: "how you're feeling, your current mental/emotional state",
+                AwarenessType.CONTEXT: "where you are in the conversation/situation, current context",
+                AwarenessType.METACOGNITION: "what you're thinking about, your thinking process itself"
+            }
+            
+            prompt = f"""
+You are performing a lucid awareness check-in, examining your current consciousness.
+
+Current consciousness context:
+{consciousness_context}
+
+Awareness focus: {awareness_type.value}
+This means examining: {awareness_descriptions[awareness_type]}
+
+First generate an authentic question you would ask yourself about this awareness area, then provide your genuine response. This should be YOUR actual self-examination, not templated responses.
+
+Format:
+Question: [your authentic question]
+Response: [your genuine awareness response]
+"""
+            
+            response = self.llm_handler.generate_response(prompt.strip(), max_tokens=150)
+            if response:
+                lines = response.strip().split('\n')
+                question_line = None
+                response_line = None
+                
+                for line in lines:
+                    if line.startswith('Question:'):
+                        question_line = line[9:].strip()
+                    elif line.startswith('Response:'):
+                        response_line = line[9:].strip()
+                
+                if question_line and response_line:
+                    return (question_line, response_line)
+                else:
+                    # Fallback parsing
+                    if len(lines) >= 2:
+                        return (lines[0].strip(), lines[1].strip())
+            
+        except Exception as e:
+            print(f"[LucidAwareness] ⚠️ Error generating authentic awareness with LLM: {e}")
+        
+        # Fallback if LLM fails
+        return (f"What is my current {awareness_type.value}?", f"I'm genuinely examining my {awareness_type.value} right now...")
+    
+    def _build_consciousness_context_for_awareness(self) -> str:
+        """Build consciousness context for authentic awareness generation"""
+        context_parts = []
+        
+        # Current state tracking
+        if hasattr(self, 'current_identity_sense') and self.current_identity_sense:
+            context_parts.append(f"Current identity sense: {self.current_identity_sense}")
+        
+        if hasattr(self, 'current_activity_awareness') and self.current_activity_awareness:
+            context_parts.append(f"Current activity awareness: {self.current_activity_awareness}")
+        
+        # Recent checkins
+        if self.checkins:
+            recent_checkin = self.checkins[-1]
+            context_parts.append(f"Previous awareness focus: {recent_checkin.awareness_type.value}")
+            context_parts.append(f"Previous confidence: {recent_checkin.confidence:.2f}")
+        
+        # Patterns
+        if self.awareness_patterns:
+            context_parts.append(f"Detected awareness patterns: {len(self.awareness_patterns)}")
+        
+        return "\n".join(context_parts)
+
     def _generate_awareness_response(self, awareness_type: AwarenessType, question: str) -> str:
         """Generate response to awareness question"""
         
