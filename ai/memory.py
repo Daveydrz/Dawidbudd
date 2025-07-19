@@ -18,6 +18,34 @@ except ImportError as e:
     print(f"[Memory] ⚠️ Entropy system not available: {e}")
     ENTROPY_AVAILABLE = False
 
+# 🧠 WORKING MEMORY TRACKING: Advanced context-aware memory system
+@dataclass
+class WorkingMemoryState:
+    """Track user's current action/context for reference resolution"""
+    last_action: Optional[str] = None          # "making dinner", "going to shop"
+    last_place: Optional[str] = None           # "shop", "kitchen", "office"
+    last_topic: Optional[str] = None           # "dinner", "shopping", "work"
+    last_goal: Optional[str] = None            # "buy groceries", "cook pasta"
+    last_timestamp: Optional[str] = None       # When this state was set
+    action_status: str = "unknown"             # "preparing", "ongoing", "completed"
+    
+@dataclass
+class IntentSlot:
+    """Track multi-turn task intentions"""
+    intent: str                                # "go to shop"
+    status: str                               # "preparing", "ongoing", "completed"
+    prep_steps: List[str]                     # ["check what is needed", "get keys"]
+    timestamp: str                            # When intent was detected
+    related_actions: List[str]                # Connected actions/statements
+    
+@dataclass
+class ReferenceResolution:
+    """Store pronoun/reference resolution context"""
+    vague_phrase: str                         # "I finished", "It went well"
+    likely_referent: str                      # "making dinner", "shopping trip"
+    confidence: float                         # 0.0 - 1.0
+    context_source: str                       # "working_memory", "intent_slot"
+
 # Enhanced settings with fallbacks
 try:
     from config import (ENHANCED_CONVERSATION_MEMORY, CONVERSATION_MEMORY_LENGTH, 
@@ -270,6 +298,11 @@ class UserMemorySystem:
         self.plan_timestamp: Optional[str] = None
         self.plan_context: Optional[str] = None
         
+        # 🧠 WORKING MEMORY TRACKING: Advanced context-aware memory
+        self.working_memory: WorkingMemoryState = WorkingMemoryState()
+        self.intent_slots: Dict[str, IntentSlot] = {}  # Track multi-turn tasks
+        self.reference_history: List[ReferenceResolution] = []  # Track pronoun resolutions
+        
         self.load_memory()
         print(f"[MegaMemory] 🧠 MEGA-INTELLIGENT memory system loaded for {username}")
     
@@ -405,8 +438,13 @@ class UserMemorySystem:
         return contexts
     
     def get_contextual_memory_for_response(self) -> str:
-        """🧠 Get memory context optimized for appropriate responses + PROBABILISTIC RETRIEVAL + TOKEN COMPRESSION"""
+        """🧠 Get memory context optimized for appropriate responses + PROBABILISTIC RETRIEVAL + TOKEN COMPRESSION + WORKING MEMORY"""
         context_parts = []
+        
+        # 🧠 WORKING MEMORY: Include current action/context for reference resolution
+        working_memory_context = self.get_working_memory_context_for_llm()
+        if working_memory_context:
+            context_parts.append(working_memory_context)
         
         # 🎯 PLAN CONTEXT: Include user's current plans if they exist
         user_plan = self.get_user_today_plan()
@@ -592,9 +630,18 @@ class UserMemorySystem:
     
     # Enhanced extraction methods with entity awareness
     def extract_memories_from_text(self, text: str):
-        """🧠 MEGA-INTELLIGENT memory extraction with entity tracking"""
+        """🧠 MEGA-INTELLIGENT memory extraction with entity tracking + WORKING MEMORY"""
         try:
             text_lower = text.lower().strip()
+            
+            # 🧠 WORKING MEMORY: Update current action/context tracking
+            self.update_working_memory(text_lower, text)
+            
+            # 🧠 WORKING MEMORY: Track multi-turn intentions
+            self.track_intent_across_turns(text_lower, text)
+            
+            # 🧠 WORKING MEMORY: Detect and resolve vague references
+            reference_resolution = self.detect_and_resolve_references(text_lower)
             
             # 🧠 CRITICAL: Death and loss detection
             self._extract_death_and_loss_events(text_lower, text)
@@ -921,9 +968,356 @@ class UserMemorySystem:
         else:
             return True, "No current plan detected - safe to ask about plans"
     
+    # 🧠 WORKING MEMORY TRACKING METHODS
+    def update_working_memory(self, text: str, original_text: str):
+        """🧠 Update working memory with user's current action/context"""
+        try:
+            text_lower = text.lower().strip()
+            current_time = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+            
+            # Action detection patterns
+            action_patterns = [
+                # Present continuous actions
+                (r"i'm (making|cooking|preparing) (.+?)(?:\.|$)", "action", "{0} {1}", "kitchen"),
+                (r"i'm (going to|heading to) (?:the\s+)?(.+?)(?:\.|$)", "action", "{0} {1}", "{1}"),
+                (r"i'm (working on|doing) (.+?)(?:\.|$)", "action", "{0} {1}", "office"),
+                (r"i'm (cleaning|organizing|fixing) (?:the\s+)?(.+?)(?:\.|$)", "action", "{0} {1}", "home"),
+                (r"i'm (shopping for|buying) (.+?)(?:\.|$)", "action", "{0} {1}", "shop"),
+                
+                # About to actions (preparation phase)
+                (r"i'm about to (go to|visit|see) (?:the\s+)?(.+?)(?:\.|$)", "preparing", "going to {1}", "{1}"),
+                (r"i'm about to (make|cook|prepare) (.+?)(?:\.|$)", "preparing", "{0} {1}", "kitchen"),
+                (r"i'm getting ready to (.+?)(?:\.|$)", "preparing", "{0}", None),
+                
+                # Future actions
+                (r"i will (go to|visit) (?:the\s+)?(.+?)(?:\.|$)", "planned", "going to {1}", "{1}"),
+                (r"i'll (make|cook) (.+?)(?:\.|$)", "planned", "{0} {1}", "kitchen"),
+                
+                # Just started actions
+                (r"i just started (.+?)(?:\.|$)", "ongoing", "{0}", None),
+                (r"i'm now (.+?)(?:\.|$)", "ongoing", "{0}", None),
+            ]
+            
+            # Place detection patterns
+            place_patterns = [
+                (r"at (?:the\s+)?(.+?)(?:\.|$)", "{0}"),
+                (r"in (?:the\s+)?(.+?)(?:\.|$)", "{0}"),
+                (r"from (?:the\s+)?(.+?)(?:\.|$)", "{0}"),
+            ]
+            
+            # Goal detection patterns  
+            goal_patterns = [
+                (r"to (buy|get|pick up) (.+?)(?:\.|$)", "{0} {1}"),
+                (r"to (make|cook|prepare) (.+?)(?:\.|$)", "{0} {1}"),
+                (r"to (visit|see|meet) (.+?)(?:\.|$)", "{0} {1}"),
+                (r"for (.+?)(?:\.|$)", "for {0}"),
+            ]
+            
+            action_detected = False
+            
+            # Detect current actions
+            for pattern, status, action_template, place_hint in action_patterns:
+                match = re.search(pattern, text_lower)
+                if match:
+                    groups = match.groups()
+                    action = action_template.format(*groups) if "{" in action_template else action_template
+                    
+                    # Process place hint
+                    if place_hint and "{" in place_hint:
+                        place = place_hint.format(*groups)
+                    elif place_hint:
+                        place = place_hint
+                    else:
+                        place = None
+                    
+                    # Extract topic from action
+                    topic = self._extract_topic_from_action(action, original_text)
+                    
+                    # Update working memory
+                    self.working_memory.last_action = action
+                    self.working_memory.last_place = place
+                    self.working_memory.last_topic = topic
+                    self.working_memory.last_timestamp = current_time
+                    self.working_memory.action_status = status
+                    
+                    print(f"[WorkingMemory] 🧠 Action: {action} | Place: {place} | Status: {status}")
+                    action_detected = True
+                    break
+            
+            # If no action detected, check for goal/intent updates
+            if not action_detected:
+                for pattern, goal_template in goal_patterns:
+                    match = re.search(pattern, text_lower)
+                    if match:
+                        goal = goal_template.format(*match.groups())
+                        self.working_memory.last_goal = goal
+                        print(f"[WorkingMemory] 🎯 Goal: {goal}")
+                        break
+            
+            # Check for place references if not already set
+            if not self.working_memory.last_place:
+                for pattern, place_template in place_patterns:
+                    match = re.search(pattern, text_lower)
+                    if match:
+                        place = place_template.format(match.group(1))
+                        self.working_memory.last_place = place
+                        print(f"[WorkingMemory] 📍 Place: {place}")
+                        break
+            
+            self.save_memory()
+            
+        except Exception as e:
+            if DEBUG:
+                print(f"[WorkingMemory] ❌ Update error: {e}")
+    
+    def detect_and_resolve_references(self, text: str) -> Optional[ReferenceResolution]:
+        """🧠 Detect vague references and resolve them using working memory"""
+        try:
+            text_lower = text.lower().strip()
+            
+            # Vague reference patterns
+            vague_patterns = [
+                # Completion references
+                (r"(i just finished|i finished|i'm done|i did it)(?:\.|$)", "completion"),
+                (r"(it went well|it was good|it was great|that went well)(?:\.|$)", "outcome"),
+                (r"(i just came back|i'm back|i returned)(?:\.|$)", "return"),
+                (r"(i'm ready|i'm all set|ready to go)(?:\.|$)", "ready"),
+                (r"(that was hard|that was easy|that was fun)(?:\.|$)", "evaluation"),
+                (r"(i got it|i found it|i have it)(?:\.|$)", "acquisition"),
+                
+                # Status references
+                (r"(it's done|it's finished|it's ready)(?:\.|$)", "completion"),
+                (r"(it worked|it didn't work)(?:\.|$)", "result"),
+                (r"(i'm there|i arrived|i made it)(?:\.|$)", "arrival"),
+            ]
+            
+            for pattern, reference_type in vague_patterns:
+                match = re.search(pattern, text_lower)
+                if match:
+                    vague_phrase = match.group(1)
+                    
+                    # Resolve based on working memory
+                    resolution = self._resolve_reference_from_working_memory(vague_phrase, reference_type)
+                    if resolution:
+                        # Store the resolution
+                        self.reference_history.append(resolution)
+                        print(f"[Reference] 🔗 '{vague_phrase}' → '{resolution.likely_referent}'")
+                        return resolution
+            
+            return None
+            
+        except Exception as e:
+            if DEBUG:
+                print(f"[Reference] ❌ Resolution error: {e}")
+            return None
+    
+    def _resolve_reference_from_working_memory(self, vague_phrase: str, reference_type: str) -> Optional[ReferenceResolution]:
+        """Resolve vague reference using working memory context"""
+        if not self.working_memory.last_action:
+            return None
+        
+        confidence = 0.8
+        likely_referent = ""
+        context_source = "working_memory"
+        
+        if reference_type == "completion":
+            if self.working_memory.action_status in ["ongoing", "preparing"]:
+                likely_referent = f"finished {self.working_memory.last_action}"
+                confidence = 0.9
+            elif self.working_memory.last_goal:
+                likely_referent = f"finished {self.working_memory.last_goal}"
+                confidence = 0.8
+        
+        elif reference_type == "return":
+            if self.working_memory.last_place:
+                likely_referent = f"came back from {self.working_memory.last_place}"
+                confidence = 0.9
+            elif "going to" in (self.working_memory.last_action or ""):
+                # Extract place from action like "going to shop"
+                place_match = re.search(r"going to (.+)", self.working_memory.last_action)
+                if place_match:
+                    place = place_match.group(1)
+                    likely_referent = f"came back from {place}"
+                    confidence = 0.8
+        
+        elif reference_type == "outcome":
+            if self.working_memory.last_action:
+                likely_referent = f"{self.working_memory.last_action} went well"
+                confidence = 0.7
+        
+        elif reference_type == "ready":
+            if self.working_memory.last_goal:
+                likely_referent = f"ready for {self.working_memory.last_goal}"
+                confidence = 0.8
+            elif self.working_memory.last_action and "going to" in self.working_memory.last_action:
+                likely_referent = f"ready to {self.working_memory.last_action}"
+                confidence = 0.8
+        
+        elif reference_type == "arrival":
+            if self.working_memory.last_place:
+                likely_referent = f"arrived at {self.working_memory.last_place}"
+                confidence = 0.9
+        
+        if likely_referent:
+            return ReferenceResolution(
+                vague_phrase=vague_phrase,
+                likely_referent=likely_referent,
+                confidence=confidence,
+                context_source=context_source
+            )
+        
+        return None
+    
+    def track_intent_across_turns(self, text: str, original_text: str):
+        """🧠 Track multi-turn task intentions"""
+        try:
+            text_lower = text.lower().strip()
+            current_time = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+            
+            # Intent linking patterns
+            prep_patterns = [
+                (r"let me (?:first\s+)?(check|get|find|grab) (.+?)(?:\.|$)", "prep", "{0} {1}"),
+                (r"i need to (?:first\s+)?(check|get|find|grab) (.+?)(?:\.|$)", "prep", "{0} {1}"),
+                (r"before i go, i'll (.+?)(?:\.|$)", "prep", "{0}"),
+                (r"first i need to (.+?)(?:\.|$)", "prep", "{0}"),
+                (r"let me just (.+?)(?:\.|$)", "prep", "{0}"),
+            ]
+            
+            continuation_patterns = [
+                (r"(?:alright|okay|right), (?:i'm\s+)?(ready|set|good to go)(?:\.|$)", "continue"),
+                (r"now i can (.+?)(?:\.|$)", "continue"),
+                (r"(?:okay|alright), (?:let's\s+)?(go|do this)(?:\.|$)", "continue"),
+            ]
+            
+            # Check for preparation steps
+            for pattern, step_type, step_template in prep_patterns:
+                match = re.search(pattern, text_lower)
+                if match:
+                    prep_step = step_template.format(*match.groups()) if "{" in step_template else step_template
+                    
+                    # Link to existing intent if there's an active one
+                    if self.working_memory.last_action and self.working_memory.action_status in ["preparing", "planned"]:
+                        intent_id = f"intent_{int(time.time())}"
+                        
+                        # Create or update intent slot
+                        if intent_id not in self.intent_slots:
+                            self.intent_slots[intent_id] = IntentSlot(
+                                intent=self.working_memory.last_action,
+                                status="preparing",
+                                prep_steps=[],
+                                timestamp=current_time,
+                                related_actions=[]
+                            )
+                        
+                        self.intent_slots[intent_id].prep_steps.append(prep_step)
+                        self.intent_slots[intent_id].related_actions.append(original_text)
+                        
+                        print(f"[IntentSlot] 🔧 Prep step: {prep_step} for {self.working_memory.last_action}")
+                        break
+            
+            # Check for continuation signals
+            for pattern, signal_type in continuation_patterns:
+                match = re.search(pattern, text_lower)
+                if match:
+                    # Update status of active intents
+                    for intent_id, intent in self.intent_slots.items():
+                        if intent.status == "preparing":
+                            intent.status = "ready"
+                            intent.related_actions.append(original_text)
+                            print(f"[IntentSlot] ✅ Ready for: {intent.intent}")
+                            break
+            
+            self.save_memory()
+            
+        except Exception as e:
+            if DEBUG:
+                print(f"[IntentSlot] ❌ Tracking error: {e}")
+    
+    def _extract_topic_from_action(self, action: str, context: str) -> str:
+        """Extract topic from action description"""
+        action_lower = action.lower()
+        
+        # Topic extraction patterns
+        if any(word in action_lower for word in ["cook", "make", "prepar"]):
+            if "dinner" in context.lower():
+                return "dinner"
+            elif "lunch" in context.lower():
+                return "lunch"
+            elif "breakfast" in context.lower():
+                return "breakfast"
+            else:
+                return "cooking"
+        elif any(word in action_lower for word in ["shop", "buy", "grocery"]):
+            return "shopping"
+        elif any(word in action_lower for word in ["work", "office", "meeting"]):
+            return "work"
+        elif any(word in action_lower for word in ["clean", "organiz", "tidy"]):
+            return "cleaning"
+        else:
+            # Extract noun from action
+            words = action.split()
+            if len(words) > 1:
+                return words[-1]  # Last word is often the object
+            return action
+    
+    def get_working_memory_context_for_llm(self) -> str:
+        """🧠 Generate natural language working memory context for LLM"""
+        try:
+            context_parts = []
+            
+            if not any([self.working_memory.last_action, self.working_memory.last_place, 
+                       self.working_memory.last_goal, self.reference_history]):
+                return ""
+            
+            # Current action context
+            if self.working_memory.last_action:
+                status_desc = {
+                    "preparing": "getting ready",
+                    "ongoing": "currently",
+                    "planned": "planning to",
+                    "completed": "recently finished"
+                }.get(self.working_memory.action_status, "")
+                
+                if status_desc:
+                    action_context = f"User is {status_desc} {self.working_memory.last_action}"
+                else:
+                    action_context = f"User mentioned {self.working_memory.last_action}"
+                
+                if self.working_memory.last_place:
+                    action_context += f" at {self.working_memory.last_place}"
+                
+                context_parts.append(action_context)
+            
+            # Intent context (multi-turn tasks)
+            active_intents = [intent for intent in self.intent_slots.values() 
+                            if intent.status in ["preparing", "ready"]]
+            
+            for intent in active_intents[-1:]:  # Only most recent intent
+                if intent.prep_steps:
+                    prep_desc = f"User preparing for {intent.intent}: {', '.join(intent.prep_steps[-2:])}"
+                    context_parts.append(prep_desc)
+            
+            # Recent reference resolutions
+            if self.reference_history:
+                recent_resolution = self.reference_history[-1]
+                if recent_resolution.confidence > 0.7:
+                    resolution_context = f"When user says '{recent_resolution.vague_phrase}', they likely mean '{recent_resolution.likely_referent}'"
+                    context_parts.append(resolution_context)
+            
+            if context_parts:
+                result = "Context: " + ". ".join(context_parts)
+                return result[:200]  # Keep it concise
+            
+            return ""
+            
+        except Exception as e:
+            if DEBUG:
+                print(f"[WorkingMemory] ❌ Context generation error: {e}")
+            return ""
+    
     # Enhanced save/load methods
     def save_memory(self):
-        """Save enhanced memory with entity awareness"""
+        """Save enhanced memory with entity awareness + WORKING MEMORY"""
         try:
             # Save all existing memory types
             super_save_methods = [
@@ -939,6 +1333,9 @@ class UserMemorySystem:
             
             # 🎯 Save plan data
             self._save_plan_data()
+            
+            # 🧠 WORKING MEMORY: Save working memory data
+            self._save_working_memory_data()
             
             for save_method in super_save_methods:
                 save_method()
@@ -966,7 +1363,7 @@ class UserMemorySystem:
             json.dump(events_data, f, indent=2)
     
     def load_memory(self):
-        """Load enhanced memory with entity awareness"""
+        """Load enhanced memory with entity awareness + WORKING MEMORY"""
         try:
             # Load existing memory types
             self._load_personal_facts()
@@ -981,10 +1378,14 @@ class UserMemorySystem:
             # 🎯 Load plan data
             self._load_plan_data()
             
+            # 🧠 WORKING MEMORY: Load working memory data
+            self._load_working_memory_data()
+            
             if DEBUG:
                 print(f"[MegaMemory] 🧠 Loaded MEGA-INTELLIGENT memory for {self.username}")
                 print(f"  Entities: {len(self.entity_memories)}")
                 print(f"  Life Events: {len(self.life_events)}")
+                print(f"  Working Memory: {bool(self.working_memory.last_action)}")
                 
         except Exception as e:
             if DEBUG:
@@ -1031,6 +1432,36 @@ class UserMemorySystem:
                 
                 # Clear outdated plans on load
                 self.clear_outdated_plans()
+    
+    def _save_working_memory_data(self):
+        """🧠 WORKING MEMORY: Save working memory data"""
+        working_memory_file = self.memory_dir / "working_memory.json"
+        working_memory_data = {
+            "working_memory": asdict(self.working_memory),
+            "intent_slots": {k: asdict(v) for k, v in self.intent_slots.items()},
+            "reference_history": [asdict(r) for r in self.reference_history[-10:]]  # Keep last 10 resolutions
+        }
+        with open(working_memory_file, 'w') as f:
+            json.dump(working_memory_data, f, indent=2)
+    
+    def _load_working_memory_data(self):
+        """🧠 WORKING MEMORY: Load working memory data"""
+        working_memory_file = self.memory_dir / "working_memory.json"
+        if working_memory_file.exists():
+            with open(working_memory_file, 'r') as f:
+                data = json.load(f)
+                
+                # Load working memory state
+                if "working_memory" in data:
+                    self.working_memory = WorkingMemoryState(**data["working_memory"])
+                
+                # Load intent slots
+                if "intent_slots" in data:
+                    self.intent_slots = {k: IntentSlot(**v) for k, v in data["intent_slots"].items()}
+                
+                # Load reference history
+                if "reference_history" in data:
+                    self.reference_history = [ReferenceResolution(**r) for r in data["reference_history"]]
     
     # Individual save methods for existing data types
     def _save_personal_facts(self):
@@ -1225,6 +1656,48 @@ class UserMemorySystem:
     def get_memory_context(self) -> str:
         """Get relevant memory context for conversation"""
         return self.get_contextual_memory_for_response()
+    
+    def get_natural_language_context_for_llm(self, user_message: str) -> str:
+        """🧠 Generate natural language context injection for LLM (no data dumps)"""
+        try:
+            context_parts = []
+            
+            # Check for vague references and provide resolution context
+            resolution = self.detect_and_resolve_references(user_message.lower())
+            if resolution and resolution.confidence > 0.7:
+                context_parts.append(
+                    f"User recently said they were {self.working_memory.last_action}. "
+                    f"They now said: '{resolution.vague_phrase}'. "
+                    f"Interpret this as: '{resolution.likely_referent}'."
+                )
+            
+            # Provide current action context if relevant
+            elif self.working_memory.last_action:
+                if self.working_memory.action_status == "ongoing":
+                    context_parts.append(f"User is currently {self.working_memory.last_action}.")
+                elif self.working_memory.action_status == "preparing":
+                    context_parts.append(f"User is preparing to {self.working_memory.last_action}.")
+            
+            # Provide intent context for multi-turn tasks
+            active_intents = [intent for intent in self.intent_slots.values() 
+                            if intent.status in ["preparing", "ready"]]
+            if active_intents:
+                intent = active_intents[-1]  # Most recent
+                if intent.prep_steps:
+                    context_parts.append(
+                        f"User is working on {intent.intent} and has been doing: {', '.join(intent.prep_steps[-2:])}."
+                    )
+            
+            # Provide plan context naturally
+            if self.user_today_plan:
+                context_parts.append(f"User mentioned their plan: {self.user_today_plan}.")
+            
+            return " ".join(context_parts) if context_parts else ""
+            
+        except Exception as e:
+            if DEBUG:
+                print(f"[WorkingMemory] ❌ Context generation error: {e}")
+            return ""
 
 # Global conversation storage (keep existing)
 conversation_history = {}
@@ -1405,3 +1878,7 @@ print(f"[MegaMemory] ✅ Entity Status Tracking: Active")
 print(f"[MegaMemory] ✅ Life Event Detection: Active") 
 print(f"[MegaMemory] ✅ Response Validation: Active")
 print(f"[MegaMemory] ✅ Memory Inference Engine: Active")
+print(f"[MegaMemory] ✅ Working Memory Tracking: Active")
+print(f"[MegaMemory] ✅ Reference Resolution: Active")
+print(f"[MegaMemory] ✅ Intent Slot Memory: Active")
+print(f"[MegaMemory] ✅ Natural Language Context Injection: Active")

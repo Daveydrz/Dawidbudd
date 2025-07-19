@@ -47,6 +47,10 @@ class PromptCompressor:
         if context_data.get('context') and len(context_data['context'].strip()) > 10:
             ctx_id = self._store_memory_context(context_data['context'])
             compressed_parts.append(f"[MEMORY:CTX_{ctx_id}]")
+        
+        # 🧠 NEW: Add working memory context if available
+        if context_data.get('natural_context') and len(context_data['natural_context'].strip()) > 5:
+            compressed_parts.append("[WORKING_MEMORY:V1]")
             
         # Skip location and consciousness for ultra-compression unless specifically needed
         location_context = context_data.get('current_location', '')

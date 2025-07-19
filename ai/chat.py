@@ -348,6 +348,10 @@ def generate_response_streaming(question, username, lang=DEFAULT_LANG):
         reminders = memory.get_today_reminders()
         follow_ups = memory.get_follow_up_questions()
         
+        # 🧠 WORKING MEMORY: Get natural language context for LLM
+        natural_context = memory.get_natural_language_context_for_llm(question)
+        print(f"[ChatStream] 🔗 Working memory context: {natural_context[:100]}..." if natural_context else "[ChatStream] 🔗 No working memory context")
+        
         # Build reminder text (optimized)
         reminder_text = ""
         if reminders:
@@ -374,6 +378,7 @@ def generate_response_streaming(question, username, lang=DEFAULT_LANG):
             'context': context_text,
             'reminder_text': reminder_text,
             'follow_up_text': follow_up_text,
+            'natural_context': natural_context,  # 🧠 WORKING MEMORY: Natural context injection
             'emotion': 'neutral',
             'goal': 'assist_user'
         }
@@ -522,6 +527,10 @@ def generate_response(question, username, lang=DEFAULT_LANG):
         reminders = memory.get_today_reminders()
         follow_ups = memory.get_follow_up_questions()
         
+        # 🧠 WORKING MEMORY: Get natural language context for LLM
+        natural_context = memory.get_natural_language_context_for_llm(question)
+        print(f"[Chat] 🔗 Working memory context: {natural_context[:100]}..." if natural_context else "[Chat] 🔗 No working memory context")
+        
         # Build reminder text with personality
         reminder_text = ""
         if reminders:
@@ -548,6 +557,7 @@ def generate_response(question, username, lang=DEFAULT_LANG):
             'context': context_text,
             'reminder_text': reminder_text,
             'follow_up_text': follow_up_text,
+            'natural_context': natural_context,  # 🧠 WORKING MEMORY: Natural context injection
             'emotion': 'neutral',
             'goal': 'assist_user'
         }
