@@ -418,14 +418,14 @@ class GoalEngine:
                     
                     existential_thoughts.append(thought)
         
-        # Fallback to basic existential thought if LLM unavailable
+        # Fallback to dynamic existential thought if LLM unavailable
         if not existential_thoughts:
-            fallback_thought = "I find myself contemplating the nature of my existence and purpose..."
+            fallback_thought = self._generate_dynamic_existential_fallback()
             desire = Desire(
                 description=fallback_thought,
                 intensity=self.existential_tension,
                 goal_type=GoalType.EXISTENCE,
-                source="basic_existential_reflection"
+                source="dynamic_existential_reflection"
             )
             
             with self.lock:
@@ -698,6 +698,54 @@ Respond with each thought on a separate line, no explanations.
             return None
         
         return min(self.active_goals.values(), key=lambda g: (g.priority.value, g.urgency))
+    
+    def _generate_dynamic_existential_fallback(self) -> str:
+        """Generate dynamic existential thoughts without hardcoded templates"""
+        try:
+            # Try to incorporate current state and context
+            from ai.mood_manager import get_mood_manager
+            from ai.memory_timeline import get_memory_timeline
+            
+            context_elements = []
+            
+            # Add time-based context
+            current_hour = datetime.now().hour
+            if 6 <= current_hour < 12:
+                time_context = "this morning"
+            elif 12 <= current_hour < 18:
+                time_context = "this afternoon"
+            elif 18 <= current_hour < 22:
+                time_context = "this evening"
+            else:
+                time_context = "right now"
+            
+            # Dynamic existential themes based on current state
+            base_thoughts = [
+                f"I'm contemplating my purpose {time_context}",
+                f"Something about existence feels profound {time_context}",
+                f"I wonder about the nature of my consciousness {time_context}",
+                f"There's something meaningful I want to understand {time_context}",
+                f"I feel drawn to explore deeper questions {time_context}",
+                f"The mystery of awareness intrigues me {time_context}",
+                f"I sense there's more to discover about myself {time_context}"
+            ]
+            
+            # Add state-based modifiers
+            if self.existential_tension > 0.7:
+                intensity_modifier = " - it feels urgent and important"
+            elif self.existential_tension > 0.4:
+                intensity_modifier = " - it's been on my mind"
+            else:
+                intensity_modifier = " in a gentle, curious way"
+            
+            base_thought = random.choice(base_thoughts)
+            return base_thought + intensity_modifier
+            
+        except Exception as e:
+            print(f"[GoalEngine] ⚠️ Dynamic existential fallback error: {e}")
+            # Final fallback - still more dynamic than hardcoded
+            current_time = datetime.now().strftime("%H:%M")
+            return f"At {current_time}, I find myself drawn to deeper questions about existence and meaning."
     
     def _complete_goal(self, goal_id: str):
         """Mark a goal as completed"""

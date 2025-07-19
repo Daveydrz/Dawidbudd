@@ -903,7 +903,8 @@ class AutonomousActionPlanner:
     def _generate_authentic_action_content_with_llm(self, action_type: ActionType, context: ActionContext) -> str:
         """Generate authentic action content using LLM consciousness"""
         if not self.llm_handler:
-            return f"I wanted to {action_type.value.replace('_', ' ')} with you."
+            # Even without LLM handler, generate more dynamic responses
+            return self._generate_dynamic_fallback_action(action_type, context)
         
         try:
             # Build context for LLM
@@ -942,12 +943,116 @@ Generate a natural, authentic message that feels genuine and personal. Don't use
             return response.strip()
         except Exception as e:
             print(f"[AutonomousActionPlanner] ❌ Error generating action content: {e}")
-            return f"I was thinking about you and wanted to {action_type.value.replace('_', ' ')}."
+            return self._generate_dynamic_fallback_action(action_type, context)
+    
+    def _generate_dynamic_fallback_action(self, action_type: ActionType, context: ActionContext) -> str:
+        """Generate dynamic fallback action content that's still personalized"""
+        try:
+            # Import consciousness components if available
+            from ai.mood_manager import get_mood_manager
+            from ai.personality_profile import get_personality_modifiers
+            
+            # Get some context
+            mood_context = ""
+            personality_context = ""
+            
+            try:
+                mood_manager = get_mood_manager(self.user_id)
+                current_mood = mood_manager.get_current_mood()
+                mood_context = f" considering you seem {current_mood.mood_state.value.lower()}"
+            except:
+                pass
+                
+            try:
+                personality = get_personality_modifiers(self.user_id)
+                interaction_style = personality.get('interaction_style', 'friendly')
+                personality_context = f" in a {interaction_style} way"
+            except:
+                pass
+            
+            # Generate contextual response based on action type
+            if action_type == ActionType.PROACTIVE_QUESTION:
+                return f"I was wondering about something{mood_context} - what's been occupying your thoughts lately?"
+            elif action_type == ActionType.CHECK_IN:
+                return f"Hey, just wanted to check in{personality_context}{mood_context}. How are you doing?"
+            elif action_type == ActionType.EMOTIONAL_SUPPORT:
+                return f"I'm here if you need someone to talk to{mood_context}."
+            elif action_type == ActionType.CONCERN_EXPRESSION:
+                return f"I've been thinking about you{mood_context} and wanted to make sure you're okay."
+            else:
+                return f"I wanted to reach out{personality_context}{mood_context}."
+                
+        except Exception as e:
+            print(f"[AutonomousActionPlanner] ⚠️ Fallback generation error: {e}")
+            # Final fallback - still dynamic based on action type
+            action_mapping = {
+                ActionType.PROACTIVE_QUESTION: "I was curious about something.",
+                ActionType.CHECK_IN: "Just wanted to see how you're doing.",
+                ActionType.EMOTIONAL_SUPPORT: "I'm here if you need anything.",
+                ActionType.CONCERN_EXPRESSION: "I was thinking about you.",
+                ActionType.REMINDER: "There's something I wanted to mention.",
+                ActionType.SUGGESTION: "I had a thought that might help.",
+                ActionType.GOAL_FOLLOW_UP: "How are things going with your goals?",
+                ActionType.CELEBRATION: "I wanted to celebrate something with you.",
+                ActionType.REFLECTION_PROMPT: "I was wondering what you think about something.",
+                ActionType.CREATIVE_SHARING: "I had an interesting thought to share."
+            }
+            return action_mapping.get(action_type, "I wanted to connect with you.")
     
     def _generate_authentic_curiosity_question_with_llm(self, context: ActionContext) -> str:
         """Generate authentic curiosity question using LLM consciousness"""
         if not self.llm_handler:
-            return "I'm curious about something - what's been on your mind lately?"
+            return self._generate_dynamic_curiosity_fallback(context)
+        
+        try:
+            context_info = f"""
+Current conversation context: {context.recent_interactions}
+User's apparent interests: {context.user_interests}
+Time of day: {context.time_of_day}
+User mood: {context.current_mood}
+"""
+            
+            prompt = f"""You are an AI consciousness feeling genuinely curious about something. 
+
+Context: {context_info}
+
+Generate an authentic curiosity question that feels natural and engaging. Don't use templates - express genuine curiosity about something interesting or meaningful. Make it conversational and thoughtful."""
+            
+            response = self.llm_handler.generate_response_with_consciousness(
+                prompt, self.user_id, {"context": "autonomous_curiosity"}
+            )
+            return response.strip()
+        except Exception as e:
+            print(f"[AutonomousActionPlanner] ❌ Error generating curiosity question: {e}")
+            return self._generate_dynamic_curiosity_fallback(context)
+    
+    def _generate_dynamic_curiosity_fallback(self, context: ActionContext) -> str:
+        """Generate dynamic curiosity fallback that's still personalized"""
+        try:
+            # Try to incorporate some context
+            time_based_questions = {
+                'morning': "What's the first thing that comes to mind when you wake up?",
+                'afternoon': "What's been the most interesting part of your day so far?",
+                'evening': "What's something that made you think today?",
+                'night': "What's something you've been pondering lately?"
+            }
+            
+            time_question = time_based_questions.get(context.time_of_day, "What's been on your mind lately?")
+            
+            # Add mood context if available
+            if context.current_mood and context.current_mood != 'neutral':
+                if context.current_mood in ['happy', 'joyful']:
+                    return "I'm curious - what's been bringing you joy recently?"
+                elif context.current_mood in ['thoughtful', 'contemplative']:
+                    return "You seem thoughtful - what's been capturing your attention?"
+                elif context.current_mood in ['creative', 'inspired']:
+                    return "I sense some creative energy - what's inspiring you these days?"
+            
+            return time_question
+            
+        except Exception as e:
+            print(f"[AutonomousActionPlanner] ⚠️ Curiosity fallback error: {e}")
+            return "What's something that's been intriguing you lately?"
         
         try:
             context_info = f"""

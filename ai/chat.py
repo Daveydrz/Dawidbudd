@@ -6,6 +6,77 @@ from datetime import datetime
 import pytz
 from ai.memory import get_conversation_context, get_user_memory
 from config import *
+from typing import Dict, Any
+
+def _generate_dynamic_error_response(error_context: Dict[str, Any]) -> str:
+    """Generate dynamic, personalized error responses using LLM instead of hardcoded messages"""
+    try:
+        # Try to import consciousness and LLM modules
+        try:
+            from ai.conscious_prompt_builder import ConsciousPromptBuilder
+            from ai.llm_handler import LLMHandler
+            
+            # Create consciousness-aware error response
+            builder = ConsciousPromptBuilder()
+            
+            error_prompts = {
+                'connection_error': "I'm having trouble connecting to my processing systems right now. Express this naturally without being technical.",
+                'timeout_error': "My response is taking longer than expected. Acknowledge this in a natural, personal way.",
+                'json_decode_error': "I received information I couldn't process properly. Express this conversationally.",
+                'no_choices': "My processing didn't generate the expected response format. Communicate this naturally.",
+                'http_error': "There's a technical issue with my response generation. Express this in a friendly way.",
+                'streaming_error': "Something went wrong while I was generating my response. Acknowledge this naturally.",
+                'response_generation_error': "I encountered an issue while thinking through my response. Express this conversationally.",
+                'general_error': "I ran into an unexpected issue. Express this in a natural, personal way.",
+                'unexpected_error': "Something unexpected happened on my end. Communicate this naturally."
+            }
+            
+            error_type = error_context.get('error_type', 'general_error')
+            error_prompt = error_prompts.get(error_type, error_prompts['general_error'])
+            
+            # Build consciousness-aware prompt
+            consciousness_prompt = f"""You are Buddy, an AI assistant experiencing a technical issue. 
+
+Context: {error_context}
+
+Instruction: {error_prompt}
+
+Respond as yourself with your natural personality - be authentic, not overly apologetic, and maintain your conversational style. Keep it brief and natural."""
+            
+            # Try to get LLM response
+            try:
+                llm_handler = LLMHandler()
+                response = llm_handler.generate_response_with_consciousness(
+                    consciousness_prompt, "system", {"context": "error_handling"}
+                )
+                if response and response.strip():
+                    return response.strip()
+            except:
+                pass
+                
+        except ImportError:
+            pass
+        
+        # Fallback to simple dynamic responses (but still more natural than hardcoded)
+        error_type = error_context.get('error_type', 'general_error')
+        
+        fallback_responses = {
+            'connection_error': "Having some connection issues on my end - give me a moment.",
+            'timeout_error': "This is taking longer than usual - let me try again.",
+            'json_decode_error': "Got some garbled info back - let me process that differently.",
+            'no_choices': "My response didn't come through right - trying again.",
+            'http_error': "Hit a technical snag - working on it.",
+            'streaming_error': "Something hiccupped while I was responding.",
+            'response_generation_error': "My thinking got a bit tangled there.",
+            'general_error': "Something went sideways on my end.",
+            'unexpected_error': "That wasn't supposed to happen - let me sort this out."
+        }
+        
+        return fallback_responses.get(error_type, "Something's not quite right - give me a sec.")
+        
+    except Exception as e:
+        print(f"[ErrorResponse] ❌ Error generating dynamic error response: {e}")
+        return "Give me a moment to sort this out."
 
 # Import time and location helpers
 try:
@@ -222,11 +293,25 @@ def ask_kobold_streaming(messages, max_tokens=MAX_TOKENS):
                     
         else:
             print(f"[SmartResponsive] ❌ HTTP Error {response.status_code}: {response.text}")
-            yield f"Sorry, I got an error {response.status_code} from my brain."
+            # Generate dynamic error response through LLM
+            error_context = {
+                'error_type': 'connection_error',
+                'error_code': response.status_code,
+                'situation': 'streaming_response'
+            }
+            error_response = _generate_dynamic_error_response(error_context)
+            yield error_response
             
     except Exception as e:
         print(f"[SmartResponsive] ❌ Error: {e}")
-        yield f"Sorry, I encountered an error: {e}"
+        # Generate dynamic error response through LLM
+        error_context = {
+            'error_type': 'general_error',
+            'error_message': str(e),
+            'situation': 'streaming_response'
+        }
+        error_response = _generate_dynamic_error_response(error_context)
+        yield error_response
 
 def ask_kobold(messages, max_tokens=MAX_TOKENS):
     """Original non-streaming KoboldCpp request (kept for compatibility)"""
@@ -259,26 +344,58 @@ def ask_kobold(messages, max_tokens=MAX_TOKENS):
                     return result
                 else:
                     print(f"[KoboldCpp] ❌ No 'choices' field or empty choices")
-                    return "KoboldCpp responded but no choices found."
+                    # Generate dynamic error response
+                    error_context = {
+                        'error_type': 'no_choices',
+                        'situation': 'kobold_response'
+                    }
+                    return _generate_dynamic_error_response(error_context)
                     
             except json.JSONDecodeError as e:
                 print(f"[KoboldCpp] ❌ JSON Decode Error: {e}")
                 print(f"[KoboldCpp] 📄 Raw Response: {response.text[:500]}")
-                return "KoboldCpp returned invalid JSON."
+                # Generate dynamic error response
+                error_context = {
+                    'error_type': 'json_decode_error',
+                    'situation': 'kobold_response'
+                }
+                return _generate_dynamic_error_response(error_context)
         else:
             print(f"[KoboldCpp] ❌ HTTP Error {response.status_code}")
             print(f"[KoboldCpp] 📄 Error Response: {response.text[:500]}")
-            return f"KoboldCpp HTTP error: {response.status_code}"
+            # Generate dynamic error response
+            error_context = {
+                'error_type': 'http_error',
+                'error_code': response.status_code,
+                'situation': 'kobold_request'
+            }
+            return _generate_dynamic_error_response(error_context)
             
     except requests.exceptions.ConnectionError:
         print(f"[KoboldCpp] ❌ Connection Error - Cannot reach {KOBOLD_URL}")
-        return "Cannot connect to KoboldCpp"
+        # Generate dynamic error response
+        error_context = {
+            'error_type': 'connection_error',
+            'situation': 'kobold_connection'
+        }
+        return _generate_dynamic_error_response(error_context)
     except requests.exceptions.Timeout:
         print(f"[KoboldCpp] ❌ Timeout after 30 seconds")
-        return "KoboldCpp request timed out"
+        # Generate dynamic error response
+        error_context = {
+            'error_type': 'timeout_error',
+            'situation': 'kobold_request'
+        }
+        return _generate_dynamic_error_response(error_context)
     except Exception as e:
         print(f"[KoboldCpp] ❌ Unexpected Error: {type(e).__name__}: {e}")
-        return f"Unexpected error: {e}"
+        # Generate dynamic error response
+        error_context = {
+            'error_type': 'unexpected_error',
+            'error_message': str(e),
+            'situation': 'kobold_general'
+        }
+        return _generate_dynamic_error_response(error_context)
 
 def generate_response_streaming(question, username, lang=DEFAULT_LANG):
     """✅ ULTRA-RESPONSIVE: Generate AI response with TRUE streaming - speaks as it generates"""
@@ -428,7 +545,14 @@ def generate_response_streaming(question, username, lang=DEFAULT_LANG):
         print(f"[ChatStream] ❌ Streaming error: {e}")
         import traceback
         traceback.print_exc()
-        yield "Ah shit, something went wrong on my end. Give me a sec."
+        # Generate dynamic error response through LLM
+        error_context = {
+            'error_type': 'streaming_error',
+            'error_message': str(e),
+            'situation': 'chat_streaming'
+        }
+        error_response = _generate_dynamic_error_response(error_context)
+        yield error_response
 
 def generate_response(question, username, lang=DEFAULT_LANG):
     """Original generate response function with dynamic personality (ADDED BACK)"""
@@ -604,7 +728,13 @@ def generate_response(question, username, lang=DEFAULT_LANG):
         print(f"[Chat] ❌ Response generation error: {e}")
         import traceback
         traceback.print_exc()
-        return "Ah shit, something's not working right. Give me a moment."
+        # Generate dynamic error response through LLM
+        error_context = {
+            'error_type': 'response_generation_error',
+            'error_message': str(e),
+            'situation': 'chat_generation'
+        }
+        return _generate_dynamic_error_response(error_context)
 
 def get_response_with_context_stats(question, username, lang=DEFAULT_LANG):
     """Generate response and return context statistics - DEBUG HELPER"""
