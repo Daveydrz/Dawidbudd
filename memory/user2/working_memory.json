@@ -1,0 +1,68 @@
+{
+  "working_memory": {
+    "active_contexts": {
+      "ctx_1752899877_0": {
+        "context_id": "ctx_1752899877_0",
+        "event_type": "social_event",
+        "description": "cooking dinner and",
+        "place": null,
+        "time_reference": null,
+        "status": "planned",
+        "priority": 1,
+        "timestamp": "2025-07-19 04:37:57",
+        "related_contexts": [],
+        "completion_status": 0.0
+      },
+      "ctx_1752899877_1": {
+        "context_id": "ctx_1752899877_1",
+        "event_type": "general_event",
+        "description": "watching a movie",
+        "place": null,
+        "time_reference": "after cooking dinner and",
+        "status": "planned",
+        "priority": 2,
+        "timestamp": "2025-07-19 04:37:57",
+        "related_contexts": [],
+        "completion_status": 0.0
+      },
+      "ctx_1752899933_2": {
+        "context_id": "ctx_1752899933_2",
+        "event_type": "social_event",
+        "description": "cooking dinner and",
+        "place": null,
+        "time_reference": null,
+        "status": "planned",
+        "priority": 1,
+        "timestamp": "2025-07-19 04:38:53",
+        "related_contexts": [],
+        "completion_status": 0.0
+      },
+      "ctx_1752899933_3": {
+        "context_id": "ctx_1752899933_3",
+        "event_type": "general_event",
+        "description": "watching a movie",
+        "place": null,
+        "time_reference": "after cooking dinner and",
+        "status": "planned",
+        "priority": 2,
+        "timestamp": "2025-07-19 04:38:53",
+        "related_contexts": [],
+        "completion_status": 0.0
+      }
+    },
+    "last_action": "cooking dinner and",
+    "last_place": null,
+    "last_topic": "dinner",
+    "last_goal": null,
+    "last_timestamp": "2025-07-19 04:38:53",
+    "action_status": "planned",
+    "context_sequence": [
+      "ctx_1752899877_0",
+      "ctx_1752899877_1",
+      "ctx_1752899933_2",
+      "ctx_1752899933_3"
+    ]
+  },
+  "intent_slots": {},
+  "reference_history": []
+}

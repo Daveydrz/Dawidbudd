@@ -367,15 +367,44 @@ class ContextWindowManager:
         return beliefs
     
     def _format_working_memory(self, working_memory: Dict[str, Any]) -> str:
-        """Format working memory for context injection"""
+        """Format working memory for context injection - supports multi-context"""
         parts = []
         
-        if working_memory.get("last_action"):
+        # 🧠 MULTI-CONTEXT: Format active contexts if they exist
+        if working_memory.get("active_contexts"):
+            active_contexts = working_memory["active_contexts"]
+            context_summaries = []
+            
+            for context_id, context_data in active_contexts.items():
+                if isinstance(context_data, dict):
+                    description = context_data.get("description", "Unknown")
+                    status = context_data.get("status", "unknown")
+                    place = context_data.get("place")
+                    event_type = context_data.get("event_type", "general")
+                    
+                    status_emoji = {
+                        "planned": "📅",
+                        "preparing": "🔧", 
+                        "ongoing": "⚡",
+                        "completed": "✅"
+                    }.get(status, "❓")
+                    
+                    context_summary = f"{status_emoji} {description}"
+                    if place:
+                        context_summary += f" (at {place})"
+                    
+                    context_summaries.append(context_summary)
+            
+            if context_summaries:
+                parts.append(f"Active contexts: {' | '.join(context_summaries)}")
+        
+        # 🎯 FALLBACK: Use single-context fields for backward compatibility
+        elif working_memory.get("last_action"):
             parts.append(f"Last action: {working_memory['last_action']}")
-        if working_memory.get("last_place"):
-            parts.append(f"Location: {working_memory['last_place']}")
-        if working_memory.get("last_goal"):
-            parts.append(f"Goal: {working_memory['last_goal']}")
+            if working_memory.get("last_place"):
+                parts.append(f"Location: {working_memory['last_place']}")
+            if working_memory.get("last_goal"):
+                parts.append(f"Goal: {working_memory['last_goal']}")
         
         return " | ".join(parts) if parts else "No current context"
     

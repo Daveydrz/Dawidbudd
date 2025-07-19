@@ -18,16 +18,42 @@ except ImportError as e:
     print(f"[Memory] ⚠️ Entropy system not available: {e}")
     ENTROPY_AVAILABLE = False
 
-# 🧠 WORKING MEMORY TRACKING: Advanced context-aware memory system
+# 🧠 MULTI-CONTEXT WORKING MEMORY: Track multiple simultaneous contexts
+@dataclass
+class ContextItem:
+    """Individual context/event tracking"""
+    context_id: str                           # Unique identifier for this context
+    event_type: str                          # "social_event", "medical_appointment", "work_task", etc.
+    description: str                         # "niece's birthday", "gp annual check"
+    place: Optional[str] = None              # "restaurant", "doctor's office", etc.
+    time_reference: Optional[str] = None     # "today", "after birthday", "tomorrow"
+    status: str = "planned"                  # "planned", "preparing", "ongoing", "completed"
+    priority: int = 1                        # 1=high, 2=medium, 3=low
+    timestamp: Optional[str] = None          # When this was added
+    related_contexts: List[str] = None       # IDs of related contexts
+    completion_status: float = 0.0           # 0.0 to 1.0 progress
+    
+    def __post_init__(self):
+        if self.related_contexts is None:
+            self.related_contexts = []
+
 @dataclass
 class WorkingMemoryState:
-    """Track user's current action/context for reference resolution"""
-    last_action: Optional[str] = None          # "making dinner", "going to shop"
-    last_place: Optional[str] = None           # "shop", "kitchen", "office"
-    last_topic: Optional[str] = None           # "dinner", "shopping", "work"
-    last_goal: Optional[str] = None            # "buy groceries", "cook pasta"
-    last_timestamp: Optional[str] = None       # When this state was set
-    action_status: str = "unknown"             # "preparing", "ongoing", "completed"
+    """Track multiple simultaneous actions/contexts for reference resolution"""
+    active_contexts: Dict[str, ContextItem] = None  # Multiple simultaneous contexts
+    last_action: Optional[str] = None               # For backward compatibility
+    last_place: Optional[str] = None                # For backward compatibility  
+    last_topic: Optional[str] = None                # For backward compatibility
+    last_goal: Optional[str] = None                 # For backward compatibility
+    last_timestamp: Optional[str] = None            # When last updated
+    action_status: str = "unknown"                  # For backward compatibility
+    context_sequence: List[str] = None              # Order of context creation
+    
+    def __post_init__(self):
+        if self.active_contexts is None:
+            self.active_contexts = {}
+        if self.context_sequence is None:
+            self.context_sequence = []
 
 # 📋 INTERACTION THREAD MEMORY: Track conversation threads
 @dataclass
@@ -1226,108 +1252,327 @@ class UserMemorySystem:
     
     # 🧠 WORKING MEMORY TRACKING METHODS
     def update_working_memory(self, text: str, original_text: str):
-        """🧠 Update working memory with user's current action/context"""
+        """🧠 MULTI-CONTEXT: Update working memory with multiple simultaneous contexts"""
         try:
             text_lower = text.lower().strip()
             current_time = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
             
-            # Action detection patterns
-            action_patterns = [
-                # Present continuous actions
-                (r"i'm (making|cooking|preparing) (.+?)(?:\.|$)", "action", "{0} {1}", "kitchen"),
-                (r"i'm (going to|heading to) (?:the\s+)?(.+?)(?:\.|$)", "action", "{0} {1}", "{1}"),
-                (r"i'm (working on|doing) (.+?)(?:\.|$)", "action", "{0} {1}", "office"),
-                (r"i'm (cleaning|organizing|fixing) (?:the\s+)?(.+?)(?:\.|$)", "action", "{0} {1}", "home"),
-                (r"i'm (shopping for|buying) (.+?)(?:\.|$)", "action", "{0} {1}", "shop"),
+            # 🎯 STEP 1: Parse for multiple events in compound statements
+            contexts = self._parse_multi_context_statement(text_lower, original_text)
+            
+            # 🎯 STEP 2: Add detected contexts to working memory
+            for context in contexts:
+                context_id = f"ctx_{int(time.time())}_{len(self.working_memory.active_contexts)}"
+                context.context_id = context_id
+                context.timestamp = current_time
                 
-                # About to actions (preparation phase)
-                (r"i'm about to (go to|visit|see) (?:the\s+)?(.+?)(?:\.|$)", "preparing", "going to {1}", "{1}"),
-                (r"i'm about to (make|cook|prepare) (.+?)(?:\.|$)", "preparing", "{0} {1}", "kitchen"),
-                (r"i'm getting ready to (.+?)(?:\.|$)", "preparing", "{0}", None),
+                self.working_memory.active_contexts[context_id] = context
+                self.working_memory.context_sequence.append(context_id)
                 
-                # Future actions
-                (r"i will (go to|visit) (?:the\s+)?(.+?)(?:\.|$)", "planned", "going to {1}", "{1}"),
-                (r"i'll (make|cook) (.+?)(?:\.|$)", "planned", "{0} {1}", "kitchen"),
-                
-                # Just started actions
-                (r"i just started (.+?)(?:\.|$)", "ongoing", "{0}", None),
-                (r"i'm now (.+?)(?:\.|$)", "ongoing", "{0}", None),
-            ]
+                print(f"[MultiContext] ➕ Added: {context.description} ({context.event_type})")
             
-            # Place detection patterns
-            place_patterns = [
-                (r"at (?:the\s+)?(.+?)(?:\.|$)", "{0}"),
-                (r"in (?:the\s+)?(.+?)(?:\.|$)", "{0}"),
-                (r"from (?:the\s+)?(.+?)(?:\.|$)", "{0}"),
-            ]
+            # 🎯 STEP 3: Update backward compatibility fields with most recent/important context
+            if contexts:
+                primary_context = contexts[0]  # Use first/primary context
+                self.working_memory.last_action = primary_context.description
+                self.working_memory.last_place = primary_context.place
+                self.working_memory.last_topic = self._extract_topic_from_action(primary_context.description, original_text)
+                self.working_memory.last_timestamp = current_time
+                self.working_memory.action_status = primary_context.status
             
-            # Goal detection patterns  
-            goal_patterns = [
-                (r"to (buy|get|pick up) (.+?)(?:\.|$)", "{0} {1}"),
-                (r"to (make|cook|prepare) (.+?)(?:\.|$)", "{0} {1}"),
-                (r"to (visit|see|meet) (.+?)(?:\.|$)", "{0} {1}"),
-                (r"for (.+?)(?:\.|$)", "for {0}"),
-            ]
+            # 🎯 STEP 4: Fallback to original single-context parsing if no contexts detected
+            if not contexts:
+                self._update_single_context_fallback(text_lower, original_text, current_time)
             
-            action_detected = False
-            
-            # Detect current actions
-            for pattern, status, action_template, place_hint in action_patterns:
-                match = re.search(pattern, text_lower)
-                if match:
-                    groups = match.groups()
-                    action = action_template.format(*groups) if "{" in action_template else action_template
-                    
-                    # Process place hint
-                    if place_hint and "{" in place_hint:
-                        place = place_hint.format(*groups)
-                    elif place_hint:
-                        place = place_hint
-                    else:
-                        place = None
-                    
-                    # Extract topic from action
-                    topic = self._extract_topic_from_action(action, original_text)
-                    
-                    # Update working memory
-                    self.working_memory.last_action = action
-                    self.working_memory.last_place = place
-                    self.working_memory.last_topic = topic
-                    self.working_memory.last_timestamp = current_time
-                    self.working_memory.action_status = status
-                    
-                    print(f"[WorkingMemory] 🧠 Action: {action} | Place: {place} | Status: {status}")
-                    action_detected = True
-                    break
-            
-            # If no action detected, check for goal/intent updates
-            if not action_detected:
-                for pattern, goal_template in goal_patterns:
-                    match = re.search(pattern, text_lower)
-                    if match:
-                        goal = goal_template.format(*match.groups())
-                        self.working_memory.last_goal = goal
-                        print(f"[WorkingMemory] 🎯 Goal: {goal}")
-                        break
-            
-            # Check for place references if not already set
-            if not self.working_memory.last_place:
-                for pattern, place_template in place_patterns:
-                    match = re.search(pattern, text_lower)
-                    if match:
-                        place = place_template.format(match.group(1))
-                        self.working_memory.last_place = place
-                        print(f"[WorkingMemory] 📍 Place: {place}")
-                        break
+            # 🎯 STEP 5: Clean up old/completed contexts (keep max 10 active)
+            self._cleanup_old_contexts()
             
             self.save_memory()
             
         except Exception as e:
             if DEBUG:
                 print(f"[WorkingMemory] ❌ Update error: {e}")
+
+    def _parse_multi_context_statement(self, text_lower: str, original_text: str) -> List[ContextItem]:
+        """🧠 Parse compound statements to extract multiple events/contexts"""
+        contexts = []
+        
+        # 🎯 COMPOUND STATEMENT PATTERNS: Detect multiple events in one statement
+        compound_patterns = [
+            # "going to X and then Y" - sequential events
+            (r"(?:i'm\s+)?going (?:to\s+)?(.+?)\s+and then (?:also\s+)?(?:to\s+)?(.+?)(?:\.|$)", "sequential"),
+            (r"(?:i'm\s+)?going (?:for\s+)?(.+?)\s+and then (?:also\s+)?(?:to\s+)?(.+?)(?:\.|$)", "sequential"),
+            
+            # "doing X and Y" - parallel events
+            (r"(?:i'm\s+)?(?:doing|planning|having) (.+?)\s+and (?:also\s+)?(.+?)(?:\.|$)", "parallel"),
+            
+            # "X then Y" patterns
+            (r"(.+?)\s+then (?:i'm\s+)?(?:going\s+)?(?:to\s+)?(.+?)(?:\.|$)", "sequential"),
+            
+            # "X and Y" - general parallel
+            (r"(?:i'm\s+)?(.+?)\s+and (?:then\s+)?(?:also\s+)?(.+?)(?:\.|$)", "parallel"),
+        ]
+        
+        for pattern, relationship_type in compound_patterns:
+            match = re.search(pattern, text_lower)
+            if match:
+                event1_text, event2_text = match.groups()
+                
+                # Clean up the event descriptions
+                event1_text = self._clean_event_description(event1_text)
+                event2_text = self._clean_event_description(event2_text)
+                
+                if event1_text and event2_text:
+                    # Create context for first event
+                    context1 = self._create_context_from_description(event1_text, original_text, priority=1)
+                    
+                    # Create context for second event
+                    context2 = self._create_context_from_description(event2_text, original_text, priority=2)
+                    
+                    # Set relationship between contexts
+                    if relationship_type == "sequential":
+                        context1.status = "planned"
+                        context2.status = "planned"
+                        context2.time_reference = "after " + event1_text
+                    elif relationship_type == "parallel":
+                        context1.status = "planned" 
+                        context2.status = "planned"
+                    
+                    contexts.extend([context1, context2])
+                    print(f"[MultiContext] 🔗 Parsed {relationship_type}: '{event1_text}' + '{event2_text}'")
+                    break
+        
+        # 🎯 SINGLE EVENT PATTERNS: If no compound found, try single event
+        if not contexts:
+            single_context = self._parse_single_event(text_lower, original_text)
+            if single_context:
+                contexts.append(single_context)
+        
+        return contexts
+    
+    def _clean_event_description(self, event_text: str) -> str:
+        """Clean and normalize event descriptions"""
+        event_text = event_text.strip()
+        
+        # Remove common prefixes/suffixes
+        prefixes_to_remove = ["going to", "going for", "i'm", "im", "to", "for"]
+        for prefix in prefixes_to_remove:
+            if event_text.startswith(prefix + " "):
+                event_text = event_text[len(prefix):].strip()
+        
+        # Remove trailing prepositions
+        suffixes_to_remove = [" to", " for", " at"]
+        for suffix in suffixes_to_remove:
+            if event_text.endswith(suffix):
+                event_text = event_text[:-len(suffix)].strip()
+        
+        return event_text
+    
+    def _create_context_from_description(self, description: str, original_text: str, priority: int = 1) -> ContextItem:
+        """Create a ContextItem from an event description"""
+        
+        # 🎯 EVENT TYPE CLASSIFICATION
+        event_type = self._classify_event_type(description)
+        
+        # 🎯 PLACE EXTRACTION
+        place = self._extract_place_from_description(description)
+        
+        # 🎯 TIME REFERENCE EXTRACTION
+        time_ref = self._extract_time_reference(original_text)
+        
+        return ContextItem(
+            context_id="",  # Will be set later
+            event_type=event_type,
+            description=description,
+            place=place,
+            time_reference=time_ref,
+            status="planned",
+            priority=priority,
+            timestamp="",  # Will be set later
+            related_contexts=[],
+            completion_status=0.0
+        )
+    
+    def _classify_event_type(self, description: str) -> str:
+        """Classify the type of event/context"""
+        desc_lower = description.lower()
+        
+        # Medical/health patterns
+        if any(word in desc_lower for word in ["doctor", "gp", "appointment", "checkup", "check", "medical", "dentist", "hospital"]):
+            return "medical_appointment"
+        
+        # Social event patterns
+        if any(word in desc_lower for word in ["birthday", "party", "wedding", "celebration", "dinner", "lunch", "meeting friends"]):
+            return "social_event"
+        
+        # Work/business patterns
+        if any(word in desc_lower for word in ["work", "office", "meeting", "conference", "business", "interview"]):
+            return "work_task"
+        
+        # Shopping patterns
+        if any(word in desc_lower for word in ["shop", "shopping", "store", "buy", "purchase", "groceries"]):
+            return "shopping_task"
+        
+        # Travel patterns
+        if any(word in desc_lower for word in ["airport", "flight", "train", "travel", "trip", "vacation"]):
+            return "travel_event"
+        
+        # Home/personal patterns
+        if any(word in desc_lower for word in ["home", "house", "cleaning", "cooking", "repair", "fix"]):
+            return "personal_task"
+        
+        return "general_event"
+    
+    def _extract_place_from_description(self, description: str) -> Optional[str]:
+        """Extract place/location from event description"""
+        desc_lower = description.lower()
+        
+        # Common place patterns
+        place_patterns = [
+            (r"at (?:the\s+)?(.+?)(?:\s|$)", "{0}"),
+            (r"in (?:the\s+)?(.+?)(?:\s|$)", "{0}"),
+            (r"(?:doctor|gp|dentist)", "doctor's office"),
+            (r"(?:shop|store|mall)", "shop"),
+            (r"(?:office|work)", "office"),
+            (r"(?:restaurant|cafe|bar)", "restaurant"),
+            (r"(?:home|house)", "home"),
+        ]
+        
+        for pattern, place_template in place_patterns:
+            match = re.search(pattern, desc_lower)
+            if match:
+                if "{" in place_template:
+                    return place_template.format(match.group(1))
+                else:
+                    return place_template
+        
+        return None
+    
+    def _extract_time_reference(self, original_text: str) -> Optional[str]:
+        """Extract time references from original text"""
+        text_lower = original_text.lower()
+        
+        time_patterns = [
+            (r"(today|tomorrow|yesterday)", "{0}"),
+            (r"(this morning|this afternoon|this evening|tonight)", "{0}"),
+            (r"(next week|next month|next year)", "{0}"),
+            (r"(in \d+ hours?|in \d+ days?|in \d+ weeks?)", "{0}"),
+            (r"(at \d+(?::\d+)?(?:\s*(?:am|pm))?)", "{0}"),
+            (r"(after .+?)(?:\s|$)", "{0}"),
+        ]
+        
+        for pattern, time_template in time_patterns:
+            match = re.search(pattern, text_lower)
+            if match:
+                return time_template.format(match.group(1))
+        
+        return None
+    
+    def _parse_single_event(self, text_lower: str, original_text: str) -> Optional[ContextItem]:
+        """Parse single event if no compound statement detected"""
+        
+        # Original single-action patterns (adapted for ContextItem)
+        single_patterns = [
+            (r"i'm (making|cooking|preparing) (.+?)(?:\.|$)", "personal_task", "{0} {1}", "kitchen"),
+            (r"i'm (going to|heading to) (?:the\s+)?(.+?)(?:\.|$)", "general_event", "going to {1}", "{1}"),
+            (r"i'm (working on|doing) (.+?)(?:\.|$)", "work_task", "{0} {1}", "office"),
+            (r"i'm about to (go to|visit|see) (?:the\s+)?(.+?)(?:\.|$)", "general_event", "going to {1}", "{1}"),
+        ]
+        
+        for pattern, event_type, desc_template, place_hint in single_patterns:
+            match = re.search(pattern, text_lower)
+            if match:
+                groups = match.groups()
+                description = desc_template.format(*groups) if "{" in desc_template else desc_template
+                
+                place = None
+                if place_hint and "{" in place_hint:
+                    place = place_hint.format(*groups)
+                elif place_hint:
+                    place = place_hint
+                
+                return ContextItem(
+                    context_id="",
+                    event_type=event_type,
+                    description=description,
+                    place=place,
+                    time_reference=self._extract_time_reference(original_text),
+                    status="planned",
+                    priority=1,
+                    timestamp="",
+                    related_contexts=[],
+                    completion_status=0.0
+                )
+        
+        return None
+    
+    def _update_single_context_fallback(self, text_lower: str, original_text: str, current_time: str):
+        """Fallback to original single-context logic for backward compatibility"""
+        
+        # Goal detection patterns  
+        goal_patterns = [
+            (r"to (buy|get|pick up) (.+?)(?:\.|$)", "{0} {1}"),
+            (r"to (make|cook|prepare) (.+?)(?:\.|$)", "{0} {1}"),
+            (r"to (visit|see|meet) (.+?)(?:\.|$)", "{0} {1}"),
+            (r"for (.+?)(?:\.|$)", "for {0}"),
+        ]
+        
+        # Place patterns
+        place_patterns = [
+            (r"at (?:the\s+)?(.+?)(?:\.|$)", "{0}"),
+            (r"in (?:the\s+)?(.+?)(?:\.|$)", "{0}"),
+            (r"from (?:the\s+)?(.+?)(?:\.|$)", "{0}"),
+        ]
+        
+        # Check for goal/intent updates
+        for pattern, goal_template in goal_patterns:
+            match = re.search(pattern, text_lower)
+            if match:
+                goal = goal_template.format(*match.groups())
+                self.working_memory.last_goal = goal
+                print(f"[WorkingMemory] 🎯 Goal: {goal}")
+                break
+        
+        # Check for place references
+        if not self.working_memory.last_place:
+            for pattern, place_template in place_patterns:
+                match = re.search(pattern, text_lower)
+                if match:
+                    place = place_template.format(match.group(1))
+                    self.working_memory.last_place = place
+                    print(f"[WorkingMemory] 📍 Place: {place}")
+                    break
+    
+    def _cleanup_old_contexts(self):
+        """Clean up old/completed contexts to prevent memory bloat"""
+        max_active_contexts = 10
+        
+        if len(self.working_memory.active_contexts) > max_active_contexts:
+            # Remove oldest completed contexts first
+            contexts_to_remove = []
+            for context_id, context in self.working_memory.active_contexts.items():
+                if context.status == "completed" and context.completion_status >= 1.0:
+                    contexts_to_remove.append(context_id)
+            
+            # Remove oldest contexts if still too many
+            if len(self.working_memory.active_contexts) - len(contexts_to_remove) > max_active_contexts:
+                oldest_contexts = sorted(
+                    self.working_memory.context_sequence[:-max_active_contexts]
+                )
+                contexts_to_remove.extend(oldest_contexts)
+            
+            # Actually remove the contexts
+            for context_id in contexts_to_remove:
+                if context_id in self.working_memory.active_contexts:
+                    del self.working_memory.active_contexts[context_id]
+                if context_id in self.working_memory.context_sequence:
+                    self.working_memory.context_sequence.remove(context_id)
+            
+            if contexts_to_remove:
+                print(f"[MultiContext] 🧹 Cleaned up {len(contexts_to_remove)} old contexts")
     
     def detect_and_resolve_references(self, text: str) -> Optional[ReferenceResolution]:
-        """🧠 Detect vague references and resolve them using working memory"""
+        """🧠 MULTI-CONTEXT: Detect vague references and resolve them using all active contexts"""
         try:
             text_lower = text.lower().strip()
             
@@ -1345,6 +1590,10 @@ class UserMemorySystem:
                 (r"(it's done|it's finished|it's ready)(?:\.|$)", "completion"),
                 (r"(it worked|it didn't work)(?:\.|$)", "result"),
                 (r"(i'm there|i arrived|i made it)(?:\.|$)", "arrival"),
+                
+                # Multi-context references
+                (r"(both are done|both went well|finished both)(?:\.|$)", "multiple_completion"),
+                (r"(the first one|the second one|the next one)(?:\.|$)", "sequence_reference"),
             ]
             
             for pattern, reference_type in vague_patterns:
@@ -1352,12 +1601,12 @@ class UserMemorySystem:
                 if match:
                     vague_phrase = match.group(1)
                     
-                    # Resolve based on working memory
-                    resolution = self._resolve_reference_from_working_memory(vague_phrase, reference_type)
+                    # Resolve based on multi-context working memory
+                    resolution = self._resolve_reference_from_multi_context(vague_phrase, reference_type)
                     if resolution:
                         # Store the resolution
                         self.reference_history.append(resolution)
-                        print(f"[Reference] 🔗 '{vague_phrase}' → '{resolution.likely_referent}'")
+                        print(f"[MultiReference] 🔗 '{vague_phrase}' → '{resolution.likely_referent}'")
                         return resolution
             
             return None
@@ -1366,6 +1615,166 @@ class UserMemorySystem:
             if DEBUG:
                 print(f"[Reference] ❌ Resolution error: {e}")
             return None
+
+    def _resolve_reference_from_multi_context(self, vague_phrase: str, reference_type: str) -> Optional[ReferenceResolution]:
+        """🧠 MULTI-CONTEXT: Resolve vague reference using all active contexts"""
+        
+        # Get most recent/relevant contexts
+        active_contexts = list(self.working_memory.active_contexts.values())
+        if not active_contexts:
+            # Fallback to single-context resolution
+            return self._resolve_reference_from_working_memory(vague_phrase, reference_type)
+        
+        likely_referent = None
+        confidence = 0.0
+        context_source = "multi_context"
+        
+        if reference_type == "completion":
+            # Find most recently active context
+            recent_context = self._get_most_recent_active_context()
+            if recent_context:
+                likely_referent = f"finished {recent_context.description}"
+                confidence = 0.8
+                # Update context status
+                recent_context.status = "completed"
+                recent_context.completion_status = 1.0
+            else:
+                # Fallback: look for any active context
+                for context in active_contexts:
+                    if context.status in ["ongoing", "planned"]:
+                        likely_referent = f"finished {context.description}"
+                        confidence = 0.7
+                        context.status = "completed"
+                        context.completion_status = 1.0
+                        break
+        
+        elif reference_type == "multiple_completion":
+            # Multiple contexts completed
+            active_count = len([c for c in active_contexts if c.status in ["ongoing", "planned"]])
+            if active_count >= 2:
+                context_descriptions = [c.description for c in active_contexts[:2]]
+                likely_referent = f"finished {' and '.join(context_descriptions)}"
+                confidence = 0.9
+                # Update multiple contexts
+                for context in active_contexts[:2]:
+                    context.status = "completed"
+                    context.completion_status = 1.0
+        
+        elif reference_type == "sequence_reference":
+            # Reference to specific item in sequence
+            if "first" in vague_phrase and len(active_contexts) >= 1:
+                # Get first context by sequence
+                first_context = None
+                if self.working_memory.context_sequence:
+                    first_context_id = self.working_memory.context_sequence[0]
+                    first_context = self.working_memory.active_contexts.get(first_context_id)
+                
+                if first_context:
+                    likely_referent = f"the first event: {first_context.description}"
+                    confidence = 0.9
+                else:
+                    likely_referent = f"the first event: {active_contexts[0].description}"
+                    confidence = 0.8
+            elif "second" in vague_phrase and len(active_contexts) >= 2:
+                # Get second context by sequence
+                second_context = None
+                if len(self.working_memory.context_sequence) >= 2:
+                    second_context_id = self.working_memory.context_sequence[1]
+                    second_context = self.working_memory.active_contexts.get(second_context_id)
+                
+                if second_context:
+                    likely_referent = f"the second event: {second_context.description}"
+                    confidence = 0.9
+                else:
+                    likely_referent = f"the second event: {active_contexts[1].description}"
+                    confidence = 0.8
+            elif "next" in vague_phrase:
+                next_context = self._get_next_planned_context()
+                if next_context:
+                    likely_referent = f"the next event: {next_context.description}"
+                    confidence = 0.8
+        
+        elif reference_type == "outcome":
+            recent_context = self._get_most_recent_active_context()
+            if recent_context:
+                likely_referent = f"{recent_context.description} went well"
+                confidence = 0.7
+        
+        elif reference_type == "return":
+            # Check for contexts with places
+            place_contexts = [c for c in active_contexts if c.place]
+            if place_contexts:
+                recent_place_context = place_contexts[-1]  # Most recent
+                likely_referent = f"came back from {recent_place_context.place} ({recent_place_context.description})"
+                confidence = 0.8
+                recent_place_context.status = "completed"
+        
+        elif reference_type == "ready":
+            # Check for contexts in preparing status
+            preparing_contexts = [c for c in active_contexts if c.status == "planned"]
+            if preparing_contexts:
+                next_context = preparing_contexts[0]
+                likely_referent = f"ready for {next_context.description}"
+                confidence = 0.8
+                next_context.status = "preparing"
+        
+        elif reference_type == "arrival":
+            # Check for travel/location contexts
+            recent_context = self._get_most_recent_active_context()
+            if recent_context and recent_context.place:
+                likely_referent = f"arrived at {recent_context.place} for {recent_context.description}"
+                confidence = 0.9
+                recent_context.status = "ongoing"
+        
+        if likely_referent:
+            self.save_memory()  # Save context status updates
+            return ReferenceResolution(
+                vague_phrase=vague_phrase,
+                likely_referent=likely_referent,
+                confidence=confidence,
+                context_source=context_source
+            )
+        
+        # Fallback to single-context resolution
+        return self._resolve_reference_from_working_memory(vague_phrase, reference_type)
+    
+    def _get_most_recent_active_context(self) -> Optional[ContextItem]:
+        """Get the most recently active context"""
+        if not self.working_memory.context_sequence:
+            return None
+        
+        # Check contexts in reverse chronological order
+        for context_id in reversed(self.working_memory.context_sequence):
+            if context_id in self.working_memory.active_contexts:
+                context = self.working_memory.active_contexts[context_id]
+                if context.status in ["ongoing", "planned", "preparing"]:
+                    return context
+        
+        return None
+    
+    def _get_next_planned_context(self) -> Optional[ContextItem]:
+        """Get the next planned context in sequence"""
+        # First try to find planned contexts
+        planned_contexts = [
+            c for c in self.working_memory.active_contexts.values() 
+            if c.status == "planned"
+        ]
+        
+        if planned_contexts:
+            # Sort by priority and return highest priority
+            planned_contexts.sort(key=lambda x: x.priority)
+            return planned_contexts[0]
+        
+        # If no planned contexts, return any active context
+        active_contexts = [
+            c for c in self.working_memory.active_contexts.values() 
+            if c.status in ["preparing", "ongoing"]
+        ]
+        
+        if active_contexts:
+            return active_contexts[0]
+        
+        return None
     
     def _resolve_reference_from_working_memory(self, vague_phrase: str, reference_type: str) -> Optional[ReferenceResolution]:
         """Resolve vague reference using working memory context"""
@@ -1702,10 +2111,26 @@ class UserMemorySystem:
                 self.clear_outdated_plans()
     
     def _save_working_memory_data(self):
-        """🧠 WORKING MEMORY: Save working memory data"""
+        """🧠 MULTI-CONTEXT WORKING MEMORY: Save working memory data with multiple contexts"""
         working_memory_file = self.memory_dir / "working_memory.json"
+        
+        # Convert active_contexts to serializable format
+        active_contexts_data = {}
+        if hasattr(self.working_memory, 'active_contexts') and self.working_memory.active_contexts:
+            for context_id, context in self.working_memory.active_contexts.items():
+                active_contexts_data[context_id] = asdict(context)
+        
         working_memory_data = {
-            "working_memory": asdict(self.working_memory),
+            "working_memory": {
+                "active_contexts": active_contexts_data,
+                "last_action": self.working_memory.last_action,
+                "last_place": self.working_memory.last_place,
+                "last_topic": self.working_memory.last_topic,
+                "last_goal": self.working_memory.last_goal,
+                "last_timestamp": self.working_memory.last_timestamp,
+                "action_status": self.working_memory.action_status,
+                "context_sequence": getattr(self.working_memory, 'context_sequence', [])
+            },
             "intent_slots": {k: asdict(v) for k, v in self.intent_slots.items()},
             "reference_history": [asdict(r) for r in self.reference_history[-10:]]  # Keep last 10 resolutions
         }
@@ -1713,15 +2138,36 @@ class UserMemorySystem:
             json.dump(working_memory_data, f, indent=2)
     
     def _load_working_memory_data(self):
-        """🧠 WORKING MEMORY: Load working memory data"""
+        """🧠 MULTI-CONTEXT WORKING MEMORY: Load working memory data with multiple contexts"""
         working_memory_file = self.memory_dir / "working_memory.json"
         if working_memory_file.exists():
-            with open(working_memory_file, 'r') as f:
-                data = json.load(f)
+            try:
+                with open(working_memory_file, 'r') as f:
+                    data = json.load(f)
                 
                 # Load working memory state
                 if "working_memory" in data:
-                    self.working_memory = WorkingMemoryState(**data["working_memory"])
+                    wm_data = data["working_memory"]
+                    
+                    # Initialize WorkingMemoryState with backward compatibility
+                    self.working_memory = WorkingMemoryState(
+                        last_action=wm_data.get("last_action"),
+                        last_place=wm_data.get("last_place"),
+                        last_topic=wm_data.get("last_topic"),
+                        last_goal=wm_data.get("last_goal"),
+                        last_timestamp=wm_data.get("last_timestamp"),
+                        action_status=wm_data.get("action_status", "unknown"),
+                        active_contexts={},
+                        context_sequence=wm_data.get("context_sequence", [])
+                    )
+                    
+                    # Load active contexts if they exist
+                    if "active_contexts" in wm_data and wm_data["active_contexts"]:
+                        for context_id, context_data in wm_data["active_contexts"].items():
+                            try:
+                                self.working_memory.active_contexts[context_id] = ContextItem(**context_data)
+                            except Exception as e:
+                                print(f"[MultiContext] ⚠️ Error loading context {context_id}: {e}")
                 
                 # Load intent slots
                 if "intent_slots" in data:
@@ -1730,6 +2176,13 @@ class UserMemorySystem:
                 # Load reference history
                 if "reference_history" in data:
                     self.reference_history = [ReferenceResolution(**r) for r in data["reference_history"]]
+                    
+            except Exception as e:
+                print(f"[MultiContext] ⚠️ Error loading working memory: {e}")
+                # Initialize with defaults if loading fails
+                self.working_memory = WorkingMemoryState()
+                self.intent_slots = {}
+                self.reference_history = []
     
     def _save_interaction_log(self):
         """📋 INTERACTION THREAD MEMORY: Save interaction threads"""
@@ -2026,6 +2479,65 @@ class UserMemorySystem:
             if DEBUG:
                 print(f"[WorkingMemory] ❌ Context generation error: {e}")
             return ""
+    
+    def get_multi_context_summary(self) -> str:
+        """🧠 MULTI-CONTEXT: Get summary of all active contexts for LLM injection"""
+        if not self.working_memory.active_contexts:
+            return ""
+        
+        context_lines = []
+        active_contexts = list(self.working_memory.active_contexts.values())
+        
+        # Sort by priority and recency
+        active_contexts.sort(key=lambda x: (x.priority, x.timestamp), reverse=True)
+        
+        for i, context in enumerate(active_contexts[:5]):  # Max 5 contexts in summary
+            status_emoji = {
+                "planned": "📅",
+                "preparing": "🔧", 
+                "ongoing": "⚡",
+                "completed": "✅"
+            }.get(context.status, "❓")
+            
+            context_line = f"{status_emoji} {context.description}"
+            
+            if context.place:
+                context_line += f" (at {context.place})"
+            
+            if context.time_reference:
+                context_line += f" - {context.time_reference}"
+            
+            if context.completion_status > 0:
+                context_line += f" ({int(context.completion_status * 100)}% complete)"
+            
+            context_lines.append(context_line)
+        
+        if context_lines:
+            return "User's current contexts: " + " | ".join(context_lines)
+        
+        return ""
+    
+    def update_context_status(self, context_description: str, new_status: str, completion: float = None):
+        """🧠 MULTI-CONTEXT: Update status of specific context"""
+        for context in self.working_memory.active_contexts.values():
+            if context_description.lower() in context.description.lower():
+                context.status = new_status
+                if completion is not None:
+                    context.completion_status = completion
+                print(f"[MultiContext] 🔄 Updated '{context.description}' → {new_status}")
+                self.save_memory()
+                return True
+        return False
+    
+    def get_active_contexts_count(self) -> int:
+        """🧠 MULTI-CONTEXT: Get count of active contexts"""
+        return len([c for c in self.working_memory.active_contexts.values() 
+                   if c.status in ["planned", "preparing", "ongoing"]])
+    
+    def get_context_by_type(self, event_type: str) -> List[ContextItem]:
+        """🧠 MULTI-CONTEXT: Get contexts by event type"""
+        return [c for c in self.working_memory.active_contexts.values() 
+                if c.event_type == event_type]
 
 # Global conversation storage (keep existing)
 conversation_history = {}
@@ -2214,3 +2726,8 @@ print(f"[MegaMemory] ✅ Time-Aware Greetings: Active")
 print(f"[MegaMemory] ✅ Interaction Thread Memory: Active")
 print(f"[MegaMemory] ✅ Episodic Turn Memory: Active")
 print(f"[MegaMemory] ✅ Conversation Context for LLM: Active")
+print(f"[MegaMemory] 🚀 MULTI-CONTEXT CONVERSATION HANDLING: Active")
+print(f"[MegaMemory] 🎯 Multi-Event Parsing: Active")
+print(f"[MegaMemory] 🔗 Advanced Reference Resolution: Active")
+print(f"[MegaMemory] 💾 Cross-User Memory Isolation: Active")
+print(f"[MegaMemory] 🔄 8K Context Window Preservation: Active")

@@ -23,7 +23,8 @@ class ConsciousnessTokenizer:
             'self_reflection': "[SELF:{aspect}|value:{value}]",
             'experience': "[EXP:{type}|valence:{valence:.2f}|significance:{significance:.2f}]",
             'belief': "[BELIEF:{belief}|certainty:{certainty:.2f}|contradictions:{contradictions}]",
-            'personality': "[PERSONALITY:{trait}|strength:{strength:.2f}|adaptation:{adaptation}]"
+            'personality': "[PERSONALITY:{trait}|strength:{strength:.2f}|adaptation:{adaptation}]",
+            'context': "[CONTEXT:{event}|type:{type}|status:{status}|priority:{priority}]"  # New multi-context token
         }
         
         self.max_tokens_per_category = {
@@ -36,7 +37,8 @@ class ConsciousnessTokenizer:
             'self_reflection': 3,
             'experience': 2,
             'belief': 4,
-            'personality': 3
+            'personality': 3,
+            'context': 6  # Allow more tokens for multi-context information
         }
         
         self.consciousness_cache = {}
@@ -102,6 +104,42 @@ class ConsciousnessTokenizer:
         except Exception as e:
             print(f"[ConsciousnessTokenizer] ❌ Error tokenizing consciousness: {e}")
             return f"[CONSCIOUSNESS_ERROR:{str(e)}]"
+    
+    def tokenize_multi_context_memory(self, memory_system) -> str:
+        """🧠 MULTI-CONTEXT: Tokenize multi-context memory for LLM efficiency"""
+        try:
+            tokens = []
+            
+            # Check if memory system has multi-context capability
+            if hasattr(memory_system, 'working_memory') and hasattr(memory_system.working_memory, 'active_contexts'):
+                active_contexts = memory_system.working_memory.active_contexts
+                
+                if active_contexts:
+                    # Sort contexts by priority and recency
+                    sorted_contexts = sorted(
+                        active_contexts.values(), 
+                        key=lambda x: (x.priority, x.timestamp), 
+                        reverse=True
+                    )
+                    
+                    # Tokenize top priority contexts
+                    for context in sorted_contexts[:self.max_tokens_per_category['context']]:
+                        # Clean description for token efficiency
+                        clean_description = context.description[:20]  # Limit length
+                        
+                        context_token = self.token_templates['context'].format(
+                            event=clean_description,
+                            type=context.event_type,
+                            status=context.status,
+                            priority=context.priority
+                        )
+                        tokens.append(context_token)
+            
+            return " ".join(tokens) if tokens else ""
+            
+        except Exception as e:
+            print(f"[ConsciousnessTokenizer] ❌ Error tokenizing multi-context: {e}")
+            return f"[MULTICONTEXT_ERROR:{str(e)}]"
     
     def _tokenize_emotions(self, emotion_state: Dict[str, Any]) -> List[str]:
         """Tokenize emotional state"""
