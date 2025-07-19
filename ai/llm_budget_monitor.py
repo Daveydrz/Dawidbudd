@@ -410,14 +410,8 @@ def check_llm_budget_before_request(estimated_tokens: int, model: str, user: str
     Returns:
         (allowed, status_message)
     """
-    allowed, alert, message = budget_monitor.check_pre_request_limits(estimated_tokens, model, user)
-    
-    if alert in [BudgetAlert.WARNING, BudgetAlert.CRITICAL]:
-        print(f"[LLMBudgetMonitor] ⚠️ {alert.value.upper()}: {message}")
-    elif alert == BudgetAlert.EXCEEDED:
-        print(f"[LLMBudgetMonitor] 🚫 BUDGET EXCEEDED: {message}")
-    
-    return allowed, message
+    # For local LLM, budget is unlimited
+    return True, "✅ Local LLM - Unlimited budget"
 
 def log_llm_usage(input_tokens: int, output_tokens: int, model: str, user: str, request_type: str = "chat"):
     """Log LLM usage after request completion"""

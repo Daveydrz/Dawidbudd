@@ -755,7 +755,7 @@ class GoalReasoner:
                     # Fallback values if enum conversion fails
                     goal_type = GoalType.SHORT_TERM
                     priority = GoalPriority.MEDIUM
-                    source = GoalSource.SYSTEM_GENERATED
+                    source = GoalSource.SYSTEM_NEED
                     print(f"[GoalReasoner] ⚠️ Enum conversion error: {e}, using fallback values")
                 
                 goal = GeneratedGoal(
@@ -789,38 +789,36 @@ class GoalReasoner:
     def save_goal_data(self):
         """Save goal data to file"""
         try:
+            # Convert goals to dictionaries with proper enum handling
+            goals_list = []
+            for goal in self.generated_goals.values():
+                goal_dict = {
+                    'goal_id': goal.goal_id,
+                    'description': goal.description,
+                    'goal_type': goal.goal_type.value if hasattr(goal.goal_type, 'value') else str(goal.goal_type),
+                    'priority': goal.priority.value if hasattr(goal.priority, 'value') else str(goal.priority),
+                    'source': goal.source.value if hasattr(goal.source, 'value') else str(goal.source),
+                    'triggering_factors': goal.triggering_factors,
+                    'context': goal.context,
+                    'user_id': goal.user_id,
+                    'created_at': goal.created_at.isoformat() if isinstance(goal.created_at, datetime) else goal.created_at,
+                    'deadline': goal.deadline.isoformat() if isinstance(goal.deadline, datetime) else goal.deadline,
+                    'progress': goal.progress,
+                    'is_active': goal.is_active,
+                    'completion_criteria': goal.completion_criteria,
+                    'emotional_weight': goal.emotional_weight,
+                    'reasoning': goal.reasoning
+                }
+                goals_list.append(goal_dict)
+            
             data = {
-                'goals': [asdict(goal) for goal in self.generated_goals.values()],
+                'goals': goals_list,
                 'last_updated': datetime.now().isoformat(),
                 'total_goals': len(self.generated_goals)
             }
             
-            # Convert enum values to their string values for JSON serialization
-            def convert_enums(obj):
-                if hasattr(obj, '__dict__'):
-                    # Handle dataclass objects
-                    result = {}
-                    for k, v in obj.__dict__.items():
-                        if hasattr(v, 'value'):
-                            result[k] = v.value
-                        elif isinstance(v, datetime):
-                            result[k] = v.isoformat()
-                        elif isinstance(v, (list, dict)):
-                            result[k] = v  # Let JSON handle these
-                        else:
-                            result[k] = v
-                    return result
-                elif isinstance(obj, dict):
-                    return {k: (v.value if hasattr(v, 'value') else v) for k, v in obj.items()}
-                elif hasattr(obj, 'value'):
-                    return obj.value
-                elif isinstance(obj, datetime):
-                    return obj.isoformat()
-                else:
-                    return str(obj)
-            
             with open(self.save_path, 'w') as f:
-                json.dump(data, f, indent=2, default=convert_enums)
+                json.dump(data, f, indent=2)
                 
         except Exception as e:
             print(f"[GoalReasoner] ❌ Error saving goal data: {e}")

@@ -803,27 +803,16 @@ class AutonomousConsciousnessIntegrator:
                 stats['module_stats']['self_motivation'] = self.self_motivation.get_stats()
             except:
                 pass
-            
-            try:
-                stats['module_stats']['dream_simulator'] = self.dream_simulator.get_stats()
-            except:
-                pass
-            
-            try:
-                stats['module_stats']['environmental_awareness'] = self.environmental_awareness.get_stats()
-            except:
-                pass
-            
-            try:
-                stats['module_stats']['communication_manager'] = self.communication_manager.get_stats()
-            except:
-                pass
-            
+                
             return stats
             
         except Exception as e:
             logging.error(f"[AutonomousIntegrator] ❌ Stats error: {e}")
             return {'error': str(e)}
+    
+    def get_comprehensive_stats(self) -> Dict[str, Any]:
+        """Alias for get_autonomous_stats for compatibility"""
+        return self.get_autonomous_stats()
 
 
 # Global instance
