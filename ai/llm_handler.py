@@ -374,11 +374,44 @@ class LLMHandler:
         stream: bool = True
     ) -> Generator[str, None, None]:
         """
-        Generate response with full consciousness integration
+        Generate response with full consciousness integration and 8k context window management
         
         Yields response chunks if streaming, otherwise returns complete response
         """
         try:
+            # ✅ 8K CONTEXT WINDOW MANAGEMENT: Check if rollover needed before processing
+            current_context = context.get("current_context", "") if context else ""
+            
+            # Import context window manager
+            try:
+                from ai.context_window_manager import check_context_window_rollover, create_context_snapshot_for_user
+                needs_rollover, fresh_context = check_context_window_rollover(user, current_context, text)
+                
+                if needs_rollover:
+                    print(f"[LLMHandler] 🔄 Context window rollover triggered for {user}")
+                    
+                    # Create snapshot of current state
+                    conversation_history = context.get("conversation_history", []) if context else []
+                    working_memory = context.get("working_memory", {}) if context else {}
+                    
+                    snapshot_created = create_context_snapshot_for_user(
+                        user, current_context, working_memory, conversation_history
+                    )
+                    
+                    if snapshot_created:
+                        print(f"[LLMHandler] 📸 Context snapshot created - seamless continuation enabled")
+                        # Update context to use fresh compressed context
+                        if context:
+                            context["current_context"] = fresh_context
+                            context["context_rollover_occurred"] = True
+                        else:
+                            context = {"current_context": fresh_context, "context_rollover_occurred": True}
+                    else:
+                        print(f"[LLMHandler] ⚠️ Context snapshot failed - proceeding with compression")
+                
+            except ImportError:
+                print(f"[LLMHandler] ⚠️ Context window manager not available - using standard processing")
+            
             # Process user input through all systems
             analysis = self.process_user_input(text, user, context)
             
@@ -388,11 +421,15 @@ class LLMHandler:
                 yield f"I'm sorry, but I've reached my usage limit. {budget_message}"
                 return
             
-            # Build enhanced prompt with consciousness context
-            enhanced_prompt = self._build_enhanced_prompt(text, user, analysis)
+            # Build enhanced prompt with consciousness context (now includes rollover handling)
+            enhanced_prompt = self._build_enhanced_prompt(text, user, analysis, context)
             
             print(f"[LLMHandler] 🎯 Generating response with consciousness integration")
             print(f"[LLMHandler] 📊 Enhanced prompt length: {len(enhanced_prompt)} characters")
+            
+            # Check for context rollover notification
+            if context and context.get("context_rollover_occurred"):
+                print(f"[LLMHandler] ✅ Context window rollover completed - conversation continuity maintained")
             
             # Track token usage start
             input_tokens = estimate_tokens_from_text(enhanced_prompt)
@@ -600,13 +637,40 @@ class LLMHandler:
             
         return consciousness_systems
         
-    def _build_enhanced_prompt(self, text: str, user: str, analysis: Dict[str, Any]) -> str:
-        """Build enhanced prompt with consciousness integration and AGGRESSIVE token optimization (40-85% reduction)"""
+    def _build_enhanced_prompt(self, text: str, user: str, analysis: Dict[str, Any], context: Dict[str, Any] = None) -> str:
+        """Build enhanced prompt with consciousness integration, AGGRESSIVE token optimization, and 8k context management"""
         try:
             # Sanitize user input first
             sanitized_text = self.sanitize_prompt_input(text, user)
             
-            # ✅ AGGRESSIVE TOKEN OPTIMIZATION: Calculate reduction target
+            # ✅ 8K CONTEXT WINDOW MANAGEMENT: Check if we're using fresh context from rollover
+            using_fresh_context = context and context.get("context_rollover_occurred", False)
+            base_context = context.get("current_context", "") if context else ""
+            
+            if using_fresh_context:
+                print(f"[LLMHandler] 🔄 Using fresh context from window rollover")
+                # Start with the already-optimized fresh context
+                fresh_context_lines = base_context.split('\n')
+                
+                # Find where user input should be added/replaced
+                user_input_added = False
+                for i, line in enumerate(fresh_context_lines):
+                    if line.startswith("User:") and line == fresh_context_lines[-1]:
+                        # Replace the last user input with current one
+                        fresh_context_lines[i] = f"User: {sanitized_text}"
+                        user_input_added = True
+                        break
+                
+                if not user_input_added:
+                    fresh_context_lines.append(f"User: {sanitized_text}")
+                
+                # Return the fresh context with minimal additional processing
+                optimized_prompt = '\n'.join(fresh_context_lines)
+                
+                print(f"[LLMHandler] ✅ Fresh context ready: {self.estimate_tokens_from_text(optimized_prompt)} tokens")
+                return optimized_prompt
+            
+            # ✅ STANDARD PROCESSING: Aggressive token optimization for normal flow
             budget_status = analysis.get("budget", {})
             usage_percentage = budget_status.get("usage_percentage", 0.0)
             
@@ -623,7 +687,7 @@ class LLMHandler:
             print(f"[LLMHandler] 🏷️ AGGRESSIVE token optimization: {token_reduction*100:.0f}% reduction target")
             
             # Calculate highly optimized budget
-            estimated_user_tokens = estimate_tokens_from_text(sanitized_text)
+            estimated_user_tokens = self.estimate_tokens_from_text(sanitized_text)
             base_budget = self.max_context_tokens - 200  # Reserve for response
             optimized_budget = int(base_budget * (1 - token_reduction))
             available_budget = max(optimized_budget - estimated_user_tokens, 50)  # Minimum viable budget
@@ -638,7 +702,7 @@ class LLMHandler:
             
             # User input (cannot be compressed further)
             prompt_parts.append(f"User: {sanitized_text}")
-            available_budget -= estimate_tokens_from_text(system_prompt + sanitized_text)
+            available_budget -= self.estimate_tokens_from_text(system_prompt + sanitized_text)
             
             # ✅ ULTRA-COMPRESSED consciousness context (symbolic tokens only)
             consciousness_context = analysis.get("consciousness", {}).get("context", "")
@@ -649,7 +713,7 @@ class LLMHandler:
                     consciousness_budget = min(int(available_budget * 0.15), 25)
                     trimmed_consciousness = trim_tokens_to_budget(consciousness_context, consciousness_budget)
                     prompt_parts.append(f"Consciousness State: {trimmed_consciousness}")
-                    available_budget -= estimate_tokens_from_text(trimmed_consciousness)
+                    available_budget -= self.estimate_tokens_from_text(trimmed_consciousness)
                     print(f"[LLMHandler] 🧠 Consciousness tokens: {len(trimmed_consciousness)} chars")
                 else:
                     # Ultra-compressed fallback (only essential tokens)
@@ -670,7 +734,7 @@ class LLMHandler:
                         personality_budget = min(int(available_budget * 0.10), 15)
                         trimmed_personality = trim_tokens_to_budget(personality_tokens, personality_budget)
                         prompt_parts.append(f"Personality: {trimmed_personality}")
-                        available_budget -= estimate_tokens_from_text(trimmed_personality)
+                        available_budget -= self.estimate_tokens_from_text(trimmed_personality)
                         print(f"[LLMHandler] 🎭 Personality tokens: {len(trimmed_personality)} chars")
                     else:
                         # Ultra-compressed fallback (top 2 traits only)
@@ -726,8 +790,8 @@ class LLMHandler:
             final_prompt = "\n".join(prompt_parts)
             
             # Final token count verification
-            final_tokens = estimate_tokens_from_text(final_prompt)
-            original_estimate = estimate_tokens_from_text(f"User: {sanitized_text}") * 3  # Rough estimate without optimization
+            final_tokens = self.estimate_tokens_from_text(final_prompt)
+            original_estimate = self.estimate_tokens_from_text(f"User: {sanitized_text}") * 3  # Rough estimate without optimization
             actual_reduction = max(0, (original_estimate - final_tokens) / original_estimate)
             
             print(f"[LLMHandler] ✅ OPTIMIZATION COMPLETE: {final_tokens} tokens")
@@ -735,55 +799,14 @@ class LLMHandler:
             
             return final_prompt
             
-            # Add belief context with budget management and compression
-            beliefs = analysis.get("beliefs", {})
-            if available_budget > 20:
-                belief_parts = []
-                
-                if beliefs.get("extracted_beliefs"):
-                    compressed_beliefs = []
-                    for i, belief in enumerate(beliefs["extracted_beliefs"][:3]):
-                        if NEW_MODULES_AVAILABLE:
-                            from ai.consciousness_tokenizer import compress_memory_entry
-                            belief_entry = {"content": belief, "significance": 0.7, "type": "belief"}
-                            compressed = compress_memory_entry(belief_entry, 10)
-                            compressed_beliefs.append(compressed)
-                        else:
-                            compressed_beliefs.append(f"<belief{i+1}> {belief[:20]}")
-                    
-                    if compressed_beliefs:
-                        belief_parts.append(f"New Beliefs: {' '.join(compressed_beliefs)}")
-                
-                if beliefs.get("new_contradictions") and available_budget > 10:
-                    contradictions = beliefs["new_contradictions"][:2]
-                    belief_parts.append(f"Belief Contradictions: {', '.join(contradictions)}")
-                
-                if belief_parts:
-                    belief_text = " | ".join(belief_parts)
-                    words = belief_text.split()[:available_budget]
-                    prompt_parts.append(" ".join(words))
-            
-            # Add system instruction
-            system_instruction = self._get_system_instruction(analysis)
-            if system_instruction:
-                prompt_parts.insert(0, system_instruction)
-            
-            final_prompt = "\n".join(prompt_parts)
-            
-            # Final token budget check and emergency trimming
-            final_tokens = estimate_tokens_from_text(final_prompt)
-            if final_tokens > self.max_context_tokens:
-                print(f"[LLMHandler] ⚠️ Prompt too long ({final_tokens} tokens), emergency trimming")
-                words = final_prompt.split()
-                target_words = (self.max_context_tokens * 3) // 4  # Rough word-to-token ratio
-                final_prompt = " ".join(words[:target_words]) + " [TRIMMED]"
-            
-            return final_prompt
-            
         except Exception as e:
             print(f"[LLMHandler] ⚠️ Error building enhanced prompt: {e}")
             # Fallback to sanitized text only
             return self.sanitize_prompt_input(text, "unknown")
+    
+    def estimate_tokens_from_text(self, text: str) -> int:
+        """Estimate token count from text (for internal use)"""
+        return max(1, len(text) // 4)  # Rough approximation
             
     def _get_system_instruction(self, analysis: Dict[str, Any]) -> str:
         """Generate system instruction based on analysis"""
