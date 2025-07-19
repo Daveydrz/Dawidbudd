@@ -265,6 +265,11 @@ class UserMemorySystem:
         self.memory_validator = MemoryContextValidator()
         self.inference_engine = MemoryInferenceEngine()
         
+        # 🎯 PLAN DETECTION: Store user plans with temporal context
+        self.user_today_plan: Optional[str] = None
+        self.plan_timestamp: Optional[str] = None
+        self.plan_context: Optional[str] = None
+        
         self.load_memory()
         print(f"[MegaMemory] 🧠 MEGA-INTELLIGENT memory system loaded for {username}")
     
@@ -402,6 +407,11 @@ class UserMemorySystem:
     def get_contextual_memory_for_response(self) -> str:
         """🧠 Get memory context optimized for appropriate responses + PROBABILISTIC RETRIEVAL + TOKEN COMPRESSION"""
         context_parts = []
+        
+        # 🎯 PLAN CONTEXT: Include user's current plans if they exist
+        user_plan = self.get_user_today_plan()
+        if user_plan:
+            context_parts.append(f"User's current plan: {user_plan}")
         
         # ✅ ENTROPY SYSTEM: Probabilistic memory retrieval instead of always best match
         if ENTROPY_AVAILABLE:
@@ -601,6 +611,9 @@ class UserMemorySystem:
             # 🧠 Enhanced events with entity connections
             self._extract_enhanced_events(text_lower, text)
             
+            # 🎯 PLAN DETECTION: Extract user plans for today/future
+            self._detect_user_plan_for_today(text_lower, text)
+            
         except Exception as e:
             if DEBUG:
                 print(f"[MegaMemory] ❌ Enhanced extraction error: {e}")
@@ -779,6 +792,135 @@ class UserMemorySystem:
                 
                 self.scheduled_events.append(event)
     
+    def _detect_user_plan_for_today(self, text_lower: str, original_text: str):
+        """🎯 PLAN DETECTION: Extract user plans for today/immediate future"""
+        try:
+            today = datetime.datetime.utcnow().strftime('%Y-%m-%d')
+            current_time = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+            
+            # Plan patterns for today and immediate future
+            plan_patterns = [
+                # Today specific plans (high priority)
+                (r"i'm going to (?:my\s+)?(.+?)\s+(?:birthday party|party)\s+today", "going to {0} birthday party"),
+                (r"i'm going to (.+?)\s+today", "going to {0}"),
+                (r"today i'm (.+?)(?:\.|$)", "i'm {0}"),
+                (r"i have (?:a\s+)?(.+?)\s+today", "have {0}"),
+                (r"i'm (?:having|attending) (?:a\s+)?(.+?)\s+today", "attending {0}"),
+                (r"my (.+?)\s+(?:birthday|party) is today", "my {0} birthday"),
+                
+                # General plans without time indicator (considered for today)
+                (r"i'm going to (?:my\s+)?(.+?)\s+(?:birthday party|party)(?:\.|$)", "going to {0} birthday party"),
+                (r"i'll be at (?:the\s+)?(.+?)(?:\.|$)", "will be at {0}"),
+                (r"i have plans? to (.+?)(?:\.|$)", "plan to {0}"),
+                (r"planning to (.+?)(?:\.|$)", "planning to {0}"),
+            ]
+            
+            # Tomorrow plans (separate category, not considered "today")
+            tomorrow_patterns = [
+                (r"tomorrow i'm going to (.+?)(?:\.|$)", "going to {0} tomorrow"),
+                (r"i'm going to (.+?)\s+tomorrow", "going to {0} tomorrow"),
+            ]
+            
+            plan_detected = False
+            
+            # First check for today plans
+            for pattern, plan_template in plan_patterns:
+                match = re.search(pattern, text_lower)
+                if match:
+                    plan_description = plan_template.format(match.group(1).strip())
+                    
+                    # Store the plan (replace any existing plan)
+                    self.user_today_plan = plan_description
+                    self.plan_timestamp = current_time
+                    self.plan_context = original_text
+                    
+                    print(f"[MegaMemory] 🎯 Plan detected: {plan_description}")
+                    plan_detected = True
+                    break
+            
+            # Check for tomorrow plans (do not store as today's plan)
+            if not plan_detected:
+                for pattern, plan_template in tomorrow_patterns:
+                    match = re.search(pattern, text_lower)
+                    if match:
+                        plan_description = plan_template.format(match.group(1).strip())
+                        print(f"[MegaMemory] 📅 Tomorrow plan noted: {plan_description}")
+                        # Don't store tomorrow plans as today's plan
+                        plan_detected = True
+                        break
+                    
+            # Special handling for family events and celebrations
+            if not plan_detected:
+                family_event_patterns = [
+                    (r"(?:i'm going to|going to) (?:my\s+)?(.+?)\s+(?:birthday|celebration|party)", "{0} celebration"),
+                    (r"it's (?:my\s+)?(.+?)'s birthday", "{0}'s birthday"),
+                    (r"celebrating (?:my\s+)?(.+?)'s (.+?)(?:\.|$)", "{0}'s {1}"),
+                ]
+                
+                for pattern, plan_template in family_event_patterns:
+                    match = re.search(pattern, text_lower)
+                    if match:
+                        groups = match.groups()
+                        if len(groups) == 1:
+                            plan_description = plan_template.format(groups[0].strip())
+                        else:
+                            plan_description = plan_template.format(groups[0].strip(), groups[1].strip())
+                        
+                        self.user_today_plan = plan_description
+                        self.plan_timestamp = current_time
+                        self.plan_context = original_text
+                        
+                        print(f"[MegaMemory] 🎯 Family plan detected: {plan_description}")
+                        break
+                        
+            # Save memory if plan was detected
+            if self.user_today_plan:
+                self.save_memory()
+                
+        except Exception as e:
+            if DEBUG:
+                print(f"[MegaMemory] ❌ Plan detection error: {e}")
+    
+    def has_user_plan_for_today(self) -> bool:
+        """🎯 Check if user has already mentioned plans for today"""
+        if not self.user_today_plan:
+            return False
+            
+        # Check if plan is still relevant (within last 24 hours)
+        if self.plan_timestamp:
+            try:
+                plan_time = datetime.datetime.strptime(self.plan_timestamp, '%Y-%m-%d %H:%M:%S')
+                now = datetime.datetime.utcnow()
+                hours_since_plan = (now - plan_time).total_seconds() / 3600
+                
+                # Plans are relevant for 24 hours
+                return hours_since_plan < 24
+            except Exception:
+                return True  # If we can't parse timestamp, assume plan is still relevant
+                
+        return True
+    
+    def get_user_today_plan(self) -> Optional[str]:
+        """🎯 Get user's plan for today if exists"""
+        if self.has_user_plan_for_today():
+            return self.user_today_plan
+        return None
+    
+    def clear_outdated_plans(self):
+        """🎯 Clear plans that are no longer relevant"""
+        if not self.has_user_plan_for_today():
+            self.user_today_plan = None
+            self.plan_timestamp = None
+            self.plan_context = None
+    
+    def should_ask_about_plans(self) -> Tuple[bool, str]:
+        """🎯 Check if Buddy should ask about user plans, with context if not"""
+        if self.has_user_plan_for_today():
+            plan = self.get_user_today_plan()
+            return False, f"User already mentioned their plan: {plan}"
+        else:
+            return True, "No current plan detected - safe to ask about plans"
+    
     # Enhanced save/load methods
     def save_memory(self):
         """Save enhanced memory with entity awareness"""
@@ -794,6 +936,9 @@ class UserMemorySystem:
             # 🧠 Save new enhanced memory types
             self._save_entity_memories()
             self._save_life_events()
+            
+            # 🎯 Save plan data
+            self._save_plan_data()
             
             for save_method in super_save_methods:
                 save_method()
@@ -833,6 +978,9 @@ class UserMemorySystem:
             self._load_entity_memories()
             self._load_life_events()
             
+            # 🎯 Load plan data
+            self._load_plan_data()
+            
             if DEBUG:
                 print(f"[MegaMemory] 🧠 Loaded MEGA-INTELLIGENT memory for {self.username}")
                 print(f"  Entities: {len(self.entity_memories)}")
@@ -859,6 +1007,30 @@ class UserMemorySystem:
             with open(events_file, 'r') as f:
                 events_data = json.load(f)
                 self.life_events = {k: LifeEvent(**v) for k, v in events_data.items()}
+    
+    def _save_plan_data(self):
+        """🎯 Save plan detection data"""
+        plan_file = self.memory_dir / "user_plans.json"
+        plan_data = {
+            "user_today_plan": self.user_today_plan,
+            "plan_timestamp": self.plan_timestamp,
+            "plan_context": self.plan_context
+        }
+        with open(plan_file, 'w') as f:
+            json.dump(plan_data, f, indent=2)
+    
+    def _load_plan_data(self):
+        """🎯 Load plan detection data"""
+        plan_file = self.memory_dir / "user_plans.json"
+        if plan_file.exists():
+            with open(plan_file, 'r') as f:
+                plan_data = json.load(f)
+                self.user_today_plan = plan_data.get("user_today_plan")
+                self.plan_timestamp = plan_data.get("plan_timestamp")
+                self.plan_context = plan_data.get("plan_context")
+                
+                # Clear outdated plans on load
+                self.clear_outdated_plans()
     
     # Individual save methods for existing data types
     def _save_personal_facts(self):
