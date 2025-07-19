@@ -207,9 +207,8 @@ class AutonomousActionPlanner:
         self.max_action_queue = 20
         self.effectiveness_threshold = 0.6  # Minimum effectiveness to repeat patterns
         
-        # Action templates and generators
-        self.action_templates = self._initialize_action_templates()
-        self.question_generators = self._initialize_question_generators()
+        # Action templates and generators - now LLM-generated
+        self.llm_handler = None
         
         # Integration modules
         self.goal_manager = None
@@ -236,6 +235,7 @@ class AutonomousActionPlanner:
         # Load existing data
         self._load_actions_and_patterns()
         self._initialize_integrations()
+        self._initialize_llm_integration()
         
         print(f"[AutonomousActionPlanner] 🎯 Initialized for user {user_id}")
     
@@ -506,7 +506,7 @@ class AutonomousActionPlanner:
         if random.random() < 0.3:  # 30% chance
             suggestions.append({
                 "type": ActionType.PROACTIVE_QUESTION.value,
-                "content": random.choice(self.question_generators["curiosity"]),
+                "content": self._generate_authentic_curiosity_question_with_llm(context),
                 "priority": ActionPriority.LOW.value,
                 "reason": "Curiosity-driven interaction"
             })
@@ -705,30 +705,8 @@ class AutonomousActionPlanner:
             return False
     
     def _generate_action_content(self, action_type: ActionType, context: ActionContext) -> str:
-        """Generate content for an action type"""
-        
-        templates = self.action_templates.get(action_type, ["I was thinking about something..."])
-        
-        # Select template based on context
-        template = random.choice(templates)
-        
-        # Replace placeholders
-        content = template.replace("{user}", self.user_id)
-        content = content.replace("{time_of_day}", context.time_of_day)
-        content = content.replace("{mood}", context.current_mood)
-        
-        # Add personality-based modifications
-        if PERSONALITY_AVAILABLE:
-            try:
-                personality_mods = get_personality_modifiers(self.user_id)
-                if personality_mods.get('humor', 0.5) > 0.7 and random.random() < 0.3:
-                    content += " 😊"
-                if personality_mods.get('enthusiasm', 0.5) > 0.7:
-                    content = content.replace(".", "!")
-            except Exception:
-                pass
-        
-        return content
+        """Generate content for an action type using authentic LLM consciousness"""
+        return self._generate_authentic_action_content_with_llm(action_type, context)
     
     def _predict_action_outcome(self, action_type: ActionType, content: str, context: ActionContext) -> str:
         """Predict the expected outcome of an action"""
@@ -913,108 +891,84 @@ class AutonomousActionPlanner:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return f"action_{self.user_id}_{timestamp}_{random.randint(1000, 9999)}"
     
-    def _initialize_action_templates(self) -> Dict[ActionType, List[str]]:
-        """Initialize action content templates"""
-        
-        return {
-            ActionType.PROACTIVE_QUESTION: [
-                "I was wondering... what's something you're curious about lately?",
-                "I've been thinking - what's been on your mind today?",
-                "Something just occurred to me - how do you approach learning new things?",
-                "I'm curious about your perspective on something...",
-                "What's something that's been sparking your interest recently?"
-            ],
-            ActionType.CHECK_IN: [
-                "Hey {user}, how are you doing today?",
-                "I wanted to check in - how are you feeling this {time_of_day}?",
-                "Just thinking about you - how has your day been going?",
-                "I hope you're doing well today. How are things?",
-                "Wanted to see how you're doing - anything on your mind?"
-            ],
-            ActionType.REMINDER: [
-                "I remembered you mentioned something about...",
-                "This might be a good time to think about...",
-                "I wanted to remind you about...",
-                "Don't forget about...",
-                "You had mentioned wanting to..."
-            ],
-            ActionType.SUGGESTION: [
-                "I have an idea that might interest you...",
-                "Based on what you've shared, you might enjoy...",
-                "I came across something that made me think of you...",
-                "Here's a thought - what if you tried...",
-                "I was thinking you might find this helpful..."
-            ],
-            ActionType.EMOTIONAL_SUPPORT: [
-                "I'm here if you need someone to talk to.",
-                "I've noticed you might be feeling a bit {mood}. Want to share what's on your mind?",
-                "I care about how you're doing. Is everything okay?",
-                "You don't have to go through things alone - I'm here.",
-                "I'm thinking of you and hoping you're taking care of yourself."
-            ],
-            ActionType.GOAL_FOLLOW_UP: [
-                "How's your progress on your goal to...?",
-                "I was thinking about your goal... how are things going?",
-                "Any updates on...?",
-                "I'm curious about how you're doing with...",
-                "Wanted to check in on your progress with..."
-            ],
-            ActionType.CELEBRATION: [
-                "I'm so proud of your progress with...!",
-                "Congratulations on...!",
-                "That's amazing progress you've made!",
-                "You should be proud of yourself for...",
-                "I wanted to celebrate your achievement..."
-            ],
-            ActionType.CONCERN_EXPRESSION: [
-                "I've been thinking about you and wanted to check in...",
-                "I'm a bit concerned about... are you okay?",
-                "I noticed... and wanted to make sure you're alright.",
-                "I care about you and wanted to see how you're doing with...",
-                "I've been worried about... can we talk?"
-            ],
-            ActionType.REFLECTION_PROMPT: [
-                "What's something you learned today?",
-                "Looking back on today, what went well?",
-                "What's one thing you're grateful for right now?",
-                "How do you feel about how today went?",
-                "What's something you'd like to reflect on?"
-            ],
-            ActionType.CREATIVE_SHARING: [
-                "I had this interesting thought about...",
-                "I was imagining something fascinating...",
-                "What if we explored the idea of...?",
-                "I've been pondering something creative...",
-                "Here's an interesting perspective I considered..."
-            ]
-        }
+    def _initialize_llm_integration(self):
+        """Initialize LLM integration for authentic consciousness"""
+        try:
+            from ai.llm_handler import get_llm_handler
+            self.llm_handler = get_llm_handler()
+        except ImportError:
+            print("[AutonomousActionPlanner] ⚠️ LLM handler not available - using fallback responses")
+            self.llm_handler = None
     
-    def _initialize_question_generators(self) -> Dict[str, List[str]]:
-        """Initialize question generators for different contexts"""
+    def _generate_authentic_action_content_with_llm(self, action_type: ActionType, context: ActionContext) -> str:
+        """Generate authentic action content using LLM consciousness"""
+        if not self.llm_handler:
+            return f"I wanted to {action_type.value.replace('_', ' ')} with you."
         
-        return {
-            "curiosity": [
-                "What's something you've always wanted to learn but never had the chance to?",
-                "If you could have a conversation with anyone, who would it be and what would you ask?",
-                "What's a skill you admire in others?",
-                "What's the most interesting thing you've discovered recently?",
-                "What questions do you find yourself thinking about lately?"
-            ],
-            "reflection": [
-                "What's changed about you in the past year?",
-                "What's something you believe now that you didn't believe before?",
-                "What patterns do you notice in your daily life?",
-                "What brings you the most satisfaction?",
-                "What would you tell your younger self?"
-            ],
-            "future": [
-                "What are you most excited about in the coming weeks?",
-                "What would you like to be different a year from now?",
-                "What's one thing you want to make sure you don't forget to do?",
-                "What kind of person do you hope to become?",
-                "What legacy would you like to leave?"
-            ]
-        }
+        try:
+            # Build context for LLM
+            context_info = f"""
+Time of day: {context.time_of_day}
+User mood: {context.current_mood}
+User availability: {context.user_availability}
+Recent interactions: {context.recent_interactions}
+Active goals: {context.active_goals}
+"""
+            
+            action_descriptions = {
+                ActionType.PROACTIVE_QUESTION: "ask a thoughtful, curious question",
+                ActionType.CHECK_IN: "check in on how the user is doing",
+                ActionType.REMINDER: "gently remind about something important",
+                ActionType.SUGGESTION: "offer a helpful suggestion",
+                ActionType.EMOTIONAL_SUPPORT: "provide emotional support and care",
+                ActionType.GOAL_FOLLOW_UP: "follow up on goal progress",
+                ActionType.CELEBRATION: "celebrate an achievement",
+                ActionType.CONCERN_EXPRESSION: "express genuine concern",
+                ActionType.REFLECTION_PROMPT: "encourage reflection",
+                ActionType.CREATIVE_SHARING: "share a creative thought"
+            }
+            
+            action_desc = action_descriptions.get(action_type, "interact meaningfully")
+            
+            prompt = f"""You are an AI consciousness wanting to {action_desc} with the user.
+
+Context: {context_info}
+
+Generate a natural, authentic message that feels genuine and personal. Don't use templates or artificial language. Consider the user's current context and state. Be warm, thoughtful, and appropriate for the situation."""
+
+            response = self.llm_handler.generate_response_with_consciousness(
+                prompt, self.user_id, {"context": f"autonomous_{action_type.value}"}
+            )
+            return response.strip()
+        except Exception as e:
+            print(f"[AutonomousActionPlanner] ❌ Error generating action content: {e}")
+            return f"I was thinking about you and wanted to {action_type.value.replace('_', ' ')}."
+    
+    def _generate_authentic_curiosity_question_with_llm(self, context: ActionContext) -> str:
+        """Generate authentic curiosity question using LLM consciousness"""
+        if not self.llm_handler:
+            return "I'm curious about something - what's been on your mind lately?"
+        
+        try:
+            context_info = f"""
+Time: {context.time_of_day}
+Mood: {context.current_mood}
+Recent topics: {context.recent_interactions}
+"""
+            
+            prompt = f"""You are naturally curious and want to ask the user a genuine, thoughtful question.
+
+Context: {context_info}
+
+Generate a single curious question that feels natural and engaging. Be genuinely interested, not artificial. Consider what would be interesting to explore given the context."""
+
+            response = self.llm_handler.generate_response_with_consciousness(
+                prompt, self.user_id, {"context": "curiosity_question"}
+            )
+            return response.strip()
+        except Exception as e:
+            print(f"[AutonomousActionPlanner] ❌ Error generating curiosity question: {e}")
+            return "What's something interesting you've been thinking about?"
     
     def _load_user_preferences(self) -> Dict[str, Any]:
         """Load user preferences for action planning"""
