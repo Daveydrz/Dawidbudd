@@ -113,9 +113,12 @@ class ThoughtLoop:
     - Responds to internal states and external triggers
     """
     
-    def __init__(self, user_id: str, save_path: str = "ai_thought_loop.json"):
+    def __init__(self, user_id: str, save_path: str = "ai_thought_loop.json", llm_handler=None):
         self.user_id = user_id
         self.save_path = save_path
+        
+        # LLM integration for authentic consciousness
+        self.llm_handler = llm_handler
         
         # Core thought loop state
         self.current_state = ThoughtLoopState(
