@@ -188,9 +188,23 @@ def generate_response_streaming_with_intelligent_fusion(question: str, username:
                 connector = inject_consciousness_entropy("response", connector)
             yield connector
     
-    # ✅ ENHANCED ENTROPY SYSTEM: Multiple response pathway generation for consciousness emergence
+    # ✅ ENHANCED ENTROPY SYSTEM: Multiple response pathway generation for consciousness emergence + CONVERSATION CONTEXT
     response_pathways = []
     optimized_question = question
+    
+    # 💬 CONVERSATION CONTEXT INJECTION: Add conversation context to LLM prompt
+    try:
+        from ai.memory import get_user_memory
+        user_memory = get_user_memory(username)
+        conversation_context = user_memory.get_conversation_context_for_llm(question)
+        
+        if conversation_context:
+            print(f"[ChatFusion] 💬 Adding conversation context: {len(conversation_context)} chars")
+            # Inject context as system-level information
+            context_prefix = f"Buddy, you're continuing an ongoing conversation.\n{conversation_context}\n\nUser: "
+            optimized_question = f"{context_prefix}{question}"
+    except Exception as e:
+        print(f"[ChatFusion] ⚠️ Conversation context error: {e}")
     
     if ENTROPY_AVAILABLE:
         try:

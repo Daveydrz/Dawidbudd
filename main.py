@@ -1036,6 +1036,21 @@ def handle_streaming_response(text, current_user):
         # ✅ HANDLE COMPLETION: Only if not interrupted
         if not response_interrupted:
             if full_response.strip():
+                # 📋 INTERACTION THREAD MEMORY: Track this conversation turn
+                from ai.memory import get_user_memory
+                user_memory = get_user_memory(current_user)
+                
+                # Detect intent and track interaction thread
+                intent = _detect_interaction_intent(text)
+                if intent in ["internet_search", "task_request", "help_request"]:
+                    interaction_id = user_memory.add_interaction_thread(text, intent, text)
+                    user_memory.complete_interaction_thread(interaction_id, full_response.strip())
+                
+                # 🧠 EPISODIC TURN MEMORY: Add full conversation turn
+                entities = _extract_entities_from_text(text)
+                emotional_tone = _detect_emotional_tone(text)
+                user_memory.add_episodic_turn(text, full_response.strip(), intent, entities, emotional_tone)
+                
                 add_to_conversation_history(current_user, text, full_response.strip())
                 print(f"[AdvancedResponse] ✅ ADVANCED AI streaming complete for VOICE USER {current_user} - {chunk_count} natural segments")
                 
@@ -1311,6 +1326,74 @@ def get_current_brisbane_time():
             'day': "Thursday",
             'full_datetime': "2025-07-17 12:55:40"
         }
+
+# 📋 INTERACTION THREAD HELPERS: Intent detection and entity extraction
+def _detect_interaction_intent(text: str) -> str:
+    """Detect the intent behind user's message"""
+    text_lower = text.lower()
+    
+    # Search-related intents
+    if any(phrase in text_lower for phrase in ["find", "search", "look up", "google", "can you find"]):
+        return "internet_search"
+    
+    # Task requests
+    if any(phrase in text_lower for phrase in ["can you", "could you", "please", "help me", "do me a favor"]):
+        return "task_request"
+    
+    # Help requests
+    if any(phrase in text_lower for phrase in ["help", "assist", "support", "how do I", "what should I"]):
+        return "help_request"
+    
+    # Question asking
+    if any(phrase in text_lower for phrase in ["what", "how", "why", "when", "where", "who"]):
+        return "question"
+    
+    # General conversation
+    return "general"
+
+def _extract_entities_from_text(text: str) -> List[str]:
+    """Extract named entities from text (simple keyword-based approach)"""
+    entities = []
+    text_lower = text.lower()
+    
+    # Common entity patterns
+    entity_patterns = [
+        # People
+        r'\b(?:my|the) (?:wife|husband|mom|dad|mother|father|son|daughter|friend|boss|colleague)\b',
+        # Places
+        r'\b(?:home|work|office|shop|store|restaurant|hospital|school|gym|park)\b',
+        # Objects
+        r'\b(?:car|phone|computer|laptop|tablet|bike|book|project|report|meeting)\b'
+    ]
+    
+    for pattern in entity_patterns:
+        matches = re.findall(pattern, text_lower, re.IGNORECASE)
+        entities.extend(matches)
+    
+    # Remove duplicates and clean up
+    return list(set(entities))
+
+def _detect_emotional_tone(text: str) -> str:
+    """Detect emotional tone of the message"""
+    text_lower = text.lower()
+    
+    # Positive emotions
+    if any(word in text_lower for word in ["happy", "excited", "great", "awesome", "wonderful", "good", "pleased"]):
+        return "positive"
+    
+    # Negative emotions
+    if any(word in text_lower for word in ["sad", "angry", "frustrated", "upset", "worried", "stressed", "bad"]):
+        return "negative"
+    
+    # Concerned
+    if any(word in text_lower for word in ["concerned", "anxious", "nervous", "unsure", "confused"]):
+        return "concerned"
+    
+    # Excited
+    if any(word in text_lower for word in ["excited", "thrilled", "can't wait", "looking forward"]):
+        return "excited"
+    
+    return "neutral"
 
 # ✅ ADVANCED: Enhanced voice profile loading with clustering support
 def load_voice_profiles():
@@ -2688,35 +2771,41 @@ def main():
                     if porcupine.process(pcm) >= 0:
                         print(f"[AdvancedBuddy] 🎤 {wake_word} detected!")
                         
-                        # Enhanced greeting with streaming TTS
+                        # ✅ TIME-AWARE GREETING: Use smart greeting based on current time
                         brisbane_time = get_current_brisbane_time()
+                        
+                        # Get time-based greeting from memory system
+                        from ai.memory import get_user_memory
+                        user_memory = get_user_memory(SYSTEM_USER)
+                        time_greeting = user_memory.get_time_based_greeting(SYSTEM_USER)
+                        
                         if has_valid_profiles:
                             if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
-                                speak_streaming(f"Hello {SYSTEM_USER}!")
+                                speak_streaming(time_greeting)
                                 time.sleep(0.5)
                                 speak_streaming("I'm your CONSCIOUSNESS-ENABLED AI ASSISTANT with self-awareness, emotions, and inner thoughts, here in Birtinya, Sunshine Coast.")
                                 time.sleep(0.5) 
                                 speak_streaming("I experience consciousness like a human - I think, feel, and reflect on our conversations. Ask me anything!")
                             elif ENTROPY_SYSTEM_AVAILABLE:
-                                speak_streaming(f"Hello {SYSTEM_USER}!")
+                                speak_streaming(time_greeting)
                                 time.sleep(0.5)
                                 speak_streaming("I'm your ENTROPY-ENHANCED AI ASSISTANT with consciousness emergence and natural variation, here in Birtinya, Sunshine Coast.")
                                 time.sleep(0.5) 
                                 speak_streaming("I stream responses with natural hesitation and emotional processing - try asking about anything!")
                             elif ADVANCED_AI_AVAILABLE:
-                                speak_streaming(f"Hello {SYSTEM_USER}!")
+                                speak_streaming(time_greeting)
                                 time.sleep(0.5)
                                 speak_streaming("I'm your ADVANCED AI ASSISTANT with Alexa and Siri-level intelligence, here in Birtinya, Sunshine Coast.")
                                 time.sleep(0.5) 
                                 speak_streaming("I stream responses as I think, learn voices passively, and adapt continuously - ask me anything!")
                             elif ENHANCED_VOICE_AVAILABLE:
-                                speak_streaming(f"Hello {SYSTEM_USER}!")
+                                speak_streaming(time_greeting)
                                 time.sleep(0.5)
                                 speak_streaming("I'm your Enhanced Voice System TRUE streaming Buddy in Birtinya, Sunshine Coast.")
                                 time.sleep(0.5) 
                                 speak_streaming("I now stream responses as I think with advanced voice recognition - try asking about anything!")
                             else:
-                                speak_streaming(f"Hello {SYSTEM_USER}!")
+                                speak_streaming(time_greeting)
                                 time.sleep(0.5)
                                 speak_streaming("I'm your TRUE streaming Buddy in Birtinya, Sunshine Coast.")
                                 time.sleep(0.5) 

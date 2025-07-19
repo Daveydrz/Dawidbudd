@@ -28,6 +28,42 @@ class WorkingMemoryState:
     last_goal: Optional[str] = None            # "buy groceries", "cook pasta"
     last_timestamp: Optional[str] = None       # When this state was set
     action_status: str = "unknown"             # "preparing", "ongoing", "completed"
+
+# 📋 INTERACTION THREAD MEMORY: Track conversation threads
+@dataclass
+class InteractionThread:
+    """Track individual conversation threads for reference resolution"""
+    interaction_id: int                        # Turn number in conversation
+    timestamp: str                            # When this interaction occurred
+    intent: str                               # "internet_search", "help_request", "task_request"
+    query: str                                # Original user request/query
+    status: str                               # "pending", "completed", "failed"
+    user_message: str                         # Full user message
+    ai_response: Optional[str] = None         # AI response if completed
+    related_threads: List[int] = None         # Connected interaction IDs
+    
+    def __post_init__(self):
+        if self.related_threads is None:
+            self.related_threads = []
+
+# 🧠 EPISODIC TURN MEMORY: Track conversation turns with full context
+@dataclass
+class EpisodicTurn:
+    """Track individual conversation turns with full context"""
+    turn_number: int                          # Sequential turn number
+    timestamp: str                            # When this turn occurred
+    user_message: str                         # What user said
+    ai_response: str                          # How AI responded
+    intent_detected: str                      # Detected intent/purpose
+    entities_mentioned: List[str]             # People, places, things mentioned
+    emotional_tone: str                       # "neutral", "concerned", "excited"
+    context_references: List[str]             # References to previous turns
+    
+    def __post_init__(self):
+        if self.entities_mentioned is None:
+            self.entities_mentioned = []
+        if self.context_references is None:
+            self.context_references = []
     
 @dataclass
 class IntentSlot:
@@ -303,6 +339,14 @@ class UserMemorySystem:
         self.intent_slots: Dict[str, IntentSlot] = {}  # Track multi-turn tasks
         self.reference_history: List[ReferenceResolution] = []  # Track pronoun resolutions
         
+        # 📋 INTERACTION THREAD MEMORY: Track conversation threads
+        self.interaction_log: List[InteractionThread] = []  # Conversation thread tracking
+        self.current_interaction_id: int = 0  # Current turn number
+        
+        # 🧠 EPISODIC TURN MEMORY: Track full conversation context
+        self.episodic_memory: List[EpisodicTurn] = []  # Full conversation history
+        self.current_turn_number: int = 0  # Current turn in conversation
+        
         self.load_memory()
         print(f"[MegaMemory] 🧠 MEGA-INTELLIGENT memory system loaded for {username}")
     
@@ -334,7 +378,219 @@ class UserMemorySystem:
         
         self.save_memory()
     
-    def add_life_event(self, event_type: str, description: str, entities_involved: List[str], 
+    # 🕐 TIME-AWARE GREETINGS: Generate appropriate greeting based on current time
+    def get_time_based_greeting(self, user_name: str = None) -> str:
+        """Generate time-appropriate greeting (Good morning/afternoon/evening)"""
+        current_time = datetime.datetime.now()
+        hour = current_time.hour
+        
+        # Determine time of day
+        if 5 <= hour < 12:
+            time_greeting = "Good morning"
+            time_context = "morning"
+        elif 12 <= hour < 17:
+            time_greeting = "Good afternoon"
+            time_context = "afternoon"
+        elif 17 <= hour < 22:
+            time_greeting = "Good evening"
+            time_context = "evening"
+        else:
+            time_greeting = "Hello"  # Late night/early morning
+            time_context = "late night"
+        
+        # Personalize if user name available
+        if user_name:
+            greeting = f"{time_greeting} {user_name}"
+        else:
+            greeting = time_greeting
+        
+        # Add contextual follow-up based on time
+        if time_context == "morning":
+            follow_up = "Did you sleep well?"
+        elif time_context == "afternoon":
+            follow_up = "How's your day going?"
+        elif time_context == "evening":
+            follow_up = "How was your day?"
+        else:
+            follow_up = "You're up late! Everything okay?"
+        
+        return f"{greeting}. {follow_up}"
+    
+    # 📋 INTERACTION THREAD MEMORY: Track and resolve conversation threads
+    def add_interaction_thread(self, user_message: str, intent: str, query: str = None) -> int:
+        """Add new interaction thread for tracking"""
+        self.current_interaction_id += 1
+        current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        thread = InteractionThread(
+            interaction_id=self.current_interaction_id,
+            timestamp=current_time,
+            intent=intent,
+            query=query or user_message,
+            status="pending",
+            user_message=user_message
+        )
+        
+        self.interaction_log.append(thread)
+        print(f"[InteractionMemory] 📋 Thread #{self.current_interaction_id}: {intent} - {query}")
+        
+        self.save_memory()
+        return self.current_interaction_id
+    
+    def complete_interaction_thread(self, interaction_id: int, ai_response: str, status: str = "completed"):
+        """Mark interaction thread as completed with AI response"""
+        for thread in self.interaction_log:
+            if thread.interaction_id == interaction_id:
+                thread.ai_response = ai_response
+                thread.status = status
+                print(f"[InteractionMemory] ✅ Thread #{interaction_id} completed")
+                break
+        self.save_memory()
+    
+    def find_recent_interaction(self, intent_type: str, status: str = "pending", max_age_minutes: int = 30) -> Optional[InteractionThread]:
+        """Find most recent interaction matching criteria"""
+        current_time = datetime.datetime.now()
+        
+        for thread in reversed(self.interaction_log):  # Search from most recent
+            try:
+                thread_time = datetime.datetime.strptime(thread.timestamp, '%Y-%m-%d %H:%M:%S')
+                age_minutes = (current_time - thread_time).total_seconds() / 60
+                
+                if (thread.intent == intent_type and 
+                    thread.status == status and 
+                    age_minutes <= max_age_minutes):
+                    return thread
+            except ValueError:
+                continue  # Skip if timestamp parsing fails
+        
+        return None
+    
+    def resolve_thread_reference(self, user_message: str) -> Optional[str]:
+        """Resolve vague references to previous interactions"""
+        user_lower = user_message.lower()
+        
+        # Common reference patterns
+        reference_patterns = [
+            ("did you find", "internet_search"),
+            ("what about that", "task_request"),
+            ("did you do", "task_request"),
+            ("how did it go", "internet_search"),
+            ("any update", "pending_task"),
+            ("what happened with", "task_request")
+        ]
+        
+        for pattern, intent_type in reference_patterns:
+            if pattern in user_lower:
+                recent_thread = self.find_recent_interaction(intent_type, "pending")
+                if recent_thread:
+                    return f"User is referring to their earlier {intent_type}: '{recent_thread.query}' from {self._format_time_ago(recent_thread.timestamp)}"
+        
+        return None
+    
+    def _format_time_ago(self, timestamp_str: str) -> str:
+        """Format how long ago something happened"""
+        try:
+            thread_time = datetime.datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S')
+            current_time = datetime.datetime.now()
+            diff = current_time - thread_time
+            
+            minutes = int(diff.total_seconds() / 60)
+            if minutes < 1:
+                return "just now"
+            elif minutes < 60:
+                return f"{minutes} minutes ago"
+            else:
+                hours = int(minutes / 60)
+                return f"{hours} hours ago"
+        except ValueError:
+            return "earlier"
+    
+    # 🧠 EPISODIC TURN MEMORY: Track full conversation context  
+    def add_episodic_turn(self, user_message: str, ai_response: str, intent: str = "general", 
+                         entities: List[str] = None, emotional_tone: str = "neutral") -> int:
+        """Add complete conversation turn to episodic memory"""
+        self.current_turn_number += 1
+        current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Detect context references to previous turns
+        context_refs = self._detect_context_references(user_message)
+        
+        turn = EpisodicTurn(
+            turn_number=self.current_turn_number,
+            timestamp=current_time,
+            user_message=user_message,
+            ai_response=ai_response,
+            intent_detected=intent,
+            entities_mentioned=entities or [],
+            emotional_tone=emotional_tone,
+            context_references=context_refs
+        )
+        
+        self.episodic_memory.append(turn)
+        print(f"[EpisodicMemory] 🧠 Turn #{self.current_turn_number}: {intent} - {len(entities or [])} entities")
+        
+        self.save_memory()
+        return self.current_turn_number
+    
+    def _detect_context_references(self, user_message: str) -> List[str]:
+        """Detect references to previous conversation turns"""
+        refs = []
+        user_lower = user_message.lower()
+        
+        # Temporal references
+        temporal_refs = ["earlier", "before", "previously", "just now", "a minute ago"]
+        for ref in temporal_refs:
+            if ref in user_lower:
+                refs.append(f"temporal_reference: {ref}")
+        
+        # Pronoun references 
+        pronoun_refs = ["that", "it", "this", "what we discussed"]
+        for ref in pronoun_refs:
+            if ref in user_lower:
+                refs.append(f"pronoun_reference: {ref}")
+        
+        return refs
+    
+    # 💬 NATURAL LANGUAGE CONTEXT INJECTION: Enhanced context for LLM
+    def get_conversation_context_for_llm(self, user_message: str) -> str:
+        """Generate enhanced conversation context for LLM prompts"""
+        context_parts = []
+        
+        # 🕐 TIME CONTEXT: Current time information
+        current_time = datetime.datetime.now()
+        time_str = current_time.strftime('%H:%M')
+        if 5 <= current_time.hour < 12:
+            time_context = f"Current time: {time_str} — morning"
+        elif 12 <= current_time.hour < 17:
+            time_context = f"Current time: {time_str} — afternoon"
+        elif 17 <= current_time.hour < 22:
+            time_context = f"Current time: {time_str} — evening"
+        else:
+            time_context = f"Current time: {time_str} — late night"
+        
+        context_parts.append(time_context)
+        context_parts.append(f"User: {self.username}")
+        
+        # 📋 THREAD REFERENCE RESOLUTION: Check for references to previous interactions
+        thread_reference = self.resolve_thread_reference(user_message)
+        if thread_reference:
+            context_parts.append(thread_reference)
+        
+        # 🧠 RECENT EPISODIC CONTEXT: Include recent conversation turns
+        if self.episodic_memory:
+            recent_turns = self.episodic_memory[-2:]  # Last 2 turns
+            for turn in recent_turns:
+                turn_context = f"Turn #{turn.turn_number} ({self._format_time_ago(turn.timestamp)}): User said '{turn.user_message}' → Intent: {turn.intent_detected}"
+                context_parts.append(turn_context)
+        
+        # 🧠 WORKING MEMORY: Current action context
+        working_memory_context = self.get_working_memory_context_for_llm()
+        if working_memory_context:
+            context_parts.append(working_memory_context)
+        
+        return "\n".join(context_parts)
+    
+    def add_life_event(self, event_type: str, description: str, entities_involved: List[str],
                       emotional_impact: float, ongoing_effects: List[str] = None):
         """🧠 Record major life events with context"""
         current_time = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
@@ -1337,6 +1593,12 @@ class UserMemorySystem:
             # 🧠 WORKING MEMORY: Save working memory data
             self._save_working_memory_data()
             
+            # 📋 INTERACTION THREAD MEMORY: Save interaction threads
+            self._save_interaction_log()
+            
+            # 🧠 EPISODIC TURN MEMORY: Save episodic memory
+            self._save_episodic_memory()
+            
             for save_method in super_save_methods:
                 save_method()
                 
@@ -1380,6 +1642,12 @@ class UserMemorySystem:
             
             # 🧠 WORKING MEMORY: Load working memory data
             self._load_working_memory_data()
+            
+            # 📋 INTERACTION THREAD MEMORY: Load interaction threads
+            self._load_interaction_log()
+            
+            # 🧠 EPISODIC TURN MEMORY: Load episodic memory
+            self._load_episodic_memory()
             
             if DEBUG:
                 print(f"[MegaMemory] 🧠 Loaded MEGA-INTELLIGENT memory for {self.username}")
@@ -1462,6 +1730,66 @@ class UserMemorySystem:
                 # Load reference history
                 if "reference_history" in data:
                     self.reference_history = [ReferenceResolution(**r) for r in data["reference_history"]]
+    
+    def _save_interaction_log(self):
+        """📋 INTERACTION THREAD MEMORY: Save interaction threads"""
+        interaction_file = self.memory_dir / "interaction_log.json"
+        interaction_data = {
+            "current_interaction_id": self.current_interaction_id,
+            "interaction_log": [asdict(thread) for thread in self.interaction_log[-50:]]  # Keep last 50 interactions
+        }
+        with open(interaction_file, 'w') as f:
+            json.dump(interaction_data, f, indent=2)
+    
+    def _load_interaction_log(self):
+        """📋 INTERACTION THREAD MEMORY: Load interaction threads"""
+        interaction_file = self.memory_dir / "interaction_log.json"
+        if interaction_file.exists():
+            try:
+                with open(interaction_file, 'r') as f:
+                    data = json.load(f)
+                    
+                    # Load interaction log
+                    if "interaction_log" in data:
+                        self.interaction_log = [InteractionThread(**thread) for thread in data["interaction_log"]]
+                    
+                    # Load current interaction ID
+                    if "current_interaction_id" in data:
+                        self.current_interaction_id = data["current_interaction_id"]
+            except Exception as e:
+                print(f"[InteractionMemory] ⚠️ Error loading interaction log: {e}")
+                self.interaction_log = []
+                self.current_interaction_id = 0
+    
+    def _save_episodic_memory(self):
+        """🧠 EPISODIC TURN MEMORY: Save episodic memory"""
+        episodic_file = self.memory_dir / "episodic_memory.json"
+        episodic_data = {
+            "current_turn_number": self.current_turn_number,
+            "episodic_memory": [asdict(turn) for turn in self.episodic_memory[-100:]]  # Keep last 100 turns
+        }
+        with open(episodic_file, 'w') as f:
+            json.dump(episodic_data, f, indent=2)
+    
+    def _load_episodic_memory(self):
+        """🧠 EPISODIC TURN MEMORY: Load episodic memory"""
+        episodic_file = self.memory_dir / "episodic_memory.json"
+        if episodic_file.exists():
+            try:
+                with open(episodic_file, 'r') as f:
+                    data = json.load(f)
+                    
+                    # Load episodic memory
+                    if "episodic_memory" in data:
+                        self.episodic_memory = [EpisodicTurn(**turn) for turn in data["episodic_memory"]]
+                    
+                    # Load current turn number
+                    if "current_turn_number" in data:
+                        self.current_turn_number = data["current_turn_number"]
+            except Exception as e:
+                print(f"[EpisodicMemory] ⚠️ Error loading episodic memory: {e}")
+                self.episodic_memory = []
+                self.current_turn_number = 0
     
     # Individual save methods for existing data types
     def _save_personal_facts(self):
@@ -1882,3 +2210,7 @@ print(f"[MegaMemory] ✅ Working Memory Tracking: Active")
 print(f"[MegaMemory] ✅ Reference Resolution: Active")
 print(f"[MegaMemory] ✅ Intent Slot Memory: Active")
 print(f"[MegaMemory] ✅ Natural Language Context Injection: Active")
+print(f"[MegaMemory] ✅ Time-Aware Greetings: Active")
+print(f"[MegaMemory] ✅ Interaction Thread Memory: Active")
+print(f"[MegaMemory] ✅ Episodic Turn Memory: Active")
+print(f"[MegaMemory] ✅ Conversation Context for LLM: Active")
