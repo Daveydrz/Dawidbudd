@@ -374,14 +374,42 @@ class LLMHandler:
         text: str, 
         user: str, 
         context: Dict[str, Any] = None,
-        stream: bool = True
+        stream: bool = True,
+        use_optimization: bool = True
     ) -> Generator[str, None, None]:
         """
-        Generate response with full consciousness integration and 8k context window management
+        Generate response with consciousness integration and latency optimization
+        
+        Args:
+            text: User input text
+            user: User identifier
+            context: Optional conversation context
+            stream: Whether to stream response chunks
+            use_optimization: Whether to use latency optimization (default: True)
         
         Yields response chunks if streaming, otherwise returns complete response
         """
         try:
+            # 🚀 NEW LATENCY OPTIMIZATION SYSTEM
+            if use_optimization:
+                try:
+                    from ai.latency_optimizer import generate_optimized_buddy_response
+                    print(f"[LLMHandler] ⚡ Using optimized response generation")
+                    yield from generate_optimized_buddy_response(
+                        user_input=text,
+                        user_id=user,
+                        context=context,
+                        stream=stream
+                    )
+                    return
+                except ImportError:
+                    print(f"[LLMHandler] ⚠️ Latency optimizer not available, using standard processing")
+                except Exception as e:
+                    print(f"[LLMHandler] ⚠️ Optimization error, falling back to standard: {e}")
+            
+            # FALLBACK: Original consciousness system (for compatibility)
+            print(f"[LLMHandler] 🔄 Using standard consciousness processing")
+            
             # ✅ 8K CONTEXT WINDOW MANAGEMENT: Check if rollover needed before processing
             current_context = context.get("current_context", "") if context else ""
             
@@ -415,7 +443,7 @@ class LLMHandler:
             except ImportError:
                 print(f"[LLMHandler] ⚠️ Context window manager not available - using standard processing")
             
-            # Process user input through all systems
+            # Process user input through systems (simplified for fallback)
             analysis = self.process_user_input(text, user, context)
             
             # Check if request is allowed
