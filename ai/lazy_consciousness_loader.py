@@ -469,13 +469,15 @@ class LazyConsciousnessLoader:
         """Load emotion engine module"""
         try:
             from ai.emotion import get_current_emotional_state
-            emotional_state = get_current_emotional_state(user_id)
+            # Call without arguments as the function doesn't take user_id
+            emotional_state = get_current_emotional_state()
             return {
-                'dominant_emotion': emotional_state.get('emotion', 'neutral'),
+                'dominant_emotion': emotional_state.get('current_emotion', 'neutral'),
                 'intensity': emotional_state.get('intensity', 0.5),
                 'valence': emotional_state.get('valence', 0.0)
             }
-        except ImportError:
+        except (ImportError, TypeError) as e:
+            print(f"[LazyConsciousnessLoader] ❌ Error loading emotion_engine: {e}")
             return None
     
     def _load_motivation_system(self, user_id: str) -> Optional[Dict[str, Any]]:
@@ -507,13 +509,15 @@ class LazyConsciousnessLoader:
         """Load self model module"""
         try:
             from ai.self_model import self_model
-            self_state = self_model.get_current_self_model(user_id)
+            # Use the get_identity_summary method that actually exists
+            self_state = self_model.get_identity_summary()
             return {
-                'self_awareness_level': self_state.get('awareness_level', 0.7),
-                'identity_aspects': self_state.get('identity', []),
-                'self_reflection': self_state.get('recent_reflections', [])
+                'self_awareness_level': self_state.get('current_state', {}).get('self_awareness', 0.7),
+                'identity_aspects': list(self_state.get('core_identity', {}).keys())[:3],
+                'self_reflection': self_state.get('core_identity', {})
             }
-        except ImportError:
+        except (ImportError, AttributeError) as e:
+            print(f"[LazyConsciousnessLoader] ❌ Error loading self_model: {e}")
             return None
     
     def _load_belief_tracker(self, user_id: str) -> Optional[Dict[str, Any]]:
@@ -527,33 +531,38 @@ class LazyConsciousnessLoader:
                 'belief_strength': [b.confidence for b in active_beliefs[:3]],
                 'contradictions': belief_tracker.detect_contradictions()
             }
-        except ImportError:
+        except (ImportError, AttributeError) as e:
+            print(f"[LazyConsciousnessLoader] ❌ Error loading belief_tracker: {e}")
             return None
     
     def _load_inner_monologue(self, user_id: str) -> Optional[Dict[str, Any]]:
         """Load inner monologue module"""
         try:
             from ai.inner_monologue import inner_monologue
-            monologue_state = inner_monologue.get_recent_thoughts(user_id)
+            # Use the get_recent_thoughts method correctly without user_id parameter
+            monologue_state = inner_monologue.get_recent_thoughts(limit=5)
             return {
-                'inner_thoughts': [t[:60] for t in monologue_state.get('thoughts', [])],
-                'thought_flow': monologue_state.get('flow_state', 'normal'),
-                'introspection_level': monologue_state.get('depth', 0.5)
+                'inner_thoughts': [t.content[:60] for t in monologue_state],
+                'thought_flow': 'normal',  # Default since we don't have flow_state
+                'introspection_level': 0.5  # Default value
             }
-        except ImportError:
+        except (ImportError, AttributeError) as e:
+            print(f"[LazyConsciousnessLoader] ❌ Error loading inner_monologue: {e}")
             return None
     
     def _load_subjective_experience(self, user_id: str) -> Optional[Dict[str, Any]]:
         """Load subjective experience module"""
         try:
             from ai.subjective_experience import subjective_experience
-            experience_state = subjective_experience.get_current_experience(user_id)
+            # Use the introspect_current_state method that actually exists
+            experience_state = subjective_experience.introspect_current_state()
             return {
-                'qualia_intensity': experience_state.get('qualia_level', 0.5),
-                'experience_richness': experience_state.get('richness', 0.6),
-                'subjective_narrative': experience_state.get('narrative', '')
+                'qualia_intensity': 0.6,  # Default value since we have different data structure
+                'experience_richness': 0.7,  # Default value
+                'subjective_narrative': experience_state.get('subjective_insights', [''])[-1] if experience_state.get('subjective_insights') else ''
             }
-        except ImportError:
+        except (ImportError, AttributeError) as e:
+            print(f"[LazyConsciousnessLoader] ❌ Error loading subjective_experience: {e}")
             return None
     
     def get_consciousness_summary(self, loaded_modules: Dict[str, Any]) -> Dict[str, Any]:
