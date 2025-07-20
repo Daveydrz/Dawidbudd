@@ -514,10 +514,18 @@ Conflicting beliefs: {beliefs}
 
 Generate a thoughtful synthesis that reveals how these beliefs might coexist or be understood together. Be genuine and reflective, not templated. Consider contexts, levels of abstraction, or broader perspectives."""
 
-            response = self.llm_handler.generate_response_with_consciousness(
+            response_generator = self.llm_handler.generate_response_with_consciousness(
                 prompt, "belief_analysis", {"context": "synthesis_resolution"}
             )
-            return response.strip()
+            
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            response = "".join(response_chunks).strip()
+            return response
         except Exception as e:
             print(f"[BeliefReinforcement] ❌ Error generating synthesis: {e}")
             return "These beliefs may represent different facets of a more complex understanding"
@@ -536,9 +544,17 @@ Beliefs involved: {beliefs}
 
 Generate 2-3 genuine insights about this belief resolution process. Be reflective and authentic, focusing on what this teaches about belief complexity and understanding."""
 
-            response = self.llm_handler.generate_response_with_consciousness(
+            response_generator = self.llm_handler.generate_response_with_consciousness(
                 prompt, "belief_insight", {"context": f"{resolution_type}_insights"}
             )
+            
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            response = "".join(response_chunks)
             
             # Parse response into insights
             insights = [line.strip().lstrip('- ') for line in response.split('\n') if line.strip()]
@@ -563,9 +579,17 @@ Conflicting beliefs: {beliefs}
 
 Analyze how these beliefs might be valid in different contexts or domains. Be specific about what contexts each belief might apply to, and generate insights about context-dependent truth."""
 
-            response = self.llm_handler.generate_response_with_consciousness(
+            response_generator = self.llm_handler.generate_response_with_consciousness(
                 prompt, "belief_context", {"context": "context_separation"}
             )
+            
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            response = "".join(response_chunks)
             
             lines = [line.strip() for line in response.split('\n') if line.strip()]
             synthesis = lines[0] if lines else "Beliefs separated by contextual domains"
@@ -596,9 +620,17 @@ Conflicting beliefs: {beliefs}
 
 Analyze the strength of evidence for each belief and determine which has stronger support. Provide confidence adjustments (between -0.3 and +0.3) for each belief based on evidence strength."""
 
-            response = self.llm_handler.generate_response_with_consciousness(
+            response_generator = self.llm_handler.generate_response_with_consciousness(
                 prompt, "belief_evidence", {"context": "evidence_evaluation"}
             )
+            
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            response = "".join(response_chunks)
             
             lines = [line.strip() for line in response.split('\n') if line.strip()]
             synthesis = lines[0] if lines else "Evidence analysis complete"
@@ -642,9 +674,17 @@ Conflicting beliefs: {beliefs}
 
 Determine which beliefs are more fundamental or important, and establish a hierarchy. Provide confidence adjustments for each belief based on their position in the hierarchy."""
 
-            response = self.llm_handler.generate_response_with_consciousness(
+            response_generator = self.llm_handler.generate_response_with_consciousness(
                 prompt, "belief_hierarchy", {"context": "hierarchy_resolution"}
             )
+            
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            response = "".join(response_chunks)
             
             lines = [line.strip() for line in response.split('\n') if line.strip()]
             synthesis = lines[0] if lines else "Belief hierarchy established"
@@ -687,9 +727,17 @@ Conflicting beliefs: {beliefs}
 
 Explain why this contradiction requires further analysis and what kind of additional information or perspective might help resolve it. Be thoughtful about the complexity involved."""
 
-            response = self.llm_handler.generate_response_with_consciousness(
+            response_generator = self.llm_handler.generate_response_with_consciousness(
                 prompt, "belief_deferred", {"context": "deferred_resolution"}
             )
+            
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            response = "".join(response_chunks)
             
             lines = [line.strip() for line in response.split('\n') if line.strip()]
             synthesis = lines[0] if lines else "Contradiction deferred for deeper analysis"

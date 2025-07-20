@@ -937,10 +937,17 @@ Context: {context_info}
 
 Generate a natural, authentic message that feels genuine and personal. Don't use templates or artificial language. Consider the user's current context and state. Be warm, thoughtful, and appropriate for the situation."""
 
-            response = self.llm_handler.generate_response_with_consciousness(
+            response_generator = self.llm_handler.generate_response_with_consciousness(
                 prompt, self.user_id, {"context": f"autonomous_{action_type.value}"}
             )
-            return response.strip()
+            
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            return "".join(response_chunks).strip()
         except Exception as e:
             print(f"[AutonomousActionPlanner] ❌ Error generating action content: {e}")
             return self._generate_dynamic_fallback_action(action_type, context)
@@ -1018,10 +1025,17 @@ Context: {context_info}
 
 Generate an authentic curiosity question that feels natural and engaging. Don't use templates - express genuine curiosity about something interesting or meaningful. Make it conversational and thoughtful."""
             
-            response = self.llm_handler.generate_response_with_consciousness(
+            response_generator = self.llm_handler.generate_response_with_consciousness(
                 prompt, self.user_id, {"context": "autonomous_curiosity"}
             )
-            return response.strip()
+            
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            return "".join(response_chunks).strip()
         except Exception as e:
             print(f"[AutonomousActionPlanner] ❌ Error generating curiosity question: {e}")
             return self._generate_dynamic_curiosity_fallback(context)
@@ -1067,10 +1081,17 @@ Context: {context_info}
 
 Generate a single curious question that feels natural and engaging. Be genuinely interested, not artificial. Consider what would be interesting to explore given the context."""
 
-            response = self.llm_handler.generate_response_with_consciousness(
+            response_generator = self.llm_handler.generate_response_with_consciousness(
                 prompt, self.user_id, {"context": "curiosity_question"}
             )
-            return response.strip()
+            
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            return "".join(response_chunks).strip()
         except Exception as e:
             print(f"[AutonomousActionPlanner] ❌ Error generating curiosity question: {e}")
             return "What's something interesting you've been thinking about?"

@@ -136,6 +136,9 @@ except ImportError:
         CONSCIOUSNESS_AVAILABLE = False
         print("[LLMHandler] ⚠️ Consciousness architecture not fully available")
 
+# Set consciousness modules availability flag based on what we have
+CONSCIOUSNESS_MODULES_AVAILABLE = NEW_MODULES_AVAILABLE or CONSCIOUSNESS_AVAILABLE
+
 class LLMHandler:
     """Centralized LLM handler with full consciousness integration"""
     
@@ -928,6 +931,10 @@ def generate_consciousness_integrated_response(
 def get_llm_session_statistics() -> Dict[str, Any]:
     """Get LLM handler session statistics"""
     return llm_handler.get_session_stats()
+
+def get_llm_handler() -> LLMHandler:
+    """Get the global LLM handler instance"""
+    return llm_handler
 
 if __name__ == "__main__":
     # Test the LLM handler

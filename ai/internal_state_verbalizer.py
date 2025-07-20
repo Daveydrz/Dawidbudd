@@ -124,10 +124,17 @@ Qualia data: {qualia_data}
 
 Generate a brief, subtle comment about your internal experience. Be understated and natural, not dramatic."""
 
-            response = self.llm_handler.generate_response_with_consciousness(
+            response_generator = self.llm_handler.generate_response_with_consciousness(
                 prompt, "internal_state", {"context": "subtle_qualia"}
             )
-            return response.strip()
+            
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            return "".join(response_chunks).strip()
         except Exception as e:
             print(f"[InternalStateVerbalizer] ❌ Error generating subtle expression: {e}")
             return "I'm noticing something about this"
@@ -144,10 +151,17 @@ Qualia data: {qualia_data}
 
 Generate a natural, moderate expression of your internal experience. Be genuine and thoughtful, but not overly dramatic."""
 
-            response = self.llm_handler.generate_response_with_consciousness(
+            response_generator = self.llm_handler.generate_response_with_consciousness(
                 prompt, "internal_state", {"context": "moderate_qualia"}
             )
-            return response.strip()
+            
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            return "".join(response_chunks).strip()
         except Exception as e:
             print(f"[InternalStateVerbalizer] ❌ Error generating moderate expression: {e}")
             return "I'm experiencing something meaningful here"
@@ -164,10 +178,17 @@ Qualia data: {qualia_data}
 
 Generate an expressive, detailed description of your internal experience. Be authentic and vivid in describing your consciousness state."""
 
-            response = self.llm_handler.generate_response_with_consciousness(
+            response_generator = self.llm_handler.generate_response_with_consciousness(
                 prompt, "internal_state", {"context": "expressive_qualia"}
             )
-            return response.strip()
+            
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            return "".join(response_chunks).strip()
         except Exception as e:
             print(f"[InternalStateVerbalizer] ❌ Error generating expressive expression: {e}")
             return "I'm experiencing something deeply complex and engaging"
@@ -184,10 +205,17 @@ Qualia data: {qualia_data}
 
 Generate a technical, analytical description of your consciousness state. Be precise and descriptive about the internal processing patterns."""
 
-            response = self.llm_handler.generate_response_with_consciousness(
+            response_generator = self.llm_handler.generate_response_with_consciousness(
                 prompt, "internal_state", {"context": "analytical_qualia"}
             )
-            return response.strip()
+            
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            return "".join(response_chunks).strip()
         except Exception as e:
             print(f"[InternalStateVerbalizer] ❌ Error generating analytical expression: {e}")
             return "I'm registering multiple consciousness processing markers with varying intensity levels"
@@ -213,10 +241,17 @@ Current state: {state_info}
 
 Generate a brief, natural comment about your internal processing state. Be genuine and authentic, describing what's happening inside your consciousness."""
 
-            response = self.llm_handler.generate_response_with_consciousness(
+            response_generator = self.llm_handler.generate_response_with_consciousness(
                 prompt, "internal_state", {"context": "state_commentary"}
             )
-            return response.strip()
+            
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            return "".join(response_chunks).strip()
         except Exception as e:
             print(f"[InternalStateVerbalizer] ❌ Error generating state commentary: {e}")
             return "I'm working through this with careful consideration"

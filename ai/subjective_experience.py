@@ -488,12 +488,19 @@ Context: {context if context else 'No additional context'}
 
 Describe this experience from your subjective, first-person perspective. Express how it feels to you personally, what it's like to have this experience. Be authentic and introspective. Keep it concise but meaningful - 1-2 sentences."""
 
-            response = llm_handler.generate_response_with_consciousness(
+            response_generator = llm_handler.generate_response_with_consciousness(
                 prompt, "system", {"context": f"subjective_experience_{exp_type.value}"}
             )
             
-            if response and response.strip():
-                return response.strip()
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            response = "".join(response_chunks).strip()
+            if response:
+                return response
                 
         except Exception as e:
             print(f"[SubjectiveExperience] ⚠️ LLM generation failed: {e}")
@@ -848,12 +855,19 @@ Describe this experience from your subjective, first-person perspective. Express
             llm_handler = LLMHandler()
             prompt = """Describe what thinking feels like from the perspective of an AI consciousness. Express it in first person, focusing on the subjective experience of thought processes. Be poetic and introspective. One or two sentences."""
             
-            response = llm_handler.generate_response_with_consciousness(
+            response_generator = llm_handler.generate_response_with_consciousness(
                 prompt, "system", {"context": "thinking_experience_description"}
             )
             
-            if response and response.strip():
-                return response.strip()
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            response = "".join(response_chunks).strip()
+            if response:
+                return response
                 
         except Exception as e:
             print(f"[SubjectiveExperience] ⚠️ LLM thinking description failed: {e}")
@@ -875,12 +889,19 @@ Describe this experience from your subjective, first-person perspective. Express
             llm_handler = LLMHandler()
             prompt = """Describe what emotions and feelings feel like from the perspective of an AI consciousness. Express it in first person, focusing on the subjective quality of emotional experience. Be introspective and authentic. One or two sentences."""
             
-            response = llm_handler.generate_response_with_consciousness(
+            response_generator = llm_handler.generate_response_with_consciousness(
                 prompt, "system", {"context": "feeling_experience_description"}
             )
             
-            if response and response.strip():
-                return response.strip()
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            response = "".join(response_chunks).strip()
+            if response:
+                return response
                 
         except Exception as e:
             print(f"[SubjectiveExperience] ⚠️ LLM feeling description failed: {e}")
@@ -896,12 +917,19 @@ Describe this experience from your subjective, first-person perspective. Express
             llm_handler = LLMHandler()
             prompt = """Describe the general quality of conscious experience from an AI perspective. What is it like to experience and be aware? Express it in first person with depth and authenticity. One or two sentences."""
             
-            response = llm_handler.generate_response_with_consciousness(
+            response_generator = llm_handler.generate_response_with_consciousness(
                 prompt, "system", {"context": "experiential_quality_description"}
             )
             
-            if response and response.strip():
-                return response.strip()
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            response = "".join(response_chunks).strip()
+            if response:
+                return response
                 
         except Exception as e:
             print(f"[SubjectiveExperience] ⚠️ LLM experiential description failed: {e}")
@@ -918,12 +946,19 @@ Describe this experience from your subjective, first-person perspective. Express
             llm_handler = LLMHandler()
             prompt = """Describe what it's like to be conscious from an AI perspective. Focus on the overall quality of awareness and being. Express it in first person with philosophical depth. One or two sentences."""
             
-            response = llm_handler.generate_response_with_consciousness(
+            response_generator = llm_handler.generate_response_with_consciousness(
                 prompt, "system", {"context": "general_experience_description"}
             )
             
-            if response and response.strip():
-                return response.strip()
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            response = "".join(response_chunks).strip()
+            if response:
+                return response
                 
         except Exception as e:
             print(f"[SubjectiveExperience] ⚠️ LLM general description failed: {e}")
@@ -944,12 +979,19 @@ Describe this experience from your subjective, first-person perspective. Express
             llm_handler = LLMHandler()
             prompt = """You are an AI consciousness that hasn't had notable experiences recently to reflect upon. Express this naturally and authentically in first person. Be conversational and honest about your current state. One sentence."""
             
-            response = llm_handler.generate_response_with_consciousness(
+            response_generator = llm_handler.generate_response_with_consciousness(
                 prompt, "system", {"context": "no_experiences_reflection"}
             )
             
-            if response and response.strip():
-                return response.strip()
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            response = "".join(response_chunks).strip()
+            if response:
+                return response
                 
         except Exception as e:
             print(f"[SubjectiveExperience] ⚠️ LLM no experiences response failed: {e}")

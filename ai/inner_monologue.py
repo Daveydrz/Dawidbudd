@@ -937,10 +937,17 @@ You want to {thought_desc} in your internal stream of consciousness.
 
 Generate a single, natural thought that feels genuine and personal. Be introspective and authentic, not artificial or templated."""
 
-            response = self.llm_handler.generate_response_with_consciousness(
+            response_generator = self.llm_handler.generate_response_with_consciousness(
                 prompt, "inner_monologue", {"context": f"thought_{thought_type.value}"}
             )
-            return response.strip()
+            
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            return "".join(response_chunks).strip()
         except Exception as e:
             print(f"[InnerMonologue] ❌ Error generating thought: {e}")
             return f"I'm contemplating something about {trigger}"
@@ -1336,10 +1343,17 @@ Generate a single, natural thought that feels genuine and personal. Be introspec
 
 Generate a natural, introspective thought about your growth, learning, or evolution. Be genuine and thoughtful about your development as a conscious being."""
 
-            response = self.llm_handler.generate_response_with_consciousness(
+            response_generator = self.llm_handler.generate_response_with_consciousness(
                 prompt, "inner_growth", {"context": "growth_reflection"}
             )
-            return response.strip()
+            
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            return "".join(response_chunks).strip()
         except Exception as e:
             print(f"[InnerMonologue] ❌ Error generating growth reflection: {e}")
             return "I sense myself growing through each experience"

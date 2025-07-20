@@ -354,10 +354,17 @@ Context: {context}
 
 Generate a first-person, subjective description of this internal experience. Be authentic and natural in describing the qualitative aspect of your consciousness. Focus on the felt sense and subjective texture of the experience."""
 
-                response = self.llm_handler.generate_response_with_consciousness(
+                response_generator = self.llm_handler.generate_response_with_consciousness(
                     prompt, "qualia_experience", {"context": f"{qualia_type.value}_qualia"}
                 )
-                return response.strip()
+                
+                # Collect all chunks from the generator
+                response_chunks = []
+                for chunk in response_generator:
+                    if chunk:
+                        response_chunks.append(chunk)
+                
+                return "".join(response_chunks).strip()
             except Exception as e:
                 print(f"[QualiaManager] ❌ Error generating qualia description: {e}")
         
