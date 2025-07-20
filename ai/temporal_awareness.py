@@ -794,6 +794,38 @@ class TemporalAwareness:
         except Exception as e:
             logging.error(f"[TemporalAwareness] ❌ Failed to load temporal state: {e}")
     
+    def get_current_time_context(self, user_id: str = None) -> Dict[str, Any]:
+        """Get current temporal context for consciousness integration"""
+        now = datetime.now()
+        session_duration = now - self.session_start_time
+        
+        # Get recent temporal events
+        recent_markers = [
+            m for m in self.temporal_markers 
+            if (now - m.timestamp).total_seconds() < 3600  # Last hour
+        ]
+        
+        # Get recent episodic memories
+        recent_memories = [
+            mem for mem in self.episodic_memories.values()
+            if (now - mem.start_time).total_seconds() < 7200  # Last 2 hours
+        ]
+        
+        return {
+            "current_time": now.isoformat(),
+            "session_duration": str(session_duration),
+            "temporal_focus": self.current_temporal_focus.value,
+            "time_awareness_level": self.time_awareness_level,
+            "perceived_flow_rate": self.subjective_time.perceived_flow_rate,
+            "temporal_mood": self.subjective_time.temporal_mood,
+            "flow_state": self.subjective_time.flow_state,
+            "recent_events": len(recent_markers),
+            "recent_memories": len(recent_memories),
+            "temporal_coherence": self._calculate_temporal_coherence(),
+            "time_since_last_reflection": str(now - self.last_time_check),
+            "user_id": user_id or "global"  # Include user_id in response if provided
+        }
+    
     def get_stats(self) -> Dict[str, Any]:
         """Get temporal awareness statistics"""
         return {

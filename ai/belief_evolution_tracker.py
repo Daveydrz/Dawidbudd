@@ -486,6 +486,24 @@ class BeliefEvolutionTracker:
         
         return conflicts
     
+    def detect_contradictions(self) -> List[Dict[str, Any]]:
+        """Detect contradictions for consciousness integration (alias for get_belief_conflicts)"""
+        conflicts = self.get_belief_conflicts(unresolved_only=True)
+        
+        # Convert to simple dict format for lazy loader
+        contradictions = []
+        for conflict in conflicts:
+            contradictions.append({
+                "conflict_id": conflict.conflict_id,
+                "severity": conflict.severity,
+                "belief_ids": conflict.belief_ids,
+                "description": conflict.description,
+                "detected_time": conflict.detected_time.isoformat(),
+                "type": conflict.conflict_type.value if conflict.conflict_type else "unknown"
+            })
+            
+        return contradictions
+    
     def get_belief_network(self, belief_id: str, max_depth: int = 2) -> Dict[str, Any]:
         """Get belief relationship network"""
         
@@ -1070,3 +1088,7 @@ def start_belief_evolution(user_id: str):
     """Start belief evolution monitoring for a user"""
     tracker = get_belief_evolution_tracker(user_id)
     tracker.start_evolution_monitoring()
+
+def get_belief_tracker(user_id: str = "default") -> BeliefEvolutionTracker:
+    """Get belief tracker for a specific user (alias for get_belief_evolution_tracker)"""
+    return get_belief_evolution_tracker(user_id)

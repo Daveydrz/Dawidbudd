@@ -919,6 +919,32 @@ class LLMHandler:
         except Exception as e:
             print(f"[LLMHandler] ⚠️ Error updating consciousness: {e}")
             
+    def generate_response(self, text: str, user: str = "unknown", max_tokens: int = None, **kwargs) -> str:
+        """
+        Simple generate response method for backward compatibility
+        
+        This method wraps generate_response_with_consciousness and returns a complete string
+        instead of a generator for modules that expect a simple string response.
+        """
+        try:
+            # Collect all response chunks into a single string
+            response_chunks = []
+            for chunk in self.generate_response_with_consciousness(text, user, stream=True, **kwargs):
+                if isinstance(chunk, str):
+                    response_chunks.append(chunk)
+            
+            full_response = ''.join(response_chunks)
+            
+            # Trim to max_tokens if specified (rough estimation: 4 chars per token)
+            if max_tokens and len(full_response) > max_tokens * 4:
+                full_response = full_response[:max_tokens * 4]
+                
+            return full_response.strip()
+            
+        except Exception as e:
+            print(f"[LLMHandler] ⚠️ Error in generate_response: {e}")
+            return f"I'm having trouble generating a response right now. Please try again."
+
     def get_session_stats(self) -> Dict[str, Any]:
         """Get current session statistics"""
         session_duration = time.time() - self.session_start
