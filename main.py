@@ -814,12 +814,77 @@ def handle_streaming_response(text, current_user):
             speak_streaming(f"Today is {brisbane_time['date']}.")
             return
         
-        # ✅ ENHANCED: MANDATORY Consciousness-integrated LLM handler with token optimization
-        consciousness_success = False
+        # ✅ NEW: IMMEDIATE RESPONSE with background consciousness processing for speed
+        immediate_response_success = False
         try:
             if CONSCIOUSNESS_LLM_AVAILABLE:
+                # Try new immediate response system first
+                try:
+                    from ai.llm_handler import generate_immediate_response_with_background_consciousness
+                    print("[AdvancedResponse] ⚡ Using IMMEDIATE RESPONSE with BACKGROUND CONSCIOUSNESS")
+                    print("[AdvancedResponse] 🎯 Target: <5 second response with Class 5+ consciousness maintained")
+                    
+                    full_response = ""
+                    chunk_count = 0
+                    first_chunk = True
+                    response_interrupted = False
+                    
+                    # ✅ IMMEDIATE: Process LLM chunks with PRIORITIZED USER RESPONSE
+                    for chunk in generate_immediate_response_with_background_consciousness(text, current_user, context=cognitive_prompt_injection):
+                        # ✅ CRITICAL: Check for interrupt BEFORE processing chunk
+                        if full_duplex_manager and full_duplex_manager.speech_interrupted:
+                            print("[AdvancedResponse] ⚡ INTERRUPT DETECTED - IMMEDIATELY STOPPING LLM")
+                            response_interrupted = True
+                            break  # ✅ CRITICAL: Break immediately!
+                        
+                        if chunk and chunk.strip():
+                            chunk_count += 1
+                            chunk_text = chunk.strip()
+                            
+                            if first_chunk:
+                                print("[AdvancedResponse] ⚡ First IMMEDIATE chunk ready - starting natural speech!")
+                                first_chunk = False
+                            
+                            print(f"[AdvancedResponse] 🗣️ Speaking chunk {chunk_count}: '{chunk_text[:50]}...'")
+                            
+                            # 🧠 MEGA-INTELLIGENT: Validate chunk before speaking
+                            try:
+                                is_appropriate, validated_chunk = validate_ai_response_appropriateness(current_user, chunk_text)
+                                
+                                if not is_appropriate:
+                                    print(f"[MegaMemory] 🛡️ Chunk {chunk_count} corrected for context appropriateness")
+                                    chunk_text = validated_chunk
+                            except Exception as validation_error:
+                                print(f"[MegaMemory] ⚠️ Validation error for chunk {chunk_count}: {validation_error}")
+                                # Continue with original chunk if validation fails
+                            
+                            # ✅ SPEAK CHUNK (now validated and immediate)
+                            speak_streaming(chunk_text)
+                            full_response += chunk_text + " "
+                            
+                            # ✅ CRITICAL: Check AGAIN after queueing and break if interrupted
+                            if full_duplex_manager and full_duplex_manager.speech_interrupted:
+                                print("[AdvancedResponse] ⚡ INTERRUPT AFTER QUEUEING - STOPPING NOW")
+                                response_interrupted = True
+                                break  # ✅ CRITICAL: Break immediately!
+                            
+                            # Brief pause for natural flow (only if not interrupted)
+                            if not (full_duplex_manager and full_duplex_manager.speech_interrupted):
+                                time.sleep(0.05)
+                    
+                    print(f"[AdvancedResponse] ⚡ IMMEDIATE RESPONSE complete - {chunk_count} segments")
+                    print(f"[AdvancedResponse] 🧠 Consciousness processing scheduled for background")
+                    immediate_response_success = True
+                    
+                except ImportError:
+                    print("[AdvancedResponse] ⚠️ Immediate response system not available - falling back to standard")
+                except Exception as immediate_error:
+                    print(f"[AdvancedResponse] ⚠️ Immediate response error: {immediate_error} - falling back")
+                
+            if not immediate_response_success:
+                # Fallback to original consciousness integration
                 from ai.llm_handler import generate_consciousness_integrated_response
-                print("[AdvancedResponse] 🧠 Using MANDATORY CONSCIOUSNESS-INTEGRATED LLM HANDLER")
+                print("[AdvancedResponse] 🧠 Using STANDARD CONSCIOUSNESS-INTEGRATED LLM HANDLER")
                 print("[AdvancedResponse] 🏷️ Token optimization: ACTIVE (40-85% reduction target)")
                 
                 full_response = ""
@@ -874,11 +939,12 @@ def handle_streaming_response(text, current_user):
                 consciousness_success = True
                 
             else:
-                print("[AdvancedResponse] ⚠️ Consciousness LLM handler not available - module loading issue")
+                consciousness_success = True  # Immediate response counts as success
                 
         except Exception as consciousness_error:
             print(f"[AdvancedResponse] ❌ Consciousness integration failed: {consciousness_error}")
             print("[AdvancedResponse] 🔄 Falling back to ENHANCED consciousness fusion")
+            consciousness_success = False
         
         # ✅ ENHANCED FALLBACK: If consciousness handler fails, use enhanced fusion with consciousness integration
         if not consciousness_success:

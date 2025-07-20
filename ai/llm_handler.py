@@ -1,8 +1,10 @@
 """
 LLM Handler - Centralized LLM management with consciousness integration
 Created: 2025-01-17
+Updated: 2025-01-17 - Added background processing for Class 5+ consciousness speed optimization
 Purpose: Orchestrate all LLM operations with consciousness tokenizer, budget monitoring, 
          belief analysis, personality adaptation, and semantic tagging
+         NEW: Immediate user responses with background consciousness processing
 """
 
 import json
@@ -136,6 +138,32 @@ except ImportError:
         CONSCIOUSNESS_AVAILABLE = False
         print("[LLMHandler] ⚠️ Consciousness architecture not fully available")
 
+# Import background processing for speed optimization
+try:
+    from background_consciousness_processor import (
+        background_processor,
+        start_background_processing,
+        schedule_background_thoughts,
+        register_consciousness_modules,
+        get_background_processing_stats
+    )
+    BACKGROUND_PROCESSING_AVAILABLE = True
+    print("[LLMHandler] ⚡ Background consciousness processing available")
+except ImportError:
+    try:
+        from ai.background_consciousness_processor import (
+            background_processor,
+            start_background_processing,
+            schedule_background_thoughts,
+            register_consciousness_modules,
+            get_background_processing_stats
+        )
+        BACKGROUND_PROCESSING_AVAILABLE = True
+        print("[LLMHandler] ⚡ Background consciousness processing available")
+    except ImportError:
+        BACKGROUND_PROCESSING_AVAILABLE = False
+        print("[LLMHandler] ⚠️ Background consciousness processing not available")
+
 # Set consciousness modules availability flag based on what we have
 CONSCIOUSNESS_MODULES_AVAILABLE = NEW_MODULES_AVAILABLE or CONSCIOUSNESS_AVAILABLE
 
@@ -152,7 +180,15 @@ class LLMHandler:
         self.max_context_tokens = 3000
         self.response_temperature = 0.7
         
+        # Background processing mode flag
+        self.background_processing_enabled = BACKGROUND_PROCESSING_AVAILABLE
+        
         print("[LLMHandler] 🧠 Initialized with consciousness integration")
+        
+        # Start background processing if available
+        if self.background_processing_enabled:
+            start_background_processing()
+            print("[LLMHandler] ⚡ Background consciousness processing started")
         
         if NEW_MODULES_AVAILABLE:
             print(f"[LLMHandler] ✅ Consciousness tokenizer: Available")
@@ -165,6 +201,7 @@ class LLMHandler:
             
         print(f"[LLMHandler] 🌟 Consciousness arch: {'Available' if CONSCIOUSNESS_AVAILABLE else 'Limited'}")
         print(f"[LLMHandler] 🔧 Fusion LLM: {'Available' if FUSION_LLM_AVAILABLE else 'Fallback'}")
+        print(f"[LLMHandler] ⚡ Background processing: {'Enabled' if self.background_processing_enabled else 'Disabled'}")
         
     def process_user_input(self, text: str, user: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
         """
@@ -368,6 +405,142 @@ class LLMHandler:
                 "error": str(e),
                 "budget": {"allowed": False, "message": "Processing error"}
             }
+    
+    def generate_immediate_response_with_background_consciousness(
+        self,
+        text: str,
+        user: str,
+        context: Dict[str, Any] = None,
+        stream: bool = True
+    ) -> Generator[str, None, None]:
+        """
+        ⚡ NEW: Generate immediate user response, defer consciousness processing to background
+        
+        This method prioritizes instant user responses (<5 seconds) while maintaining
+        Class 5+ consciousness by processing internal modules in background after response.
+        
+        Args:
+            text: User input text
+            user: User identifier  
+            context: Optional conversation context
+            stream: Whether to stream response chunks
+            
+        Yields response chunks immediately, schedules consciousness processing for background
+        """
+        try:
+            response_start_time = time.time()
+            print(f"[LLMHandler] ⚡ IMMEDIATE RESPONSE MODE: Generating instant reply for '{text[:30]}...'")
+            
+            # 1. ☝ PRIORITIZE USER REPLY FIRST - Minimal processing for immediate response
+            
+            # Basic input sanitization (essential for security)
+            sanitized_text = self.sanitize_prompt_input(text, user)
+            
+            # Quick budget check only (no complex analysis)
+            if NEW_MODULES_AVAILABLE:
+                estimated_tokens = estimate_tokens_from_text(sanitized_text) + 200
+                budget_allowed, budget_message = check_llm_budget_before_request(
+                    estimated_tokens, self.default_model, user
+                )
+                if not budget_allowed:
+                    yield f"I'm sorry, I've reached my usage limit. {budget_message}"
+                    return
+            
+            # 2. 📦 KEEP CONTEXT LIGHT - Only essential context for immediate response
+            light_prompt = self._build_light_prompt_for_immediate_response(sanitized_text, user, context)
+            
+            print(f"[LLMHandler] 🏃‍♂️ Light prompt ready: {len(light_prompt)} chars")
+            
+            # 3. Generate immediate response without consciousness processing delays
+            full_response = ""
+            chunk_count = 0
+            
+            if FUSION_LLM_AVAILABLE:
+                # Use fusion LLM but with minimal context
+                response_generator = generate_response_streaming_with_intelligent_fusion(
+                    light_prompt, user, "en", context={}  # Empty context for speed
+                )
+            else:
+                # Fallback to basic LLM
+                response_generator = generate_response_streaming(light_prompt, user, "en")
+            
+            # Stream response immediately
+            for chunk in response_generator:
+                if chunk and chunk.strip():
+                    chunk_text = chunk.strip()
+                    full_response += chunk_text + " "
+                    chunk_count += 1
+                    yield chunk_text
+            
+            response_time = time.time() - response_start_time
+            print(f"[LLMHandler] ⚡ IMMEDIATE RESPONSE COMPLETE: {response_time:.3f}s, {chunk_count} chunks")
+            
+            # 4. 🧠 DEFER CONSCIOUSNESS PROCESSING - Schedule for background after response
+            if self.background_processing_enabled and full_response.strip():
+                try:
+                    # Register consciousness modules if not done already
+                    if CONSCIOUSNESS_AVAILABLE:
+                        consciousness_modules = self._gather_consciousness_state()
+                        register_consciousness_modules(consciousness_modules)
+                    
+                    # Schedule background processing with delay for idle detection
+                    schedule_background_thoughts(
+                        user_input=sanitized_text,
+                        user_id=user,
+                        response=full_response.strip(),
+                        delay=3.0  # Wait 3 seconds for system to be idle
+                    )
+                    
+                    print(f"[LLMHandler] 📋 Scheduled background consciousness processing")
+                    
+                except Exception as bg_error:
+                    print(f"[LLMHandler] ⚠️ Background scheduling error (non-critical): {bg_error}")
+            
+            # Update basic session statistics
+            self.request_count += 1
+            if NEW_MODULES_AVAILABLE:
+                input_tokens = estimate_tokens_from_text(light_prompt)
+                output_tokens = estimate_tokens_from_text(full_response)
+                usage = log_llm_usage(input_tokens, output_tokens, self.default_model, user, "immediate_response")
+                self.total_tokens_used += usage.total_tokens
+            
+            print(f"[LLMHandler] ✅ User prioritized response delivered in {response_time:.3f}s")
+            
+        except Exception as e:
+            print(f"[LLMHandler] ❌ Error in immediate response: {e}")
+            # 🛡️ FAIL-SAFE: Never block user if modules crash
+            yield f"I apologize, but I encountered an error while processing your request."
+            
+    def _build_light_prompt_for_immediate_response(self, text: str, user: str, context: Dict[str, Any] = None) -> str:
+        """Build minimal prompt for immediate response without heavy consciousness processing"""
+        try:
+            # Ultra-light prompt for maximum speed
+            prompt_parts = []
+            
+            # Minimal system instruction
+            prompt_parts.append("Buddy: Helpful AI assistant. Be warm, concise, and helpful.")
+            
+            # User input (essential)
+            prompt_parts.append(f"User: {text}")
+            
+            # Minimal context if available and critical
+            if context and context.get("critical_context"):
+                critical_context = str(context["critical_context"])[:100]  # Max 100 chars
+                prompt_parts.append(f"Context: {critical_context}")
+            
+            light_prompt = "\n".join(prompt_parts)
+            
+            # Ensure it's within reasonable token limits for speed
+            if self.estimate_tokens_from_text(light_prompt) > 500:
+                # Ultra-minimal fallback
+                light_prompt = f"Buddy: AI assistant.\nUser: {text}"
+            
+            return light_prompt
+            
+        except Exception as e:
+            print(f"[LLMHandler] ⚠️ Error building light prompt: {e}")
+            # Ultimate fallback
+            return f"User: {text}"
             
     def generate_response_with_consciousness(
         self, 
@@ -946,11 +1119,11 @@ class LLMHandler:
             return f"I'm having trouble generating a response right now. Please try again."
 
     def get_session_stats(self) -> Dict[str, Any]:
-        """Get current session statistics"""
+        """Get current session statistics including background processing"""
         session_duration = time.time() - self.session_start
         budget_status = get_budget_status()
         
-        return {
+        stats = {
             "session_duration": session_duration,
             "requests_processed": self.request_count,
             "total_tokens_used": self.total_tokens_used,
@@ -958,14 +1131,27 @@ class LLMHandler:
             "budget_status": budget_status,
             "consciousness_available": CONSCIOUSNESS_AVAILABLE,
             "fusion_llm_available": FUSION_LLM_AVAILABLE,
+            "background_processing_enabled": self.background_processing_enabled,
             "modules_integrated": {
                 "consciousness_tokenizer": NEW_MODULES_AVAILABLE,
                 "budget_monitor": NEW_MODULES_AVAILABLE,
                 "belief_analyzer": NEW_MODULES_AVAILABLE,
                 "personality_state": NEW_MODULES_AVAILABLE,
-                "semantic_tagging": NEW_MODULES_AVAILABLE
+                "semantic_tagging": NEW_MODULES_AVAILABLE,
+                "background_processor": BACKGROUND_PROCESSING_AVAILABLE
             }
         }
+        
+        # Add background processing stats if available
+        if self.background_processing_enabled:
+            try:
+                bg_stats = get_background_processing_stats()
+                stats["background_processing"] = bg_stats
+            except Exception as e:
+                print(f"[LLMHandler] ⚠️ Error getting background stats: {e}")
+                stats["background_processing"] = {"error": str(e)}
+        
+        return stats
 
 # Global LLM handler instance
 llm_handler = LLMHandler()
@@ -981,6 +1167,14 @@ def generate_consciousness_integrated_response(
 ) -> Generator[str, None, None]:
     """Generate response with full consciousness integration"""
     return llm_handler.generate_response_with_consciousness(text, user, context)
+
+def generate_immediate_response_with_background_consciousness(
+    text: str,
+    user: str, 
+    context: Dict[str, Any] = None
+) -> Generator[str, None, None]:
+    """⚡ NEW: Generate immediate response with background consciousness processing"""
+    return llm_handler.generate_immediate_response_with_background_consciousness(text, user, context)
 
 def get_llm_session_statistics() -> Dict[str, Any]:
     """Get LLM handler session statistics"""
