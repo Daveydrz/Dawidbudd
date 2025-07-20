@@ -113,6 +113,34 @@ class BackgroundConsciousnessProcessor:
                     data={"response": response},
                     delay_seconds=delay + 1.5,
                     priority=2
+                ),
+                # ✅ NEW: Additional consciousness modules as requested by @Daveydrz
+                BackgroundTask(
+                    task_id=f"subjective_experience_{int(time.time())}",
+                    task_type="subjective_experience_reflect",
+                    user_input=user_input,
+                    user_id=user_id,
+                    data={"response": response},
+                    delay_seconds=delay + 2.0,
+                    priority=2
+                ),
+                BackgroundTask(
+                    task_id=f"self_model_{int(time.time())}",
+                    task_type="self_model_update",
+                    user_input=user_input,
+                    user_id=user_id,
+                    data={"response": response},
+                    delay_seconds=delay + 2.5,
+                    priority=2
+                ),
+                BackgroundTask(
+                    task_id=f"global_workspace_{int(time.time())}",
+                    task_type="global_workspace_update",
+                    user_input=user_input,
+                    user_id=user_id,
+                    data={"response": response},
+                    delay_seconds=delay + 3.0,
+                    priority=1
                 )
             ]
             
@@ -180,6 +208,13 @@ class BackgroundConsciousnessProcessor:
                 self._run_pending_belief_update(task)
             elif task.task_type == "update_timeline_memory":
                 self._run_pending_memory_update(task)
+            # ✅ NEW: Additional consciousness modules as requested by @Daveydrz
+            elif task.task_type == "subjective_experience_reflect":
+                self._run_pending_subjective_experience(task)
+            elif task.task_type == "self_model_update":
+                self._run_pending_self_model_update(task)
+            elif task.task_type == "global_workspace_update":
+                self._run_pending_global_workspace_update(task)
             else:
                 print(f"[BackgroundProcessor] ⚠️ Unknown task type: {task.task_type}")
                 
@@ -312,6 +347,96 @@ class BackgroundConsciousnessProcessor:
                 
         except Exception as e:
             print(f"[BackgroundProcessor] ❌ Memory update error: {e}")
+            
+    def _run_pending_subjective_experience(self, task: BackgroundTask):
+        """Process subjective experience reflection in background"""
+        try:
+            try:
+                from ai.subjective_experience import subjective_experience, ExperienceType
+                
+                # Create subjective experience of the interaction
+                subjective_experience.process_experience(
+                    f"User interaction: {task.user_input}",
+                    ExperienceType.SOCIAL,
+                    {
+                        "user": task.user_id,
+                        "response": task.data.get("response", ""),
+                        "background_processing": True,
+                        "interaction_type": "conversation"
+                    },
+                    intensity=0.6
+                )
+                
+                print(f"[BackgroundProcessor] 🌈 Processed subjective experience")
+                
+            except ImportError:
+                print(f"[BackgroundProcessor] ⚠️ Subjective experience module not available")
+                
+        except Exception as e:
+            print(f"[BackgroundProcessor] ❌ Subjective experience error: {e}")
+            
+    def _run_pending_self_model_update(self, task: BackgroundTask):
+        """Update self model in background"""
+        try:
+            try:
+                from ai.self_model import self_model
+                
+                # Reflect on the interaction to update self-model
+                self_model.reflect_on_experience(
+                    f"Assisted user with: {task.user_input}",
+                    {
+                        "user": task.user_id,
+                        "interaction_type": "assistance",
+                        "response_provided": True,
+                        "background_processing": True,
+                        "context": task.data.get("response", "")[:100]
+                    }
+                )
+                
+                print(f"[BackgroundProcessor] 🎭 Updated self model")
+                
+            except ImportError:
+                print(f"[BackgroundProcessor] ⚠️ Self model module not available")
+                
+        except Exception as e:
+            print(f"[BackgroundProcessor] ❌ Self model update error: {e}")
+            
+    def _run_pending_global_workspace_update(self, task: BackgroundTask):
+        """Update global workspace state in background"""
+        try:
+            try:
+                from ai.global_workspace import global_workspace, AttentionPriority, ProcessingMode
+                
+                # Add interaction to working memory
+                global_workspace.add_to_working_memory(
+                    f"interaction_{int(time.time())}",
+                    {
+                        "user_input": task.user_input,
+                        "user_id": task.user_id,
+                        "response": task.data.get("response", ""),
+                        "background_processed": True
+                    },
+                    "background_processor",
+                    importance=0.6
+                )
+                
+                # Request attention for completed interaction processing
+                global_workspace.request_attention(
+                    "background_processor",
+                    f"Completed processing interaction: {task.user_input[:30]}...",
+                    AttentionPriority.LOW,
+                    ProcessingMode.UNCONSCIOUS,
+                    duration=5.0,
+                    tags=["background_processing", "interaction_complete"]
+                )
+                
+                print(f"[BackgroundProcessor] 🌟 Updated global workspace")
+                
+            except ImportError:
+                print(f"[BackgroundProcessor] ⚠️ Global workspace module not available")
+                
+        except Exception as e:
+            print(f"[BackgroundProcessor] ❌ Global workspace update error: {e}")
             
     def get_stats(self) -> Dict[str, Any]:
         """Get background processing statistics"""

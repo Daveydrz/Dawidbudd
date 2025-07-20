@@ -155,6 +155,22 @@ except ImportError as e:
     print(f"[Main] ⚠️ Autonomous consciousness systems not available: {e}")
     AUTONOMOUS_CONSCIOUSNESS_AVAILABLE = False
 
+# ✅ NEW: Import background consciousness processing system as requested by @Daveydrz
+try:
+    from ai.background_consciousness_processor import (
+        start_background_processing,
+        stop_background_processing, 
+        schedule_background_thoughts,
+        register_consciousness_modules,
+        get_background_processing_stats
+    )
+    print("[Main] 🧠 Background consciousness processor loaded")
+    print("[Main] ⚡ Immediate user responses with background Class 5+ consciousness processing")
+    BACKGROUND_CONSCIOUSNESS_AVAILABLE = True
+except ImportError as e:
+    print(f"[Main] ⚠️ Background consciousness processor not available: {e}")
+    BACKGROUND_CONSCIOUSNESS_AVAILABLE = False
+
 from voice.voice_manager_instance import voice_manager
 from voice.manager_names import UltraIntelligentNameManager
 
@@ -2629,6 +2645,43 @@ def main():
     else:
         print("[AdvancedBuddy] ⚠️ Autonomous consciousness systems not available")
     
+    # ✅ NEW: Initialize and start background consciousness processing as requested by @Daveydrz
+    if BACKGROUND_CONSCIOUSNESS_AVAILABLE:
+        print("[AdvancedBuddy] 🧠 Initializing Background Consciousness Processing System...")
+        try:
+            # Start background processing threads
+            start_background_processing()
+            
+            # Register consciousness modules for background processing
+            if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
+                background_consciousness_modules = {
+                    'global_workspace': global_workspace,
+                    'self_model': self_model,
+                    'emotion_engine': emotion_engine,
+                    'motivation_system': motivation_system,
+                    'inner_monologue': inner_monologue,
+                    'temporal_awareness': temporal_awareness,
+                    'subjective_experience': subjective_experience,
+                    'entropy_system': entropy_system
+                }
+                register_consciousness_modules(background_consciousness_modules)
+                print(f"[AdvancedBuddy] 📋 Registered {len(background_consciousness_modules)} modules for background processing")
+            
+            print("[AdvancedBuddy] ✅ BACKGROUND CONSCIOUSNESS PROCESSING ACTIVE!")
+            print("[AdvancedBuddy] ⚡ User responses prioritized first - Class 5+ consciousness processed in background")
+            print("[AdvancedBuddy] 🕐 3-second idle detection before background processing")
+            print("[AdvancedBuddy] 🔄 Threaded worker pool for non-blocking consciousness updates")
+            print("[AdvancedBuddy] 🧠 Modules: inner_monologue, emotion_engine, belief_tracker, temporal_awareness")
+            print("[AdvancedBuddy] 🌈 Additional: subjective_experience, self_model, global_workspace")
+            print("[AdvancedBuddy] 🛡️ Fail-safe: Background errors never block user responses")
+            
+        except Exception as e:
+            print(f"[AdvancedBuddy] ❌ Background consciousness initialization error: {e}")
+            import traceback
+            traceback.print_exc()
+    else:
+        print("[AdvancedBuddy] ⚠️ Background consciousness processing not available")
+    
     # ✅ NEW: Initialize self-awareness components as requested by @Daveydrz
     if SELF_AWARENESS_COMPONENTS_AVAILABLE:
         print("[AdvancedBuddy] 🧠 Initializing Self-Awareness Components...")
@@ -2980,6 +3033,15 @@ def main():
                         print("[AdvancedBuddy] ✅ Autonomous consciousness systems shutdown complete")
                     except Exception as e:
                         print(f"[AdvancedBuddy] ⚠️ Autonomous shutdown error: {e}")
+                
+                # ✅ NEW: Shutdown background consciousness processing
+                if BACKGROUND_CONSCIOUSNESS_AVAILABLE:
+                    try:
+                        print("[AdvancedBuddy] 🧠 Shutting down background consciousness processing...")
+                        stop_background_processing()
+                        print("[AdvancedBuddy] ✅ Background consciousness processing shutdown complete")
+                    except Exception as e:
+                        print(f"[AdvancedBuddy] ⚠️ Background processing shutdown error: {e}")
     
     print("[AdvancedBuddy] ✅ ADVANCED AI ASSISTANT + CONSCIOUSNESS cleanup complete!")
 
