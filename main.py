@@ -70,7 +70,7 @@ except ImportError as e:
     print(f"[Main] ⚠️ Full consciousness architecture not available: {e}")
     CONSCIOUSNESS_ARCHITECTURE_AVAILABLE = False
 
-# ✅ NEW: Import consciousness-integrated modules
+# ✅ NEW: Import consciousness-integrated modules with latency optimization
 try:
     from ai.llm_handler import (
         llm_handler,
@@ -83,6 +83,21 @@ try:
 except ImportError as e:
     print(f"[Main] ⚠️ Consciousness LLM handler not available: {e}")
     CONSCIOUSNESS_LLM_AVAILABLE = False
+
+# ✅ NEW: Import latency optimization system for sub-5-second responses
+try:
+    from ai.latency_optimizer import (
+        set_global_optimization_mode,
+        LatencyOptimizationMode,
+        get_latency_performance_report
+    )
+    # Set default optimization mode for production
+    set_global_optimization_mode(LatencyOptimizationMode.FAST)
+    print("[Main] ⚡ Latency optimization system loaded - Target: <5 second responses")
+    LATENCY_OPTIMIZATION_AVAILABLE = True
+except ImportError as e:
+    print(f"[Main] ⚠️ Latency optimization not available: {e}")
+    LATENCY_OPTIMIZATION_AVAILABLE = False
 
 try:
     from ai.consciousness_tokenizer import tokenize_consciousness_for_llm
@@ -905,11 +920,25 @@ def handle_streaming_response(text, current_user):
             response_interrupted = False
             
             try:
-                from ai.chat_enhanced_smart_with_fusion import generate_response_streaming_with_intelligent_fusion
-                print("[AdvancedResponse] ✅ Using ADVANCED AI streaming with INTELLIGENT FUSION")
+                # 🚀 NEW: Use optimized latency system for sub-5-second responses
+                try:
+                    from ai.latency_optimizer import generate_optimized_buddy_response, LatencyOptimizationMode
+                    print("[AdvancedResponse] ⚡ Using OPTIMIZED LATENCY system with consciousness preservation")
+                    response_generator = generate_optimized_buddy_response(
+                        user_input=text,
+                        user_id=current_user,
+                        context={'cognitive_context': cognitive_prompt_injection},
+                        optimization_mode=LatencyOptimizationMode.FAST,  # Target <5 seconds
+                        stream=True
+                    )
+                except ImportError:
+                    # Fallback to standard fusion system
+                    from ai.chat_enhanced_smart_with_fusion import generate_response_streaming_with_intelligent_fusion
+                    print("[AdvancedResponse] ✅ Using ADVANCED AI streaming with INTELLIGENT FUSION")
+                    response_generator = generate_response_streaming_with_intelligent_fusion(text, current_user, DEFAULT_LANG, context=cognitive_prompt_injection)
                 
                 # ✅ ADVANCED: Process LLM chunks with IMMEDIATE interrupt breaking
-                for chunk in generate_response_streaming_with_intelligent_fusion(text, current_user, DEFAULT_LANG, context=cognitive_prompt_injection):
+                for chunk in response_generator:
                     # ✅ CRITICAL: Check for interrupt BEFORE processing chunk
                     if full_duplex_manager and full_duplex_manager.speech_interrupted:
                         print("[AdvancedResponse] ⚡ INTERRUPT DETECTED - IMMEDIATELY STOPPING LLM")
