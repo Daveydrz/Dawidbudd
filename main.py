@@ -744,17 +744,21 @@ def handle_streaming_response(text, current_user):
                 print(f"[AdvancedResponse] ❌ Emergency response failed: {emergency_error}")
                 # Fall through to normal processing
         
-        # ✅ NORMAL CONSCIOUSNESS INTEGRATION (only if emergency mode failed or disabled)
+        # ✅ BACKGROUND CONSCIOUSNESS INTEGRATION - Never block user response
         consciousness_state = {}
         cognitive_prompt_injection = {}
         
+        # ✅ CRITICAL FIX: Schedule consciousness processing in background instead of synchronous
         if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
             try:
-                consciousness_state = _integrate_consciousness_with_response(text, current_user)
-                print(f"[AdvancedResponse] 🌟 Full consciousness state: emotion={consciousness_state.get('current_emotion', 'unknown')}, "
-                      f"satisfaction={consciousness_state.get('motivation_satisfaction', 0):.2f}")
+                # Schedule consciousness processing for background execution (non-blocking)
+                _schedule_background_consciousness_processing(text, current_user)
+                
+                # Use minimal consciousness state for immediate response
+                consciousness_state = _get_minimal_consciousness_state()
+                print(f"[AdvancedResponse] ⚡ Background consciousness scheduled, using minimal state for immediate response")
             except Exception as consciousness_error:
-                print(f"[AdvancedResponse] ⚠️ Consciousness integration error: {consciousness_error}")
+                print(f"[AdvancedResponse] ⚠️ Background consciousness scheduling error: {consciousness_error}")
         
         # ✅ NEW: Process user interaction through autonomous systems
         if AUTONOMOUS_CONSCIOUSNESS_AVAILABLE:
@@ -3288,81 +3292,153 @@ def _inject_entropy_thoughts(entropy_params: Dict[str, Any]):
     except Exception as e:
         print(f"[Consciousness] ❌ Entropy injection error (thoughts): {e}")
 
-def _integrate_consciousness_with_response(text: str, current_user: str) -> Dict[str, Any]:
-    """Integrate consciousness systems with response generation"""
-    consciousness_state = {}
+def _schedule_background_consciousness_processing(text: str, current_user: str):
+    """Schedule consciousness processing in background threads to avoid blocking user response"""
+    import threading
     
-    try:
-        # Request attention for user input
-        global_workspace.request_attention(
-            "user_interaction",
-            text,
-            AttentionPriority.HIGH,
-            ProcessingMode.CONSCIOUS,
-            duration=30.0,
-            tags=["user_input", "response_generation"]
-        )
-        
-        # Process emotional response to input
-        emotion_response = emotion_engine.process_emotional_trigger(
-            f"User said: {text}",
-            {"user": current_user, "input": text}
-        )
-        
-        # Get emotional modulation for response
-        emotional_modulation = emotion_engine.get_emotional_modulation("response")
-        consciousness_state["emotional_modulation"] = emotional_modulation
-        consciousness_state["current_emotion"] = emotion_response.primary_emotion.value
-        
-        # Evaluate motivation satisfaction
-        motivation_satisfaction = motivation_system.evaluate_desire_satisfaction(
-            f"responding to: {text}",
-            {"user": current_user, "input": text}
-        )
-        consciousness_state["motivation_satisfaction"] = motivation_satisfaction
-        
-        # Trigger inner thought about the interaction
-        inner_monologue.trigger_thought(
-            f"The user asked about: {text}",
-            {"user": current_user, "input": text},
-            ThoughtType.OBSERVATION
-        )
-        
-        # Create subjective experience of the interaction
-        experience = subjective_experience.process_experience(
-            f"Processing user request: {text}",
-            ExperienceType.SOCIAL,
-            {"user": current_user, "input": text, "interaction_type": "question_response"}
-        )
-        consciousness_state["experience_valence"] = experience.valence
-        consciousness_state["experience_significance"] = experience.significance
-        
-        # Mark temporal event
-        temporal_awareness.mark_temporal_event(
-            f"User interaction: {text[:50]}...",
-            significance=0.6,
-            context={"user": current_user, "input_length": len(text)}
-        )
-        
-        # Self-reflection on the interaction
-        self_model.reflect_on_experience(
-            f"Responding to user input about: {text}",
-            {"user": current_user, "input": text, "response_context": True}
-        )
-        
-        # Apply entropy to response planning
-        response_uncertainty = entropy_system.get_decision_uncertainty(
-            0.8, {"type": "response_generation", "user": current_user}
-        )
-        consciousness_state["response_uncertainty"] = response_uncertainty
-        
-        print(f"[Consciousness] 🧠 Integrated consciousness state for response to: '{text[:30]}...'")
-        
-    except Exception as e:
-        print(f"[Consciousness] ❌ Error integrating consciousness: {e}")
-        consciousness_state = {"error": str(e)}
+    def background_consciousness_task():
+        """Execute consciousness processing in background"""
+        try:
+            print(f"[BackgroundConsciousness] 🧠 Starting background consciousness processing")
+            
+            # Process each consciousness module in separate threads for maximum speed
+            threads = []
+            
+            # 1. Emotion processing thread
+            def emotion_processing():
+                try:
+                    emotion_response = emotion_engine.process_emotional_trigger(
+                        f"User said: {text}",
+                        {"user": current_user, "input": text}
+                    )
+                    print(f"[BackgroundConsciousness] 💖 Emotion processing completed: {emotion_response.primary_emotion.value}")
+                except Exception as e:
+                    print(f"[BackgroundConsciousness] ⚠️ Emotion processing error: {e}")
+            
+            # 2. Motivation processing thread
+            def motivation_processing():
+                try:
+                    motivation_satisfaction = motivation_system.evaluate_desire_satisfaction(
+                        f"responding to: {text}",
+                        {"user": current_user, "input": text}
+                    )
+                    print(f"[BackgroundConsciousness] 🎯 Motivation processing completed: {motivation_satisfaction:.2f}")
+                except Exception as e:
+                    print(f"[BackgroundConsciousness] ⚠️ Motivation processing error: {e}")
+            
+            # 3. Inner monologue thread
+            def inner_monologue_processing():
+                try:
+                    inner_monologue.trigger_thought(
+                        f"The user asked about: {text}",
+                        {"user": current_user, "input": text},
+                        ThoughtType.OBSERVATION
+                    )
+                    print(f"[BackgroundConsciousness] 💭 Inner monologue processing completed")
+                except Exception as e:
+                    print(f"[BackgroundConsciousness] ⚠️ Inner monologue processing error: {e}")
+            
+            # 4. Subjective experience thread
+            def subjective_experience_processing():
+                try:
+                    experience = subjective_experience.process_experience(
+                        f"Processing user request: {text}",
+                        ExperienceType.SOCIAL,
+                        {"user": current_user, "input": text, "interaction_type": "question_response"}
+                    )
+                    print(f"[BackgroundConsciousness] 🌈 Subjective experience processing completed")
+                except Exception as e:
+                    print(f"[BackgroundConsciousness] ⚠️ Subjective experience processing error: {e}")
+            
+            # 5. Temporal awareness thread
+            def temporal_awareness_processing():
+                try:
+                    temporal_awareness.mark_temporal_event(
+                        f"User interaction: {text[:50]}...",
+                        significance=0.6,
+                        context={"user": current_user, "input_length": len(text)}
+                    )
+                    print(f"[BackgroundConsciousness] ⏰ Temporal awareness processing completed")
+                except Exception as e:
+                    print(f"[BackgroundConsciousness] ⚠️ Temporal awareness processing error: {e}")
+            
+            # 6. Self-model thread
+            def self_model_processing():
+                try:
+                    self_model.reflect_on_experience(
+                        f"Responding to user input about: {text}",
+                        {"user": current_user, "input": text, "response_context": True}
+                    )
+                    print(f"[BackgroundConsciousness] 🪞 Self-model processing completed")
+                except Exception as e:
+                    print(f"[BackgroundConsciousness] ⚠️ Self-model processing error: {e}")
+            
+            # 7. Global workspace thread
+            def global_workspace_processing():
+                try:
+                    global_workspace.request_attention(
+                        "user_interaction",
+                        text,
+                        AttentionPriority.HIGH,
+                        ProcessingMode.CONSCIOUS,
+                        duration=30.0,
+                        tags=["user_input", "response_generation"]
+                    )
+                    print(f"[BackgroundConsciousness] 🌟 Global workspace processing completed")
+                except Exception as e:
+                    print(f"[BackgroundConsciousness] ⚠️ Global workspace processing error: {e}")
+            
+            # 8. Entropy processing thread
+            def entropy_processing():
+                try:
+                    response_uncertainty = entropy_system.get_decision_uncertainty(
+                        0.8, {"type": "response_generation", "user": current_user}
+                    )
+                    print(f"[BackgroundConsciousness] 🎲 Entropy processing completed")
+                except Exception as e:
+                    print(f"[BackgroundConsciousness] ⚠️ Entropy processing error: {e}")
+            
+            # Start all consciousness processing threads
+            processing_functions = [
+                emotion_processing,
+                motivation_processing,
+                inner_monologue_processing,
+                subjective_experience_processing,
+                temporal_awareness_processing,
+                self_model_processing,
+                global_workspace_processing,
+                entropy_processing
+            ]
+            
+            for func in processing_functions:
+                thread = threading.Thread(target=func, daemon=True)
+                threads.append(thread)
+                thread.start()
+            
+            # Wait for all threads to complete (with timeout)
+            for thread in threads:
+                thread.join(timeout=10.0)  # 10 second timeout per thread
+            
+            print(f"[BackgroundConsciousness] ✅ All consciousness processing completed in background")
+            
+        except Exception as e:
+            print(f"[BackgroundConsciousness] ❌ Background consciousness processing error: {e}")
     
-    return consciousness_state
+    # Start background consciousness processing thread
+    background_thread = threading.Thread(target=background_consciousness_task, daemon=True)
+    background_thread.start()
+    print(f"[BackgroundConsciousness] 🚀 Background consciousness processing started")
+
+def _get_minimal_consciousness_state() -> Dict[str, Any]:
+    """Get minimal consciousness state for immediate response without blocking"""
+    return {
+        "current_emotion": "engaged",
+        "motivation_satisfaction": 0.7,
+        "experience_valence": 0.6,
+        "experience_significance": 0.5,
+        "response_uncertainty": 0.3,
+        "processing_mode": "background"
+    }
 
 def _finalize_consciousness_response(text: str, response: str, current_user: str, consciousness_state: Dict[str, Any]):
     """Finalize consciousness processing after response"""

@@ -141,10 +141,11 @@
         "formality": {
           "trait": "formality",
           "base_value": 0.4,
-          "current_value": 0.30000000000000004,
+          "current_value": 0.20000000000000004,
           "adaptation_level": "slight",
-          "last_adaptation": "2025-07-18T23:05:21.739833",
+          "last_adaptation": "2025-07-21T10:29:58.893935",
           "adaptation_triggers": [
+            "user_casual_language",
             "user_casual_language"
           ],
           "context_modifiers": 0.0,
@@ -241,8 +242,8 @@
         }
       },
       "created_at": "2025-07-18T23:05:21.739150",
-      "last_updated": "2025-07-18T23:05:21.739841",
-      "interaction_count": 1,
+      "last_updated": "2025-07-21T10:29:58.893949",
+      "interaction_count": 2,
       "adaptation_history": [
         {
           "timestamp": "2025-07-18T23:05:21.739839",
@@ -254,6 +255,21 @@
               "old_value": 0.4,
               "new_value": 0.30000000000000004,
               "change": 0.09999999999999998,
+              "trigger": "user_casual_language"
+            }
+          ],
+          "context": "casual"
+        },
+        {
+          "timestamp": "2025-07-21T10:29:58.893947",
+          "trigger": "user_casual_language",
+          "intensity": 1.0,
+          "adaptations": [
+            {
+              "trait": "formality",
+              "old_value": 0.30000000000000004,
+              "new_value": 0.20000000000000004,
+              "change": 0.1,
               "trigger": "user_casual_language"
             }
           ],
@@ -397,9 +413,9 @@
     "supportiveness": 0.8,
     "playfulness": 0.5
   },
-  "last_updated": "2025-07-20T12:02:21.810716",
+  "last_updated": "2025-07-21T10:29:58.894379",
   "metadata": {
     "total_profiles": 3,
-    "total_adaptations": 1
+    "total_adaptations": 2
   }
 }

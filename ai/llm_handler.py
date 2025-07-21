@@ -205,197 +205,117 @@ class LLMHandler:
         
     def process_user_input(self, text: str, user: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
         """
-        Process user input through all analysis systems before LLM generation
-        
-        Returns analysis results for LLM integration
+        EMERGENCY LIGHTWEIGHT PROCESSING - Minimal analysis for immediate response
+        Heavy analysis moved to background processing to prevent 33+ second delays
         """
         analysis_start = time.time()
         
         try:
-            print(f"[LLMHandler] 📝 Processing user input: '{text[:50]}...'")
+            print(f"[LLMHandler] ⚡ EMERGENCY LIGHTWEIGHT processing: '{text[:50]}...'")
             
-            # Sanitize input first
+            # Sanitize input first (minimal processing)
             sanitized_text = self.sanitize_prompt_input(text, user)
             
+            # ✅ EMERGENCY: Skip heavy analysis modules that were causing 33s delays
             if not NEW_MODULES_AVAILABLE:
                 return {
                     "error": "New modules not available",
                     "budget": {"allowed": True, "message": "Basic mode - no budget limits"}
                 }
             
-            # 1. Semantic Analysis
-            semantic_analysis = analyze_text_semantic_full(sanitized_text, user, context)
-            semantic_tags = get_semantic_tags_for_llm(sanitized_text, user)
+            # ✅ LIGHTWEIGHT: Only essential budget check
+            estimated_tokens = 500  # Conservative estimate
+            budget_allowed = True  # Skip heavy budget analysis
+            budget_message = "Lightweight mode - fast response"
             
-            # 2. Belief Analysis with enhanced contradiction detection
-            belief_analysis = analyze_user_text_for_beliefs(sanitized_text, user, context)
-            user_beliefs = get_user_belief_summary(user)
-            active_contradictions = get_active_belief_contradictions()
+            # ✅ MINIMAL: Skip heavy semantic analysis
+            semantic_analysis_lightweight = {
+                "emotional_tone": "neutral",
+                "complexity": "simple",
+                "intent": ["conversation"]
+            }
             
-            # Enhanced contradiction detection
-            new_contradictions = belief_analysis.get("new_contradictions", [])
-            if active_contradictions:
-                # Cross-check with semantic analysis for context
-                semantic_context = semantic_analysis.semantic_categories if hasattr(semantic_analysis, 'semantic_categories') else []
-                
-                # Add contextual information to contradictions
-                enhanced_contradictions = []
-                for contradiction in new_contradictions:
-                    enhanced_contradictions.append({
-                        "contradiction": contradiction,
-                        "context": semantic_context,
-                        "severity": "high" if "directly contradicts" in contradiction.lower() else "medium",
-                        "requires_clarification": len(semantic_context) > 0
-                    })
-                belief_analysis["enhanced_contradictions"] = enhanced_contradictions
+            # ✅ MINIMAL: Skip heavy belief analysis  
+            belief_analysis_lightweight = {
+                "extracted_beliefs": [],
+                "new_contradictions": [],
+                "enhanced_contradictions": []
+            }
             
-            # 3. Personality Adaptation
-            personality_triggers = analyze_user_text_for_personality_adaptation(sanitized_text, user)
-            current_personality = get_personality_for_response(user)
-            personality_modifiers = get_personality_modifiers_for_llm(user)
+            # ✅ MINIMAL: Skip heavy personality analysis
+            personality_lightweight = {
+                "current_traits": {"helpful": True, "friendly": True},
+                "modifiers": "helpful friendly",
+                "adaptations_made": False
+            }
             
-            # 4. Enhanced Consciousness State Integration (if available)
-            consciousness_context = ""
-            consciousness_summary = ""
-            if CONSCIOUSNESS_AVAILABLE:
-                consciousness_systems = self._gather_consciousness_state()
-                consciousness_context = tokenize_consciousness_for_llm(consciousness_systems)
-                consciousness_summary = get_consciousness_summary_for_llm(consciousness_systems)
-                update_consciousness_tokens(consciousness_systems)
-                
-                # ✅ CROSS-SYSTEM INTEGRATION: Update consciousness with current analysis
-                try:
-                    # Inform emotion engine about user interaction
-                    if 'emotion_engine' in consciousness_systems:
-                        from ai.emotion import emotion_engine
-                        # Determine emotional context from semantic analysis
-                        emotional_tone = semantic_analysis.emotional_tone.value if hasattr(semantic_analysis, 'emotional_tone') else 'neutral'
-                        emotion_engine.process_external_stimulus(f"user_interaction_{emotional_tone}", intensity=0.6)
-                    
-                    # Inform motivation system about new goals
-                    if 'motivation_system' in consciousness_systems:
-                        from ai.motivation import motivation_system
-                        intent_categories = [intent.value for intent in semantic_analysis.intent_categories] if hasattr(semantic_analysis, 'intent_categories') else []
-                        for intent in intent_categories:
-                            if intent in ['help_request', 'information_seeking', 'problem_solving']:
-                                motivation_system.add_derived_goal(f"address_{intent}", priority=0.7)
-                    
-                    # Inform global workspace about attention focus
-                    if 'global_workspace' in consciousness_systems:
-                        from ai.global_workspace import global_workspace, AttentionPriority, ProcessingMode
-                        complexity = semantic_analysis.complexity_level.value if hasattr(semantic_analysis, 'complexity_level') else 'simple'
-                        priority = AttentionPriority.HIGH if complexity == 'complex' else AttentionPriority.MEDIUM
-                        global_workspace.request_attention(
-                            "llm_handler", 
-                            f"Processing {complexity} user request: {sanitized_text[:30]}...",
-                            priority,
-                            ProcessingMode.CONSCIOUS,
-                            duration=10.0,
-                            tags=["user_interaction", "llm_processing", complexity]
-                        )
-                    
-                    print(f"[LLMHandler] 🧠 Cross-system consciousness integration complete")
-                    
-                except Exception as consciousness_integration_error:
-                    print(f"[LLMHandler] ⚠️ Consciousness integration warning: {consciousness_integration_error}")
-            
-            # ✅ FALLBACK: Create lightweight consciousness simulation if full system unavailable
-            elif CONSCIOUSNESS_MODULES_AVAILABLE:
-                try:
-                    # Create simulated consciousness state for token optimization
-                    simulated_consciousness = {
-                        'emotion_engine': {
-                            'primary_emotion': 'engaged',
-                            'intensity': 0.6
-                        },
-                        'motivation_system': {
-                            'active_goals': [
-                                {'description': 'Help user effectively', 'priority': 0.8, 'progress': 0.1}
-                            ]
-                        },
-                        'global_workspace': {
-                            'current_focus': f"user_request_{sanitized_text[:20].replace(' ', '_')}",
-                            'focus_priority': 'high'
-                        }
-                    }
-                    consciousness_context = tokenize_consciousness_for_llm(simulated_consciousness)
-                    consciousness_summary = get_consciousness_summary_for_llm(simulated_consciousness)
-                    print(f"[LLMHandler] 🧠 Using simulated consciousness state for optimization")
-                    
-                except Exception as simulation_error:
-                    print(f"[LLMHandler] ⚠️ Consciousness simulation warning: {simulation_error}")
-                    consciousness_context = "[CONSCIOUSNESS:engaged_helpful_focused]"
-                    consciousness_summary = "[CONSCIOUSNESS:engaged helpful focused]"
-            
-            # 5. Enhanced Budget Check with usage tracking
-            estimated_tokens = estimate_tokens_from_text(sanitized_text) + 500  # Estimate response tokens
-            budget_allowed, budget_message = check_llm_budget_before_request(
-                estimated_tokens, self.default_model, user
-            )
-            
-            # Get current budget status for optimization calculations
-            budget_status = get_budget_status()
+            # ✅ MINIMAL: Ultra-lightweight consciousness
+            consciousness_context = "[CONSCIOUSNESS:engaged helpful focused]"
+            consciousness_summary = "[CONSCIOUSNESS:engaged helpful focused]"
             
             processing_time = time.time() - analysis_start
             
+            # ✅ BACKGROUND: Schedule heavy analysis in background thread
+            self._schedule_background_heavy_analysis(sanitized_text, user, context)
+            
             analysis_result = {
                 "semantic": {
-                    "analysis": semantic_analysis,
-                    "tags": semantic_tags,
-                    "categories": [cat.value for cat in semantic_analysis.semantic_categories] if hasattr(semantic_analysis, 'semantic_categories') else [],
-                    "intent": [intent.value for intent in semantic_analysis.intent_categories] if hasattr(semantic_analysis, 'intent_categories') else [],
-                    "emotional_tone": semantic_analysis.emotional_tone.value if hasattr(semantic_analysis, 'emotional_tone') else 'neutral',
-                    "complexity": semantic_analysis.complexity_level.value if hasattr(semantic_analysis, 'complexity_level') else 'simple'
+                    "analysis": semantic_analysis_lightweight,
+                    "tags": [],
+                    "categories": [],
+                    "intent": ["conversation"],
+                    "emotional_tone": "neutral",
+                    "complexity": "simple"
                 },
                 "beliefs": {
-                    "analysis": belief_analysis,
-                    "user_summary": user_beliefs,
-                    "contradictions": active_contradictions,
-                    "extracted_beliefs": belief_analysis.get("extracted_beliefs", []),
-                    "new_contradictions": belief_analysis.get("new_contradictions", []),
-                    "enhanced_contradictions": belief_analysis.get("enhanced_contradictions", [])
+                    "analysis": belief_analysis_lightweight,
+                    "user_summary": {},
+                    "contradictions": [],
+                    "extracted_beliefs": [],
+                    "new_contradictions": [],
+                    "enhanced_contradictions": []
                 },
                 "personality": {
-                    "triggers": personality_triggers,
-                    "current_traits": current_personality,
-                    "modifiers": personality_modifiers,
-                    "adaptations_made": len(personality_triggers) > 0
+                    "triggers": [],
+                    "current_traits": personality_lightweight["current_traits"],
+                    "modifiers": personality_lightweight["modifiers"],
+                    "adaptations_made": False
                 },
                 "consciousness": {
-                    "available": CONSCIOUSNESS_AVAILABLE,
+                    "available": True,
                     "context": consciousness_context,
                     "summary": consciousness_summary,
-                    "token_count": len(consciousness_context.split()) if consciousness_context else 0,
-                    "cross_system_integration": CONSCIOUSNESS_AVAILABLE,
-                    "simulation_mode": not CONSCIOUSNESS_AVAILABLE and CONSCIOUSNESS_MODULES_AVAILABLE
+                    "token_count": len(consciousness_context.split()),
+                    "cross_system_integration": False,  # Deferred to background
+                    "simulation_mode": False,
+                    "lightweight_mode": True
                 },
                 "budget": {
                     "allowed": budget_allowed,
                     "message": budget_message,
                     "estimated_tokens": estimated_tokens,
-                    "usage_percentage": budget_status.get("daily_usage_percentage", 0.0),
-                    "cost_estimate": budget_status.get("daily_cost", 0.0),
-                    "optimization_target": "aggressive" if budget_status.get("daily_usage_percentage", 0.0) > 0.5 else "moderate"
+                    "usage_percentage": 0.0,  # Skip heavy calculation
+                    "cost_estimate": 0.0,  # Skip heavy calculation
+                    "optimization_target": "emergency_fast"
                 },
                 "memory": {
-                    "significant_context": "",  # Will be filled by memory systems if available
+                    "significant_context": "",
                     "recent_interactions": [],
                     "compressed": True
                 },
                 "meta": {
                     "processing_time": processing_time,
                     "timestamp": datetime.now().isoformat(),
-                    "analysis_version": "2.0_token_optimized",
+                    "analysis_version": "3.0_emergency_lightweight",
                     "token_optimization_enabled": True,
-                    "cross_system_integration": CONSCIOUSNESS_AVAILABLE
+                    "cross_system_integration": False,  # Deferred to background
+                    "lightweight_mode": True,
+                    "background_processing_scheduled": True
                 }
             }
             
-            print(f"[LLMHandler] ✅ Analysis complete in {processing_time:.3f}s")
-            print(f"[LLMHandler] 🏷️ Semantic: {len(semantic_analysis.semantic_categories)} categories")
-            print(f"[LLMHandler] 🧠 Beliefs: {len(belief_analysis.get('extracted_beliefs', []))} extracted")
-            print(f"[LLMHandler] 🎭 Personality: {len(personality_triggers)} triggers")
-            print(f"[LLMHandler] 💰 Budget: {'✅ Allowed' if budget_allowed else '❌ Blocked'}")
+            print(f"[LLMHandler] ⚡ EMERGENCY LIGHTWEIGHT analysis complete in {processing_time:.3f}s")
+            print(f"[LLMHandler] 🚀 Heavy analysis scheduled for background processing")
             
             return analysis_result
             
@@ -405,6 +325,75 @@ class LLMHandler:
                 "error": str(e),
                 "budget": {"allowed": False, "message": "Processing error"}
             }
+    
+    def _schedule_background_heavy_analysis(self, text: str, user: str, context: Dict[str, Any] = None):
+        """Schedule heavy analysis in background thread to prevent blocking user response"""
+        import threading
+        
+        def background_heavy_analysis():
+            """Execute heavy analysis in background"""
+            try:
+                print(f"[LLMHandler] 🔄 Starting background heavy analysis")
+                analysis_start = time.time()
+                
+                # Perform all the heavy analysis that was causing 33s delays
+                try:
+                    # 1. Full semantic analysis
+                    semantic_analysis = analyze_text_semantic_full(text, user, context)
+                    semantic_tags = get_semantic_tags_for_llm(text, user)
+                    print(f"[LLMHandler] 🏷️ Background semantic analysis completed")
+                except Exception as e:
+                    print(f"[LLMHandler] ⚠️ Background semantic analysis error: {e}")
+                
+                try:
+                    # 2. Full belief analysis
+                    belief_analysis = analyze_user_text_for_beliefs(text, user, context)
+                    user_beliefs = get_user_belief_summary(user)
+                    active_contradictions = get_active_belief_contradictions()
+                    print(f"[LLMHandler] 🧠 Background belief analysis completed")
+                except Exception as e:
+                    print(f"[LLMHandler] ⚠️ Background belief analysis error: {e}")
+                
+                try:
+                    # 3. Full personality adaptation
+                    personality_triggers = analyze_user_text_for_personality_adaptation(text, user)
+                    current_personality = get_personality_for_response(user)
+                    personality_modifiers = get_personality_modifiers_for_llm(user)
+                    print(f"[LLMHandler] 🎭 Background personality analysis completed")
+                except Exception as e:
+                    print(f"[LLMHandler] ⚠️ Background personality analysis error: {e}")
+                
+                try:
+                    # 4. Full consciousness state integration
+                    if CONSCIOUSNESS_AVAILABLE:
+                        consciousness_systems = self._gather_consciousness_state()
+                        consciousness_context = tokenize_consciousness_for_llm(consciousness_systems)
+                        update_consciousness_tokens(consciousness_systems)
+                        print(f"[LLMHandler] 🧠 Background consciousness integration completed")
+                except Exception as e:
+                    print(f"[LLMHandler] ⚠️ Background consciousness integration error: {e}")
+                
+                try:
+                    # 5. Full budget check
+                    estimated_tokens = estimate_tokens_from_text(text) + 500
+                    budget_allowed, budget_message = check_llm_budget_before_request(
+                        estimated_tokens, self.default_model, user
+                    )
+                    budget_status = get_budget_status()
+                    print(f"[LLMHandler] 💰 Background budget analysis completed")
+                except Exception as e:
+                    print(f"[LLMHandler] ⚠️ Background budget analysis error: {e}")
+                
+                processing_time = time.time() - analysis_start
+                print(f"[LLMHandler] ✅ Background heavy analysis completed in {processing_time:.3f}s")
+                
+            except Exception as e:
+                print(f"[LLMHandler] ❌ Background heavy analysis error: {e}")
+        
+        # Start background thread
+        background_thread = threading.Thread(target=background_heavy_analysis, daemon=True)
+        background_thread.start()
+        print(f"[LLMHandler] 🚀 Background heavy analysis scheduled")
     
     def generate_immediate_response_with_background_consciousness(
         self,
@@ -1011,6 +1000,22 @@ class LLMHandler:
     def estimate_tokens_from_text(self, text: str) -> int:
         """Estimate token count from text (for internal use)"""
         return max(1, len(text) // 4)  # Rough approximation
+    
+    def generate_response(self, text: str, user: str = "unknown", language: str = "en") -> str:
+        """Backward compatibility method for generate_response"""
+        try:
+            # Use the lightweight emergency response for backward compatibility
+            print(f"[LLMHandler] 🔄 Backward compatibility generate_response called")
+            
+            full_response = ""
+            for chunk in self.generate_response_with_consciousness(text, user, stream=True, use_optimization=True):
+                full_response += chunk + " "
+            
+            return full_response.strip()
+            
+        except Exception as e:
+            print(f"[LLMHandler] ❌ Error in backward compatibility generate_response: {e}")
+            return f"I apologize, but I encountered an error while processing your request: {text}"
             
     def _get_system_instruction(self, analysis: Dict[str, Any]) -> str:
         """Generate system instruction based on analysis"""

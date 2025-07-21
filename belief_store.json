@@ -75,12 +75,31 @@
       "tags": [
         "factual"
       ]
+    },
+    {
+      "id": "belief_1753093798870_0",
+      "content": "how you today?",
+      "belief_type": "factual",
+      "certainty": "moderate",
+      "source": "text_extraction",
+      "timestamp": "2025-07-21T10:29:58.870098",
+      "user": "test_user",
+      "context": {},
+      "supporting_evidence": [
+        "How are you today?"
+      ],
+      "contradictions": [],
+      "confidence_score": 0.6,
+      "last_confirmed": "2025-07-21T10:29:58.870109",
+      "tags": [
+        "factual"
+      ]
     }
   ],
   "contradictions": [],
-  "last_updated": "2025-07-18T23:05:21.738698",
+  "last_updated": "2025-07-21T10:29:58.871243",
   "metadata": {
-    "total_beliefs": 4,
+    "total_beliefs": 5,
     "total_contradictions": 0,
     "unresolved_contradictions": 0
   }
