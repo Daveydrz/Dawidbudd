@@ -46,6 +46,11 @@ class FullDuplexManager:
         self.speech_interrupted = False
         self.interrupt_lock = threading.Lock()
         
+        # 🚨 EMERGENCY: Voice detection timeout protection
+        self.voice_detection_timeout = 5.0  # Max 5 seconds for voice detection
+        self.voice_detection_start_time = 0.0
+        self.voice_detection_stuck_count = 0
+        
         # ✅ TURN-BASED: Conversation state management
         self.conversation_state = "WAITING_FOR_INPUT"  # Start waiting for user
         self.buddy_is_speaking = False
@@ -90,6 +95,7 @@ class FullDuplexManager:
         self.threads = []
 
         print(f"[FullDuplex] 🔄 TURN-BASED Full Duplex Manager with Interrupt Handling")
+        print(f"[FullDuplex] 🚨 EMERGENCY: Voice detection timeout protection enabled")
         print(f"[FullDuplex] 🎯 User Speech Threshold: {self.user_speech_threshold}")
         print(f"[FullDuplex] 🎯 Buddy Interrupt Threshold: {self.buddy_interrupt_threshold}")
         print(f"[FullDuplex] 🔄 Initial State: {self.conversation_state}")
@@ -313,46 +319,83 @@ class FullDuplexManager:
                     user_detection_active = self.user_speech_detection_active
                     interrupt_active = self.interrupt_detection_active
 
-                # ✅ VOICE ANALYSIS WITH SMART DETECTION
+                # ✅ VOICE ANALYSIS WITH SMART DETECTION AND EMERGENCY PROTECTION
                 try:
-                    from audio.voice_analyzer import voice_analyzer
-                    if voice_analyzer:
-                        is_voice, voice_score, details = voice_analyzer.analyze_audio(
-                            chunk, is_buddy_speaking=(state == "BUDDY_RESPONDING")
-                        )
-                    else:
-                        # Fallback with smart detection if available
-                        volume = np.abs(chunk).mean()
-                        peak = np.max(np.abs(chunk))
+                    # 🚨 EMERGENCY: Check for voice detection timeout
+                    if self.voice_detection_start_time == 0.0:
+                        self.voice_detection_start_time = current_time
+                    
+                    detection_time = current_time - self.voice_detection_start_time
+                    if detection_time > self.voice_detection_timeout:
+                        print(f"[FullDuplex] 🚨 VOICE DETECTION TIMEOUT: {detection_time:.1f}s - Using emergency detection")
+                        self.voice_detection_stuck_count += 1
                         
-                        if SMART_DETECTION_AVAILABLE and state != "BUDDY_RESPONDING":
-                            # Use smart detection for user speech
-                            should_trigger, detection_info = analyze_speech_detection(chunk, volume)
-                            is_voice = should_trigger
-                            voice_score = detection_info.get('quality', volume / self.user_speech_threshold)
-                            details = {
-                                'volume': volume, 
-                                'peak': peak, 
-                                'combined': voice_score,
-                                'smart_detection': True,
-                                'smart_tier': detection_info['tier'],
-                                'smart_reason': detection_info['reason']
-                            }
-                        else:
-                            # Original detection for interrupts or fallback
+                        # Use emergency voice detection
+                        try:
+                            from ai.voice_detection_fix import emergency_voice_detection
+                            is_voice, details = emergency_voice_detection(chunk)
+                            voice_score = details.get('quality', 0.5)
+                            details['emergency_detection'] = True
+                            details['detection_timeout'] = detection_time
+                            print(f"[FullDuplex] 🚨 Emergency detection result: {is_voice}")
+                        except:
+                            # Ultimate fallback
+                            volume = np.abs(chunk).mean()
                             is_voice = volume > self.user_speech_threshold
                             voice_score = min(1.0, volume / self.user_speech_threshold)
-                            details = {'volume': volume, 'peak': peak, 'combined': voice_score}
+                            details = {'volume': volume, 'emergency_fallback': True}
+                        
+                        # Reset detection timer
+                        self.voice_detection_start_time = current_time
+                    else:
+                        # Normal voice detection
+                        from audio.voice_analyzer import voice_analyzer
+                        if voice_analyzer:
+                            is_voice, voice_score, details = voice_analyzer.analyze_audio(
+                                chunk, is_buddy_speaking=(state == "BUDDY_RESPONDING")
+                            )
+                        else:
+                            # Fallback with smart detection if available
+                            volume = np.abs(chunk).mean()
+                            peak = np.max(np.abs(chunk))
+                            
+                            if SMART_DETECTION_AVAILABLE and state != "BUDDY_RESPONDING":
+                                # Use smart detection for user speech
+                                should_trigger, detection_info = analyze_speech_detection(chunk, volume)
+                                is_voice = should_trigger
+                                voice_score = detection_info.get('quality', volume / self.user_speech_threshold)
+                                details = {
+                                    'volume': volume, 
+                                    'peak': peak, 
+                                    'combined': voice_score,
+                                    'smart_detection': True,
+                                    'smart_tier': detection_info['tier'],
+                                    'smart_reason': detection_info['reason']
+                                }
+                            else:
+                                # Original detection for interrupts or fallback
+                                is_voice = volume > self.user_speech_threshold
+                                voice_score = min(1.0, volume / self.user_speech_threshold)
+                                details = {'volume': volume, 'peak': peak, 'combined': voice_score}
                             
                 except Exception as e:
                     if DEBUG:
                         print(f"[FullDuplex] Voice analysis error: {e}")
-                    # Fallback to simple detection
-                    volume = np.abs(chunk).mean()
-                    peak = np.max(np.abs(chunk))
-                    is_voice = volume > self.user_speech_threshold
-                    voice_score = min(1.0, volume / self.user_speech_threshold)
-                    details = {'volume': volume, 'peak': peak, 'combined': voice_score}
+                    
+                    # Emergency fallback to prevent getting stuck
+                    try:
+                        from ai.voice_detection_fix import emergency_voice_detection
+                        is_voice, details = emergency_voice_detection(chunk)
+                        voice_score = details.get('quality', 0.5)
+                        details['analysis_error'] = str(e)
+                        print(f"[FullDuplex] 🚨 Using emergency detection due to error")
+                    except:
+                        # Ultimate fallback
+                        volume = np.abs(chunk).mean()
+                        peak = np.max(np.abs(chunk))
+                        is_voice = volume > self.user_speech_threshold
+                        voice_score = min(1.0, volume / self.user_speech_threshold)
+                        details = {'volume': volume, 'peak': peak, 'combined': voice_score}
 
                 # Extract volume for legacy compatibility
                 volume = details.get('volume', np.abs(chunk).mean())
