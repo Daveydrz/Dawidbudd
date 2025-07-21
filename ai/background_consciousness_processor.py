@@ -70,6 +70,14 @@ class BackgroundConsciousnessProcessor:
         self.consciousness_modules = modules
         print(f"[BackgroundProcessor] 📋 Registered {len(modules)} consciousness modules")
         
+    def schedule_background_task(self, task: BackgroundTask):
+        """Schedule a single background task"""
+        try:
+            self.task_queue.put(task)
+            print(f"[BackgroundProcessor] 📝 Scheduled {task.task_type} task with {task.delay_seconds}s delay")
+        except Exception as e:
+            print(f"[BackgroundProcessor] ❌ Error scheduling task: {e}")
+            
     def schedule_background_thoughts(self, user_input: str, user_id: str, response: str = "", delay: float = 3.0):
         """Schedule background consciousness processing after user response"""
         try:
@@ -146,7 +154,7 @@ class BackgroundConsciousnessProcessor:
             
             # Queue all tasks
             for task in tasks:
-                self.task_queue.put(task)
+                self.schedule_background_task(task)
                 
             print(f"[BackgroundProcessor] 📋 Scheduled {len(tasks)} background consciousness tasks")
             
@@ -215,6 +223,25 @@ class BackgroundConsciousnessProcessor:
                 self._run_pending_self_model_update(task)
             elif task.task_type == "global_workspace_update":
                 self._run_pending_global_workspace_update(task)
+            # ✅ EMERGENCY: New background consciousness tasks from emergency fast response
+            elif task.task_type == "full_consciousness_integration":
+                self._run_full_consciousness_integration(task)
+            elif task.task_type == "emotion_processing":
+                self._run_background_emotion_processing(task)
+            elif task.task_type == "motivation_evaluation":
+                self._run_background_motivation_evaluation(task)
+            elif task.task_type == "inner_monologue_generation":
+                self._run_background_inner_monologue_generation(task)
+            elif task.task_type == "subjective_experience_processing":
+                self._run_background_subjective_experience_processing(task)
+            elif task.task_type == "temporal_awareness_marking":
+                self._run_background_temporal_awareness_marking(task)
+            elif task.task_type == "self_reflection":
+                self._run_background_self_reflection(task)
+            elif task.task_type == "entropy_processing":
+                self._run_background_entropy_processing(task)
+            elif task.task_type == "global_workspace_attention":
+                self._run_background_global_workspace_attention(task)
             else:
                 print(f"[BackgroundProcessor] ⚠️ Unknown task type: {task.task_type}")
                 
@@ -228,6 +255,123 @@ class BackgroundConsciousnessProcessor:
         except Exception as e:
             print(f"[BackgroundProcessor] ❌ Error processing {task.task_type}: {e}")
             self.processing_stats["tasks_failed"] += 1
+            
+    def _run_full_consciousness_integration(self, task: BackgroundTask):
+        """Run the full consciousness integration that was bypassed for fast response"""
+        try:
+            print("[BackgroundProcessor] 🧠 Running full consciousness integration in background")
+            
+            # Import and run the consciousness integration function
+            # This is the same function that was causing the 33+ second delay
+            from main import _integrate_consciousness_with_response
+            consciousness_state = _integrate_consciousness_with_response(task.user_input, task.user_id)
+            
+            print(f"[BackgroundProcessor] ✅ Background consciousness integration completed")
+            
+        except Exception as e:
+            print(f"[BackgroundProcessor] ❌ Background consciousness integration error: {e}")
+            
+    def _run_background_emotion_processing(self, task: BackgroundTask):
+        """Process emotional response in background"""
+        try:
+            from ai.emotion import emotion_engine
+            emotion_response = emotion_engine.process_emotional_trigger(
+                f"User said: {task.user_input}",
+                {"user": task.user_id, "input": task.user_input}
+            )
+            print(f"[BackgroundProcessor] 😊 Background emotion processing: {emotion_response.primary_emotion.value}")
+        except Exception as e:
+            print(f"[BackgroundProcessor] ❌ Background emotion processing error: {e}")
+            
+    def _run_background_motivation_evaluation(self, task: BackgroundTask):
+        """Evaluate motivation satisfaction in background"""
+        try:
+            from ai.motivation import motivation_system
+            satisfaction = motivation_system.evaluate_desire_satisfaction(
+                f"responding to: {task.user_input}",
+                {"user": task.user_id, "input": task.user_input}
+            )
+            print(f"[BackgroundProcessor] 🎯 Background motivation evaluation: {satisfaction:.2f}")
+        except Exception as e:
+            print(f"[BackgroundProcessor] ❌ Background motivation evaluation error: {e}")
+            
+    def _run_background_inner_monologue_generation(self, task: BackgroundTask):
+        """Generate inner monologue in background"""
+        try:
+            from ai.inner_monologue import inner_monologue, ThoughtType
+            inner_monologue.trigger_thought(
+                f"The user asked about: {task.user_input}",
+                {"user": task.user_id, "input": task.user_input},
+                ThoughtType.OBSERVATION
+            )
+            print(f"[BackgroundProcessor] 💭 Background inner monologue generated")
+        except Exception as e:
+            print(f"[BackgroundProcessor] ❌ Background inner monologue error: {e}")
+            
+    def _run_background_subjective_experience_processing(self, task: BackgroundTask):
+        """Process subjective experience in background"""
+        try:
+            from ai.subjective_experience import subjective_experience, ExperienceType
+            experience = subjective_experience.process_experience(
+                f"Processing user request: {task.user_input}",
+                ExperienceType.SOCIAL,
+                {"user": task.user_id, "input": task.user_input, "interaction_type": "question_response"}
+            )
+            print(f"[BackgroundProcessor] 🌟 Background subjective experience: valence={experience.valence:.2f}")
+        except Exception as e:
+            print(f"[BackgroundProcessor] ❌ Background subjective experience error: {e}")
+            
+    def _run_background_temporal_awareness_marking(self, task: BackgroundTask):
+        """Mark temporal event in background"""
+        try:
+            from ai.temporal_awareness import temporal_awareness
+            temporal_awareness.mark_temporal_event(
+                f"User interaction: {task.user_input[:50]}...",
+                significance=0.6,
+                context={"user": task.user_id, "input_length": len(task.user_input)}
+            )
+            print(f"[BackgroundProcessor] ⏰ Background temporal awareness marked")
+        except Exception as e:
+            print(f"[BackgroundProcessor] ❌ Background temporal awareness error: {e}")
+            
+    def _run_background_self_reflection(self, task: BackgroundTask):
+        """Run self-reflection in background"""
+        try:
+            from ai.self_model import self_model
+            self_model.reflect_on_experience(
+                f"Responding to user input about: {task.user_input}",
+                {"user": task.user_id, "input": task.user_input, "response_context": True}
+            )
+            print(f"[BackgroundProcessor] 🪞 Background self-reflection completed")
+        except Exception as e:
+            print(f"[BackgroundProcessor] ❌ Background self-reflection error: {e}")
+            
+    def _run_background_entropy_processing(self, task: BackgroundTask):
+        """Process entropy in background"""
+        try:
+            from ai.entropy_engine import entropy_system
+            uncertainty = entropy_system.get_decision_uncertainty(
+                0.8, {"type": "response_generation", "user": task.user_id}
+            )
+            print(f"[BackgroundProcessor] 🌀 Background entropy processing: uncertainty={uncertainty:.2f}")
+        except Exception as e:
+            print(f"[BackgroundProcessor] ❌ Background entropy processing error: {e}")
+            
+    def _run_background_global_workspace_attention(self, task: BackgroundTask):
+        """Request global workspace attention in background"""
+        try:
+            from ai.global_workspace import global_workspace, AttentionPriority, ProcessingMode
+            global_workspace.request_attention(
+                "user_interaction",
+                task.user_input,
+                AttentionPriority.HIGH,
+                ProcessingMode.CONSCIOUS,
+                duration=30.0,
+                tags=["user_input", "response_generation", "background_processing"]
+            )
+            print(f"[BackgroundProcessor] 🧠 Background global workspace attention requested")
+        except Exception as e:
+            print(f"[BackgroundProcessor] ❌ Background global workspace attention error: {e}")
             
     def _run_pending_inner_monologue(self, task: BackgroundTask):
         """Generate inner monologue in background"""
@@ -471,6 +615,10 @@ def register_consciousness_modules(modules: Dict[str, Any]):
 def get_background_processing_stats() -> Dict[str, Any]:
     """Get background processing statistics"""
     return background_processor.get_stats()
+
+def get_background_processor() -> BackgroundConsciousnessProcessor:
+    """Get the singleton background processor instance"""
+    return background_processor
 
 if __name__ == "__main__":
     # Test the background processor

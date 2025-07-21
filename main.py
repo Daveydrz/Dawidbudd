@@ -689,7 +689,62 @@ def handle_streaming_response(text, current_user):
                 print(f"[AdvancedResponse] 🛡️ LLM LOCKED by voice processing - queuing response")
                 return
         
-        # ✅ CONSCIOUSNESS INTEGRATION: Initialize consciousness state
+        # ✅ EMERGENCY FAST RESPONSE: Check if we need immediate response to fix latency crisis
+        use_emergency_fast_response = False
+        try:
+            from ai.emergency_fast_response import is_emergency_fast_mode_needed, generate_immediate_response, schedule_background_consciousness_processing, get_minimal_context_for_response
+            use_emergency_fast_response = is_emergency_fast_mode_needed()
+        except ImportError:
+            print("[AdvancedResponse] ⚠️ Emergency fast response not available")
+        
+        if use_emergency_fast_response:
+            print("[AdvancedResponse] 🚨 EMERGENCY FAST RESPONSE MODE - bypassing consciousness for immediate response")
+            
+            # Generate immediate response with minimal processing
+            try:
+                response_start = time.time()
+                full_response = ""
+                chunk_count = 0
+                
+                # Get immediate response without consciousness processing
+                for chunk in generate_immediate_response(text, current_user):
+                    if chunk and chunk.strip():
+                        chunk_count += 1
+                        chunk_text = chunk.strip()
+                        
+                        # Check for interrupt
+                        if full_duplex_manager and full_duplex_manager.speech_interrupted:
+                            print("[AdvancedResponse] ⚡ INTERRUPT DETECTED - STOPPING EMERGENCY RESPONSE")
+                            break
+                        
+                        print(f"[AdvancedResponse] 🚨 Emergency chunk {chunk_count}: '{chunk_text[:50]}...'")
+                        speak_streaming(chunk_text)
+                        full_response += chunk_text + " "
+                        
+                        # Brief pause for natural flow
+                        if not (full_duplex_manager and full_duplex_manager.speech_interrupted):
+                            time.sleep(0.05)
+                
+                response_time = time.time() - response_start
+                print(f"[AdvancedResponse] 🚨 EMERGENCY RESPONSE COMPLETED in {response_time:.3f}s")
+                
+                # Schedule all consciousness processing for background
+                minimal_context = get_minimal_context_for_response(text, current_user)
+                schedule_background_consciousness_processing(text, current_user, minimal_context)
+                
+                # Add to conversation history
+                try:
+                    add_to_conversation_history(current_user, text, full_response.strip())
+                except Exception as history_error:
+                    print(f"[AdvancedResponse] ⚠️ History error: {history_error}")
+                
+                return  # Exit early with emergency response
+                
+            except Exception as emergency_error:
+                print(f"[AdvancedResponse] ❌ Emergency response failed: {emergency_error}")
+                # Fall through to normal processing
+        
+        # ✅ NORMAL CONSCIOUSNESS INTEGRATION (only if emergency mode failed or disabled)
         consciousness_state = {}
         cognitive_prompt_injection = {}
         
@@ -2432,6 +2487,17 @@ def main():
     else:
         print(f"[AdvancedBuddy] ❌ Kokoro-FastAPI not available - check server on {KOKORO_API_BASE_URL}")
         print("[AdvancedBuddy] 💡 Make sure to start Kokoro-FastAPI server first!")
+    
+    # ✅ EMERGENCY: Initialize background consciousness processor for fast responses
+    print("[AdvancedBuddy] 🚨 Initializing emergency background consciousness processor...")
+    try:
+        from ai.background_consciousness_processor import get_background_processor
+        background_processor = get_background_processor()
+        background_processor.start()
+        print("[AdvancedBuddy] ✅ Background consciousness processor started - fast responses enabled")
+    except Exception as bg_error:
+        print(f"[AdvancedBuddy] ⚠️ Background processor initialization error: {bg_error}")
+        print("[AdvancedBuddy] ⚠️ Fast response mode may not work optimally")
     
     # Load voice profiles with ADVANCED features
     print("[AdvancedBuddy] 📚 Loading ADVANCED AI voice database...")
