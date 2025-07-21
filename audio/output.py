@@ -53,6 +53,11 @@ def test_kokoro_api():
             kokoro_api_available = True
             print(f"[Buddy V2] ✅ Kokoro-FastAPI connected at {KOKORO_API_BASE_URL}")
             return True
+    except requests.exceptions.ConnectionError as e:
+        print(f"[Buddy V2] ❌ Kokoro-FastAPI connection failed: {e}")
+        print(f"[Buddy V2] 💡 Make sure Kokoro-FastAPI is running on {KOKORO_API_BASE_URL}")
+    except requests.exceptions.Timeout as e:
+        print(f"[Buddy V2] ❌ Kokoro-FastAPI timeout: {e}")
     except Exception as e:
         print(f"[Buddy V2] ❌ Kokoro-FastAPI not available: {e}")
         print(f"[Buddy V2] 💡 Make sure Kokoro-FastAPI is running on {KOKORO_API_BASE_URL}")
@@ -78,12 +83,26 @@ def generate_tts(text, lang=DEFAULT_LANG):
             "response_format": "wav"
         }
         
-        # Call Kokoro-FastAPI
-        response = requests.post(
-            f"{KOKORO_API_BASE_URL}/v1/audio/speech",
-            json=payload,
-            timeout=KOKORO_API_TIMEOUT
-        )
+        # Call Kokoro-FastAPI with retry mechanism
+        response = None
+        try:
+            response = requests.post(
+                f"{KOKORO_API_BASE_URL}/v1/audio/speech",
+                json=payload,
+                timeout=KOKORO_API_TIMEOUT
+            )
+        except requests.exceptions.RequestException as e:
+            print(f"[TTS] ❌ First request failed: {e}, retrying...")
+            time.sleep(1)
+            try:
+                response = requests.post(
+                    f"{KOKORO_API_BASE_URL}/v1/audio/speech",
+                    json=payload,
+                    timeout=KOKORO_API_TIMEOUT
+                )
+            except requests.exceptions.RequestException as retry_e:
+                print(f"[TTS] ❌ Retry also failed: {retry_e}")
+                return None, None
         
         if response.status_code == 200:
             # Save audio to temporary file
@@ -142,10 +161,24 @@ def speak_async(text, lang=DEFAULT_LANG):
     """Queue text for speech synthesis"""
     if not text or len(text.strip()) < 2:
         return
+    
+    # Split long text before TTS
+    if len(text.strip()) > 500:
+        print("[TTS] ⚠️ Text too long. Splitting into chunks.")
+        import re
+        for chunk in re.split(r'[.!?]', text):
+            if chunk.strip():
+                speak_async(chunk.strip(), lang)
+        return
         
     def tts_worker():
         pcm, sr = generate_tts(text.strip(), lang)
-        if pcm is not None:
+        if pcm is None:
+            print("[TTS] ⚠️ No audio generated. Using fallback message.")
+            fallback_pcm, sr = generate_tts("Sorry, something went wrong.", lang)
+            if fallback_pcm is not None:
+                audio_queue.put((fallback_pcm, sr))
+        else:
             audio_queue.put((pcm, sr))
     
     threading.Thread(target=tts_worker, daemon=True).start()
@@ -154,6 +187,17 @@ def speak_streaming(text, voice=None, lang=DEFAULT_LANG):
     """✅ FIXED: Queue text chunk for immediate streaming TTS"""
     if not text or len(text.strip()) < 2:
         return False
+    
+    # Split long text before streaming TTS
+    if len(text.strip()) > 500:
+        print("[StreamingTTS] ⚠️ Text too long. Splitting into chunks.")
+        import re
+        success = True
+        for chunk in re.split(r'[.!?]', text):
+            if chunk.strip():
+                chunk_success = speak_streaming(chunk.strip(), voice, lang)
+                success = success and chunk_success
+        return success
         
     def streaming_tts_worker():
         try:
@@ -175,11 +219,26 @@ def speak_streaming(text, voice=None, lang=DEFAULT_LANG):
                 "response_format": "wav"
             }
             
-            response = requests.post(
-                f"{KOKORO_API_BASE_URL}/v1/audio/speech",
-                json=payload,
-                timeout=5  # Shorter timeout for streaming
-            )
+            # Call Kokoro-FastAPI with retry mechanism
+            response = None
+            try:
+                response = requests.post(
+                    f"{KOKORO_API_BASE_URL}/v1/audio/speech",
+                    json=payload,
+                    timeout=5  # Shorter timeout for streaming
+                )
+            except requests.exceptions.RequestException as e:
+                print(f"[StreamingTTS] ❌ First request failed: {e}, retrying...")
+                time.sleep(0.5)
+                try:
+                    response = requests.post(
+                        f"{KOKORO_API_BASE_URL}/v1/audio/speech",
+                        json=payload,
+                        timeout=5
+                    )
+                except requests.exceptions.RequestException as retry_e:
+                    print(f"[StreamingTTS] ❌ Retry also failed: {retry_e}")
+                    return False
             
             if response.status_code == 200:
                 # Process audio quickly for streaming
@@ -503,8 +562,12 @@ def start_streaming_response(user_input, current_user, language):
     pass
 
 def queue_text_chunk(text_chunk, voice=None):
-    """Queue a text chunk for immediate TTS processing"""
-    return speak_streaming(text_chunk, voice)
+    """Queue a text chunk for immediate TTS processing with fallback"""
+    success = speak_streaming(text_chunk, voice)
+    if not success:
+        print("[TTS] ⚠️ Streaming failed, trying fallback...")
+        speak_async("Sorry, there was an audio issue.")
+    return success
 
 # Initialize API connection on module load
 test_kokoro_api()
