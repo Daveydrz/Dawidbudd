@@ -247,7 +247,7 @@ try:
 except Exception as test_err:
     print(f"[AdvancedBuddy] ❌ voice_manager test error: {test_err}")
 
-# ✅ Updated imports for Kokoro-FastAPI streaming with error handling
+# ✅ Updated imports for Kokoro direct library streaming with error handling
 try:
     from audio.output import (
         speak_async, speak_streaming, play_chime, start_audio_worker,
@@ -1745,8 +1745,8 @@ def main():
     print(f"[AdvancedBuddy] 🕐 Current Time: {brisbane_time_12h} Brisbane")
     print(f"[AdvancedBuddy] 📅 Current Date: {brisbane_date}")
     
-    # ✅ Test Kokoro-FastAPI connection
-    print("[AdvancedBuddy] 🎵 Testing Kokoro-FastAPI connection...")
+    # ✅ Test Kokoro direct library connection
+    print("[AdvancedBuddy] 🎵 Testing Kokoro direct library connection...")
     if test_kokoro_api():
         print(f"[AdvancedBuddy] ✅ Kokoro Direct Library ready - Model: {KOKORO_MODEL_PATH}")
         print(f"[AdvancedBuddy] 🎵 Default voice: {KOKORO_DEFAULT_VOICE} (Australian)")
@@ -1755,7 +1755,7 @@ def main():
         print(f"[AdvancedBuddy] 🧠 LLM chunks: {STREAMING_LLM_CHUNK_WORDS} words")
     else:
         print(f"[AdvancedBuddy] ❌ Kokoro Direct Library not available - check model at {KOKORO_MODEL_PATH}")
-        print("[AdvancedBuddy] 💡 Make sure to start Kokoro-FastAPI server first!")
+        print("[AdvancedBuddy] 💡 Make sure the Kokoro model file exists at the specified path!")
     
     # Load voice profiles with ADVANCED features
     print("[AdvancedBuddy] 📚 Loading ADVANCED AI voice database...")

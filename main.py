@@ -2480,17 +2480,17 @@ def main():
     print(f"[AdvancedBuddy] 🕐 Current Time: {brisbane_time_12h} Brisbane")
     print(f"[AdvancedBuddy] 📅 Current Date: {brisbane_date}")
     
-    # ✅ Test Kokoro-FastAPI connection
-    print("[AdvancedBuddy] 🎵 Testing Kokoro-FastAPI connection...")
+    # ✅ Test Kokoro direct library connection
+    print("[AdvancedBuddy] 🎵 Testing Kokoro direct library connection...")
     if test_kokoro_api():
-        print(f"[AdvancedBuddy] ✅ Kokoro-FastAPI connected at {KOKORO_API_BASE_URL}")
+        print(f"[AdvancedBuddy] ✅ Kokoro Direct Library ready - Model: {KOKORO_MODEL_PATH}")
         print(f"[AdvancedBuddy] 🎵 Default voice: {KOKORO_DEFAULT_VOICE} (Australian)")
         print(f"[AdvancedBuddy] ⚡ Streaming chunks: {STREAMING_CHUNK_WORDS} words")
         print(f"[AdvancedBuddy] ⏱️ Chunk delay: {STREAMING_RESPONSE_DELAY}s")
         print(f"[AdvancedBuddy] 🧠 LLM chunks: {STREAMING_LLM_CHUNK_WORDS} words")
     else:
-        print(f"[AdvancedBuddy] ❌ Kokoro-FastAPI not available - check server on {KOKORO_API_BASE_URL}")
-        print("[AdvancedBuddy] 💡 Make sure to start Kokoro-FastAPI server first!")
+        print(f"[AdvancedBuddy] ❌ Kokoro Direct Library not available - check model at {KOKORO_MODEL_PATH}")
+        print("[AdvancedBuddy] 💡 Make sure the Kokoro model file exists at the specified path!")
     
     # ✅ EMERGENCY: Initialize background consciousness processor for fast responses
     print("[AdvancedBuddy] 🚨 Initializing emergency background consciousness processor...")
