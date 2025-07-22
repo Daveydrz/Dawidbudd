@@ -12,13 +12,13 @@ import os
 from langdetect import detect
 from config import *
 
-# Import Kokoro library directly
+# Import Kokoro library directly with KPipeline
 try:
-    from kokoro import Kokoro
+    from kokoro import KPipeline
     KOKORO_AVAILABLE = True
-    print("[Kokoro] ✅ Direct Kokoro library imported successfully")
+    print("[Kokoro] ✅ KPipeline imported successfully")
 except ImportError as e:
-    print(f"[Kokoro] ❌ Could not import Kokoro library: {e}")
+    print(f"[Kokoro] ❌ Could not import KPipeline: {e}")
     KOKORO_AVAILABLE = False
 
 # Global audio state
@@ -28,13 +28,13 @@ audio_lock = threading.Lock()
 buddy_talking = threading.Event()
 playback_start_time = None
 
-# ✅ NEW: Direct Kokoro library configuration
-KOKORO_MODEL_PATH = "C:/Users/drzew/kokoro-onnx/kokoro-v1_0.pth"
-KOKORO_DEFAULT_VOICE = getattr(globals(), 'KOKORO_DEFAULT_VOICE', "af_heart")
+# ✅ NEW: Direct Kokoro library configuration with KPipeline
+KOKORO_MODEL_PATH = "C:/Users/drzew/kokoro/kokoro/voices/kokoro-v1_0.pth"
+KOKORO_DEFAULT_VOICE = getattr(globals(), 'KOKORO_DEFAULT_VOICE', "af_bella")
 
-# Voice mapping for different languages
+# Voice mapping for different languages (KPipeline compatible)
 KOKORO_VOICES = {
-    "en": "af_heart",      # Australian female
+    "en": "af_bella",      # Australian female
     "en-us": "am_adam",    # American male  
     "en-gb": "bf_emma",    # British female
     "es": "es_maria",      # Spanish female
@@ -47,75 +47,113 @@ KOKORO_VOICES = {
     "zh": "zh_mei",        # Chinese female
 }
 
-# Initialize Kokoro model
-kokoro_model = None
+# Language code mapping for KPipeline
+KOKORO_LANG_CODES = {
+    "en": "a",      # American English
+    "en-us": "a",   # American English  
+    "en-gb": "a",   # American English (no specific British code)
+    "es": "a",      # Default to American for now
+    "fr": "a",      # Default to American for now
+    "de": "a",      # Default to American for now
+    "it": "i",      # Italian
+    "pt": "a",      # Default to American for now
+    "ja": "a",      # Default to American for now
+    "ko": "a",      # Default to American for now
+    "zh": "a",      # Default to American for now
+}
+
+# Initialize KPipeline
+kokoro_pipeline = None
 
 def load_kokoro_model():
-    """Load the Kokoro model once globally"""
-    global kokoro_model
+    """Load the KPipeline once globally"""
+    global kokoro_pipeline
     try:
-        if KOKORO_AVAILABLE and kokoro_model is None:
-            print(f"[Kokoro] 🔄 Loading model from {KOKORO_MODEL_PATH}")
-            kokoro_model = Kokoro(KOKORO_MODEL_PATH)
-            print(f"[Kokoro] ✅ Model loaded successfully")
+        if KOKORO_AVAILABLE and kokoro_pipeline is None:
+            print(f"[Kokoro] 🔄 Loading KPipeline with lang_code 'a' (American English)")
+            kokoro_pipeline = KPipeline(lang_code='a')  # Default to American English
+            print(f"[Kokoro] ✅ KPipeline loaded successfully")
             return True
     except Exception as e:
-        print(f"[Kokoro] ❌ Failed to load model: {e}")
-        kokoro_model = None
+        print(f"[Kokoro] ❌ Failed to load KPipeline: {e}")
+        kokoro_pipeline = None
     return False
 
 def test_kokoro_api():
-    """Test if Kokoro model is available and loaded"""
-    global kokoro_model
-    if kokoro_model is not None:
-        print(f"[Kokoro] ✅ Direct Kokoro model ready")
+    """Test if KPipeline is available and loaded"""
+    global kokoro_pipeline
+    if kokoro_pipeline is not None:
+        print(f"[Kokoro] ✅ KPipeline ready")
         return True
     
-    # Try to load the model
+    # Try to load the pipeline
     if load_kokoro_model():
         return True
     
-    print(f"[Kokoro] ❌ Kokoro model not available")
-    print(f"[Kokoro] 💡 Make sure the model file exists at {KOKORO_MODEL_PATH}")
+    print(f"[Kokoro] ❌ KPipeline not available")
+    print(f"[Kokoro] 💡 Make sure the Kokoro library is installed properly")
     return False
 
+def generate_kokoro(text, voice='af_bella', speed=1.0):
+    """Generate TTS audio using KPipeline with voice and speed control"""
+    try:
+        if not text.strip():
+            return None
+        
+        # Ensure pipeline is loaded
+        if kokoro_pipeline is None:
+            if not load_kokoro_model():
+                return None
+        
+        print(f"[Kokoro] 🎭 Generating with voice: {voice}, speed: {speed}")
+        
+        # Generate audio using KPipeline
+        audio_chunks = []
+        for _, _, audio in kokoro_pipeline(text.strip(), voice=voice, speed=speed):
+            audio_chunks.append(audio)
+        
+        if audio_chunks:
+            # Concatenate audio chunks
+            full_audio = b''.join([a.tobytes() for a in audio_chunks])
+            
+            # Convert to numpy array (24kHz as mentioned in the comment)
+            audio_np = np.frombuffer(full_audio, dtype=np.int16)
+            
+            if DEBUG:
+                print(f"[Kokoro] 🗣️ Generated KPipeline TTS: {len(audio_np)} samples, voice: {voice}")
+            
+            return audio_np, 24000  # Kokoro returns 24kHz
+        else:
+            print(f"[Kokoro] ❌ No audio chunks generated")
+            return None
+            
+    except Exception as e:
+        print(f"[Kokoro] ❌ KPipeline generation error: {e}")
+        return None
+
 def generate_tts(text, lang=DEFAULT_LANG):
-    """Generate TTS audio using direct Kokoro library"""
+    """Generate TTS audio using KPipeline (updated to use generate_kokoro)"""
     try:
         if not text.strip():
             return None, None
         
-        # Ensure model is loaded
-        if kokoro_model is None:
-            if not load_kokoro_model():
-                return None, None
-            
-        # Detect language and select voice (simplified for direct library)
+        # Detect language and select voice
         detected_lang = lang or detect(text)
         voice = KOKORO_VOICES.get(detected_lang, KOKORO_DEFAULT_VOICE)
         
-        # Generate audio directly using Kokoro model
-        try:
-            audio_np = kokoro_model.generate(text.strip())
-        except Exception as e:
-            print(f"[Kokoro] ❌ First generation failed: {e}, retrying...")
-            time.sleep(1)
-            try:
-                audio_np = kokoro_model.generate(text.strip())
-            except Exception as retry_e:
-                print(f"[Kokoro] ❌ Retry also failed: {retry_e}")
-                return None, None
+        # Use generate_kokoro function
+        result = generate_kokoro(text.strip(), voice=voice, speed=1.0)
         
-        # Normalize and ensure correct dtype
-        if audio_np is not None:
-            audio_np = (audio_np * 32767).astype(np.int16)
+        if result:
+            audio_np, sample_rate = result
+            # Convert to 16kHz if needed for compatibility
+            if sample_rate == 24000:
+                # Simple downsampling (every 1.5th sample)
+                audio_np = audio_np[::3] * 2  # Take every 3rd sample and amplify
+                sample_rate = 16000
             
-            if DEBUG:
-                print(f"[Kokoro] 🗣️ Generated TTS: {len(audio_np)} samples, voice: {voice}")
-            
-            return audio_np, 16000
+            return audio_np, sample_rate
         else:
-            print(f"[Kokoro] ❌ No audio generated")
             return None, None
             
     except Exception as e:
@@ -149,7 +187,7 @@ def speak_async(text, lang=DEFAULT_LANG):
     threading.Thread(target=tts_worker, daemon=True).start()
 
 def speak_streaming(text, voice=None, lang=DEFAULT_LANG):
-    """✅ FIXED: Queue text chunk for immediate streaming TTS using direct Kokoro"""
+    """✅ UPDATED: Queue text chunk for immediate streaming TTS using KPipeline"""
     if not text or len(text.strip()) < 2:
         return False
     
@@ -166,36 +204,22 @@ def speak_streaming(text, voice=None, lang=DEFAULT_LANG):
         
     def streaming_tts_worker():
         try:
-            # Ensure model is loaded
-            if kokoro_model is None:
-                if not load_kokoro_model():
-                    return False
-            
             # ✅ FIX: Properly handle voice parameter
-            selected_voice = voice  # Use provided voice
-            if selected_voice is None:
-                # Detect voice from language if none provided
-                detected_lang = lang or detect(text)
-                selected_voice = KOKORO_VOICES.get(detected_lang, KOKORO_DEFAULT_VOICE)
+            selected_voice = voice or KOKORO_VOICES.get(lang, KOKORO_DEFAULT_VOICE)
             
-            # Generate audio directly using Kokoro model
-            try:
-                audio_data = kokoro_model.generate(text.strip())
-            except Exception as e:
-                print(f"[StreamingTTS] ❌ First generation failed: {e}, retrying...")
-                time.sleep(0.5)
-                try:
-                    audio_data = kokoro_model.generate(text.strip())
-                except Exception as retry_e:
-                    print(f"[StreamingTTS] ❌ Retry also failed: {retry_e}")
-                    return False
+            # Use generate_kokoro function with voice control
+            result = generate_kokoro(text.strip(), voice=selected_voice, speed=1.0)
             
-            if audio_data is not None:
-                # Normalize and convert to int16
-                audio_data = (audio_data * 32767).astype(np.int16)
+            if result:
+                audio_data, sample_rate = result
+                
+                # Convert to 16kHz for compatibility if needed
+                if sample_rate == 24000:
+                    audio_data = audio_data[::3] * 2  # Simple downsampling
+                    sample_rate = 16000
                 
                 # Queue immediately
-                audio_queue.put((audio_data, 16000))
+                audio_queue.put((audio_data, sample_rate))
                 
                 if DEBUG:
                     print(f"[StreamingTTS] ✅ Queued chunk: '{text[:50]}...' with voice: {selected_voice}")

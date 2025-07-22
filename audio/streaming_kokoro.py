@@ -23,14 +23,14 @@ class AudioChunk:
     generation_time: float
 
 class StreamingKokoroWrapper:
-    """UPDATED: Streaming wrapper that uses direct Kokoro library"""
+    """UPDATED: Streaming wrapper that uses KPipeline"""
     
     def __init__(self):
         self.thread_pool = ThreadPoolExecutor(max_workers=STREAMING_THREAD_POOL_SIZE)
         self.audio_queue = queue.Queue(maxsize=STREAMING_BUFFER_SIZE)
         self.generation_futures = {}
         self.is_streaming = False
-        self.current_voice = "af_heart"  # Default voice
+        self.current_voice = "af_bella"  # Default voice for KPipeline
         self.current_lang = "en-us"
         
     def set_voice_settings(self, lang: str):
@@ -42,22 +42,26 @@ class StreamingKokoroWrapper:
                 print(f"[StreamingKokoro] 🎭 Voice set to {self.current_voice} ({self.current_lang})")
     
     def generate_audio_chunk_sync(self, text: str, chunk_id: str) -> Optional[AudioChunk]:
-        """Generate audio for a single chunk using direct Kokoro library"""
+        """Generate audio for a single chunk using KPipeline"""
         try:
             start_time = time.time()
             
-            # ✅ UPDATED: Use direct Kokoro library via audio.output
-            from audio.output import generate_tts
+            # ✅ UPDATED: Use KPipeline via audio.output
+            from audio.output import generate_kokoro
             
             if DEBUG:
                 print(f"[StreamingKokoro] 🎵 Generating chunk {chunk_id}: '{text[:30]}...'")
             
-            # Use the updated generate_tts with direct library
-            audio_data, sample_rate = generate_tts(text, self.current_lang.split('-')[0])
+            # Use the updated generate_kokoro with KPipeline
+            result = generate_kokoro(text, voice=self.current_voice, speed=1.0)
             
             generation_time = time.time() - start_time
             
-            if audio_data is not None:
+            if result:
+                # Convert bytes to numpy array (24kHz from KPipeline)
+                audio_data = np.frombuffer(result, dtype=np.int16)
+                sample_rate = 24000  # Kokoro KPipeline returns 24kHz
+                
                 audio_chunk = AudioChunk(
                     audio_data=audio_data,
                     sample_rate=sample_rate,
@@ -68,7 +72,7 @@ class StreamingKokoroWrapper:
                 )
                 
                 if DEBUG:
-                    print(f"[StreamingKokoro] ✅ Generated chunk {chunk_id} in {generation_time:.2f}s")
+                    print(f"[StreamingKokoro] ✅ Generated chunk {chunk_id} in {generation_time:.2f}s (24kHz)")
                 
                 return audio_chunk
             else:
@@ -128,17 +132,17 @@ class StreamingKokoroWrapper:
 streaming_kokoro = StreamingKokoroWrapper()
 
 def stream_speak_chunks(text_chunks: List[str], lang: str = "en"):
-    """UPDATED: High-level function to stream speak text chunks using direct library"""
+    """UPDATED: High-level function to stream speak text chunks using KPipeline"""
     kokoro = streaming_kokoro
     
     if DEBUG:
-        print(f"[StreamSpeak] 🌊 Starting to stream {len(text_chunks)} text chunks")
+        print(f"[StreamSpeak] 🌊 Starting to stream {len(text_chunks)} text chunks with KPipeline")
     
     chunk_count = 0
     for audio_chunk in kokoro.stream_text_chunks(text_chunks, lang):
         chunk_count += 1
         if DEBUG:
-            print(f"[StreamSpeak] 🎵 Completed chunk {chunk_count}: '{audio_chunk.text[:30]}...'")
+            print(f"[StreamSpeak] 🎵 Completed chunk {chunk_count}: '{audio_chunk.text[:30]}...' (24kHz)")
     
     if DEBUG:
-        print(f"[StreamSpeak] ✅ Completed streaming {chunk_count} chunks")
+        print(f"[StreamSpeak] ✅ Completed streaming {chunk_count} chunks with KPipeline")

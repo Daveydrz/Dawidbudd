@@ -192,7 +192,7 @@ CHIME_PATH = "chime.wav"
 
 # ✅ ==== KOKORO DIRECT LIBRARY TTS CONFIGURATION ====
 # Direct Kokoro library settings (replaces FastAPI)
-KOKORO_MODEL_PATH = "C:/Users/drzew/kokoro-onnx/kokoro-v1_0.pth"
+KOKORO_MODEL_PATH = "C:/Users/drzew/kokoro/kokoro/voices/kokoro-v1_0.pth"
 KOKORO_DEFAULT_VOICE = "af_heart"  # Australian female voice
 KOKORO_STREAMING_ENABLED = True    # Enable streaming TTS
 KOKORO_CHUNK_SIZE = 512           # Audio chunk size for streaming

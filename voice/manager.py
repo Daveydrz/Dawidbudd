@@ -1,4 +1,4 @@
-# voice/manager.py - INTELLIGENT Voice Learning Manager + ATTENTION ENTROPY
+# voice/manager.py - INTELLIGENT Voice Learning Manager + ATTENTION ENTROPY + KOKORO INTEGRATION
 import time
 import numpy as np
 from datetime import datetime, timedelta
@@ -9,6 +9,23 @@ from audio.output import speak_streaming
 from typing import Optional, Dict, List, Any, Tuple, Union
 
 from config import VOICE_DEBUG_MODE
+
+# ✅ KOKORO INTEGRATION: Import KPipeline for advanced TTS
+try:
+    from kokoro import KPipeline
+    KOKORO_AVAILABLE = True
+    print("[VoiceManager] 🎭 KPipeline integrated for advanced TTS")
+    # Initialize KPipeline for American English
+    kokoro_pipeline = KPipeline(lang_code='a')  # 'a' = American English, 'i' = Italian, etc.
+    print("[VoiceManager] ✅ KPipeline initialized successfully")
+except ImportError as e:
+    print(f"[VoiceManager] ⚠️ KPipeline not available: {e}")
+    KOKORO_AVAILABLE = False
+    kokoro_pipeline = None
+except Exception as e:
+    print(f"[VoiceManager] ❌ KPipeline initialization failed: {e}")
+    KOKORO_AVAILABLE = False
+    kokoro_pipeline = None
 
 # ✅ ENTROPY SYSTEM: Import consciousness emergence components for attention chaos
 try:
@@ -106,7 +123,120 @@ class IntelligentVoiceManager:
         print(f"[IntelligentVoiceManager] 📚 Loaded {len(known_users)} voice profiles")
         print(f"[IntelligentVoiceManager] 🔍 Anonymous clusters: {len(anonymous_clusters)}")
 
-    def debug_current_voice_state(self):
+        # ✅ KOKORO TTS ENGINE: Initialize TTS capabilities
+        self.tts_engine = "kokoro"  # Default TTS engine
+        self.kokoro_voice = "af_bella"  # Default voice
+        self.kokoro_speed = 1.0  # Default speed
+        print(f"[IntelligentVoiceManager] 🎭 TTS Engine: {self.tts_engine} with voice: {self.kokoro_voice}")
+
+    def generate_kokoro(self, text, voice='af_bella', speed=1.0):
+        """🎭 Generate Kokoro TTS audio with voice and speed control"""
+        try:
+            if not KOKORO_AVAILABLE or kokoro_pipeline is None:
+                print(f"[VoiceManager] ❌ KPipeline not available")
+                return None
+            
+            if not text.strip():
+                return None
+            
+            print(f"[VoiceManager] 🎭 Generating Kokoro TTS: voice={voice}, speed={speed}")
+            
+            # Generate audio chunks using KPipeline
+            audio_chunks = []
+            for _, _, audio in kokoro_pipeline(text, voice=voice, speed=speed):
+                audio_chunks.append(audio)
+            
+            if audio_chunks:
+                # Concatenate audio chunks and convert to bytes
+                return b''.join([a.tobytes() for a in audio_chunks])
+            else:
+                print(f"[VoiceManager] ❌ No audio chunks generated")
+                return None
+                
+        except Exception as e:
+            print(f"[VoiceManager] ❌ Kokoro TTS error: {e}")
+            return None
+
+    def set_tts_engine(self, engine="kokoro", voice=None, speed=None):
+        """🔧 Set TTS engine and voice settings"""
+        try:
+            self.tts_engine = engine
+            
+            if voice:
+                self.kokoro_voice = voice
+            if speed:
+                self.kokoro_speed = speed
+                
+            print(f"[VoiceManager] 🔧 TTS settings updated: engine={engine}, voice={self.kokoro_voice}, speed={self.kokoro_speed}")
+            
+        except Exception as e:
+            print(f"[VoiceManager] ❌ Error setting TTS engine: {e}")
+
+    def speak_with_engine(self, text, voice=None, speed=None):
+        """🗣️ Speak using selected TTS engine"""
+        try:
+            if self.tts_engine == "kokoro":
+                if KOKORO_AVAILABLE:
+                    selected_voice = voice or self.kokoro_voice
+                    selected_speed = speed or self.kokoro_speed
+                    
+                    audio_data = self.generate_kokoro(text, voice=selected_voice, speed=selected_speed)
+                    
+                    if audio_data:
+                        # Use existing audio system to play
+                        from audio.output import audio_queue
+                        # Convert bytes to numpy array (assuming 24kHz from Kokoro)
+                        audio_np = np.frombuffer(audio_data, dtype=np.int16)
+                        audio_queue.put((audio_np, 24000))
+                        print(f"[VoiceManager] ✅ Queued Kokoro audio: {len(audio_np)} samples")
+                        return True
+                    else:
+                        print(f"[VoiceManager] ❌ Failed to generate Kokoro audio")
+                        return False
+                else:
+                    print(f"[VoiceManager] ❌ Kokoro not available, falling back to default")
+                    speak_streaming(text)
+                    return True
+            else:
+                # Default to existing speak_streaming
+                speak_streaming(text)
+                return True
+                
+        except Exception as e:
+            print(f"[VoiceManager] ❌ Error speaking with engine: {e}")
+            # Fallback to default
+            speak_streaming(text)
+            return False
+
+    def play_kokoro_audio(self, audio_array, sample_rate=24000):
+        """🎵 Play Kokoro audio array directly (for handling 24kHz raw audio)"""
+        try:
+            import sounddevice as sd
+            
+            print(f"[VoiceManager] 🎵 Playing Kokoro audio: {len(audio_array)} samples at {sample_rate}Hz")
+            
+            # Play audio and wait for completion
+            sd.play(audio_array, samplerate=sample_rate)
+            sd.wait()
+            
+            print(f"[VoiceManager] ✅ Audio playback completed")
+            return True
+            
+        except ImportError:
+            print(f"[VoiceManager] ⚠️ sounddevice not available, using audio queue instead")
+            # Fallback to existing audio system
+            from audio.output import audio_queue
+            
+            # Convert to int16 if needed
+            if audio_array.dtype != np.int16:
+                audio_array = (audio_array * 32767).astype(np.int16)
+            
+            audio_queue.put((audio_array, sample_rate))
+            return True
+            
+        except Exception as e:
+            print(f"[VoiceManager] ❌ Error playing Kokoro audio: {e}")
+            return False
         """Debug current voice state"""
         print(f"\n🔍 VOICE STATE DEBUG:")
         print(f"📊 Known users: {list(known_users.keys())}")

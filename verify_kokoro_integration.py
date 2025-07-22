@@ -1,231 +1,211 @@
 #!/usr/bin/env python3
 """
-Comprehensive verification script for Kokoro Direct Library integration
-Checks file contents and import changes without loading heavy dependencies
+Verification script for Kokoro KPipeline integration
+Verifies that all the requested changes have been implemented correctly
 """
 
+import sys
 import os
-import re
 
-def check_file_content(filepath, check_name):
-    """Check if a file contains expected content changes"""
-    if not os.path.exists(filepath):
-        print(f"[Check] ❌ {check_name}: File {filepath} not found")
-        return False
+# Add the project root to path
+sys.path.append('.')
+
+def verify_kokoro_integration():
+    """Verify all Kokoro KPipeline integration changes"""
+    print("🔍 Verifying Kokoro KPipeline Integration")
+    print("=" * 50)
     
+    verification_results = []
+    
+    # Check 1: Config.py model path update
+    print("\n1. Checking config.py model path...")
     try:
-        with open(filepath, 'r', encoding='utf-8') as f:
-            content = f.read()
-        return content
+        from config import KOKORO_MODEL_PATH
+        expected_path = "C:/Users/drzew/kokoro/kokoro/voices/kokoro-v1_0.pth"
+        
+        if KOKORO_MODEL_PATH == expected_path:
+            print(f"✅ Model path correctly updated: {KOKORO_MODEL_PATH}")
+            verification_results.append(("Model Path", True))
+        else:
+            print(f"❌ Model path incorrect. Expected: {expected_path}, Got: {KOKORO_MODEL_PATH}")
+            verification_results.append(("Model Path", False))
+            
     except Exception as e:
-        print(f"[Check] ❌ {check_name}: Error reading {filepath}: {e}")
-        return False
-
-def verify_audio_output_changes():
-    """Verify changes in audio/output.py"""
-    print("[Verify] 🔍 Checking audio/output.py changes...")
+        print(f"❌ Error checking config: {e}")
+        verification_results.append(("Model Path", False))
     
-    content = check_file_content("audio/output.py", "Audio Output")
-    if not content:
-        return False
+    # Check 2: Audio output KPipeline import
+    print("\n2. Checking audio/output.py KPipeline import...")
+    try:
+        with open('audio/output.py', 'r') as f:
+            content = f.read()
+            
+        if 'from kokoro import KPipeline' in content:
+            print("✅ KPipeline import found in audio/output.py")
+            verification_results.append(("Audio Output Import", True))
+        else:
+            print("❌ KPipeline import not found in audio/output.py")
+            verification_results.append(("Audio Output Import", False))
+            
+    except Exception as e:
+        print(f"❌ Error checking audio/output.py: {e}")
+        verification_results.append(("Audio Output Import", False))
     
-    # Check for new imports
-    has_kokoro_import = "from kokoro import Kokoro" in content
-    print(f"[Verify] {'✅' if has_kokoro_import else '❌'} Kokoro import: {has_kokoro_import}")
+    # Check 3: Generate_kokoro function
+    print("\n3. Checking generate_kokoro function...")
+    try:
+        with open('audio/output.py', 'r') as f:
+            content = f.read()
+            
+        if 'def generate_kokoro(' in content and 'voice=' in content and 'speed=' in content:
+            print("✅ generate_kokoro function with voice and speed parameters found")
+            verification_results.append(("Generate Kokoro Function", True))
+        else:
+            print("❌ generate_kokoro function with proper parameters not found")
+            verification_results.append(("Generate Kokoro Function", False))
+            
+    except Exception as e:
+        print(f"❌ Error checking generate_kokoro function: {e}")
+        verification_results.append(("Generate Kokoro Function", False))
     
-    # Check for model path
-    has_model_path = "KOKORO_MODEL_PATH" in content
-    print(f"[Verify] {'✅' if has_model_path else '❌'} Model path config: {has_model_path}")
+    # Check 4: Voice manager Kokoro integration
+    print("\n4. Checking voice manager Kokoro integration...")
+    try:
+        with open('voice/manager.py', 'r') as f:
+            content = f.read()
+            
+        has_import = 'from kokoro import KPipeline' in content
+        has_generate = 'def generate_kokoro(' in content
+        has_tts_engine = 'def set_tts_engine(' in content
+        has_speak_engine = 'def speak_with_engine(' in content
+        
+        if has_import and has_generate and has_tts_engine and has_speak_engine:
+            print("✅ Voice manager has all required Kokoro functions")
+            verification_results.append(("Voice Manager Integration", True))
+        else:
+            print(f"❌ Voice manager missing functions: import={has_import}, generate={has_generate}, set_engine={has_tts_engine}, speak={has_speak_engine}")
+            verification_results.append(("Voice Manager Integration", False))
+            
+    except Exception as e:
+        print(f"❌ Error checking voice manager: {e}")
+        verification_results.append(("Voice Manager Integration", False))
     
-    # Check for direct library functions
-    has_load_model = "def load_kokoro_model" in content
-    print(f"[Verify] {'✅' if has_load_model else '❌'} Load model function: {has_load_model}")
+    # Check 5: TTS engine selection logic
+    print("\n5. Checking TTS engine selection logic...")
+    try:
+        with open('voice/manager.py', 'r') as f:
+            content = f.read()
+            
+        if 'self.tts_engine = "kokoro"' in content and 'if self.tts_engine == "kokoro"' in content:
+            print("✅ TTS engine selection logic implemented")
+            verification_results.append(("TTS Engine Selection", True))
+        else:
+            print("❌ TTS engine selection logic not found")
+            verification_results.append(("TTS Engine Selection", False))
+            
+    except Exception as e:
+        print(f"❌ Error checking TTS engine selection: {e}")
+        verification_results.append(("TTS Engine Selection", False))
     
-    has_kokoro_model_var = "kokoro_model =" in content
-    print(f"[Verify] {'✅' if has_kokoro_model_var else '❌'} Kokoro model variable: {has_kokoro_model_var}")
+    # Check 6: Streaming Kokoro updates
+    print("\n6. Checking streaming Kokoro updates...")
+    try:
+        with open('audio/streaming_kokoro.py', 'r') as f:
+            content = f.read()
+            
+        if 'generate_kokoro' in content and 'KPipeline' in content:
+            print("✅ Streaming Kokoro updated for KPipeline")
+            verification_results.append(("Streaming Updates", True))
+        else:
+            print("❌ Streaming Kokoro not updated for KPipeline")
+            verification_results.append(("Streaming Updates", False))
+            
+    except Exception as e:
+        print(f"❌ Error checking streaming Kokoro: {e}")
+        verification_results.append(("Streaming Updates", False))
     
-    # Check for removed FastAPI code
-    has_requests_import = "import requests" in content
-    print(f"[Verify] {'✅' if not has_requests_import else '❌'} Requests import removed: {not has_requests_import}")
+    # Check 7: Audio handling for 24kHz
+    print("\n7. Checking 24kHz audio handling...")
+    try:
+        with open('audio/output.py', 'r') as f:
+            content = f.read()
+            
+        with open('voice/manager.py', 'r') as f:
+            manager_content = f.read()
+            
+        if '24000' in content or '24000' in manager_content:
+            print("✅ 24kHz audio handling implemented")
+            verification_results.append(("24kHz Audio Handling", True))
+        else:
+            print("❌ 24kHz audio handling not found")
+            verification_results.append(("24kHz Audio Handling", False))
+            
+    except Exception as e:
+        print(f"❌ Error checking 24kHz handling: {e}")
+        verification_results.append(("24kHz Audio Handling", False))
     
-    has_fastapi_url = "KOKORO_API_BASE_URL" in content  
-    print(f"[Verify] {'✅' if not has_fastapi_url else '❌'} FastAPI URL removed: {not has_fastapi_url}")
+    # Check 8: Voice and speed parameters
+    print("\n8. Checking voice and speed parameter support...")
+    try:
+        with open('audio/output.py', 'r') as f:
+            content = f.read()
+            
+        with open('voice/manager.py', 'r') as f:
+            manager_content = f.read()
+            
+        voice_support = 'voice=' in content and 'voice=' in manager_content
+        speed_support = 'speed=' in content and 'speed=' in manager_content
+        
+        if voice_support and speed_support:
+            print("✅ Voice and speed parameter support implemented")
+            verification_results.append(("Voice/Speed Parameters", True))
+        else:
+            print(f"❌ Parameter support incomplete: voice={voice_support}, speed={speed_support}")
+            verification_results.append(("Voice/Speed Parameters", False))
+            
+    except Exception as e:
+        print(f"❌ Error checking parameters: {e}")
+        verification_results.append(("Voice/Speed Parameters", False))
     
-    has_requests_post = "requests.post" in content
-    print(f"[Verify] {'✅' if not has_requests_post else '❌'} requests.post calls removed: {not has_requests_post}")
-    
-    # Check generate_tts function uses direct library
-    generate_tts_match = re.search(r'def generate_tts.*?kokoro_model\.generate', content, re.DOTALL)
-    has_direct_generation = generate_tts_match is not None
-    print(f"[Verify] {'✅' if has_direct_generation else '❌'} Direct generation in generate_tts: {has_direct_generation}")
-    
-    success_count = sum([
-        has_kokoro_import, has_model_path, has_load_model, has_kokoro_model_var,
-        not has_requests_import, not has_fastapi_url, not has_requests_post, has_direct_generation
-    ])
-    
-    print(f"[Verify] 📊 Audio Output: {success_count}/8 checks passed")
-    return success_count >= 6
-
-def verify_config_changes():
-    """Verify changes in config.py"""
-    print("[Verify] 🔍 Checking config.py changes...")
-    
-    content = check_file_content("config.py", "Config")
-    if not content:
-        return False
-    
-    # Check for new model path
-    has_correct_path = 'C:/Users/drzew/kokoro-onnx/kokoro-v1_0.pth' in content
-    print(f"[Verify] {'✅' if has_correct_path else '❌'} Correct model path: {has_correct_path}")
-    
-    # Check for KOKORO_VOICES (not KOKORO_API_VOICES)
-    has_kokoro_voices = "KOKORO_VOICES =" in content
-    print(f"[Verify] {'✅' if has_kokoro_voices else '❌'} KOKORO_VOICES config: {has_kokoro_voices}")
-    
-    has_old_api_voices = "KOKORO_API_VOICES" in content
-    print(f"[Verify] {'✅' if not has_old_api_voices else '❌'} Old API voices removed: {not has_old_api_voices}")
-    
-    # Check for removed FastAPI configs
-    has_api_base_url = "KOKORO_API_BASE_URL" in content
-    print(f"[Verify] {'✅' if not has_api_base_url else '❌'} API base URL removed: {not has_api_base_url}")
-    
-    has_api_timeout = "KOKORO_API_TIMEOUT" in content
-    print(f"[Verify] {'✅' if not has_api_timeout else '❌'} API timeout removed: {not has_api_timeout}")
-    
-    # Check for updated status messages
-    has_direct_library_status = "KOKORO DIRECT LIBRARY TTS" in content
-    print(f"[Verify] {'✅' if has_direct_library_status else '❌'} Direct library status: {has_direct_library_status}")
-    
-    success_count = sum([
-        has_correct_path, has_kokoro_voices, not has_old_api_voices,
-        not has_api_base_url, not has_api_timeout, has_direct_library_status
-    ])
-    
-    print(f"[Verify] 📊 Config: {success_count}/6 checks passed")
-    return success_count >= 5
-
-def verify_ai_main_changes():
-    """Verify changes in ai/main.py"""
-    print("[Verify] 🔍 Checking ai/main.py changes...")
-    
-    content = check_file_content("ai/main.py", "AI Main")
-    if not content:
-        return False
-    
-    # Check for updated messages
-    has_direct_library_msg = "Kokoro Direct Library ready" in content
-    print(f"[Verify] {'✅' if has_direct_library_msg else '❌'} Direct library message: {has_direct_library_msg}")
-    
-    has_model_path_msg = "check model at" in content
-    print(f"[Verify] {'✅' if has_model_path_msg else '❌'} Model path message: {has_model_path_msg}")
-    
-    # Check that old FastAPI messages are removed
-    has_old_fastapi_msg = "Kokoro-FastAPI connected at" in content
-    print(f"[Verify] {'✅' if not has_old_fastapi_msg else '❌'} Old FastAPI message removed: {not has_old_fastapi_msg}")
-    
-    success_count = sum([has_direct_library_msg, has_model_path_msg, not has_old_fastapi_msg])
-    
-    print(f"[Verify] 📊 AI Main: {success_count}/3 checks passed")
-    return success_count >= 2
-
-def verify_main_changes():
-    """Verify changes in main.py"""
-    print("[Verify] 🔍 Checking main.py changes...")
-    
-    content = check_file_content("main.py", "Main")
-    if not content:
-        return False
-    
-    # Check for updated messages
-    has_direct_library_msg = "Kokoro Direct Library ready" in content
-    print(f"[Verify] {'✅' if has_direct_library_msg else '❌'} Direct library message: {has_direct_library_msg}")
-    
-    has_model_path_msg = "check model at" in content
-    print(f"[Verify] {'✅' if has_model_path_msg else '❌'} Model path message: {has_model_path_msg}")
-    
-    # Check that old FastAPI messages are removed
-    has_old_fastapi_msg = "Kokoro-FastAPI connected at" in content
-    print(f"[Verify] {'✅' if not has_old_fastapi_msg else '❌'} Old FastAPI message removed: {not has_old_fastapi_msg}")
-    
-    success_count = sum([has_direct_library_msg, has_model_path_msg, not has_old_fastapi_msg])
-    
-    print(f"[Verify] 📊 Main: {success_count}/3 checks passed")
-    return success_count >= 2
-
-def verify_streaming_kokoro_changes():
-    """Verify changes in audio/streaming_kokoro.py"""
-    print("[Verify] 🔍 Checking audio/streaming_kokoro.py changes...")
-    
-    content = check_file_content("audio/streaming_kokoro.py", "Streaming Kokoro")
-    if not content:
-        return False
-    
-    # Check for updated comments
-    has_direct_library_comment = "Direct Kokoro library" in content
-    print(f"[Verify] {'✅' if has_direct_library_comment else '❌'} Direct library comment: {has_direct_library_comment}")
-    
-    # Check for updated function using generate_tts
-    has_generate_tts_import = "from audio.output import generate_tts" in content
-    print(f"[Verify] {'✅' if has_generate_tts_import else '❌'} generate_tts import: {has_generate_tts_import}")
-    
-    success_count = sum([has_direct_library_comment, has_generate_tts_import])
-    
-    print(f"[Verify] 📊 Streaming Kokoro: {success_count}/2 checks passed")
-    return success_count >= 1
-
-def main():
-    """Run comprehensive verification"""
-    print("=" * 70)
-    print("🔍 KOKORO DIRECT LIBRARY INTEGRATION VERIFICATION")
-    print("=" * 70)
-    
-    verifications = [
-        ("Audio Output", verify_audio_output_changes),
-        ("Config", verify_config_changes),
-        ("AI Main", verify_ai_main_changes),
-        ("Main", verify_main_changes),
-        ("Streaming Kokoro", verify_streaming_kokoro_changes)
-    ]
+    # Summary
+    print("\n" + "=" * 50)
+    print("📋 VERIFICATION SUMMARY")
+    print("=" * 50)
     
     passed = 0
-    total = len(verifications)
+    total = len(verification_results)
     
-    for name, verify_func in verifications:
-        print(f"\n🔍 Verifying: {name}")
-        print("-" * 50)
-        
-        try:
-            result = verify_func()
-            if result:
-                print(f"[Verify] ✅ {name} verification PASSED")
-                passed += 1
-            else:
-                print(f"[Verify] ❌ {name} verification FAILED")
-        except Exception as e:
-            print(f"[Verify] ❌ {name} verification FAILED with exception: {e}")
+    for check_name, result in verification_results:
+        status = "✅ PASS" if result else "❌ FAIL"
+        print(f"{status}: {check_name}")
+        if result:
+            passed += 1
     
-    print("\n" + "=" * 70)
-    print("📊 VERIFICATION RESULTS")
-    print("=" * 70)
-    print(f"✅ Passed: {passed}/{total}")
-    print(f"❌ Failed: {total - passed}/{total}")
+    print(f"\n🎯 Overall: {passed}/{total} checks passed ({passed/total*100:.1f}%)")
     
     if passed == total:
-        print("🎉 ALL VERIFICATIONS PASSED!")
-        print("✅ Successfully switched from Kokoro FastAPI to Direct Library")
-        print("📋 Summary of changes:")
-        print("   • Replaced FastAPI requests with direct Kokoro library calls")
-        print("   • Updated model path to C:/Users/drzew/kokoro-onnx/kokoro-v1_0.pth")
-        print("   • Removed all API-related configurations")
-        print("   • Updated status messages and error handling")
-        print("   • Modified streaming integration to use direct library")
-        return True
+        print("\n🎉 ALL VERIFICATION CHECKS PASSED!")
+        print("\n✅ Implementation Summary:")
+        print("  • Updated model path to new location")
+        print("  • Replaced Kokoro with KPipeline import")
+        print("  • Added generate_kokoro function with voice/speed control")
+        print("  • Integrated KPipeline in voice manager")
+        print("  • Added TTS engine selection capabilities")
+        print("  • Updated streaming for KPipeline compatibility")
+        print("  • Implemented 24kHz audio handling")
+        print("  • Added voice and speed parameter support")
+        
+        print("\n🚀 Ready for Testing:")
+        print("  1. Install Kokoro library: pip install kokoro")
+        print("  2. Ensure model file exists at specified path")
+        print("  3. Test with: python test_kokoro_kpipeline.py")
+        
     else:
-        print("⚠️ Some verifications failed. Check the implementation.")
-        return False
+        print(f"\n⚠️ {total-passed} verification checks failed.")
+        print("Please review the failed checks above.")
+    
+    return passed == total
 
 if __name__ == "__main__":
-    import sys
-    success = main()
+    success = verify_kokoro_integration()
     sys.exit(0 if success else 1)
