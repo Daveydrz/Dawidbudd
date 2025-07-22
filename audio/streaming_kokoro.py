@@ -1,6 +1,6 @@
-# audio/streaming_kokoro.py - FIXED: Actually connect to your Kokoro TTS
+# audio/streaming_kokoro.py - UPDATED: Direct Kokoro library integration
 """
-Streaming wrapper for Kokoro TTS that works with your existing setup
+Streaming wrapper for Kokoro TTS using direct library integration
 """
 import threading
 import queue
@@ -23,7 +23,7 @@ class AudioChunk:
     generation_time: float
 
 class StreamingKokoroWrapper:
-    """FIXED: Streaming wrapper that uses your existing Kokoro setup"""
+    """UPDATED: Streaming wrapper that uses direct Kokoro library"""
     
     def __init__(self):
         self.thread_pool = ThreadPoolExecutor(max_workers=STREAMING_THREAD_POOL_SIZE)
@@ -37,44 +37,43 @@ class StreamingKokoroWrapper:
         """Set voice and language for Kokoro"""
         if lang in KOKORO_VOICES:
             self.current_voice = KOKORO_VOICES[lang]
-            self.current_lang = KOKORO_LANGS[lang]
+            self.current_lang = KOKORO_LANGS.get(lang, lang)
             if DEBUG:
                 print(f"[StreamingKokoro] 🎭 Voice set to {self.current_voice} ({self.current_lang})")
     
     def generate_audio_chunk_sync(self, text: str, chunk_id: str) -> Optional[AudioChunk]:
-        """Generate audio for a single chunk using your existing audio.output"""
+        """Generate audio for a single chunk using direct Kokoro library"""
         try:
             start_time = time.time()
             
-            # ✅ FIXED: Use your existing audio output system
-            from audio.output import speak_async
-            
-            # For now, we'll use the existing speak_async and return metadata
-            # This is a temporary solution until we can directly access Kokoro
+            # ✅ UPDATED: Use direct Kokoro library via audio.output
+            from audio.output import generate_tts
             
             if DEBUG:
                 print(f"[StreamingKokoro] 🎵 Generating chunk {chunk_id}: '{text[:30]}...'")
             
-            # Use your existing TTS
-            speak_async(text, self.current_lang.split('-')[0])  # Extract language code
+            # Use the updated generate_tts with direct library
+            audio_data, sample_rate = generate_tts(text, self.current_lang.split('-')[0])
             
             generation_time = time.time() - start_time
             
-            # Create a placeholder audio chunk (since we can't easily extract the actual audio)
-            # In a full implementation, you'd want to modify audio.output to return the audio data
-            audio_chunk = AudioChunk(
-                audio_data=np.array([]),  # Placeholder - actual audio is played by speak_async
-                sample_rate=16000,
-                chunk_id=chunk_id,
-                text=text,
-                start_time=start_time,
-                generation_time=generation_time
-            )
-            
-            if DEBUG:
-                print(f"[StreamingKokoro] ✅ Played chunk {chunk_id} in {generation_time:.2f}s")
-            
-            return audio_chunk
+            if audio_data is not None:
+                audio_chunk = AudioChunk(
+                    audio_data=audio_data,
+                    sample_rate=sample_rate,
+                    chunk_id=chunk_id,
+                    text=text,
+                    start_time=start_time,
+                    generation_time=generation_time
+                )
+                
+                if DEBUG:
+                    print(f"[StreamingKokoro] ✅ Generated chunk {chunk_id} in {generation_time:.2f}s")
+                
+                return audio_chunk
+            else:
+                print(f"[StreamingKokoro] ❌ No audio generated for chunk {chunk_id}")
+                return None
             
         except Exception as e:
             print(f"[StreamingKokoro] ❌ Error generating audio for chunk {chunk_id}: {e}")
@@ -129,7 +128,7 @@ class StreamingKokoroWrapper:
 streaming_kokoro = StreamingKokoroWrapper()
 
 def stream_speak_chunks(text_chunks: List[str], lang: str = "en"):
-    """FIXED: High-level function to stream speak text chunks"""
+    """UPDATED: High-level function to stream speak text chunks using direct library"""
     kokoro = streaming_kokoro
     
     if DEBUG:

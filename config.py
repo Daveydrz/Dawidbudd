@@ -190,16 +190,15 @@ KNOWN_USERS_PATH = "voice_profiles/known_users_v2.json"
 CONVERSATION_HISTORY_PATH = "conversation_history_v2.json"
 CHIME_PATH = "chime.wav"
 
-# ✅ ==== KOKORO-FASTAPI TTS CONFIGURATION ====
-# FastAPI server settings (replaces local ONNX)
-KOKORO_API_BASE_URL = "http://127.0.0.1:8880"
-KOKORO_API_TIMEOUT = 10
+# ✅ ==== KOKORO DIRECT LIBRARY TTS CONFIGURATION ====
+# Direct Kokoro library settings (replaces FastAPI)
+KOKORO_MODEL_PATH = "C:/Users/drzew/kokoro-onnx/kokoro-v1_0.pth"
 KOKORO_DEFAULT_VOICE = "af_heart"  # Australian female voice
 KOKORO_STREAMING_ENABLED = True    # Enable streaming TTS
 KOKORO_CHUNK_SIZE = 512           # Audio chunk size for streaming
 
-# ✅ Voice mapping for different languages (FastAPI voices)
-KOKORO_API_VOICES = {
+# ✅ Voice mapping for different languages (Direct library voices)
+KOKORO_VOICES = {
     "en": "af_heart",      # Australian female (Dave's preference)
     "en-us": "am_adam",    # American male  
     "en-gb": "bf_emma",    # British female
@@ -221,9 +220,6 @@ KOKORO_VOICE_STABILITY = 0.8      # Voice stability
 KOKORO_VOICE_CLARITY = 0.9        # Voice clarity
 
 # ✅ Legacy compatibility (kept for fallback)
-KOKORO_MODEL_PATH = "kokoro-v1.0.onnx"    # Fallback only
-KOKORO_VOICES_PATH = "voices-v1.0.bin"    # Fallback only
-KOKORO_VOICES = {"pl": "af_heart", "en": "af_heart", "it": "if_sara"}  # Legacy
 KOKORO_LANGS = {"pl": "pl", "en": "en-us", "it": "it"}  # Legacy
 
 # ==== WEBSOCKET URLS ====
@@ -713,13 +709,12 @@ print(f"[Config] ⚡ Optimized for Speed & Quality Balance")
 print(f"[Config] 💾 Memory Extraction: {MEMORY_EXTRACTION_ENABLED}")
 print(f"[Config] 🔍 Memory Debug: {MEMORY_DEBUG}")
 
-# ✅ Kokoro-FastAPI Status
-print(f"[Config] 🚀 KOKORO-FASTAPI TTS:")
-print(f"  API URL: {KOKORO_API_BASE_URL}")
+# ✅ Kokoro Direct Library Status
+print(f"[Config] 🚀 KOKORO DIRECT LIBRARY TTS:")
+print(f"  Model Path: {KOKORO_MODEL_PATH}")
 print(f"  Default Voice: {KOKORO_DEFAULT_VOICE} (Australian)")
 print(f"  Streaming: {KOKORO_STREAMING_ENABLED}")
-print(f"  Timeout: {KOKORO_API_TIMEOUT}s")
-print(f"  Voices Available: {len(KOKORO_API_VOICES)} languages")
+print(f"  Voices Available: {len(KOKORO_VOICES)} languages")
 
 # ✅ Smart Responsive Streaming Status
 print(f"[Config] 🎭 SMART RESPONSIVE STREAMING:")
@@ -732,7 +727,7 @@ print(f"  Response Delay: {STREAMING_RESPONSE_DELAY}s")
 print(f"  Natural Speech Flow: {NATURAL_SPEECH_FLOW}")
 print(f"  Overlapped Generation: {OVERLAPPED_GENERATION}")
 
-print(f"[Config] ✅ ADVANCED AI ASSISTANT + PRECISE LOCATION + KOKORO-FASTAPI + SMART STREAMING LOADED")
+print(f"[Config] ✅ ADVANCED AI ASSISTANT + PRECISE LOCATION + KOKORO DIRECT LIBRARY + SMART STREAMING LOADED")
 print(f"[Config] 🕐 Current Time: {CURRENT_TIMESTAMP} (AUTO-TIME)")
 print(f"[Config] 📍 Precise Location: {USER_SUBURB}, {USER_STATE} ({LOCATION_SOURCE})")
 print(f"[Config] 🎯 Confidence: {LOCATION_CONFIDENCE}")

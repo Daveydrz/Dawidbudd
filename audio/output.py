@@ -1,18 +1,25 @@
-# audio/output.py - UPDATED for Kokoro-FastAPI with FIXED Interrupt Handling
-# Date: 2025-07-06 20:15:28 (Brisbane Time)
-# FIXES: Proper interrupt handling, notification system, and streaming TTS coordination
+# audio/output.py - UPDATED for Direct Kokoro Library Integration
+# Date: 2025-01-18 (Brisbane Time)
+# CHANGES: Switch from Kokoro FastAPI to direct Kokoro library from hexgrad/kokoro
 
 import threading
 import time
 import queue
 import numpy as np
 import simpleaudio as sa
-import requests
-import io
 import tempfile
 import os
 from langdetect import detect
 from config import *
+
+# Import Kokoro library directly
+try:
+    from kokoro import Kokoro
+    KOKORO_AVAILABLE = True
+    print("[Kokoro] ✅ Direct Kokoro library imported successfully")
+except ImportError as e:
+    print(f"[Kokoro] ❌ Could not import Kokoro library: {e}")
+    KOKORO_AVAILABLE = False
 
 # Global audio state
 audio_queue = queue.Queue()
@@ -21,13 +28,12 @@ audio_lock = threading.Lock()
 buddy_talking = threading.Event()
 playback_start_time = None
 
-# ✅ NEW: Kokoro-FastAPI configuration
-KOKORO_API_BASE_URL = getattr(globals(), 'KOKORO_API_BASE_URL', "http://127.0.0.1:8880")
-KOKORO_API_TIMEOUT = getattr(globals(), 'KOKORO_API_TIMEOUT', 10)
+# ✅ NEW: Direct Kokoro library configuration
+KOKORO_MODEL_PATH = "C:/Users/drzew/kokoro-onnx/kokoro-v1_0.pth"
 KOKORO_DEFAULT_VOICE = getattr(globals(), 'KOKORO_DEFAULT_VOICE', "af_heart")
 
 # Voice mapping for different languages
-KOKORO_API_VOICES = {
+KOKORO_VOICES = {
     "en": "af_heart",      # Australian female
     "en-us": "am_adam",    # American male  
     "en-gb": "bf_emma",    # British female
@@ -41,120 +47,79 @@ KOKORO_API_VOICES = {
     "zh": "zh_mei",        # Chinese female
 }
 
-# Initialize Kokoro-FastAPI connection
-kokoro_api_available = False
+# Initialize Kokoro model
+kokoro_model = None
+
+def load_kokoro_model():
+    """Load the Kokoro model once globally"""
+    global kokoro_model
+    try:
+        if KOKORO_AVAILABLE and kokoro_model is None:
+            print(f"[Kokoro] 🔄 Loading model from {KOKORO_MODEL_PATH}")
+            kokoro_model = Kokoro(KOKORO_MODEL_PATH)
+            print(f"[Kokoro] ✅ Model loaded successfully")
+            return True
+    except Exception as e:
+        print(f"[Kokoro] ❌ Failed to load model: {e}")
+        kokoro_model = None
+    return False
 
 def test_kokoro_api():
-    """Test if Kokoro-FastAPI is available"""
-    global kokoro_api_available
-    try:
-        response = requests.get(f"{KOKORO_API_BASE_URL}/health", timeout=5)
-        if response.status_code == 200:
-            kokoro_api_available = True
-            print(f"[Buddy V2] ✅ Kokoro-FastAPI connected at {KOKORO_API_BASE_URL}")
-            return True
-    except requests.exceptions.ConnectionError as e:
-        print(f"[Buddy V2] ❌ Kokoro-FastAPI connection failed: {e}")
-        print(f"[Buddy V2] 💡 Make sure Kokoro-FastAPI is running on {KOKORO_API_BASE_URL}")
-    except requests.exceptions.Timeout as e:
-        print(f"[Buddy V2] ❌ Kokoro-FastAPI timeout: {e}")
-    except Exception as e:
-        print(f"[Buddy V2] ❌ Kokoro-FastAPI not available: {e}")
-        print(f"[Buddy V2] 💡 Make sure Kokoro-FastAPI is running on {KOKORO_API_BASE_URL}")
+    """Test if Kokoro model is available and loaded"""
+    global kokoro_model
+    if kokoro_model is not None:
+        print(f"[Kokoro] ✅ Direct Kokoro model ready")
+        return True
     
-    kokoro_api_available = False
+    # Try to load the model
+    if load_kokoro_model():
+        return True
+    
+    print(f"[Kokoro] ❌ Kokoro model not available")
+    print(f"[Kokoro] 💡 Make sure the model file exists at {KOKORO_MODEL_PATH}")
     return False
 
 def generate_tts(text, lang=DEFAULT_LANG):
-    """Generate TTS audio using Kokoro-FastAPI"""
+    """Generate TTS audio using direct Kokoro library"""
     try:
-        if not kokoro_api_available:
-            if not test_kokoro_api():
+        if not text.strip():
+            return None, None
+        
+        # Ensure model is loaded
+        if kokoro_model is None:
+            if not load_kokoro_model():
                 return None, None
             
-        # Detect language and select voice
+        # Detect language and select voice (simplified for direct library)
         detected_lang = lang or detect(text)
-        voice = KOKORO_API_VOICES.get(detected_lang, KOKORO_DEFAULT_VOICE)
+        voice = KOKORO_VOICES.get(detected_lang, KOKORO_DEFAULT_VOICE)
         
-        # Prepare API request
-        payload = {
-            "input": text.strip(),
-            "voice": voice,
-            "response_format": "wav"
-        }
-        
-        # Call Kokoro-FastAPI with retry mechanism
-        response = None
+        # Generate audio directly using Kokoro model
         try:
-            response = requests.post(
-                f"{KOKORO_API_BASE_URL}/v1/audio/speech",
-                json=payload,
-                timeout=KOKORO_API_TIMEOUT
-            )
-        except requests.exceptions.RequestException as e:
-            print(f"[TTS] ❌ First request failed: {e}, retrying...")
+            audio_np = kokoro_model.generate(text.strip())
+        except Exception as e:
+            print(f"[Kokoro] ❌ First generation failed: {e}, retrying...")
             time.sleep(1)
             try:
-                response = requests.post(
-                    f"{KOKORO_API_BASE_URL}/v1/audio/speech",
-                    json=payload,
-                    timeout=KOKORO_API_TIMEOUT
-                )
-            except requests.exceptions.RequestException as retry_e:
-                print(f"[TTS] ❌ Retry also failed: {retry_e}")
+                audio_np = kokoro_model.generate(text.strip())
+            except Exception as retry_e:
+                print(f"[Kokoro] ❌ Retry also failed: {retry_e}")
                 return None, None
         
-        if response.status_code == 200:
-            # Save audio to temporary file
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_file:
-                temp_file.write(response.content)
-                temp_path = temp_file.name
-            
-            # Load audio data for processing
-            import wave
-            with wave.open(temp_path, 'rb') as wav_file:
-                frames = wav_file.readframes(wav_file.getnframes())
-                sample_rate = wav_file.getframerate()
-                channels = wav_file.getnchannels()
-                sample_width = wav_file.getsampwidth()
-            
-            # Convert to numpy array
-            if sample_width == 2:
-                audio_data = np.frombuffer(frames, dtype=np.int16)
-            else:
-                audio_data = np.frombuffer(frames, dtype=np.uint8)
-                audio_data = ((audio_data.astype(np.int16) - 128) * 256)
-            
-            # Handle stereo to mono conversion
-            if channels == 2:
-                audio_data = audio_data.reshape(-1, 2)
-                audio_data = audio_data[:, 0]  # Take left channel
-            
-            # Resample if needed
-            if sample_rate != SAMPLE_RATE:
-                from scipy.signal import resample_poly
-                audio_data = resample_poly(audio_data, SAMPLE_RATE, sample_rate)
-                audio_data = audio_data.astype(np.int16)
-            
-            # Clean up temp file
-            try:
-                os.unlink(temp_path)
-            except:
-                pass
+        # Normalize and ensure correct dtype
+        if audio_np is not None:
+            audio_np = (audio_np * 32767).astype(np.int16)
             
             if DEBUG:
-                print(f"[Buddy V2] 🗣️ Generated TTS via FastAPI: {len(audio_data)} samples, voice: {voice}")
+                print(f"[Kokoro] 🗣️ Generated TTS: {len(audio_np)} samples, voice: {voice}")
             
-            return audio_data, SAMPLE_RATE
-            
+            return audio_np, 16000
         else:
-            print(f"[Buddy V2] ❌ Kokoro-FastAPI error: {response.status_code}")
-            if response.text:
-                print(f"[Buddy V2] Error details: {response.text}")
+            print(f"[Kokoro] ❌ No audio generated")
             return None, None
             
     except Exception as e:
-        print(f"[Buddy V2] TTS error: {e}")
+        print(f"[Kokoro] TTS error: {e}")
         return None, None
 
 def speak_async(text, lang=DEFAULT_LANG):
@@ -184,7 +149,7 @@ def speak_async(text, lang=DEFAULT_LANG):
     threading.Thread(target=tts_worker, daemon=True).start()
 
 def speak_streaming(text, voice=None, lang=DEFAULT_LANG):
-    """✅ FIXED: Queue text chunk for immediate streaming TTS"""
+    """✅ FIXED: Queue text chunk for immediate streaming TTS using direct Kokoro"""
     if not text or len(text.strip()) < 2:
         return False
     
@@ -201,8 +166,9 @@ def speak_streaming(text, voice=None, lang=DEFAULT_LANG):
         
     def streaming_tts_worker():
         try:
-            if not kokoro_api_available:
-                if not test_kokoro_api():
+            # Ensure model is loaded
+            if kokoro_model is None:
+                if not load_kokoro_model():
                     return False
             
             # ✅ FIX: Properly handle voice parameter
@@ -210,74 +176,33 @@ def speak_streaming(text, voice=None, lang=DEFAULT_LANG):
             if selected_voice is None:
                 # Detect voice from language if none provided
                 detected_lang = lang or detect(text)
-                selected_voice = KOKORO_API_VOICES.get(detected_lang, KOKORO_DEFAULT_VOICE)
+                selected_voice = KOKORO_VOICES.get(detected_lang, KOKORO_DEFAULT_VOICE)
             
-            # Quick API call for streaming
-            payload = {
-                "input": text.strip(),
-                "voice": selected_voice,  # ✅ Use selected_voice instead of voice
-                "response_format": "wav"
-            }
-            
-            # Call Kokoro-FastAPI with retry mechanism
-            response = None
+            # Generate audio directly using Kokoro model
             try:
-                response = requests.post(
-                    f"{KOKORO_API_BASE_URL}/v1/audio/speech",
-                    json=payload,
-                    timeout=5  # Shorter timeout for streaming
-                )
-            except requests.exceptions.RequestException as e:
-                print(f"[StreamingTTS] ❌ First request failed: {e}, retrying...")
+                audio_data = kokoro_model.generate(text.strip())
+            except Exception as e:
+                print(f"[StreamingTTS] ❌ First generation failed: {e}, retrying...")
                 time.sleep(0.5)
                 try:
-                    response = requests.post(
-                        f"{KOKORO_API_BASE_URL}/v1/audio/speech",
-                        json=payload,
-                        timeout=5
-                    )
-                except requests.exceptions.RequestException as retry_e:
+                    audio_data = kokoro_model.generate(text.strip())
+                except Exception as retry_e:
                     print(f"[StreamingTTS] ❌ Retry also failed: {retry_e}")
                     return False
             
-            if response.status_code == 200:
-                # Process audio quickly for streaming
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_file:
-                    temp_file.write(response.content)
-                    temp_path = temp_file.name
-                
-                import wave
-                with wave.open(temp_path, 'rb') as wav_file:
-                    frames = wav_file.readframes(wav_file.getnframes())
-                    sample_rate = wav_file.getframerate()
-                    channels = wav_file.getnchannels()
-                    sample_width = wav_file.getsampwidth()
-                
-                # Quick conversion
-                if sample_width == 2:
-                    audio_data = np.frombuffer(frames, dtype=np.int16)
-                else:
-                    audio_data = np.frombuffer(frames, dtype=np.uint8)
-                    audio_data = ((audio_data.astype(np.int16) - 128) * 256)
-                
-                if channels == 2:
-                    audio_data = audio_data.reshape(-1, 2)[:, 0]
+            if audio_data is not None:
+                # Normalize and convert to int16
+                audio_data = (audio_data * 32767).astype(np.int16)
                 
                 # Queue immediately
-                audio_queue.put((audio_data, sample_rate))
-                
-                # Cleanup
-                try:
-                    os.unlink(temp_path)
-                except:
-                    pass
+                audio_queue.put((audio_data, 16000))
                 
                 if DEBUG:
                     print(f"[StreamingTTS] ✅ Queued chunk: '{text[:50]}...' with voice: {selected_voice}")
                 
                 return True
             else:
-                print(f"[StreamingTTS] ❌ API Error {response.status_code}: {response.text}")
+                print(f"[StreamingTTS] ❌ No audio generated")
                 
         except Exception as e:
             print(f"[StreamingTTS] ❌ Error: {e}")
@@ -489,7 +414,7 @@ def emergency_stop_all_audio():
 
 def start_audio_worker():
     """Start the audio worker thread"""
-    test_kokoro_api()
+    load_kokoro_model()  # Load the model on startup
     threading.Thread(target=audio_worker, daemon=True).start()
     if DEBUG:
         print("[Audio] 🚀 Audio worker thread started")
@@ -553,8 +478,8 @@ def get_audio_stats():
         "playback_start_time": playback_start_time,
         "current_time": time.time(),
         "mode": "FULL_DUPLEX" if FULL_DUPLEX_MODE else "HALF_DUPLEX",
-        "kokoro_api_available": kokoro_api_available,
-        "api_url": KOKORO_API_BASE_URL
+        "kokoro_available": kokoro_model is not None,
+        "model_path": KOKORO_MODEL_PATH
     }
 
 def start_streaming_response(user_input, current_user, language):
@@ -569,5 +494,5 @@ def queue_text_chunk(text_chunk, voice=None):
         speak_async("Sorry, there was an audio issue.")
     return success
 
-# Initialize API connection on module load
-test_kokoro_api()
+# Initialize Kokoro model on module load
+load_kokoro_model()
