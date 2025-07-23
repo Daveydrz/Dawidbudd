@@ -42,28 +42,38 @@ class StreamingKokoroWrapper:
                 print(f"[StreamingKokoro] 🎭 Voice set to {self.current_voice} ({self.current_lang})")
     
     def generate_audio_chunk_sync(self, text: str, chunk_id: str) -> Optional[AudioChunk]:
-        """Generate audio for a single chunk using KPipeline"""
+        """Generate audio for a single chunk using KPipeline - FIXED to match working pattern"""
         try:
             start_time = time.time()
             
-            # ✅ UPDATED: Use KPipeline via audio.output
-            from audio.output import generate_kokoro
+            # ✅ FIXED: Use KPipeline directly via voice/manager.py pattern
+            from voice.manager import kokoro_pipeline
+            
+            if not kokoro_pipeline:
+                print(f"[StreamingKokoro] ❌ KPipeline not available")
+                return None
             
             if DEBUG:
                 print(f"[StreamingKokoro] 🎵 Generating chunk {chunk_id}: '{text[:30]}...'")
             
-            # Use the updated generate_kokoro with KPipeline
-            result = generate_kokoro(text, voice=self.current_voice, speed=1.0)
+            # ✅ FIXED: Use the correct KPipeline generator pattern like in working test
+            generator = kokoro_pipeline(text, voice=self.current_voice, speed=1.0)
+            
+            # Collect all audio chunks
+            audio_chunks = []
+            for i, (gs, ps, audio) in enumerate(generator):
+                # audio is already a numpy array from KPipeline
+                audio_chunks.append(audio)
             
             generation_time = time.time() - start_time
             
-            if result:
-                # Convert bytes to numpy array (24kHz from KPipeline)
-                audio_data = np.frombuffer(result, dtype=np.int16)
+            if audio_chunks:
+                # Concatenate all audio arrays
+                full_audio = np.concatenate(audio_chunks)
                 sample_rate = 24000  # Kokoro KPipeline returns 24kHz
                 
                 audio_chunk = AudioChunk(
-                    audio_data=audio_data,
+                    audio_data=full_audio,
                     sample_rate=sample_rate,
                     chunk_id=chunk_id,
                     text=text,

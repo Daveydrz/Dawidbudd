@@ -15,10 +15,13 @@ from config import *
 # Import Kokoro library directly with KPipeline
 try:
     from kokoro import KPipeline
+    import soundfile as sf
+    import tempfile
+    import simpleaudio as sa
     KOKORO_AVAILABLE = True
-    print("[Kokoro] ✅ KPipeline imported successfully")
+    print("[Kokoro] ✅ KPipeline and required dependencies imported successfully")
 except ImportError as e:
-    print(f"[Kokoro] ❌ Could not import KPipeline: {e}")
+    print(f"[Kokoro] ❌ Could not import KPipeline or dependencies: {e}")
     KOKORO_AVAILABLE = False
 
 # Global audio state
@@ -30,7 +33,7 @@ playback_start_time = None
 
 # ✅ NEW: Direct Kokoro library configuration with KPipeline
 KOKORO_MODEL_PATH = "C:/Users/drzew/kokoro/kokoro/voices/kokoro-v1_0.pth"
-KOKORO_DEFAULT_VOICE = getattr(globals(), 'KOKORO_DEFAULT_VOICE', "af_bella")
+KOKORO_DEFAULT_VOICE = "af_bella"
 
 # Voice mapping for different languages (KPipeline compatible)
 KOKORO_VOICES = {
@@ -95,7 +98,7 @@ def test_kokoro_api():
     return False
 
 def generate_kokoro(text, voice='af_bella', speed=1.0):
-    """Generate TTS audio using KPipeline with voice and speed control"""
+    """Generate TTS audio using KPipeline with voice and speed control - FIXED to match working pattern"""
     try:
         if not text.strip():
             return None
@@ -107,22 +110,38 @@ def generate_kokoro(text, voice='af_bella', speed=1.0):
         
         print(f"[Kokoro] 🎭 Generating with voice: {voice}, speed: {speed}")
         
-        # Generate audio using KPipeline
+        # ✅ FIXED: Use the correct KPipeline generator pattern like in working test
+        generator = kokoro_pipeline(text.strip(), voice=voice, speed=speed)
+        
+        # Collect all audio chunks (this matches the working test file)
         audio_chunks = []
-        for _, _, audio in kokoro_pipeline(text.strip(), voice=voice, speed=speed):
+        for i, (gs, ps, audio) in enumerate(generator):
+            print(f"[Kokoro] 📝 Chunk {i}: {gs[:50]}..." if gs else f"[Kokoro] 📝 Chunk {i}")
+            
+            # ✅ FIXED: audio is already a numpy array, save as WAV and play like working test
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
+                temp_path = temp_file.name
+                
+            # Write audio to WAV file (24kHz from KPipeline)
+            sf.write(temp_path, audio, 24000)
+            
+            # Load as simpleaudio WaveObject like in working test
+            wave_obj = sa.WaveObject.from_wave_file(temp_path)
+            
+            # Add to chunks for concatenation if needed
             audio_chunks.append(audio)
+            
+            # Clean up temp file
+            os.unlink(temp_path)
         
         if audio_chunks:
-            # Concatenate audio chunks
-            full_audio = b''.join([a.tobytes() for a in audio_chunks])
-            
-            # Convert to numpy array (24kHz as mentioned in the comment)
-            audio_np = np.frombuffer(full_audio, dtype=np.int16)
+            # Concatenate all audio arrays
+            full_audio = np.concatenate(audio_chunks)
             
             if DEBUG:
-                print(f"[Kokoro] 🗣️ Generated KPipeline TTS: {len(audio_np)} samples, voice: {voice}")
+                print(f"[Kokoro] 🗣️ Generated KPipeline TTS: {len(full_audio)} samples, voice: {voice}")
             
-            return audio_np, 24000  # Kokoro returns 24kHz
+            return full_audio, 24000  # Kokoro returns 24kHz
         else:
             print(f"[Kokoro] ❌ No audio chunks generated")
             return None

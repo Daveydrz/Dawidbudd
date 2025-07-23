@@ -130,7 +130,7 @@ class IntelligentVoiceManager:
         print(f"[IntelligentVoiceManager] 🎭 TTS Engine: {self.tts_engine} with voice: {self.kokoro_voice}")
 
     def generate_kokoro(self, text, voice='af_bella', speed=1.0):
-        """🎭 Generate Kokoro TTS audio with voice and speed control"""
+        """🎭 Generate Kokoro TTS audio with voice and speed control - FIXED to match working pattern"""
         try:
             if not KOKORO_AVAILABLE or kokoro_pipeline is None:
                 print(f"[VoiceManager] ❌ KPipeline not available")
@@ -141,14 +141,20 @@ class IntelligentVoiceManager:
             
             print(f"[VoiceManager] 🎭 Generating Kokoro TTS: voice={voice}, speed={speed}")
             
-            # Generate audio chunks using KPipeline
+            # ✅ FIXED: Use the correct KPipeline generator pattern like in working test
+            generator = kokoro_pipeline(text, voice=voice, speed=speed)
+            
+            # Collect all audio chunks (this matches the working test file)
             audio_chunks = []
-            for _, _, audio in kokoro_pipeline(text, voice=voice, speed=speed):
+            for i, (gs, ps, audio) in enumerate(generator):
+                print(f"[VoiceManager] 📝 Chunk {i}: {gs[:30]}..." if gs else f"[VoiceManager] 📝 Chunk {i}")
+                # audio is already a numpy array from KPipeline
                 audio_chunks.append(audio)
             
             if audio_chunks:
-                # Concatenate audio chunks and convert to bytes
-                return b''.join([a.tobytes() for a in audio_chunks])
+                # Concatenate all audio arrays and convert to bytes
+                full_audio = np.concatenate(audio_chunks)
+                return full_audio.tobytes()
             else:
                 print(f"[VoiceManager] ❌ No audio chunks generated")
                 return None

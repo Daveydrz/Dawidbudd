@@ -193,16 +193,16 @@ CHIME_PATH = "chime.wav"
 # ✅ ==== KOKORO DIRECT LIBRARY TTS CONFIGURATION ====
 # Direct Kokoro library settings (replaces FastAPI)
 KOKORO_MODEL_PATH = "C:/Users/drzew/kokoro/kokoro/voices/kokoro-v1_0.pth"
-KOKORO_DEFAULT_VOICE = "af_heart"  # Australian female voice
+KOKORO_DEFAULT_VOICE = "af_bella"  # Australian female voice (matching working test)
 KOKORO_STREAMING_ENABLED = True    # Enable streaming TTS
 KOKORO_CHUNK_SIZE = 512           # Audio chunk size for streaming
 
 # ✅ Voice mapping for different languages (Direct library voices)
 KOKORO_VOICES = {
-    "en": "af_heart",      # Australian female (Dave's preference)
+    "en": "af_bella",      # Australian female (matches working test)
     "en-us": "am_adam",    # American male  
     "en-gb": "bf_emma",    # British female
-    "en-au": "af_heart",   # Australian female (same as en)
+    "en-au": "af_bella",   # Australian female (same as en)
     "es": "es_maria",      # Spanish female
     "fr": "fr_pierre",     # French male
     "de": "de_anna",       # German female
@@ -712,7 +712,7 @@ print(f"[Config] 🔍 Memory Debug: {MEMORY_DEBUG}")
 # ✅ Kokoro Direct Library Status
 print(f"[Config] 🚀 KOKORO DIRECT LIBRARY TTS:")
 print(f"  Model Path: {KOKORO_MODEL_PATH}")
-print(f"  Default Voice: {KOKORO_DEFAULT_VOICE} (Australian)")
+print(f"  Default Voice: {KOKORO_DEFAULT_VOICE} (Australian - matches working test)")
 print(f"  Streaming: {KOKORO_STREAMING_ENABLED}")
 print(f"  Voices Available: {len(KOKORO_VOICES)} languages")
 
