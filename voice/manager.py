@@ -20,6 +20,7 @@ try:
     print("[VoiceManager] ✅ KPipeline initialized successfully")
 except ImportError as e:
     print(f"[VoiceManager] ⚠️ KPipeline not available: {e}")
+    print("[VoiceManager] 💡 Install with: pip install kokoro")
     KOKORO_AVAILABLE = False
     kokoro_pipeline = None
 except Exception as e:
@@ -134,6 +135,7 @@ class IntelligentVoiceManager:
         try:
             if not KOKORO_AVAILABLE or kokoro_pipeline is None:
                 print(f"[VoiceManager] ❌ KPipeline not available")
+                print(f"[VoiceManager] 💡 Install with: pip install kokoro")
                 return None
             
             if not text.strip():
@@ -201,6 +203,7 @@ class IntelligentVoiceManager:
                         return False
                 else:
                     print(f"[VoiceManager] ❌ Kokoro not available, falling back to default")
+                    print(f"[VoiceManager] 💡 Install with: pip install kokoro")
                     speak_streaming(text)
                     return True
             else:

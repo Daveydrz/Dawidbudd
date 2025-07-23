@@ -15,14 +15,33 @@ from config import *
 # Import Kokoro library directly with KPipeline
 try:
     from kokoro import KPipeline
-    import soundfile as sf
-    import tempfile
-    import simpleaudio as sa
-    KOKORO_AVAILABLE = True
-    print("[Kokoro] ✅ KPipeline and required dependencies imported successfully")
+    KOKORO_PIPELINE_AVAILABLE = True
+    print("[Kokoro] ✅ KPipeline imported successfully")
 except ImportError as e:
-    print(f"[Kokoro] ❌ Could not import KPipeline or dependencies: {e}")
-    KOKORO_AVAILABLE = False
+    print(f"[Kokoro] ❌ Could not import KPipeline: {e}")
+    print("[Kokoro] 💡 Install with: pip install kokoro")
+    KOKORO_PIPELINE_AVAILABLE = False
+
+try:
+    import soundfile as sf
+    SOUNDFILE_AVAILABLE = True
+    print("[Kokoro] ✅ soundfile imported successfully")
+except ImportError as e:
+    print(f"[Kokoro] ❌ Could not import soundfile: {e}")
+    print("[Kokoro] 💡 Install with: pip install soundfile")
+    SOUNDFILE_AVAILABLE = False
+
+try:
+    import simpleaudio as sa
+    SIMPLEAUDIO_AVAILABLE = True
+    print("[Kokoro] ✅ simpleaudio imported successfully")
+except ImportError as e:
+    print(f"[Kokoro] ❌ Could not import simpleaudio: {e}")
+    print("[Kokoro] 💡 Install with: pip install simpleaudio")
+    SIMPLEAUDIO_AVAILABLE = False
+
+# Overall Kokoro availability
+KOKORO_AVAILABLE = KOKORO_PIPELINE_AVAILABLE and SOUNDFILE_AVAILABLE
 
 # Global audio state
 audio_queue = queue.Queue()
@@ -72,11 +91,14 @@ def load_kokoro_model():
     """Load the KPipeline once globally"""
     global kokoro_pipeline
     try:
-        if KOKORO_AVAILABLE and kokoro_pipeline is None:
+        if KOKORO_PIPELINE_AVAILABLE and kokoro_pipeline is None:
             print(f"[Kokoro] 🔄 Loading KPipeline with lang_code 'a' (American English)")
             kokoro_pipeline = KPipeline(lang_code='a')  # Default to American English
             print(f"[Kokoro] ✅ KPipeline loaded successfully")
             return True
+        elif not KOKORO_PIPELINE_AVAILABLE:
+            print(f"[Kokoro] ❌ KPipeline not available - install kokoro library")
+            return False
     except Exception as e:
         print(f"[Kokoro] ❌ Failed to load KPipeline: {e}")
         kokoro_pipeline = None
@@ -100,6 +122,11 @@ def test_kokoro_api():
 def generate_kokoro(text, voice='af_bella', speed=1.0):
     """Generate TTS audio using KPipeline with voice and speed control - FIXED to match working pattern"""
     try:
+        if not KOKORO_AVAILABLE:
+            print(f"[Kokoro] ❌ Kokoro dependencies not available")
+            print(f"[Kokoro] 💡 Install with: pip install kokoro soundfile simpleaudio")
+            return None
+        
         if not text.strip():
             return None
         
@@ -118,21 +145,8 @@ def generate_kokoro(text, voice='af_bella', speed=1.0):
         for i, (gs, ps, audio) in enumerate(generator):
             print(f"[Kokoro] 📝 Chunk {i}: {gs[:50]}..." if gs else f"[Kokoro] 📝 Chunk {i}")
             
-            # ✅ FIXED: audio is already a numpy array, save as WAV and play like working test
-            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
-                temp_path = temp_file.name
-                
-            # Write audio to WAV file (24kHz from KPipeline)
-            sf.write(temp_path, audio, 24000)
-            
-            # Load as simpleaudio WaveObject like in working test
-            wave_obj = sa.WaveObject.from_wave_file(temp_path)
-            
-            # Add to chunks for concatenation if needed
+            # ✅ FIXED: audio is already a numpy array, store directly
             audio_chunks.append(audio)
-            
-            # Clean up temp file
-            os.unlink(temp_path)
         
         if audio_chunks:
             # Concatenate all audio arrays
@@ -156,8 +170,18 @@ def generate_tts(text, lang=DEFAULT_LANG):
         if not text.strip():
             return None, None
         
+        if not KOKORO_AVAILABLE:
+            print(f"[Kokoro] ❌ Kokoro not available - using fallback")
+            # Return some dummy audio data to prevent crashes
+            dummy_audio = np.zeros(8000, dtype=np.int16)  # 0.5 seconds of silence at 16kHz
+            return dummy_audio, 16000
+        
         # Detect language and select voice
-        detected_lang = lang or detect(text)
+        try:
+            detected_lang = lang or detect(text)
+        except:
+            detected_lang = "en"  # Fallback to English
+            
         voice = KOKORO_VOICES.get(detected_lang, KOKORO_DEFAULT_VOICE)
         
         # Use generate_kokoro function
@@ -173,11 +197,16 @@ def generate_tts(text, lang=DEFAULT_LANG):
             
             return audio_np, sample_rate
         else:
-            return None, None
+            print(f"[Kokoro] ❌ TTS generation failed - using fallback")
+            # Return some dummy audio data to prevent crashes
+            dummy_audio = np.zeros(8000, dtype=np.int16)  # 0.5 seconds of silence at 16kHz
+            return dummy_audio, 16000
             
     except Exception as e:
         print(f"[Kokoro] TTS error: {e}")
-        return None, None
+        # Return some dummy audio data to prevent crashes
+        dummy_audio = np.zeros(8000, dtype=np.int16)  # 0.5 seconds of silence at 16kHz
+        return dummy_audio, 16000
 
 def speak_async(text, lang=DEFAULT_LANG):
     """Queue text for speech synthesis"""
