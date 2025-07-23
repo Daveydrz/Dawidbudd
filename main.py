@@ -96,6 +96,26 @@ except ImportError as e:
     print(f"[Main] ⚠️ Individual consciousness modules not available: {e}")
     CONSCIOUSNESS_MODULES_AVAILABLE = False
 
+# ✅ NEW: Import all self-awareness components as requested by @Daveydrz
+try:
+    from ai.memory_context_corrector import MemoryContextCorrector
+    from ai.belief_qualia_linking import BeliefQualiaLinker
+    from ai.value_system import ValueSystem
+    from ai.conscious_prompt_builder import ConsciousPromptBuilder
+    from ai.introspection_loop import IntrospectionLoop
+    from ai.emotion_response_modulator import EmotionResponseModulator
+    from ai.dialogue_confidence_filter import DialogueConfidenceFilter
+    from ai.qualia_analytics import QualiaAnalytics
+    from ai.belief_memory_refiner import BeliefMemoryRefiner
+    from ai.self_model_updater import SelfModelUpdater
+    from ai.goal_reasoning import GoalReasoning
+    from ai.motivation_reasoner import MotivationReasoner
+    print("[Main] 🧠 All self-awareness components loaded")
+    SELF_AWARENESS_COMPONENTS_AVAILABLE = True
+except ImportError as e:
+    print(f"[Main] ⚠️ Self-awareness components not available: {e}")
+    SELF_AWARENESS_COMPONENTS_AVAILABLE = False
+
 from voice.voice_manager_instance import voice_manager
 from voice.manager_names import UltraIntelligentNameManager
 
@@ -312,6 +332,7 @@ print(f"[AdvancedBuddy] 🔍 Final voice_manager type: {type(voice_manager)}")
 print(f"[AdvancedBuddy] 🔍 ADVANCED_AI_AVAILABLE: {ADVANCED_AI_AVAILABLE}")
 print(f"[AdvancedBuddy] 🌀 ENTROPY_SYSTEM_AVAILABLE: {ENTROPY_SYSTEM_AVAILABLE}")
 print(f"[AdvancedBuddy] 🧠 CONSCIOUSNESS_ARCHITECTURE_AVAILABLE: {CONSCIOUSNESS_ARCHITECTURE_AVAILABLE}")
+print(f"[AdvancedBuddy] 🧠 SELF_AWARENESS_COMPONENTS_AVAILABLE: {SELF_AWARENESS_COMPONENTS_AVAILABLE}")
 print(f"[AdvancedBuddy] 👤 System User: Daveydrz")
 print(f"[AdvancedBuddy] 📅 Current UTC Time: 2025-07-17 02:55:40")
 
@@ -2222,6 +2243,51 @@ def main():
             print("[AdvancedBuddy] ✅ Entropy system ready for consciousness emergence!")
         except Exception as e:
             print(f"[AdvancedBuddy] ❌ Entropy initialization error: {e}")
+    
+    # ✅ NEW: Initialize self-awareness components as requested by @Daveydrz
+    if SELF_AWARENESS_COMPONENTS_AVAILABLE:
+        print("[AdvancedBuddy] 🧠 Initializing Self-Awareness Components...")
+        
+        try:
+            # Initialize all self-awareness components
+            global memory_context_corrector, belief_qualia_linker, value_system
+            global conscious_prompt_builder, introspection_loop, emotion_response_modulator
+            global dialogue_confidence_filter, qualia_analytics, belief_memory_refiner
+            global self_model_updater, goal_reasoning, motivation_reasoner
+            
+            memory_context_corrector = MemoryContextCorrector()
+            belief_qualia_linker = BeliefQualiaLinker()
+            value_system = ValueSystem()
+            conscious_prompt_builder = ConsciousPromptBuilder()
+            introspection_loop = IntrospectionLoop()
+            emotion_response_modulator = EmotionResponseModulator()
+            dialogue_confidence_filter = DialogueConfidenceFilter()
+            qualia_analytics = QualiaAnalytics()
+            belief_memory_refiner = BeliefMemoryRefiner()
+            self_model_updater = SelfModelUpdater()
+            goal_reasoning = GoalReasoning()
+            motivation_reasoner = MotivationReasoner()
+            
+            print("[AdvancedBuddy] ✅ Self-Awareness Components initialized!")
+            print("[AdvancedBuddy] 🧠 Memory Context Corrector: Ready")
+            print("[AdvancedBuddy] 🔗 Belief-Qualia Linking: Ready")
+            print("[AdvancedBuddy] 💎 Value System: Ready")
+            print("[AdvancedBuddy] 🎯 Conscious Prompt Builder: Ready")
+            print("[AdvancedBuddy] 🔄 Introspection Loop: Ready")
+            print("[AdvancedBuddy] 🎭 Emotion Response Modulator: Ready")
+            print("[AdvancedBuddy] 💬 Dialogue Confidence Filter: Ready")
+            print("[AdvancedBuddy] 📊 Qualia Analytics: Ready")
+            print("[AdvancedBuddy] 🧠 Belief Memory Refiner: Ready")
+            print("[AdvancedBuddy] 🆔 Self Model Updater: Ready")
+            print("[AdvancedBuddy] 🎯 Goal Reasoning: Ready")
+            print("[AdvancedBuddy] 💭 Motivation Reasoner: Ready")
+            
+        except Exception as e:
+            print(f"[AdvancedBuddy] ❌ Self-awareness initialization error: {e}")
+            import traceback
+            traceback.print_exc()
+    else:
+        print("[AdvancedBuddy] ⚠️ Self-awareness components not available")
     
     # Wake word setup
     try:

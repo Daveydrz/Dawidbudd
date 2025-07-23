@@ -1,0 +1,20 @@
+{
+  "instances": [
+    {
+      "instance_id": "uncertainty_0",
+      "uncertainty_type": "UncertaintyType.KNOWLEDGE_GAP",
+      "confidence_score": 0.4275,
+      "context": "math question",
+      "query": "What is 2+2?",
+      "detected_indicators": [
+        "confidence_expressions: might be"
+      ],
+      "suggested_strategy": "ClarificationStrategy.OFFER_PARTIAL_ANSWER",
+      "clarification_text": "I don't have all the details, but I can share what I know: {known_info}.",
+      "timestamp": "2025-07-18T10:00:46.500064",
+      "resolved": false
+    }
+  ],
+  "last_updated": "2025-07-18T10:00:46.500087",
+  "total_instances": 1
+}

@@ -1,107 +1,29 @@
 {
   "beliefs": [
     {
-      "id": "belief_1752804854853_0",
-      "content": "a software developer and i live in brisbane. i really like python programming.",
-      "belief_type": "personal",
-      "certainty": "moderate",
+      "id": "belief_1752833366271_0",
+      "content": "what artificial intelligence?",
+      "belief_type": "BeliefType.FACTUAL",
+      "certainty": "BeliefCertainty.MODERATE",
       "source": "text_extraction",
-      "timestamp": "2025-07-18T02:14:14.853785",
-      "user": "test_user",
+      "timestamp": "2025-07-18T10:09:26.271678",
+      "user": "e2e_test",
       "context": {},
       "supporting_evidence": [
-        "I am a software developer and I live in Brisbane. I really like Python programming."
-      ],
-      "contradictions": [],
-      "confidence_score": 0.7,
-      "last_confirmed": "2025-07-18T02:14:14.853795",
-      "tags": [
-        "personal",
-        "location",
-        "technology"
-      ]
-    },
-    {
-      "id": "belief_1752804854853_1",
-      "content": "in brisbane. i really like python programming.",
-      "belief_type": "personal",
-      "certainty": "moderate",
-      "source": "text_extraction",
-      "timestamp": "2025-07-18T02:14:14.853904",
-      "user": "test_user",
-      "context": {},
-      "supporting_evidence": [
-        "I am a software developer and I live in Brisbane. I really like Python programming."
-      ],
-      "contradictions": [],
-      "confidence_score": 0.7,
-      "last_confirmed": "2025-07-18T02:14:14.853910",
-      "tags": [
-        "personal"
-      ]
-    },
-    {
-      "id": "belief_1752804854988_0",
-      "content": "hello! how you?",
-      "belief_type": "factual",
-      "certainty": "moderate",
-      "source": "text_extraction",
-      "timestamp": "2025-07-18T02:14:14.988094",
-      "user": "pipeline_test_user",
-      "context": {},
-      "supporting_evidence": [
-        "Hello! How are you?"
+        "What is artificial intelligence?"
       ],
       "contradictions": [],
       "confidence_score": 0.6,
-      "last_confirmed": "2025-07-18T02:14:14.988103",
-      "tags": [
-        "factual"
-      ]
-    },
-    {
-      "id": "belief_1752804855294_0",
-      "content": "thanks! that really helpful.",
-      "belief_type": "factual",
-      "certainty": "moderate",
-      "source": "text_extraction",
-      "timestamp": "2025-07-18T02:14:15.294943",
-      "user": "pipeline_test_user",
-      "context": {},
-      "supporting_evidence": [
-        "Thanks! That was really helpful."
-      ],
-      "contradictions": [],
-      "confidence_score": 0.7,
-      "last_confirmed": "2025-07-18T02:14:15.294951",
-      "tags": [
-        "factual"
-      ]
-    },
-    {
-      "id": "belief_1752827403019_0",
-      "content": "hello, how you?",
-      "belief_type": "factual",
-      "certainty": "moderate",
-      "source": "text_extraction",
-      "timestamp": "2025-07-18T08:30:03.019468",
-      "user": "test_user",
-      "context": {},
-      "supporting_evidence": [
-        "Hello, how are you?"
-      ],
-      "contradictions": [],
-      "confidence_score": 0.6,
-      "last_confirmed": "2025-07-18T08:30:03.019478",
+      "last_confirmed": "2025-07-18T10:09:26.271688",
       "tags": [
         "factual"
       ]
     }
   ],
   "contradictions": [],
-  "last_updated": "2025-07-18T08:30:03.020582",
+  "last_updated": "2025-07-18T10:09:26.271773",
   "metadata": {
-    "total_beliefs": 5,
+    "total_beliefs": 1,
     "total_contradictions": 0,
     "unresolved_contradictions": 0
   }
