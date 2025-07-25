@@ -3,11 +3,46 @@ import re
 import requests
 import json
 import time  # ✅ PERFORMANCE: Added for retry delays
+import random  # For jitter in retry delays
 from datetime import datetime
 import pytz
 from ai.memory import get_conversation_context, get_user_memory
 from config import *
 from typing import Dict, Any
+
+# ✅ FIX WinError 10053: Create persistent session with better connection handling
+def create_session():
+    """Create a new session with proper configuration"""
+    new_session = requests.Session()
+    new_session.headers.update({
+        'Connection': 'keep-alive',
+        'Keep-Alive': 'timeout=30, max=100',
+        'User-Agent': 'Buddy/1.0'
+    })
+    
+    # Configure session with connection pooling
+    adapter = requests.adapters.HTTPAdapter(
+        pool_connections=1,
+        pool_maxsize=1,
+        max_retries=0,  # We handle retries manually
+        pool_block=False
+    )
+    new_session.mount('http://', adapter)
+    new_session.mount('https://', adapter)
+    return new_session
+
+session = create_session()
+
+def recreate_session():
+    """Recreate the global session with proper configuration"""
+    global session
+    try:
+        session.close()
+    except:
+        pass
+    time.sleep(0.1)
+    session = create_session()
+    print(f"[Connection] 🔄 Session recreated successfully")
 
 def _generate_dynamic_error_response(error_context: Dict[str, Any]) -> str:
     """Generate dynamic, personalized error responses using LLM instead of hardcoded messages"""
@@ -122,20 +157,28 @@ def ask_kobold_streaming(messages, max_tokens=MAX_TOKENS):
         "stream": True
     }
     
-    # ✅ PERFORMANCE: HTTP retry logic for WinError 10053 issues
-    max_retries = 3
-    retry_delay = 1.0
+    # ✅ FIX WinError 10053: Enhanced retry logic with session management
+    max_retries = 5  # Increased retries
+    base_delay = 0.5  # Start with shorter delay
     
     for attempt in range(max_retries):
         try:
+            # Add jitter to prevent thundering herd
+            jitter = random.uniform(0.1, 0.3)
+            retry_delay = (base_delay * (2 ** attempt)) + jitter
+            
+            if attempt > 0:
+                print(f"[SmartResponsive] 🔄 Retry {attempt + 1}/{max_retries} after {retry_delay:.2f}s")
+                time.sleep(retry_delay)
+            
             print(f"[SmartResponsive] 🎭 Starting performance streaming (attempt {attempt + 1}/{max_retries}) to: {KOBOLD_URL}")
             
-            response = requests.post(
+            # Use persistent session with better error handling
+            response = session.post(
                 KOBOLD_URL, 
                 json=payload, 
-                timeout=30,  # Reduced timeout for faster failures
+                timeout=(5, 30),  # (connection_timeout, read_timeout)
                 stream=True,
-                headers={'Connection': 'keep-alive'},  # Better connection handling
                 allow_redirects=False
             )
             
@@ -154,7 +197,7 @@ def ask_kobold_streaming(messages, max_tokens=MAX_TOKENS):
                 print(f"[SmartResponsive] ⚡ PERFORMANCE MODE: Immediate streaming at 5% (~{TARGET_WORDS} words) or first sentence")
                 
                 try:
-                    for line in response.iter_lines(decode_unicode=True):
+                    for line in response.iter_lines(decode_unicode=True, chunk_size=1024):
                         if line:
                             line_text = line.strip()
                             
@@ -257,31 +300,68 @@ def ask_kobold_streaming(messages, max_tokens=MAX_TOKENS):
                     print(f"[SmartResponsive] ✅ Streaming complete: {chunk_count} total chunks, ~{word_count} words")
                     return
                     
-                except requests.exceptions.RequestException as stream_err:
-                    print(f"[SmartResponsive] ❌ Streaming error on attempt {attempt + 1}: {stream_err}")
+                except (requests.exceptions.RequestException, requests.exceptions.ConnectionError, 
+                        requests.exceptions.Timeout, requests.exceptions.ChunkedEncodingError,
+                        ConnectionResetError, ConnectionAbortedError) as stream_err:
+                    
+                    print(f"[SmartResponsive] ❌ Connection error on attempt {attempt + 1}: {stream_err}")
+                    
+                    # Handle WinError 10053 specifically
+                    if "10053" in str(stream_err) or "connection was aborted" in str(stream_err).lower():
+                        print(f"[SmartResponsive] 🔧 WinError 10053 detected - connection aborted by host")
+                        
+                        # Close and recreate session on connection abort
+                        try:
+                            response.close()
+                        except:
+                            pass
+                        
+                        # Recreate session if this is an early attempt
+                        if attempt < max_retries - 2:
+                            print(f"[SmartResponsive] 🔄 Recreating session due to connection abort")
+                            recreate_session()
+                    
                     if attempt < max_retries - 1:
-                        print(f"[SmartResponsive] 🔄 Retrying in {retry_delay}s...")
-                        time.sleep(retry_delay)
-                        retry_delay *= 2  # Exponential backoff
                         continue
                     else:
                         raise
             
             else:
                 print(f"[SmartResponsive] ❌ HTTP error {response.status_code} on attempt {attempt + 1}")
+                
+                # Close response on error
+                try:
+                    response.close()
+                except:
+                    pass
+                
                 if attempt < max_retries - 1:
-                    print(f"[SmartResponsive] 🔄 Retrying in {retry_delay}s...")
-                    time.sleep(retry_delay)
-                    retry_delay *= 2
                     continue
                 else:
-                    raise Exception(f"HTTP {response.status_code}: {response.text}")
+                    error_msg = f"HTTP {response.status_code}"
+                    try:
+                        error_msg += f": {response.text[:200]}"
+                    except:
+                        pass
+                    raise ConnectionError(error_msg)
                     
-        except Exception as e:
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout, 
+                requests.exceptions.RequestException, ConnectionResetError, 
+                ConnectionAbortedError, OSError) as e:
+                
+            error_str = str(e)
             print(f"[SmartResponsive] ❌ Connection failed on attempt {attempt + 1}: {e}")
+            
+            # Handle WinError 10053 specifically
+            if "10053" in error_str or "connection was aborted" in error_str.lower():
+                print(f"[SmartResponsive] 🔧 WinError 10053 - recreating session")
+                # Recreate session for connection abort errors
+                try:
+                    recreate_session()
+                except Exception as session_err:
+                    print(f"[SmartResponsive] ⚠️ Session recreation error: {session_err}")
+            
             if attempt < max_retries - 1:
-                print(f"[SmartResponsive] 🔄 Final retry in {retry_delay}s...")
-                time.sleep(retry_delay)
                 continue
             else:
                 print(f"[SmartResponsive] ❌ All retry attempts failed: {e}")
@@ -290,7 +370,7 @@ def ask_kobold_streaming(messages, max_tokens=MAX_TOKENS):
                 return
 
 def ask_kobold(messages, max_tokens=MAX_TOKENS):
-    """Original non-streaming KoboldCpp request (kept for compatibility)"""
+    """Original non-streaming KoboldCpp request with WinError 10053 fixes"""
     payload = {
         "model": "llama3",
         "messages": messages,
@@ -299,79 +379,120 @@ def ask_kobold(messages, max_tokens=MAX_TOKENS):
         "stream": False
     }
     
-    try:
-        print(f"[KoboldCpp] 🔗 Connecting to: {KOBOLD_URL}")
-        print(f"[KoboldCpp] 📤 Sending payload: {json.dumps(payload, indent=2)}")
-        
-        response = requests.post(KOBOLD_URL, json=payload, timeout=30)
-        
-        print(f"[KoboldCpp] 📡 Response Status: {response.status_code}")
-        print(f"[KoboldCpp] 📄 Response Headers: {dict(response.headers)}")
-        
-        if response.status_code == 200:
-            try:
-                data = response.json()
-                print(f"[KoboldCpp] 📄 Response Data Keys: {list(data.keys())}")
-                print(f"[KoboldCpp] 📄 Full Response: {json.dumps(data, indent=2)}")
-                
-                if "choices" in data and len(data["choices"]) > 0:
-                    result = data["choices"][0]["message"]["content"].strip()
-                    print(f"[KoboldCpp] ✅ Extracted Response: '{result}'")
-                    return result
-                else:
-                    print(f"[KoboldCpp] ❌ No 'choices' field or empty choices")
+    # ✅ FIX WinError 10053: Enhanced retry logic for non-streaming requests
+    max_retries = 5
+    base_delay = 0.5
+    
+    for attempt in range(max_retries):
+        try:
+            # Add jitter to prevent thundering herd
+            jitter = random.uniform(0.1, 0.3)
+            retry_delay = (base_delay * (2 ** attempt)) + jitter
+            
+            if attempt > 0:
+                print(f"[KoboldCpp] 🔄 Retry {attempt + 1}/{max_retries} after {retry_delay:.2f}s")
+                time.sleep(retry_delay)
+            
+            print(f"[KoboldCpp] 🔗 Connecting to: {KOBOLD_URL} (attempt {attempt + 1})")
+            print(f"[KoboldCpp] 📤 Sending payload: {json.dumps(payload, indent=2)}")
+            
+            # Use persistent session with better timeouts
+            response = session.post(
+                KOBOLD_URL, 
+                json=payload, 
+                timeout=(5, 45)  # (connection_timeout, read_timeout)
+            )
+            
+            print(f"[KoboldCpp] 📡 Response Status: {response.status_code}")
+            print(f"[KoboldCpp] 📄 Response Headers: {dict(response.headers)}")
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    print(f"[KoboldCpp] 📄 Response Data Keys: {list(data.keys())}")
+                    print(f"[KoboldCpp] 📄 Full Response: {json.dumps(data, indent=2)}")
+                    
+                    if "choices" in data and len(data["choices"]) > 0:
+                        result = data["choices"][0]["message"]["content"].strip()
+                        print(f"[KoboldCpp] ✅ Extracted Response: '{result}'")
+                        return result
+                    else:
+                        print(f"[KoboldCpp] ❌ No 'choices' field or empty choices")
+                        # Generate dynamic error response
+                        error_context = {
+                            'error_type': 'no_choices',
+                            'situation': 'kobold_response'
+                        }
+                        return _generate_dynamic_error_response(error_context)
+                        
+                except json.JSONDecodeError as e:
+                    print(f"[KoboldCpp] ❌ JSON Decode Error: {e}")
+                    print(f"[KoboldCpp] 📄 Raw Response: {response.text[:500]}")
                     # Generate dynamic error response
                     error_context = {
-                        'error_type': 'no_choices',
+                        'error_type': 'json_decode_error',
                         'situation': 'kobold_response'
                     }
                     return _generate_dynamic_error_response(error_context)
+            else:
+                print(f"[KoboldCpp] ❌ HTTP Error {response.status_code}")
+                print(f"[KoboldCpp] 📄 Error Response: {response.text[:500]}")
+                
+                # Close response on error
+                try:
+                    response.close()
+                except:
+                    pass
+                
+                if attempt < max_retries - 1:
+                    continue
+                else:
+                    # Generate dynamic error response
+                    error_context = {
+                        'error_type': 'http_error',
+                        'error_code': response.status_code,
+                        'situation': 'kobold_request'
+                    }
+                    return _generate_dynamic_error_response(error_context)
                     
-            except json.JSONDecodeError as e:
-                print(f"[KoboldCpp] ❌ JSON Decode Error: {e}")
-                print(f"[KoboldCpp] 📄 Raw Response: {response.text[:500]}")
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout,
+                requests.exceptions.RequestException, ConnectionResetError,
+                ConnectionAbortedError, OSError) as e:
+                
+            error_str = str(e)
+            print(f"[KoboldCpp] ❌ Connection error on attempt {attempt + 1}: {e}")
+            
+            # Handle WinError 10053 specifically
+            if "10053" in error_str or "connection was aborted" in error_str.lower():
+                print(f"[KoboldCpp] 🔧 WinError 10053 detected - recreating session")
+                try:
+                    recreate_session()
+                except Exception as session_err:
+                    print(f"[KoboldCpp] ⚠️ Session recreation error: {session_err}")
+            
+            if attempt < max_retries - 1:
+                continue
+            else:
+                print(f"[KoboldCpp] ❌ All retry attempts failed")
                 # Generate dynamic error response
                 error_context = {
-                    'error_type': 'json_decode_error',
-                    'situation': 'kobold_response'
+                    'error_type': 'connection_error',
+                    'situation': 'kobold_connection'
                 }
                 return _generate_dynamic_error_response(error_context)
-        else:
-            print(f"[KoboldCpp] ❌ HTTP Error {response.status_code}")
-            print(f"[KoboldCpp] 📄 Error Response: {response.text[:500]}")
-            # Generate dynamic error response
-            error_context = {
-                'error_type': 'http_error',
-                'error_code': response.status_code,
-                'situation': 'kobold_request'
-            }
-            return _generate_dynamic_error_response(error_context)
-            
-    except requests.exceptions.ConnectionError:
-        print(f"[KoboldCpp] ❌ Connection Error - Cannot reach {KOBOLD_URL}")
-        # Generate dynamic error response
-        error_context = {
-            'error_type': 'connection_error',
-            'situation': 'kobold_connection'
-        }
-        return _generate_dynamic_error_response(error_context)
-    except requests.exceptions.Timeout:
-        print(f"[KoboldCpp] ❌ Timeout after 30 seconds")
-        # Generate dynamic error response
-        error_context = {
-            'error_type': 'timeout_error',
-            'situation': 'kobold_request'
-        }
-        return _generate_dynamic_error_response(error_context)
-    except Exception as e:
-        print(f"[KoboldCpp] ❌ Unexpected Error: {type(e).__name__}: {e}")
-        # Generate dynamic error response
-        error_context = {
-            'error_type': 'unexpected_error',
-            'error_message': str(e),
-            'situation': 'kobold_general'
-        }
-        return _generate_dynamic_error_response(error_context)
+                
+        except Exception as e:
+            print(f"[KoboldCpp] ❌ Unexpected Error: {type(e).__name__}: {e}")
+            if attempt < max_retries - 1:
+                continue
+            else:
+                # Generate dynamic error response
+                error_context = {
+                    'error_type': 'unexpected_error',
+                    'error_message': str(e),
+                    'situation': 'kobold_general'
+                }
+                return _generate_dynamic_error_response(error_context)
 
 def generate_response_streaming(question, username, lang=DEFAULT_LANG):
     """✅ ULTRA-RESPONSIVE: Generate AI response with TRUE streaming - speaks as it generates"""

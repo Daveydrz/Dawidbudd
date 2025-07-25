@@ -11,8 +11,43 @@ import requests
 import io
 import tempfile
 import os
+import random  # For retry jitter
 from langdetect import detect
 from config import *
+
+# ✅ FIX WinError 10053: Create persistent session for Kokoro API
+def create_kokoro_session():
+    """Create a new Kokoro session with proper configuration"""
+    new_session = requests.Session()
+    new_session.headers.update({
+        'Connection': 'keep-alive',
+        'Keep-Alive': 'timeout=30, max=100',
+        'User-Agent': 'Buddy-Audio/1.0'
+    })
+    
+    # Configure session with connection pooling
+    adapter = requests.adapters.HTTPAdapter(
+        pool_connections=1,
+        pool_maxsize=1,
+        max_retries=0,  # We handle retries manually
+        pool_block=False
+    )
+    new_session.mount('http://', adapter)
+    new_session.mount('https://', adapter)
+    return new_session
+
+kokoro_session = create_kokoro_session()
+
+def recreate_kokoro_session():
+    """Recreate the global Kokoro session with proper configuration"""
+    global kokoro_session
+    try:
+        kokoro_session.close()
+    except:
+        pass
+    time.sleep(0.1)
+    kokoro_session = create_kokoro_session()
+    print(f"[Kokoro] 🔄 Session recreated successfully")
 
 # Global audio state
 audio_queue = queue.Queue()
@@ -45,22 +80,49 @@ KOKORO_API_VOICES = {
 kokoro_api_available = False
 
 def test_kokoro_api():
-    """Test if Kokoro-FastAPI is available"""
+    """Test if Kokoro-FastAPI is available with retry logic"""
     global kokoro_api_available
-    try:
-        response = requests.get(f"{KOKORO_API_BASE_URL}/health", timeout=5)
-        if response.status_code == 200:
-            kokoro_api_available = True
-            print(f"[Buddy V2] ✅ Kokoro-FastAPI connected at {KOKORO_API_BASE_URL}")
-            return True
-    except requests.exceptions.ConnectionError as e:
-        print(f"[Buddy V2] ❌ Kokoro-FastAPI connection failed: {e}")
-        print(f"[Buddy V2] 💡 Make sure Kokoro-FastAPI is running on {KOKORO_API_BASE_URL}")
-    except requests.exceptions.Timeout as e:
-        print(f"[Buddy V2] ❌ Kokoro-FastAPI timeout: {e}")
-    except Exception as e:
-        print(f"[Buddy V2] ❌ Kokoro-FastAPI not available: {e}")
-        print(f"[Buddy V2] 💡 Make sure Kokoro-FastAPI is running on {KOKORO_API_BASE_URL}")
+    
+    max_retries = 3
+    base_delay = 0.5
+    
+    for attempt in range(max_retries):
+        try:
+            # Add jitter to prevent thundering herd
+            if attempt > 0:
+                jitter = random.uniform(0.1, 0.3)
+                retry_delay = (base_delay * (2 ** attempt)) + jitter
+                print(f"[Buddy V2] 🔄 Retrying Kokoro connection in {retry_delay:.2f}s...")
+                time.sleep(retry_delay)
+            
+            response = kokoro_session.get(f"{KOKORO_API_BASE_URL}/health", timeout=5)
+            if response.status_code == 200:
+                kokoro_api_available = True
+                print(f"[Buddy V2] ✅ Kokoro-FastAPI connected at {KOKORO_API_BASE_URL}")
+                return True
+                
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout,
+                requests.exceptions.RequestException, ConnectionResetError,
+                ConnectionAbortedError, OSError) as e:
+                
+            error_str = str(e)
+            print(f"[Buddy V2] ❌ Kokoro connection attempt {attempt + 1} failed: {e}")
+            
+            # Handle WinError 10053 specifically for Kokoro API
+            if "10053" in error_str or "connection was aborted" in error_str.lower():
+                print(f"[Buddy V2] 🔧 WinError 10053 detected - recreating Kokoro session")
+                try:
+                    recreate_kokoro_session()
+                except Exception as session_err:
+                    print(f"[Buddy V2] ⚠️ Kokoro session recreation error: {session_err}")
+            
+            if attempt == max_retries - 1:
+                print(f"[Buddy V2] 💡 Make sure Kokoro-FastAPI is running on {KOKORO_API_BASE_URL}")
+        
+        except Exception as e:
+            print(f"[Buddy V2] ❌ Kokoro-FastAPI not available: {e}")
+            if attempt == max_retries - 1:
+                print(f"[Buddy V2] 💡 Make sure Kokoro-FastAPI is running on {KOKORO_API_BASE_URL}")
     
     kokoro_api_available = False
     return False
@@ -84,25 +146,47 @@ def generate_tts(text, lang=DEFAULT_LANG):
         }
         
         # Call Kokoro-FastAPI with retry mechanism
-        response = None
-        try:
-            response = requests.post(
-                f"{KOKORO_API_BASE_URL}/v1/audio/speech",
-                json=payload,
-                timeout=KOKORO_API_TIMEOUT
-            )
-        except requests.exceptions.RequestException as e:
-            print(f"[TTS] ❌ First request failed: {e}, retrying...")
-            time.sleep(1)
+        max_retries = 3
+        base_delay = 0.5
+        
+        for attempt in range(max_retries):
             try:
-                response = requests.post(
+                # Add jitter to prevent thundering herd
+                if attempt > 0:
+                    jitter = random.uniform(0.1, 0.3)
+                    retry_delay = (base_delay * (2 ** attempt)) + jitter
+                    print(f"[TTS] 🔄 Retry {attempt + 1}/{max_retries} after {retry_delay:.2f}s...")
+                    time.sleep(retry_delay)
+                
+                response = kokoro_session.post(
                     f"{KOKORO_API_BASE_URL}/v1/audio/speech",
                     json=payload,
                     timeout=KOKORO_API_TIMEOUT
                 )
-            except requests.exceptions.RequestException as retry_e:
-                print(f"[TTS] ❌ Retry also failed: {retry_e}")
-                return None, None
+                break  # Success, exit retry loop
+                
+            except (requests.exceptions.RequestException, requests.exceptions.ConnectionError,
+                    requests.exceptions.Timeout, ConnectionResetError, ConnectionAbortedError, OSError) as e:
+                    
+                error_str = str(e)
+                print(f"[TTS] ❌ Request attempt {attempt + 1} failed: {e}")
+                
+                # Handle WinError 10053 specifically
+                if "10053" in error_str or "connection was aborted" in error_str.lower():
+                    print(f"[TTS] 🔧 WinError 10053 detected - recreating Kokoro session")
+                    try:
+                        recreate_kokoro_session()
+                    except Exception as session_err:
+                        print(f"[TTS] ⚠️ Kokoro session recreation error: {session_err}")
+                
+                if attempt == max_retries - 1:
+                    print(f"[TTS] ❌ All retry attempts failed")
+                    return None, None
+                    
+        else:
+            # This should not happen due to break above, but just in case
+            print(f"[TTS] ❌ Retry loop completed without success")
+            return None, None
         
         if response.status_code == 200:
             # Save audio to temporary file
@@ -220,25 +304,46 @@ def speak_streaming(text, voice=None, lang=DEFAULT_LANG):
             }
             
             # Call Kokoro-FastAPI with retry mechanism
-            response = None
-            try:
-                response = requests.post(
-                    f"{KOKORO_API_BASE_URL}/v1/audio/speech",
-                    json=payload,
-                    timeout=5  # Shorter timeout for streaming
-                )
-            except requests.exceptions.RequestException as e:
-                print(f"[StreamingTTS] ❌ First request failed: {e}, retrying...")
-                time.sleep(0.5)
+            max_retries = 3
+            base_delay = 0.3  # Shorter delay for streaming
+            
+            for attempt in range(max_retries):
                 try:
-                    response = requests.post(
+                    if attempt > 0:
+                        jitter = random.uniform(0.05, 0.15)
+                        retry_delay = (base_delay * (2 ** attempt)) + jitter
+                        print(f"[StreamingTTS] 🔄 Retry {attempt + 1} after {retry_delay:.2f}s...")
+                        time.sleep(retry_delay)
+                    
+                    response = kokoro_session.post(
                         f"{KOKORO_API_BASE_URL}/v1/audio/speech",
                         json=payload,
-                        timeout=5
+                        timeout=5  # Shorter timeout for streaming
                     )
-                except requests.exceptions.RequestException as retry_e:
-                    print(f"[StreamingTTS] ❌ Retry also failed: {retry_e}")
-                    return False
+                    break  # Success, exit retry loop
+                    
+                except (requests.exceptions.RequestException, requests.exceptions.ConnectionError,
+                        requests.exceptions.Timeout, ConnectionResetError, ConnectionAbortedError, OSError) as e:
+                        
+                    error_str = str(e)
+                    print(f"[StreamingTTS] ❌ Request attempt {attempt + 1} failed: {e}")
+                    
+                    # Handle WinError 10053 specifically
+                    if "10053" in error_str or "connection was aborted" in error_str.lower():
+                        print(f"[StreamingTTS] 🔧 WinError 10053 detected - recreating Kokoro session")
+                        try:
+                            recreate_kokoro_session()
+                        except Exception as session_err:
+                            print(f"[StreamingTTS] ⚠️ Kokoro session recreation error: {session_err}")
+                    
+                    if attempt == max_retries - 1:
+                        print(f"[StreamingTTS] ❌ All retry attempts failed")
+                        return False
+                        
+            else:
+                # This should not happen due to break above, but just in case
+                print(f"[StreamingTTS] ❌ Retry loop completed without success")
+                return False
             
             if response.status_code == 200:
                 # Process audio quickly for streaming
