@@ -139,6 +139,7 @@ class FullDuplexManager:
             threading.Thread(target=self._speech_processor, daemon=True),
             threading.Thread(target=self._conversation_state_manager, daemon=True),
             threading.Thread(target=self._noise_tracker, daemon=True),
+            threading.Thread(target=self._state_watchdog, daemon=True),  # ✅ NEW: State monitoring
         ]
         
         for thread in self.threads:
@@ -211,7 +212,7 @@ class FullDuplexManager:
                 print(f"[FullDuplex] Notify buddy speaking error: {e}")
 
     def notify_buddy_stopped_speaking(self):
-        """Buddy stopped speaking - switch to user turn"""
+        """Buddy stopped speaking - switch to user turn and COMPREHENSIVE RESET"""
         try:
             with self.conversation_state_lock:
                 self.conversation_state = "WAITING_FOR_INPUT"
@@ -223,8 +224,30 @@ class FullDuplexManager:
                 self.user_speech_detection_active = True
                 self.interrupt_detection_active = False
                 
+                # ✅ CRITICAL: Reset all counters that might cause stuck states
+                self.speech_frames = 0
+                self.silence_frames = 0
+                self.interrupt_frames = 0
+                
             # ✅ CRITICAL: Reset interrupt flag when Buddy stops speaking
             self.reset_interrupt_flag()
+            
+            # ✅ COMPREHENSIVE RESET: Automatically reset voice systems after each response
+            try:
+                # Reset voice analyzer state
+                from audio.voice_analyzer import voice_analyzer
+                if voice_analyzer:
+                    voice_analyzer.reset_conversation_state()
+                    
+                # Reset smart detection state
+                from audio.smart_detection_manager import smart_detector
+                if hasattr(smart_detector, 'reset_session'):
+                    smart_detector.reset_session()
+                    
+                print("[FullDuplex] ✅ COMPREHENSIVE RESET: All voice systems reset for next question")
+                    
+            except Exception as reset_error:
+                print(f"[FullDuplex] ⚠️ Comprehensive reset error: {reset_error}")
                 
             print(f"[FullDuplex] 🔄 TURN SWITCH: Waiting for user input")
             print(f"[FullDuplex] 📊 VAD: OFF, User Detection: ON, Interrupts: OFF")
@@ -266,6 +289,9 @@ class FullDuplexManager:
                 self.vad_active = False
                 self.user_speech_detection_active = False
                 self.interrupt_detection_active = False
+                
+                # ✅ WATCHDOG: Set processing start time for stuck detection
+                self._processing_start_time = time.time()
                 
             print(f"[FullDuplex] 🔄 USER TURN: Ended, processing response")
             print(f"[FullDuplex] 📊 VAD: OFF, User Detection: OFF, Interrupts: OFF")
@@ -617,10 +643,11 @@ class FullDuplexManager:
                 print(f"[FullDuplex] Interrupt handling error: {e}")
 
     def force_reset_to_waiting(self):
-        """✅ NEW: Force reset to waiting state (for debugging stuck states)"""
+        """✅ NEW: Force reset to waiting state (for debugging stuck states) - ENHANCED"""
         try:
+            print("[FullDuplex] 🚨 ENHANCED FORCE RESET: Conversation state to WAITING_FOR_INPUT")
+            
             with self.conversation_state_lock:
-                print("[FullDuplex] 🚨 FORCE RESET: Conversation state to WAITING_FOR_INPUT")
                 self.conversation_state = "WAITING_FOR_INPUT"
                 self.buddy_is_speaking = False
                 self.user_is_speaking = False
@@ -639,10 +666,27 @@ class FullDuplexManager:
                 self.speech_interrupted = False
                 self.buddy_interrupted = False
                 
-            print("[FullDuplex] ✅ FORCE RESET complete - should detect user speech now")
+            # ✅ ENHANCED: Also reset all voice subsystems during force reset
+            try:
+                # Reset voice analyzer state
+                from audio.voice_analyzer import voice_analyzer
+                if voice_analyzer:
+                    voice_analyzer.force_recalibrate()
+                    print("[FullDuplex] 🔧 Voice analyzer force recalibrated")
+                    
+                # Reset smart detection state
+                from audio.smart_detection_manager import smart_detector
+                if hasattr(smart_detector, 'reset_session'):
+                    smart_detector.reset_session()
+                    print("[FullDuplex] 🔧 Smart detection reset")
+                    
+            except Exception as subsystem_error:
+                print(f"[FullDuplex] ⚠️ Subsystem reset error: {subsystem_error}")
+                
+            print("[FullDuplex] ✅ ENHANCED FORCE RESET complete - all systems should detect user speech now")
             
         except Exception as e:
-            print(f"[FullDuplex] Force reset error: {e}")
+            print(f"[FullDuplex] Enhanced force reset error: {e}")
     
     def reset_conversation_session(self):
         """Reset voice detection system between conversations to prevent stuck states"""
@@ -671,6 +715,63 @@ class FullDuplexManager:
             
         except Exception as e:
             print(f"[FullDuplex] ❌ Session reset error: {e}")
+    
+    def check_for_stuck_state(self):
+        """Check if the voice detection system appears stuck and force reset if needed"""
+        try:
+            with self.conversation_state_lock:
+                state = self.conversation_state
+                
+            # Check if we've been in BUDDY_RESPONDING state too long without proper reset
+            if state == "BUDDY_RESPONDING":
+                if hasattr(self, '_buddy_speech_start_time'):
+                    speech_duration = time.time() - self._buddy_speech_start_time
+                    if speech_duration > 30:  # More than 30 seconds in speaking state is likely stuck
+                        print(f"[FullDuplex] 🚨 STUCK STATE DETECTED: Been in BUDDY_RESPONDING for {speech_duration:.1f}s")
+                        self.force_reset_to_waiting()
+                        return True
+                        
+            # Check if we've been processing too long
+            elif state == "PROCESSING_RESPONSE":
+                if hasattr(self, '_processing_start_time'):
+                    processing_duration = time.time() - self._processing_start_time
+                    if processing_duration > 15:  # More than 15 seconds processing is likely stuck
+                        print(f"[FullDuplex] 🚨 STUCK PROCESSING DETECTED: Been processing for {processing_duration:.1f}s")
+                        self.force_reset_to_waiting()
+                        return True
+                        
+            # Check if detection flags are inconsistent
+            if (not self.user_speech_detection_active and 
+                not self.vad_active and 
+                not self.interrupt_detection_active and 
+                state == "WAITING_FOR_INPUT"):
+                print("[FullDuplex] 🚨 STUCK FLAGS DETECTED: All detection disabled while waiting for input")
+                self.force_reset_to_waiting()
+                return True
+                
+            return False
+            
+        except Exception as e:
+            print(f"[FullDuplex] ❌ Stuck state check error: {e}")
+            return False
+    
+    def _state_watchdog(self):
+        """Monitor for stuck states and automatically recover"""
+        print("[FullDuplex] 🐕 State watchdog started - monitoring for stuck states")
+        
+        while self.running:
+            try:
+                # Check every 5 seconds for stuck states
+                time.sleep(5.0)
+                
+                if self.check_for_stuck_state():
+                    print("[FullDuplex] 🔧 Watchdog triggered state reset")
+                    
+            except Exception as e:
+                if DEBUG:
+                    print(f"[FullDuplex] State watchdog error: {e}")
+                    
+        print("[FullDuplex] 🐕 State watchdog stopped")
 
     def _noise_tracker(self):
         """Track noise levels"""

@@ -138,12 +138,12 @@ def ask_kobold_streaming(messages, max_tokens=MAX_TOKENS):
             first_chunk_sent = False
             estimated_total_words = max_tokens // 1.3  # Rough estimate of final word count
             
-            # ✅ SMART THRESHOLDS: Wait for natural completion
-            MIN_WORDS_FOR_FIRST_CHUNK = 8              # Minimum words before considering first chunk
-            TARGET_COMPLETION_PERCENTAGE = 0.45        # Target 45% completion
+            # ✅ IMMEDIATE STREAMING: Start as soon as first sentence is ready
+            MIN_WORDS_FOR_FIRST_CHUNK = 4              # Reduced minimum words for faster response
+            TARGET_COMPLETION_PERCENTAGE = 0.15        # Reduced from 45% to 15% for immediate streaming
             TARGET_WORDS = int(estimated_total_words * TARGET_COMPLETION_PERCENTAGE)
             
-            print(f"[SmartResponsive] 🎯 Targeting 40-50% completion (~{TARGET_WORDS} words) or first complete phrase")
+            print(f"[SmartResponsive] ⚡ IMMEDIATE STREAMING: Targeting sentence completion or 15% (~{TARGET_WORDS} words)")
             
             for line in response.iter_lines():
                 if line:
@@ -174,22 +174,22 @@ def ask_kobold_streaming(messages, max_tokens=MAX_TOKENS):
                                     buffer += content
                                     word_count = len(buffer.split())
                                     
-                                    # ✅ SMART FIRST CHUNK: Wait for natural break OR target completion
+                                    # ✅ IMMEDIATE FIRST CHUNK: Prioritize complete sentences over completion percentage
                                     if not first_chunk_sent and word_count >= MIN_WORDS_FOR_FIRST_CHUNK:
                                         
-                                        # Priority 1: Look for complete sentences (best option)
+                                        # Priority 1: Look for complete sentences (IMMEDIATE - best option)
                                         sentence_match = re.search(r'^(.*?[.!?])\s+', buffer)
                                         if sentence_match:
                                             first_chunk = sentence_match.group(1).strip()
-                                            if len(first_chunk.split()) >= 4:  # Ensure meaningful length
+                                            if len(first_chunk.split()) >= 3:  # Reduced for faster response
                                                 chunk_count += 1
                                                 first_chunk_sent = True
-                                                print(f"[SmartResponsive] 📝 SMART first chunk (complete sentence): '{first_chunk}'")
+                                                print(f"[SmartResponsive] ⚡ IMMEDIATE first chunk (complete sentence): '{first_chunk}'")
                                                 yield first_chunk
                                                 buffer = buffer[sentence_match.end():].strip()
                                                 continue
                                         
-                                        # Priority 2: Look for natural phrase breaks (comma, etc.)
+                                        # Priority 2: Look for natural phrase breaks (IMMEDIATE - secondary option)
                                         phrase_patterns = [
                                             r'^(.*?,)\s+',           # After comma
                                             r'^(.*?;\s+)',           # After semicolon
@@ -205,26 +205,26 @@ def ask_kobold_streaming(messages, max_tokens=MAX_TOKENS):
                                             phrase_match = re.search(pattern, buffer)
                                             if phrase_match:
                                                 first_chunk = phrase_match.group(1).strip()
-                                                if len(first_chunk.split()) >= 5:  # Ensure meaningful phrase
+                                                if len(first_chunk.split()) >= 3:  # Reduced for faster response
                                                     chunk_count += 1
                                                     first_chunk_sent = True
-                                                    print(f"[SmartResponsive] 🎭 SMART first chunk (natural phrase): '{first_chunk}'")
+                                                    print(f"[SmartResponsive] ⚡ IMMEDIATE first chunk (natural phrase): '{first_chunk}'")
                                                     yield first_chunk
                                                     buffer = buffer[phrase_match.end():].strip()
                                                     break
                                         
-                                        # Priority 3: Wait for target completion percentage
+                                        # Priority 3: IMMEDIATE streaming - send smaller chunks faster
                                         if not first_chunk_sent and word_count >= TARGET_WORDS:
-                                            # Take a reasonable chunk that doesn't cut words
+                                            # Take a smaller, faster chunk
                                             words = buffer.split()
-                                            # Find a good breaking point (not in the middle of a word)
-                                            chunk_size = min(12, len(words))  # Up to 12 words
+                                            # Smaller chunk size for immediate response
+                                            chunk_size = min(8, len(words))  # Reduced from 12 to 8 words
                                             first_chunk = ' '.join(words[:chunk_size])
                                             
                                             # Ensure we don't cut off mid-sentence awkwardly
                                             if not first_chunk.endswith(('.', '!', '?', ',', ';', ':')):
                                                 # Look for a better breaking point
-                                                for i in range(chunk_size-1, 4, -1):  # Work backwards
+                                                for i in range(chunk_size-1, 3, -1):  # Reduced minimum from 4 to 3
                                                     test_chunk = ' '.join(words[:i])
                                                     if test_chunk.endswith((',', ';', ':')):
                                                         first_chunk = test_chunk
@@ -234,29 +234,29 @@ def ask_kobold_streaming(messages, max_tokens=MAX_TOKENS):
                                             chunk_count += 1
                                             first_chunk_sent = True
                                             completion_pct = (word_count / estimated_total_words) * 100
-                                            print(f"[SmartResponsive] 📊 SMART first chunk (target completion {completion_pct:.1f}%): '{first_chunk}'")
+                                            print(f"[SmartResponsive] ⚡ IMMEDIATE first chunk (early completion {completion_pct:.1f}%): '{first_chunk}'")
                                             yield first_chunk
                                             buffer = ' '.join(words[chunk_size:])
                                     
-                                    # ✅ SUBSEQUENT CHUNKS: Continue with natural breaks
+                                    # ✅ IMMEDIATE SUBSEQUENT CHUNKS: Stream sentences as soon as they're complete
                                     elif first_chunk_sent:
-                                        # Complete sentences (highest priority)
+                                        # Complete sentences (highest priority - IMMEDIATE streaming)
                                         sentence_endings = re.finditer(r'([.!?]+)\s+', buffer)
                                         last_end = 0
                                         
                                         for match in sentence_endings:
                                             sentence = buffer[last_end:match.end()].strip()
-                                            if sentence and len(sentence.split()) >= 3:
+                                            if sentence and len(sentence.split()) >= 2:  # Reduced minimum for faster streaming
                                                 chunk_count += 1
-                                                print(f"[SmartResponsive] 📝 Sentence chunk {chunk_count}: '{sentence}'")
+                                                print(f"[SmartResponsive] ⚡ IMMEDIATE sentence chunk {chunk_count}: '{sentence}'")
                                                 yield sentence
                                                 last_end = match.end()
                                         
                                         buffer = buffer[last_end:]
                                         
-                                        # Natural phrase breaks (second priority)
+                                        # Natural phrase breaks (second priority - faster chunks)
                                         current_words = len(buffer.split())
-                                        if current_words >= 8:  # Wait for reasonable chunk size
+                                        if current_words >= 5:  # Reduced from 8 to 5 for faster streaming
                                             pause_patterns = [
                                                 r'([^.!?]*?,)\s+',        # Up to comma
                                                 r'([^.!?]*?;\s+)',        # Up to semicolon

@@ -182,6 +182,36 @@ class SmartDetectionManager:
             stats["tiers"][tier] += 1
         
         return stats
+    
+    def reset_session(self):
+        """Reset smart detection state between conversations to prevent stuck states"""
+        try:
+            print("[SmartDetection] 🔄 Resetting session state...")
+            
+            # Clear detection history but keep recent patterns for learning
+            if len(self.detection_history) > 50:
+                # Keep last 20 detections for pattern learning
+                recent_detections = self.detection_history[-20:]
+                self.detection_history.clear()
+                self.detection_history.extend(recent_detections)
+            
+            # Reset current tier to default
+            self.current_tier = "close"
+            
+            # ✅ CRITICAL: Clear any stuck state variables
+            if hasattr(self, '_last_detection_time'):
+                self._last_detection_time = 0
+            if hasattr(self, '_consecutive_rejections'):
+                self._consecutive_rejections = 0
+            if hasattr(self, '_stuck_counter'):
+                self._stuck_counter = 0
+                
+            print("[SmartDetection] ✅ Session state reset complete - ready for next conversation")
+            
+        except Exception as e:
+            print(f"[SmartDetection] ❌ Error resetting session: {e}")
+            # Fallback to basic reset
+            self.current_tier = "close"
 
 # Global instance
 smart_detector = SmartDetectionManager()
