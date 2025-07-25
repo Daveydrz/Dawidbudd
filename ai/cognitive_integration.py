@@ -184,25 +184,47 @@ class CognitiveIntegrator:
             return {"error": "cognitive_modules_unavailable"}
         
         try:
-            # 1. Correct input using memory context
+            # ✅ PERFORMANCE: Import async processor for background tasks
+            try:
+                from .async_consciousness_processor import async_consciousness_processor
+                async_available = True
+            except ImportError:
+                async_available = False
+            
+            # 1. Correct input using memory context (IMMEDIATE - needed for response)
             corrected_text = self._correct_input_with_context(text, user_id)
             
-            # 2. Process emotional response
+            # 2. Process emotional response (IMMEDIATE - affects response tone)
             emotional_state = self._process_emotional_input(corrected_text, user_id)
             
-            # 3. Update consciousness and attention
+            # 3. Update consciousness and attention (IMMEDIATE - affects response focus)
             consciousness_state = self._update_consciousness_attention(corrected_text, user_id)
             
-            # 4. Extract and refine beliefs
-            beliefs_state = self._process_beliefs_and_qualia(corrected_text, user_id)
+            # ✅ PERFORMANCE: Queue non-critical tasks for background processing
+            if async_available:
+                # These don't need to block the response
+                async_consciousness_processor.queue_inner_monologue(corrected_text, user_id, 
+                    {"context": "user_interaction"})
+                async_consciousness_processor.queue_reflection(corrected_text, user_id,
+                    {"type": "post_interaction_reflection"})
+                async_consciousness_processor.queue_belief_processing(corrected_text, user_id,
+                    {"analysis_type": "belief_extraction"})
+                async_consciousness_processor.queue_memory_update(corrected_text, user_id,
+                    {"update_type": "conversation_memory"})
+                
+                print(f"[CognitiveIntegrator] ⚡ PERFORMANCE: Queued background consciousness tasks")
+                
+                # Use lightweight versions for immediate response
+                beliefs_state = {"summary": "Background processing", "qualia": {}}
+                personality_state = {"modulation": {}}
+                internal_state = {"thoughts": []}
+            else:
+                # Fallback to synchronous processing if async not available
+                beliefs_state = self._process_beliefs_and_qualia(corrected_text, user_id)
+                personality_state = self._update_personality_motivation(corrected_text, user_id)
+                internal_state = self._generate_internal_state(corrected_text, user_id)
             
-            # 5. Update personality and motivation
-            personality_state = self._update_personality_motivation(corrected_text, user_id)
-            
-            # 6. Generate internal state verbalization
-            internal_state = self._generate_internal_state(corrected_text, user_id)
-            
-            # 7. Create integrated cognitive state
+            # 7. Create integrated cognitive state (IMMEDIATE - needed for response)
             with self.state_lock:
                 self.current_state = CognitiveState(
                     emotional_state=emotional_state,
@@ -216,10 +238,10 @@ class CognitiveIntegrator:
                 )
                 self.total_updates += 1
             
-            # 8. Create prompt injection data
+            # 8. Create prompt injection data (IMMEDIATE - needed for response)
             prompt_data = self._create_prompt_injection_data()
             
-            logging.debug(f"[CognitiveIntegrator] 🧠 Processed input: {len(corrected_text)} chars → {len(prompt_data)} injection keys")
+            logging.debug(f"[CognitiveIntegrator] 🧠 ⚡ PERFORMANCE MODE: {len(corrected_text)} chars → {len(prompt_data)} injection keys")
             
             return prompt_data
             

@@ -532,8 +532,8 @@ STREAMING_PROFESSIONAL_MODE = True            # Professional speech delivery
 
 # ✅ ==== SMART RESPONSE SETTINGS ====
 SMART_RESPONSE_TIMING = True                   # ✅ NEW: Smart response timing
-MIN_WORDS_FOR_FIRST_CHUNK = 8                 # ✅ NEW: Minimum words before first chunk
-TARGET_COMPLETION_PERCENTAGE = 0.45           # ✅ NEW: Target 45% completion
+MIN_WORDS_FOR_FIRST_CHUNK = 3                 # ✅ PERFORMANCE: Reduced for immediate response  
+TARGET_COMPLETION_PERCENTAGE = 0.05           # ✅ PERFORMANCE: 5% for immediate streaming
 PRIORITIZE_COMPLETE_PHRASES = True             # ✅ NEW: Avoid cutting words
 NATURAL_BREAK_DETECTION = True                # ✅ NEW: Detect natural speech breaks
 

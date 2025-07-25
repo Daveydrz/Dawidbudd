@@ -2492,6 +2492,16 @@ def main():
         print(f"[AdvancedBuddy] ❌ Kokoro-FastAPI not available - check server on {KOKORO_API_BASE_URL}")
         print("[AdvancedBuddy] 💡 Make sure to start Kokoro-FastAPI server first!")
     
+    # ✅ PERFORMANCE: Initialize async consciousness processor for background processing
+    print("[AdvancedBuddy] ⚡ Initializing async consciousness processor for performance...")
+    try:
+        from ai.async_consciousness_processor import async_consciousness_processor
+        async_consciousness_processor.start()
+        print("[AdvancedBuddy] ✅ Async consciousness processor started - background processing enabled")
+    except Exception as async_error:
+        print(f"[AdvancedBuddy] ⚠️ Async consciousness processor initialization error: {async_error}")
+        print("[AdvancedBuddy] ⚠️ Performance mode may not work optimally")
+    
     # ✅ EMERGENCY: Initialize background consciousness processor for fast responses
     print("[AdvancedBuddy] 🚨 Initializing emergency background consciousness processor...")
     try:

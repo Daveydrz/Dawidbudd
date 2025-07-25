@@ -192,19 +192,44 @@ def generate_response_streaming_with_intelligent_fusion(question: str, username:
     response_pathways = []
     optimized_question = question
     
-    # 💬 CONVERSATION CONTEXT INJECTION: Add conversation context to LLM prompt
+    # ✅ PERFORMANCE: DYNAMIC CONTEXT OPTIMIZATION for faster processing
     try:
+        from ai.dynamic_context_optimizer import dynamic_context_optimizer
         from ai.memory import get_user_memory
-        user_memory = get_user_memory(username)
-        conversation_context = user_memory.get_conversation_context_for_llm(question)
         
-        if conversation_context:
-            print(f"[ChatFusion] 💬 Adding conversation context: {len(conversation_context)} chars")
-            # Inject context as system-level information
-            context_prefix = f"Buddy, you're continuing an ongoing conversation.\n{conversation_context}\n\nUser: "
+        user_memory = get_user_memory(username)
+        conversation_history = user_memory.get_conversation_history() if hasattr(user_memory, 'get_conversation_history') else []
+        
+        # ✅ PERFORMANCE: Optimize conversation context dynamically
+        optimized_context, optimization_info = dynamic_context_optimizer.optimize_conversation_context(
+            conversation_history, question, max_tokens=1500  # Reduced for performance
+        )
+        
+        if optimized_context:
+            print(f"[ChatFusion] ⚡ PERFORMANCE: Optimized context: {optimization_info['original_turns']} → {optimization_info['kept_turns']} turns, saved {optimization_info['tokens_saved']} tokens")
+            # Use optimized context instead of full conversation context
+            context_prefix = f"Buddy, continuing conversation.\n{optimized_context}\n\nUser: "
             optimized_question = f"{context_prefix}{question}"
+        else:
+            print(f"[ChatFusion] ⚡ PERFORMANCE: No context optimization needed")
+            optimized_question = question
+            
     except Exception as e:
-        print(f"[ChatFusion] ⚠️ Conversation context error: {e}")
+        print(f"[ChatFusion] ⚠️ Context optimization error: {e}")
+        # Fallback to basic conversation context
+        try:
+            from ai.memory import get_user_memory
+            user_memory = get_user_memory(username)
+            conversation_context = user_memory.get_conversation_context_for_llm(question)
+            
+            if conversation_context:
+                print(f"[ChatFusion] 💬 Fallback: Adding conversation context: {len(conversation_context)} chars")
+                # Inject context as system-level information
+                context_prefix = f"Buddy, you're continuing an ongoing conversation.\n{conversation_context}\n\nUser: "
+                optimized_question = f"{context_prefix}{question}"
+        except Exception as fallback_e:
+            print(f"[ChatFusion] ⚠️ Fallback conversation context error: {fallback_e}")
+            optimized_question = question
     
     if ENTROPY_AVAILABLE:
         try:

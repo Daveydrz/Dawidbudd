@@ -2,6 +2,7 @@
 import re
 import requests
 import json
+import time  # ✅ PERFORMANCE: Added for retry delays
 from datetime import datetime
 import pytz
 from ai.memory import get_conversation_context, get_user_memory
@@ -112,7 +113,7 @@ def get_current_brisbane_time():
         }
 
 def ask_kobold_streaming(messages, max_tokens=MAX_TOKENS):
-    """✅ SMART RESPONSIVE: Wait for 40-50% completion or first complete phrase"""
+    """✅ PERFORMANCE: Wait for 5% completion or first complete phrase with retry logic"""
     payload = {
         "model": "llama3",
         "messages": messages,
@@ -121,197 +122,172 @@ def ask_kobold_streaming(messages, max_tokens=MAX_TOKENS):
         "stream": True
     }
     
-    try:
-        print(f"[SmartResponsive] 🎭 Starting smart responsive streaming to: {KOBOLD_URL}")
-        
-        response = requests.post(
-            KOBOLD_URL, 
-            json=payload, 
-            timeout=60,
-            stream=True
-        )
-        
-        if response.status_code == 200:
-            buffer = ""
-            word_count = 0
-            chunk_count = 0
-            first_chunk_sent = False
-            estimated_total_words = max_tokens // 1.3  # Rough estimate of final word count
+    # ✅ PERFORMANCE: HTTP retry logic for WinError 10053 issues
+    max_retries = 3
+    retry_delay = 1.0
+    
+    for attempt in range(max_retries):
+        try:
+            print(f"[SmartResponsive] 🎭 Starting performance streaming (attempt {attempt + 1}/{max_retries}) to: {KOBOLD_URL}")
             
-            # ✅ IMMEDIATE STREAMING: Start as soon as first sentence is ready
-            MIN_WORDS_FOR_FIRST_CHUNK = 4              # Reduced minimum words for faster response
-            TARGET_COMPLETION_PERCENTAGE = 0.15        # Reduced from 45% to 15% for immediate streaming
-            TARGET_WORDS = int(estimated_total_words * TARGET_COMPLETION_PERCENTAGE)
+            response = requests.post(
+                KOBOLD_URL, 
+                json=payload, 
+                timeout=30,  # Reduced timeout for faster failures
+                stream=True,
+                headers={'Connection': 'keep-alive'},  # Better connection handling
+                allow_redirects=False
+            )
             
-            print(f"[SmartResponsive] ⚡ IMMEDIATE STREAMING: Targeting sentence completion or 15% (~{TARGET_WORDS} words)")
-            
-            for line in response.iter_lines():
-                if line:
-                    line_text = line.decode('utf-8')
-                    
-                    if not line_text.strip() or line_text.startswith(':'):
-                        continue
-                    
-                    if line_text.startswith('data: '):
-                        data_content = line_text[6:]
-                        
-                        if data_content.strip() == '[DONE]':
-                            break
-                        
-                        try:
-                            chunk_data = json.loads(data_content)
+            if response.status_code == 200:
+                buffer = ""
+                word_count = 0
+                chunk_count = 0
+                first_chunk_sent = False
+                estimated_total_words = max_tokens // 1.3  # Rough estimate of final word count
+                
+                # ✅ PERFORMANCE OPTIMIZATION: IMMEDIATE STREAMING - start as soon as first complete thought is ready
+                MIN_WORDS_FOR_FIRST_CHUNK = 3              # Minimized for instant response
+                TARGET_COMPLETION_PERCENTAGE = 0.05        # 5% completion for immediate streaming
+                TARGET_WORDS = int(estimated_total_words * TARGET_COMPLETION_PERCENTAGE)
+                
+                print(f"[SmartResponsive] ⚡ PERFORMANCE MODE: Immediate streaming at 5% (~{TARGET_WORDS} words) or first sentence")
+                
+                try:
+                    for line in response.iter_lines(decode_unicode=True):
+                        if line:
+                            line_text = line.strip()
                             
-                            if 'choices' in chunk_data and len(chunk_data['choices']) > 0:
-                                choice = chunk_data['choices'][0]
+                            if not line_text or line_text.startswith(':'):
+                                continue
+                            
+                            if line_text.startswith('data: '):
+                                data_content = line_text[6:]
                                 
-                                content = ""
-                                if 'delta' in choice and 'content' in choice['delta']:
-                                    content = choice['delta']['content']
-                                elif 'message' in choice and 'content' in choice['message']:
-                                    content = choice['message']['content']
+                                if data_content.strip() == '[DONE]':
+                                    break
                                 
-                                if content:
-                                    buffer += content
-                                    word_count = len(buffer.split())
+                                try:
+                                    chunk_data = json.loads(data_content)
                                     
-                                    # ✅ IMMEDIATE FIRST CHUNK: Prioritize complete sentences over completion percentage
-                                    if not first_chunk_sent and word_count >= MIN_WORDS_FOR_FIRST_CHUNK:
+                                    if 'choices' in chunk_data and len(chunk_data['choices']) > 0:
+                                        choice = chunk_data['choices'][0]
                                         
-                                        # Priority 1: Look for complete sentences (IMMEDIATE - best option)
-                                        sentence_match = re.search(r'^(.*?[.!?])\s+', buffer)
-                                        if sentence_match:
-                                            first_chunk = sentence_match.group(1).strip()
-                                            if len(first_chunk.split()) >= 3:  # Reduced for faster response
-                                                chunk_count += 1
-                                                first_chunk_sent = True
-                                                print(f"[SmartResponsive] ⚡ IMMEDIATE first chunk (complete sentence): '{first_chunk}'")
-                                                yield first_chunk
-                                                buffer = buffer[sentence_match.end():].strip()
-                                                continue
+                                        content = ""
+                                        if 'delta' in choice and 'content' in choice['delta']:
+                                            content = choice['delta']['content']
+                                        elif 'message' in choice and 'content' in choice['message']:
+                                            content = choice['message']['content']
                                         
-                                        # Priority 2: Look for natural phrase breaks (IMMEDIATE - secondary option)
-                                        phrase_patterns = [
-                                            r'^(.*?,)\s+',           # After comma
-                                            r'^(.*?;\s+)',           # After semicolon
-                                            r'^(.*?:\s+)',           # After colon
-                                            r'^(.*?\s+and\s+)',      # Before "and"
-                                            r'^(.*?\s+but\s+)',      # Before "but"
-                                            r'^(.*?\s+so\s+)',       # Before "so"
-                                            r'^(.*?\s+because\s+)',  # Before "because"
-                                            r'^(.*?\s+however\s+)',  # Before "however"
-                                        ]
-                                        
-                                        for pattern in phrase_patterns:
-                                            phrase_match = re.search(pattern, buffer)
-                                            if phrase_match:
-                                                first_chunk = phrase_match.group(1).strip()
-                                                if len(first_chunk.split()) >= 3:  # Reduced for faster response
-                                                    chunk_count += 1
-                                                    first_chunk_sent = True
-                                                    print(f"[SmartResponsive] ⚡ IMMEDIATE first chunk (natural phrase): '{first_chunk}'")
-                                                    yield first_chunk
-                                                    buffer = buffer[phrase_match.end():].strip()
-                                                    break
-                                        
-                                        # Priority 3: IMMEDIATE streaming - send smaller chunks faster
-                                        if not first_chunk_sent and word_count >= TARGET_WORDS:
-                                            # Take a smaller, faster chunk
-                                            words = buffer.split()
-                                            # Smaller chunk size for immediate response
-                                            chunk_size = min(8, len(words))  # Reduced from 12 to 8 words
-                                            first_chunk = ' '.join(words[:chunk_size])
+                                        if content:
+                                            buffer += content
+                                            word_count = len(buffer.split())
                                             
-                                            # Ensure we don't cut off mid-sentence awkwardly
-                                            if not first_chunk.endswith(('.', '!', '?', ',', ';', ':')):
-                                                # Look for a better breaking point
-                                                for i in range(chunk_size-1, 3, -1):  # Reduced minimum from 4 to 3
-                                                    test_chunk = ' '.join(words[:i])
-                                                    if test_chunk.endswith((',', ';', ':')):
-                                                        first_chunk = test_chunk
-                                                        chunk_size = i
-                                                        break
-                                            
-                                            chunk_count += 1
-                                            first_chunk_sent = True
-                                            completion_pct = (word_count / estimated_total_words) * 100
-                                            print(f"[SmartResponsive] ⚡ IMMEDIATE first chunk (early completion {completion_pct:.1f}%): '{first_chunk}'")
-                                            yield first_chunk
-                                            buffer = ' '.join(words[chunk_size:])
-                                    
-                                    # ✅ IMMEDIATE SUBSEQUENT CHUNKS: Stream sentences as soon as they're complete
-                                    elif first_chunk_sent:
-                                        # Complete sentences (highest priority - IMMEDIATE streaming)
-                                        sentence_endings = re.finditer(r'([.!?]+)\s+', buffer)
-                                        last_end = 0
-                                        
-                                        for match in sentence_endings:
-                                            sentence = buffer[last_end:match.end()].strip()
-                                            if sentence and len(sentence.split()) >= 2:  # Reduced minimum for faster streaming
-                                                chunk_count += 1
-                                                print(f"[SmartResponsive] ⚡ IMMEDIATE sentence chunk {chunk_count}: '{sentence}'")
-                                                yield sentence
-                                                last_end = match.end()
-                                        
-                                        buffer = buffer[last_end:]
-                                        
-                                        # Natural phrase breaks (second priority - faster chunks)
-                                        current_words = len(buffer.split())
-                                        if current_words >= 5:  # Reduced from 8 to 5 for faster streaming
-                                            pause_patterns = [
-                                                r'([^.!?]*?,)\s+',        # Up to comma
-                                                r'([^.!?]*?;\s+)',        # Up to semicolon
-                                                r'([^.!?]*?:\s+)',        # Up to colon
-                                                r'([^.!?]*?\s+and\s+)',   # Up to "and"
-                                                r'([^.!?]*?\s+but\s+)',   # Up to "but"
-                                                r'([^.!?]*?\s+so\s+)',    # Up to "so"
-                                            ]
-                                            
-                                            for pattern in pause_patterns:
-                                                matches = list(re.finditer(pattern, buffer))
-                                                if matches:
-                                                    last_match = matches[-1]
-                                                    chunk_text = last_match.group(1).strip()
-                                                    if len(chunk_text.split()) >= 4:
+                                            # ✅ PERFORMANCE: IMMEDIATE FIRST CHUNK - prioritize ANY complete sentence 
+                                            if not first_chunk_sent and word_count >= MIN_WORDS_FOR_FIRST_CHUNK:
+                                                
+                                                # Priority 1: ANY sentence ending (IMMEDIATE)
+                                                sentence_match = re.search(r'^(.*?[.!?])\s*', buffer)
+                                                if sentence_match:
+                                                    first_chunk = sentence_match.group(1).strip()
+                                                    if len(first_chunk.split()) >= 2:  # Minimum 2 words
                                                         chunk_count += 1
-                                                        print(f"[SmartResponsive] 🎭 Natural pause chunk {chunk_count}: '{chunk_text}'")
-                                                        yield chunk_text
-                                                        buffer = buffer[last_match.end():]
-                                                        break
+                                                        first_chunk_sent = True
+                                                        print(f"[SmartResponsive] ⚡ INSTANT first chunk: '{first_chunk}'")
+                                                        yield first_chunk
+                                                        buffer = buffer[sentence_match.end():].strip()
+                                                        continue
+                                                
+                                                # Priority 2: Any natural break (commas, colons, etc.)
+                                                phrase_patterns = [
+                                                    r'^(.*?,)\s+',           # After comma
+                                                    r'^(.*?;\s+)',           # After semicolon  
+                                                    r'^(.*?:\s+)',           # After colon
+                                                    r'^(.*?\s+and\s+)',      # Before "and"
+                                                    r'^(.*?\s+but\s+)',      # Before "but"
+                                                ]
+                                                
+                                                for pattern in phrase_patterns:
+                                                    phrase_match = re.search(pattern, buffer, re.IGNORECASE)
+                                                    if phrase_match:
+                                                        first_chunk = phrase_match.group(1).strip()
+                                                        if len(first_chunk.split()) >= 2:
+                                                            chunk_count += 1
+                                                            first_chunk_sent = True
+                                                            print(f"[SmartResponsive] ⚡ INSTANT phrase chunk: '{first_chunk}'")
+                                                            yield first_chunk
+                                                            buffer = buffer[phrase_match.end():].strip()
+                                                            break
+                                                
+                                                if first_chunk_sent:
+                                                    continue
+                                            
+                                            # Continue with normal streaming for remaining content
+                                            if first_chunk_sent and len(buffer.split()) >= 5:
+                                                # Look for next sentence or phrase boundary
+                                                next_sentence = re.search(r'^(.*?[.!?])\s*', buffer)
+                                                if next_sentence:
+                                                    next_chunk = next_sentence.group(1).strip()
+                                                    chunk_count += 1
+                                                    yield next_chunk
+                                                    buffer = buffer[next_sentence.end():].strip()
+                                                    continue
+                                                    
+                                                # Or natural phrase break
+                                                for pattern in [r'^(.*?,)\s+', r'^(.*?;\s+)', r'^(.*?:\s+)']:
+                                                    phrase_match = re.search(pattern, buffer)
+                                                    if phrase_match:
+                                                        next_chunk = phrase_match.group(1).strip()
+                                                        if len(next_chunk.split()) >= 2:
+                                                            chunk_count += 1
+                                                            yield next_chunk
+                                                            buffer = buffer[phrase_match.end():].strip()
+                                                            break
+                                    
+                                except json.JSONDecodeError as json_err:
+                                    print(f"[SmartResponsive] ⚠️ JSON decode error: {json_err}")
+                                    continue
+                                    
+                    # Yield any remaining buffer content
+                    if buffer.strip():
+                        chunk_count += 1
+                        print(f"[SmartResponsive] ✅ Final chunk: '{buffer.strip()}'")
+                        yield buffer.strip()
                         
-                        except json.JSONDecodeError:
-                            continue
-            
-            # ✅ Send any remaining content as final chunk
-            if buffer.strip():
-                final_chunk = buffer.strip()
-                if len(final_chunk.split()) >= 2:
-                    chunk_count += 1
-                    print(f"[SmartResponsive] 🏁 Final chunk {chunk_count}: '{final_chunk}'")
-                    yield final_chunk
-            
-            print(f"[SmartResponsive] ✅ Smart responsive streaming complete - {chunk_count} natural chunks")
+                    print(f"[SmartResponsive] ✅ Streaming complete: {chunk_count} total chunks, ~{word_count} words")
+                    return
                     
-        else:
-            print(f"[SmartResponsive] ❌ HTTP Error {response.status_code}: {response.text}")
-            # Generate dynamic error response through LLM
-            error_context = {
-                'error_type': 'connection_error',
-                'error_code': response.status_code,
-                'situation': 'streaming_response'
-            }
-            error_response = _generate_dynamic_error_response(error_context)
-            yield error_response
+                except requests.exceptions.RequestException as stream_err:
+                    print(f"[SmartResponsive] ❌ Streaming error on attempt {attempt + 1}: {stream_err}")
+                    if attempt < max_retries - 1:
+                        print(f"[SmartResponsive] 🔄 Retrying in {retry_delay}s...")
+                        time.sleep(retry_delay)
+                        retry_delay *= 2  # Exponential backoff
+                        continue
+                    else:
+                        raise
             
-    except Exception as e:
-        print(f"[SmartResponsive] ❌ Error: {e}")
-        # Generate dynamic error response through LLM
-        error_context = {
-            'error_type': 'general_error',
-            'error_message': str(e),
-            'situation': 'streaming_response'
-        }
-        error_response = _generate_dynamic_error_response(error_context)
-        yield error_response
+            else:
+                print(f"[SmartResponsive] ❌ HTTP error {response.status_code} on attempt {attempt + 1}")
+                if attempt < max_retries - 1:
+                    print(f"[SmartResponsive] 🔄 Retrying in {retry_delay}s...")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2
+                    continue
+                else:
+                    raise Exception(f"HTTP {response.status_code}: {response.text}")
+                    
+        except Exception as e:
+            print(f"[SmartResponsive] ❌ Connection failed on attempt {attempt + 1}: {e}")
+            if attempt < max_retries - 1:
+                print(f"[SmartResponsive] 🔄 Final retry in {retry_delay}s...")
+                time.sleep(retry_delay)
+                continue
+            else:
+                print(f"[SmartResponsive] ❌ All retry attempts failed: {e}")
+                # Fallback response
+                yield "I'm having trouble connecting to my processing systems right now."
+                return
 
 def ask_kobold(messages, max_tokens=MAX_TOKENS):
     """Original non-streaming KoboldCpp request (kept for compatibility)"""
