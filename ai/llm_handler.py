@@ -10,6 +10,7 @@ Purpose: Orchestrate all LLM operations with consciousness tokenizer, budget mon
 import json
 import time
 import os
+import requests  # Added for direct port 5001 communication
 from typing import Dict, List, Any, Optional, Tuple, Generator
 from datetime import datetime
 
@@ -167,66 +168,100 @@ class LLMHandler:
         use_optimization: bool = True
     ) -> Generator[str, None, None]:
         """
-        Generate response with minimal single LLM call - consciousness runs locally
+        Generate response with PORT SEPARATION - consciousness via 5002, response via 5001
         
         Args:
             text: User input text
             user: User identifier
             context: Optional conversation context
             stream: Whether to stream response chunks
-            use_optimization: Ignored - always uses single LLM call
+            use_optimization: Ignored - always uses port separation
         
         Yields response chunks if streaming, otherwise returns complete response
         """
         try:
-            print(f"[LLMHandler] ⚡ Single LLM call mode: '{text[:30]}...'")
+            print(f"[LLMHandler] 🚨 PORT SEPARATION mode: '{text[:30]}...'")
             
-            # 1. Use ONNX classifiers for local processing (no LLM calls)
-            self._process_user_input_locally(text, user)
+            # 1. ALL CONSCIOUSNESS PROCESSING VIA PORT 5002 (Gemma)
+            consciousness_data = None
+            try:
+                from ai.extractor_client import process_full_consciousness, get_consciousness_for_prompt
+                
+                print(f"[LLMHandler] 🧠 Sending consciousness processing to PORT 5002...")
+                consciousness_data = process_full_consciousness(text, user, context)
+                consciousness_context = get_consciousness_for_prompt(user)
+                
+                print(f"[LLMHandler] ✅ Consciousness processing complete via PORT 5002")
+            except Exception as consciousness_error:
+                print(f"[LLMHandler] ❌ PORT 5002 consciousness error: {consciousness_error}")
+                consciousness_context = "BUDDY'S CONSCIOUSNESS STATE: Ready to help with friendly, empathetic responses."
             
-            # 2. Build minimal prompt with only facts/preferences/context
-            minimal_prompt = self._build_minimal_prompt(text, user, context)
+            # 2. ONLY FINAL RESPONSE GENERATION VIA PORT 5001 (Main LLM)
+            print(f"[LLMHandler] 🎯 Sending response generation to PORT 5001...")
             
-            print(f"[LLMHandler] 🎯 Minimal prompt ready: {len(minimal_prompt)} chars")
+            # Build prompt with consciousness injection
+            final_prompt = f"""Buddy is a helpful, empathetic AI assistant.
+
+{consciousness_context}
+
+User: {text}
+
+Buddy:"""
             
-            # 3. Single LLM call using appropriate system
             generation_start = time.time()
             
-            if FUSION_LLM_AVAILABLE:
-                response_generator = generate_response_streaming_with_intelligent_fusion(
-                    minimal_prompt, user, "en", context={}
-                )
-            else:
-                # Fallback to basic LLM
-                try:
-                    from ai.chat import generate_response_streaming
-                    response_generator = generate_response_streaming(minimal_prompt, user, "en")
-                except ImportError:
-                    # Ultimate fallback
-                    yield f"I apologize, but the response system is not available."
-                    return
-            
-            full_response = ""
-            
-            # Stream response while collecting full response
-            for chunk in response_generator:
-                if chunk and chunk.strip():
-                    chunk_text = chunk.strip()
-                    full_response += chunk_text + " "
-                    yield chunk_text
-            
-            generation_time = time.time() - generation_start
-            
-            # 4. Update local memory and consciousness state (no LLM calls)
-            self._update_local_state_after_response(text, full_response.strip(), user)
-            
-            # Update session statistics
-            self.request_count += 1
-            
-            print(f"[LLMHandler] ✅ Single LLM response generated in {generation_time:.3f}s")
+            # Direct call to port 5001 for response generation ONLY
+            try:
+                import requests
+                from config import KOBOLD_URL
+                
+                payload = {
+                    "messages": [{"role": "user", "content": final_prompt}],
+                    "max_tokens": 500,
+                    "temperature": 0.7,
+                    "stream": True,
+                    "stop": ["User:", "Human:"]
+                }
+                
+                response = requests.post(KOBOLD_URL, json=payload, stream=True, timeout=30)
+                response.raise_for_status()
+                
+                full_response = ""
+                
+                # Stream response chunks from port 5001
+                for line in response.iter_lines():
+                    if line:
+                        try:
+                            if line.startswith(b'data: '):
+                                json_str = line[6:].decode('utf-8')
+                                if json_str.strip() == '[DONE]':
+                                    break
+                                    
+                                chunk_data = json.loads(json_str)
+                                text_chunk = chunk_data.get('choices', [{}])[0].get('delta', {}).get('content', '')
+                                
+                                if text_chunk:
+                                    full_response += text_chunk
+                                    yield text_chunk
+                                    
+                        except json.JSONDecodeError:
+                            # Handle non-JSON streaming format
+                            text_chunk = line.decode('utf-8').strip()
+                            if text_chunk and not text_chunk.startswith('['):
+                                full_response += text_chunk + " "
+                                yield text_chunk
+                
+                generation_time = time.time() - generation_start
+                self.request_count += 1
+                
+                print(f"[LLMHandler] ✅ PORT 5001 response generated in {generation_time:.3f}s")
+                
+            except Exception as llm_error:
+                print(f"[LLMHandler] ❌ PORT 5001 LLM error: {llm_error}")
+                yield f"I apologize, but I'm having trouble connecting to my response generation system."
             
         except Exception as e:
-            print(f"[LLMHandler] ❌ Error generating response: {e}")
+            print(f"[LLMHandler] ❌ Error in port separation: {e}")
             yield f"I apologize, but I encountered an error while processing your request."
             
     def sanitize_prompt_input(self, text: str, user_id: str = "unknown") -> str:

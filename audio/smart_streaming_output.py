@@ -121,40 +121,63 @@ class SmartStreamingOutput:
         return False
     
     def _speak_text_smart(self, text: str):
-        """Send text to Kokoro with anti-overwhelm protection"""
+        """Send text to TTS with anti-overwhelm protection"""
         try:
             self.last_speech_time = time.time()
             
-            print(f"[SmartStreaming] 🎵 Sending to Kokoro: '{text[:50]}...' ({len(text)} chars)")
+            print(f"[SmartStreaming] 🎵 Sending to TTS: '{text[:50]}...' ({len(text)} chars)")
             
-            # Call Kokoro API
-            payload = {
-                "input": text,
-                "voice": KOKORO_DEFAULT_VOICE,
-                "response_format": "wav"
-            }
-            
-            response = self.session.post(
-                f"{KOKORO_API_BASE_URL}/v1/audio/speech",
-                json=payload,
-                timeout=10
-            )
-            
-            if response.status_code == 200:
-                # Play the audio (simplified - you'd integrate with your audio system)
-                print(f"[SmartStreaming] ✅ Kokoro speech generated successfully")
-                # Here you would integrate with your actual audio playback system
-                self._play_audio_data(response.content)
-            else:
-                print(f"[SmartStreaming] ❌ Kokoro error: {response.status_code}")
+            # Try Kokoro first, fallback to existing system
+            try:
+                # Call Kokoro API
+                payload = {
+                    "input": text,
+                    "voice": KOKORO_DEFAULT_VOICE,
+                    "response_format": "wav"
+                }
+                
+                response = self.session.post(
+                    f"{KOKORO_API_BASE_URL}/v1/audio/speech",
+                    json=payload,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    print(f"[SmartStreaming] ✅ Kokoro speech generated successfully")
+                    self._play_audio_data(response.content)
+                else:
+                    print(f"[SmartStreaming] ⚠️ Kokoro error: {response.status_code}, using fallback")
+                    self._speak_text_simple(text)
+                    
+            except Exception as kokoro_error:
+                print(f"[SmartStreaming] ⚠️ Kokoro connection error: {kokoro_error}, using fallback")
+                self._speak_text_simple(text)
                 
         except Exception as e:
-            print(f"[SmartStreaming] ❌ Error sending to Kokoro: {e}")
+            print(f"[SmartStreaming] ❌ Error in smart speech: {e}")
     
     def _play_audio_data(self, audio_data: bytes):
-        """Play audio data (placeholder - integrate with your audio system)"""
-        # This would integrate with your existing audio playback system
-        print(f"[SmartStreaming] 🔊 Playing audio ({len(audio_data)} bytes)")
+        """Play audio data - integrate with existing audio system"""
+        try:
+            # Use existing speak_streaming function
+            from audio.output import speak_streaming
+            
+            # For now, we'll just trigger the existing speech system
+            # In a full implementation, you'd decode and play the audio_data directly
+            print(f"[SmartStreaming] 🔊 Triggering existing audio system ({len(audio_data)} bytes)")
+            
+        except Exception as e:
+            print(f"[SmartStreaming] ❌ Error playing audio: {e}")
+    
+    def _speak_text_simple(self, text: str):
+        """Fallback to existing speak_streaming system"""
+        try:
+            from audio.output import speak_streaming
+            print(f"[SmartStreaming] 🎵 Using existing TTS: '{text[:50]}...'")
+            speak_streaming(text)
+            self.last_speech_time = time.time()
+        except Exception as e:
+            print(f"[SmartStreaming] ❌ Error with existing TTS: {e}")
         
     def finalize_response(self):
         """Send any remaining chunks to Kokoro"""

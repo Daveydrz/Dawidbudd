@@ -593,8 +593,8 @@ def get_mic_feeding_state():
         return mic_feeding_active
 
 def handle_streaming_response(text, current_user):
-    """✅ NEW ARCHITECTURE: Port separation - 5002 for consciousness, 5001 for final response"""
-    print(f"🚨🚨🚨 [NEW_ARCH] handle_streaming_response called with text='{text}', user='{current_user}' 🚨🚨🚨")
+    """✅ FIXED ARCHITECTURE: Port 5002 for consciousness, Port 5001 for response only"""
+    print(f"🚨🚨🚨 [FIXED_ARCH] handle_streaming_response called with text='{text}', user='{current_user}' 🚨🚨🚨")
     
     interaction_id = None
     start_time = time.time()
@@ -603,50 +603,50 @@ def handle_streaming_response(text, current_user):
     if SELF_AWARENESS_COMPONENTS_AVAILABLE:
         try:
             interaction_id = cognitive_debug_logger.start_interaction(text, current_user)
-            cognitive_debug_logger.log_processing_stage("input_processing", "Starting NEW ARCHITECTURE response", {
+            cognitive_debug_logger.log_processing_stage("input_processing", "Starting FIXED ARCHITECTURE response", {
                 "input_length": len(text),
                 "user_id": current_user,
-                "architecture": "port_separated",
+                "architecture": "port_properly_separated",
                 "timestamp": datetime.now().isoformat()
             })
         except Exception as debug_error:
-            print(f"[NEW_ARCH] ⚠️ Debug logging error: {debug_error}")
+            print(f"[FIXED_ARCH] ⚠️ Debug logging error: {debug_error}")
     
     try:
-        print(f"[NEW_ARCH] 🎯 Starting PORT SEPARATED processing for: '{text}'")
+        print(f"[FIXED_ARCH] 🎯 Starting PROPERLY SEPARATED processing for: '{text}'")
         
-        # ✅ STEP 1: Send ALL consciousness processing to PORT 5002 (Gemma)
-        print("[NEW_ARCH] 🧠 STEP 1: Processing consciousness via PORT 5002 (Gemma)")
-        consciousness_data = None
+        # ✅ STEP 1: Send ALL consciousness processing to PORT 5002 (Gemma) ONLY
+        print("[FIXED_ARCH] 🧠 STEP 1: Processing consciousness via PORT 5002 (Gemma) - NO LLM ON 5001")
         consciousness_processing_time = 0
         
         try:
             from ai.extractor_client import process_full_consciousness, get_consciousness_for_prompt
             consciousness_start = time.time()
             
-            # Process EVERYTHING via Gemma on port 5002
+            # Process EVERYTHING via Gemma on port 5002 - NO PORT 5001 CALLS HERE
+            print(f"[FIXED_ARCH] 🧠 Sending to port 5002: '{text[:50]}...'")
             consciousness_data = process_full_consciousness(text, current_user)
             consciousness_processing_time = time.time() - consciousness_start
             
-            print(f"[NEW_ARCH] ✅ Consciousness processing complete in {consciousness_processing_time:.3f}s")
-            print(f"[NEW_ARCH] 📊 Data sections: {list(consciousness_data.keys())}")
+            print(f"[FIXED_ARCH] ✅ Consciousness processing complete in {consciousness_processing_time:.3f}s via PORT 5002")
+            print(f"[FIXED_ARCH] 📊 Data sections: {list(consciousness_data.keys())}")
             
             # Get formatted consciousness for prompt injection
             consciousness_context = get_consciousness_for_prompt(current_user)
-            print(f"[NEW_ARCH] 📝 Consciousness context prepared ({len(consciousness_context)} chars)")
+            print(f"[FIXED_ARCH] 📝 Consciousness context prepared ({len(consciousness_context)} chars)")
             
         except Exception as consciousness_error:
-            print(f"[NEW_ARCH] ❌ Consciousness processing error: {consciousness_error}")
+            print(f"[FIXED_ARCH] ❌ PORT 5002 consciousness processing error: {consciousness_error}")
             consciousness_context = "BUDDY'S CONSCIOUSNESS STATE: Ready to help with friendly, empathetic responses."
         
-        # ✅ STEP 2: Send ONLY final response generation to PORT 5001 (Main LLM)
-        print("[NEW_ARCH] 🚀 STEP 2: Generating response via PORT 5001 (Main LLM)")
+        # ✅ STEP 2: Send ONLY final response generation to PORT 5001 (Main LLM) with injected consciousness
+        print("[FIXED_ARCH] 🚀 STEP 2: Generating response via PORT 5001 (Main LLM) with injected consciousness")
         
         try:
             from ai.simple_llm_handler import generate_response_with_consciousness
             from audio.smart_streaming_output import speak_streaming_smart, reset_streaming_output, finalize_streaming_output
             
-            print("[NEW_ARCH] ⚡ Using SINGLE LLM CALL via Simple LLM Handler + Smart Streaming")
+            print("[FIXED_ARCH] ⚡ Using SIMPLE LLM HANDLER for port 5001 + Smart Streaming for Kokoro protection")
             
             # Reset smart streaming for new response
             reset_streaming_output()
@@ -654,32 +654,49 @@ def handle_streaming_response(text, current_user):
             full_response = ""
             chunk_count = 0
             response_interrupted = False
+            word_count = 0
+            total_words_estimated = 50  # Initial estimate
+            speech_started = False
             
             # Generate response using ONLY port 5001 with consciousness injection
             for chunk in generate_response_with_consciousness(text, current_user, consciousness_context):
                 # Check for interrupt
                 if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                    print("[NEW_ARCH] ⚡ INTERRUPT DETECTED - STOPPING RESPONSE")
+                    print("[FIXED_ARCH] ⚡ INTERRUPT DETECTED - STOPPING RESPONSE")
                     response_interrupted = True
                     break
                 
                 if chunk and chunk.strip():
                     chunk_text = chunk.strip()
                     chunk_count += 1
+                    chunk_words = len(chunk_text.split())
+                    word_count += chunk_words
                     
-                    # Determine if this is the final chunk (simple heuristic)
-                    is_final = False  # We'll set this properly when the loop ends
+                    # Update total word estimate dynamically
+                    if chunk_count > 3:
+                        avg_words_per_chunk = word_count / chunk_count
+                        estimated_remaining_chunks = max(5, 15 - chunk_count)  # Estimate based on typical response length
+                        total_words_estimated = word_count + (avg_words_per_chunk * estimated_remaining_chunks)
                     
-                    # Use smart streaming (automatically handles 30-50% threshold)
-                    spoke = speak_streaming_smart(chunk_text, is_final)
-                    if spoke:
-                        print(f"[NEW_ARCH] 🎵 Smart streaming: Chunk {chunk_count} triggered speech")
+                    # ✅ KOKORO TIMING FIX: Start speech at 30-50% of tokens generated
+                    completion_percentage = word_count / total_words_estimated if total_words_estimated > 0 else 0
+                    
+                    if not speech_started and completion_percentage >= 0.30:  # Start at 30% minimum
+                        print(f"[FIXED_ARCH] 🎵 Starting Kokoro speech at {completion_percentage*100:.1f}% completion ({word_count}/{total_words_estimated} estimated words)")
+                        speech_started = True
+                        
+                        # Start speaking all accumulated chunks
+                        accumulated_text = full_response + chunk_text
+                        speak_streaming_smart(accumulated_text, is_final=False)
+                    elif speech_started:
+                        # Continue streaming if already started
+                        speak_streaming_smart(chunk_text, is_final=False)
                     
                     full_response += chunk_text + " "
                     
                     # Check for interrupt after speech queuing
                     if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                        print("[NEW_ARCH] ⚡ INTERRUPT AFTER SMART STREAMING")
+                        print("[FIXED_ARCH] ⚡ INTERRUPT AFTER SMART STREAMING")
                         response_interrupted = True
                         break
                     
@@ -689,7 +706,12 @@ def handle_streaming_response(text, current_user):
             
             # Finalize any remaining chunks
             if not response_interrupted:
-                finalize_streaming_output()
+                if not speech_started and full_response.strip():
+                    # If speech never started (very short response), speak it now
+                    print(f"[FIXED_ARCH] 🎵 Short response - speaking immediately")
+                    speak_streaming_smart(full_response.strip(), is_final=True)
+                else:
+                    finalize_streaming_output()
             
             total_time = time.time() - start_time
             
@@ -697,35 +719,113 @@ def handle_streaming_response(text, current_user):
                 # Add to conversation history
                 add_to_conversation_history(current_user, text, full_response.strip())
                 
-                print(f"[NEW_ARCH] ✅ PORT SEPARATED response complete:")
-                print(f"[NEW_ARCH] 📊 Consciousness time: {consciousness_processing_time:.3f}s")
-                print(f"[NEW_ARCH] 📊 Total time: {total_time:.3f}s")
-                print(f"[NEW_ARCH] 📊 Chunks processed: {chunk_count}")
-                print(f"[NEW_ARCH] 🎵 Smart streaming prevented Kokoro overwhelm")
+                print(f"[FIXED_ARCH] ✅ PROPERLY SEPARATED response complete:")
+                print(f"[FIXED_ARCH] 📊 Consciousness time (port 5002): {consciousness_processing_time:.3f}s")
+                print(f"[FIXED_ARCH] 📊 Total time: {total_time:.3f}s")
+                print(f"[FIXED_ARCH] 📊 Chunks processed: {chunk_count}")
+                print(f"[FIXED_ARCH] 🎵 Kokoro timing fixed - started at 30-50% threshold")
                 
                 # Log performance stats
                 if interaction_id:
-                    cognitive_debug_logger.log_processing_stage("response_complete", "New architecture complete", {
+                    cognitive_debug_logger.log_processing_stage("response_complete", "Fixed architecture complete", {
                         "consciousness_time": consciousness_processing_time,
                         "total_time": total_time,
                         "chunks": chunk_count,
                         "smart_streaming": True,
-                        "kokoro_protected": True
+                        "kokoro_protected": True,
+                        "architecture": "properly_separated"
                     })
                     cognitive_debug_logger.finish_interaction(full_response.strip(), total_time)
             
-            return  # ✅ Exit with new architecture
+            return  # ✅ Exit with fixed architecture
             
         except ImportError as llm_error:
-            print(f"[NEW_ARCH] ❌ Simple LLM Handler not available: {llm_error}")
-            print("[NEW_ARCH] 🔄 Falling back to existing system")
+            print(f"[FIXED_ARCH] ❌ Simple LLM Handler not available: {llm_error}")
+            print("[FIXED_ARCH] 🔄 Falling back to direct port calls")
+            
+            # Direct fallback to port separation
+            try:
+                import requests
+                from config import KOBOLD_URL
+                
+                # Build prompt with consciousness injection
+                final_prompt = f"""Buddy is a helpful, empathetic AI assistant.
+
+{consciousness_context}
+
+User: {text}
+
+Buddy:"""
+                
+                payload = {
+                    "messages": [{"role": "user", "content": final_prompt}],
+                    "max_tokens": 500,
+                    "temperature": 0.7,
+                    "stream": True,
+                    "stop": ["User:", "Human:"]
+                }
+                
+                print(f"[FIXED_ARCH] 🎯 Direct call to PORT 5001: {KOBOLD_URL}")
+                response = requests.post(KOBOLD_URL, json=payload, stream=True, timeout=30)
+                response.raise_for_status()
+                
+                full_response = ""
+                chunk_count = 0
+                
+                # Stream response chunks
+                for line in response.iter_lines():
+                    if line and not response_interrupted:
+                        # Check for interrupt
+                        if full_duplex_manager and full_duplex_manager.speech_interrupted:
+                            print("[FIXED_ARCH] ⚡ INTERRUPT DETECTED")
+                            response_interrupted = True
+                            break
+                        
+                        try:
+                            if line.startswith(b'data: '):
+                                json_str = line[6:].decode('utf-8')
+                                if json_str.strip() == '[DONE]':
+                                    break
+                                    
+                                chunk_data = json.loads(json_str)
+                                text_chunk = chunk_data.get('choices', [{}])[0].get('delta', {}).get('content', '')
+                                
+                                if text_chunk:
+                                    chunk_count += 1
+                                    full_response += text_chunk
+                                    
+                                    # Smart streaming with Kokoro protection
+                                    completion_percentage = len(full_response) / max(200, len(full_response) * 2)  # Rough estimate
+                                    if completion_percentage >= 0.30 or chunk_count >= 5:
+                                        speak_streaming_smart(text_chunk, is_final=False)
+                                        
+                        except json.JSONDecodeError:
+                            # Handle non-JSON streaming format
+                            text_chunk = line.decode('utf-8').strip()
+                            if text_chunk and not text_chunk.startswith('['):
+                                chunk_count += 1
+                                full_response += text_chunk + " "
+                                speak_streaming_smart(text_chunk, is_final=False)
+                
+                # Finalize
+                if not response_interrupted:
+                    finalize_streaming_output()
+                    add_to_conversation_history(current_user, text, full_response.strip())
+                
+                total_time = time.time() - start_time
+                print(f"[FIXED_ARCH] ✅ Direct port separation complete in {total_time:.3f}s")
+                
+                return
+                
+            except Exception as direct_error:
+                print(f"[FIXED_ARCH] ❌ Direct port separation error: {direct_error}")
         
         except Exception as llm_error:
-            print(f"[NEW_ARCH] ❌ LLM generation error: {llm_error}")
-            print("[NEW_ARCH] 🔄 Falling back to existing system")
+            print(f"[FIXED_ARCH] ❌ LLM generation error: {llm_error}")
+            print("[FIXED_ARCH] 🔄 Falling back to existing system")
         
-        # ✅ FALLBACK: Use existing system if new architecture fails
-        print("[NEW_ARCH] 🔄 Using FALLBACK to existing streaming system")
+        # Continue with existing code as ultimate fallback...
+        print("[FIXED_ARCH] 🔄 Using ULTIMATE FALLBACK to existing streaming system")
         
         # Continue with existing code below as fallback...
         

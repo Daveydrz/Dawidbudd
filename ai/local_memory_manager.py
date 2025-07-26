@@ -14,8 +14,8 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, asdict
 
-# Note: ONNX classifiers moved to Gemma-2-2B processing on port 5002
-# All classification now handled via ai.extractor_client
+# Note: Memory classification now handled by Gemma-2-2B on port 5002
+# This file provides local pattern-based fallback only
 
 @dataclass
 class MemoryEntry:
@@ -82,7 +82,11 @@ class LocalMemoryManager:
             print(f"[LocalMemory] ⚠️ Error saving memory: {e}")
     
     def extract_memory_from_text(self, text: str, user_id: str) -> List[MemoryEntry]:
-        """Extract memory information using ONNX-like classifier + fallback patterns"""
+        """
+        Extract memory information using pattern-based classification
+        NOTE: Full memory classification now handled by Gemma-2-2B on port 5002
+        This method provides local fallback only
+        """
         memories = []
         text_stripped = text.strip()
         timestamp = datetime.now().isoformat()
@@ -90,34 +94,9 @@ class LocalMemoryManager:
         if not text_stripped:
             return memories
         
-        # Use ONNX-like classifier if available
-        if MEMORY_CLASSIFIER_AVAILABLE:
-            try:
-                # Get classification with confidence
-                memory_type, confidence = classify_memory_type_with_confidence(text_stripped)
-                
-                # Extract additional metadata based on classification
-                extracted_info = self._extract_classified_metadata(text_stripped, memory_type)
-                
-                memory = MemoryEntry(
-                    timestamp=timestamp,
-                    user_id=user_id,
-                    text=text,
-                    memory_type=memory_type,
-                    extracted_info=extracted_info,
-                    confidence=confidence
-                )
-                memories.append(memory)
-                
-                if confidence > 0.7:
-                    print(f"[LocalMemory] 🧠 Classified '{text_stripped[:30]}...' as {memory_type} (confidence: {confidence:.2f})")
-                
-                return memories
-                
-            except Exception as e:
-                print(f"[LocalMemory] ⚠️ Classifier error, falling back to patterns: {e}")
+        print(f"[LocalMemory] ℹ️ Using pattern-based fallback - Full classification on port 5002")
         
-        # Fallback to original pattern-based extraction
+        # Use pattern-based extraction as fallback
         return self._extract_memory_with_patterns(text, user_id)
     
     def _extract_classified_metadata(self, text: str, memory_type: str) -> Dict[str, Any]:
@@ -520,61 +499,33 @@ class LocalMemoryManager:
         
         return result
     
+    def process_user_input_with_onnx(self, text: str, user_id: str):
+        """
+        DEPRECATED: This method is replaced by Gemma-2-2B processing on port 5002
+        All classification now handled via ai.extractor_client.process_full_consciousness()
+        """
+        print(f"[LocalMemory] ⚠️ process_user_input_with_onnx is deprecated - use port 5002 instead")
+        
+        # Extract memories using pattern-based fallback
+        memories = self.extract_memory_from_text(text, user_id)
+        self.store_memories(memories)
+        
+        print(f"[LocalMemory] ℹ️ Stored {len(memories)} memories using pattern fallback")
+        
     def _classify_user_input_all(self, text: str) -> Dict[str, Any]:
-        """Run all ONNX classifiers on user input (no LLM calls)"""
-        results = {}
+        """
+        DEPRECATED: All classification now handled by Gemma-2-2B on port 5002
+        Use ai.extractor_client.process_full_consciousness() instead
+        """
+        print(f"[LocalMemory] ⚠️ ONNX classification is deprecated - using port 5002 Gemma instead")
         
-        # Memory classification
-        if MEMORY_CLASSIFIER_AVAILABLE:
-            try:
-                memory_type, memory_confidence = classify_memory_type_with_confidence(text)
-                results["memory"] = {
-                    "type": memory_type,
-                    "confidence": memory_confidence
-                }
-            except Exception as e:
-                print(f"[LocalMemory] ⚠️ Memory classification error: {e}")
-                results["memory"] = {"type": "context", "confidence": 0.5}
-        
-        # Intent classification
-        if INTENT_CLASSIFIER_AVAILABLE:
-            try:
-                intent, intent_confidence = classify_intent_with_confidence(text)
-                results["intent"] = {
-                    "type": intent,
-                    "confidence": intent_confidence
-                }
-            except Exception as e:
-                print(f"[LocalMemory] ⚠️ Intent classification error: {e}")
-                results["intent"] = {"type": "casual_chat", "confidence": 0.5}
-        
-        # Emotion classification
-        if EMOTION_CLASSIFIER_AVAILABLE:
-            try:
-                emotion, emotion_confidence, intensity = classify_emotion_with_confidence(text)
-                results["emotion"] = {
-                    "type": emotion,
-                    "confidence": emotion_confidence,
-                    "intensity": intensity
-                }
-            except Exception as e:
-                print(f"[LocalMemory] ⚠️ Emotion classification error: {e}")
-                results["emotion"] = {"type": "neutral", "confidence": 0.5, "intensity": "low"}
-        
-        # Name classification
-        if NAME_CLASSIFIER_AVAILABLE:
-            try:
-                name_type, name_confidence, extracted_names = classify_name_with_confidence(text)
-                results["name"] = {
-                    "type": name_type,
-                    "confidence": name_confidence,
-                    "extracted_names": extracted_names
-                }
-            except Exception as e:
-                print(f"[LocalMemory] ⚠️ Name classification error: {e}")
-                results["name"] = {"type": "no_name", "confidence": 0.5, "extracted_names": []}
-        
-        return results
+        # Return basic fallback results
+        return {
+            "memory": {"type": "context", "confidence": 0.5},
+            "intent": {"type": "casual_chat", "confidence": 0.5},
+            "emotion": {"type": "neutral", "confidence": 0.5, "intensity": "low"},
+            "name": {"type": "no_name", "confidence": 0.5, "extracted_names": []}
+        }
     
     def get_all_classifier_stats(self) -> Dict[str, Any]:
         """Get performance statistics for all ONNX classifiers"""
@@ -905,6 +856,82 @@ class LocalMemoryManager:
         
         self.store_memories([interaction_memory])
         print(f"[LocalMemory] Interaction stored for {user_id}")
+        
+    def get_user_facts(self, user_id: str) -> List[str]:
+        """Get user facts for prompt injection"""
+        try:
+            if user_id not in self.memory_data["users"]:
+                return []
+            
+            facts = self.memory_data["users"][user_id].get("facts", [])
+            # Return just the content strings
+            if facts and isinstance(facts[0], dict):
+                return [fact.get("content", str(fact)) for fact in facts[-5:]]  # Last 5 facts
+            else:
+                return facts[-5:]  # Last 5 facts
+        except Exception as e:
+            print(f"[LocalMemory] ⚠️ Error getting facts: {e}")
+            return []
+    
+    def get_user_preferences(self, user_id: str) -> List[str]:
+        """Get user preferences for prompt injection"""
+        try:
+            if user_id not in self.memory_data["users"]:
+                return []
+            
+            preferences = self.memory_data["users"][user_id].get("preferences", [])
+            # Return just the content strings
+            if preferences and isinstance(preferences[0], dict):
+                return [pref.get("content", str(pref)) for pref in preferences[-5:]]  # Last 5 preferences
+            else:
+                return preferences[-5:]  # Last 5 preferences
+        except Exception as e:
+            print(f"[LocalMemory] ⚠️ Error getting preferences: {e}")
+            return []
+    
+    def get_recent_context(self, user_id: str, limit: int = 3) -> List[str]:
+        """Get recent context for prompt injection"""
+        try:
+            if user_id not in self.memory_data["users"]:
+                return []
+            
+            context = self.memory_data["users"][user_id].get("context", [])
+            # Return just the content strings
+            if context and isinstance(context[0], dict):
+                return [ctx.get("content", str(ctx)) for ctx in context[-limit:]]  # Last N context items
+            else:
+                return context[-limit:]  # Last N context items
+        except Exception as e:
+            print(f"[LocalMemory] ⚠️ Error getting context: {e}")
+            return []
+    
+    def add_interaction(self, user_id: str, user_input: str, response: str):
+        """Add interaction to memory"""
+        try:
+            # Extract memories from user input
+            memories = self.extract_memory_from_text(user_input, user_id)
+            self.store_memories(memories)
+            
+            # Store the interaction as context
+            context_memory = MemoryEntry(
+                timestamp=datetime.now().isoformat(),
+                user_id=user_id,
+                text=f"User: {user_input} | Buddy: {response}",
+                memory_type="context",
+                extracted_info={
+                    "interaction": True,
+                    "user_input": user_input,
+                    "buddy_response": response,
+                    "source": "interaction_log"
+                },
+                confidence=1.0
+            )
+            self.store_memories([context_memory])
+            
+            print(f"[LocalMemory] 💾 Stored interaction for {user_id}")
+            
+        except Exception as e:
+            print(f"[LocalMemory] ⚠️ Error adding interaction: {e}")
 
 
 # Global instance
