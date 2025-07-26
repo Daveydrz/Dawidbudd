@@ -1,0 +1,128 @@
+{
+  "users": {
+    "test_user": {
+      "actions": [],
+      "preferences": [],
+      "facts": [],
+      "context": [
+        {
+          "timestamp": "2025-07-26T02:53:21.925938",
+          "user_id": "test_user",
+          "text": "I am going to the shop",
+          "memory_type": "context",
+          "extracted_info": {
+            "topic": "general",
+            "length": 6,
+            "question": false
+          },
+          "confidence": 0.5
+        }
+      ],
+      "last_activity": "2025-07-26T02:53:21.925938"
+    },
+    "TestUser": {
+      "actions": [],
+      "preferences": [],
+      "facts": [],
+      "context": [
+        {
+          "timestamp": "2025-07-26T02:54:07.896918",
+          "user_id": "TestUser",
+          "text": "How are you?",
+          "memory_type": "context",
+          "extracted_info": {
+            "topic": "general",
+            "length": 3,
+            "question": true
+          },
+          "confidence": 0.5
+        },
+        {
+          "timestamp": "2025-07-26T02:54:38.713322",
+          "user_id": "TestUser",
+          "text": "How are you?",
+          "memory_type": "context",
+          "extracted_info": {
+            "topic": "general",
+            "length": 3,
+            "question": true
+          },
+          "confidence": 0.5
+        },
+        {
+          "timestamp": "2025-07-26T02:55:47.555768",
+          "user_id": "TestUser",
+          "text": "How are you?",
+          "memory_type": "context",
+          "extracted_info": {
+            "topic": "general",
+            "length": 3,
+            "question": true
+          },
+          "confidence": 0.5
+        },
+        {
+          "timestamp": "2025-07-26T02:55:48.061088",
+          "user_id": "TestUser",
+          "text": "I'm going to the shop",
+          "memory_type": "action",
+          "extracted_info": {
+            "action": "the shop",
+            "pattern": "i'?m going to (.+)",
+            "context": "user_reported_action"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T02:55:48.061088",
+          "user_id": "TestUser",
+          "text": "I'm going to the shop",
+          "memory_type": "action",
+          "extracted_info": {
+            "action": "going to the shop",
+            "pattern": "i'?m (.+ing .+)",
+            "context": "user_reported_action"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T02:55:48.561893",
+          "user_id": "TestUser",
+          "text": "I like pizza",
+          "memory_type": "preference",
+          "extracted_info": {
+            "sentiment": "like",
+            "subject": "pizza",
+            "pattern": "i (like|love|prefer|enjoy) (.+)"
+          },
+          "confidence": 0.8
+        },
+        {
+          "timestamp": "2025-07-26T02:55:49.062685",
+          "user_id": "TestUser",
+          "text": "What time is it?",
+          "memory_type": "context",
+          "extracted_info": {
+            "topic": "general",
+            "length": 4,
+            "question": true
+          },
+          "confidence": 0.5
+        },
+        {
+          "timestamp": "2025-07-26T02:55:49.563402",
+          "user_id": "TestUser",
+          "text": "I'm back from the shop",
+          "memory_type": "action",
+          "extracted_info": {
+            "action": "the shop",
+            "pattern": "i'?m back from (.+)",
+            "context": "user_reported_action"
+          },
+          "confidence": 0.9
+        }
+      ],
+      "last_activity": "2025-07-26T02:55:49.563402"
+    }
+  }
+}

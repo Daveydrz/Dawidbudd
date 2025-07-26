@@ -689,7 +689,83 @@ def handle_streaming_response(text, current_user):
                 print(f"[AdvancedResponse] 🛡️ LLM LOCKED by voice processing - queuing response")
                 return
         
-        # ✅ EMERGENCY FAST RESPONSE: Check if we need immediate response to fix latency crisis
+        # ✅ OPTIMIZED RESPONSE SYSTEM: Use single LLM call mode or fallback to existing system
+        if SINGLE_LLM_CALL_MODE:
+            print("[AdvancedResponse] ⚡ Using SINGLE LLM CALL MODE for optimal performance")
+            
+            try:
+                from ai.single_llm_call_system import generate_optimized_response
+                from ai.background_consciousness_processor_optimized import schedule_consciousness_processing
+                
+                # Schedule consciousness processing in background (non-blocking)
+                schedule_consciousness_processing(text, current_user, {"display_name": display_name})
+                
+                # Generate response with single LLM call
+                full_response = ""
+                chunk_count = 0
+                response_interrupted = False
+                
+                for chunk in generate_optimized_response(text, current_user):
+                    # Check for interrupt
+                    if full_duplex_manager and full_duplex_manager.speech_interrupted:
+                        print("[AdvancedResponse] ⚡ INTERRUPT DETECTED - STOPPING OPTIMIZED RESPONSE")
+                        response_interrupted = True
+                        break
+                    
+                    if chunk and chunk.strip():
+                        chunk_count += 1
+                        chunk_text = chunk.strip()
+                        
+                        if chunk_count == 1:
+                            print("[AdvancedResponse] ⚡ First optimized chunk ready - starting speech!")
+                        
+                        print(f"[AdvancedResponse] 🗣️ Speaking optimized chunk {chunk_count}: '{chunk_text[:50]}...'")
+                        
+                        # Validate chunk
+                        try:
+                            is_appropriate, validated_chunk = validate_ai_response_appropriateness(current_user, chunk_text)
+                            if not is_appropriate:
+                                print(f"[AdvancedResponse] 🛡️ Chunk {chunk_count} corrected for appropriateness")
+                                chunk_text = validated_chunk
+                        except Exception as validation_error:
+                            print(f"[AdvancedResponse] ⚠️ Validation error: {validation_error}")
+                        
+                        # Speak chunk
+                        speak_streaming(chunk_text)
+                        full_response += chunk_text + " "
+                        
+                        # Check for interrupt after queueing
+                        if full_duplex_manager and full_duplex_manager.speech_interrupted:
+                            print("[AdvancedResponse] ⚡ INTERRUPT AFTER QUEUEING - STOPPING")
+                            response_interrupted = True
+                            break
+                        
+                        # Natural pause
+                        if not (full_duplex_manager and full_duplex_manager.speech_interrupted):
+                            time.sleep(0.05)
+                
+                # Handle completion
+                if not response_interrupted and full_response.strip():
+                    add_to_conversation_history(current_user, text, full_response.strip())
+                    print(f"[AdvancedResponse] ✅ Optimized response complete - {chunk_count} chunks")
+                    
+                    # Show performance stats
+                    if SHOW_PERFORMANCE_METRICS:
+                        from ai.single_llm_call_system import get_performance_stats
+                        stats = get_performance_stats()
+                        print(f"[AdvancedResponse] 📊 Performance: {stats['average_response_time']:.2f}s avg, {stats['llm_calls_made']} LLM calls")
+                
+                return  # Exit early with optimized response
+                
+            except ImportError as import_error:
+                print(f"[AdvancedResponse] ⚠️ Optimized system not available: {import_error}")
+                print("[AdvancedResponse] 🔄 Falling back to existing system")
+                
+            except Exception as optimized_error:
+                print(f"[AdvancedResponse] ❌ Optimized system error: {optimized_error}")
+                print("[AdvancedResponse] 🔄 Falling back to existing system")
+        
+        # ✅ FALLBACK: Use existing emergency fast response system if available
         use_emergency_fast_response = False
         try:
             from ai.emergency_fast_response import is_emergency_fast_mode_needed, generate_immediate_response, schedule_background_consciousness_processing, get_minimal_context_for_response
@@ -2502,6 +2578,19 @@ def main():
         print(f"[AdvancedBuddy] ⚠️ Async consciousness processor initialization error: {async_error}")
         print("[AdvancedBuddy] ⚠️ Performance mode may not work optimally")
     
+    # ✅ OPTIMIZED: Initialize new optimized background consciousness processor
+    print("[AdvancedBuddy] 🚀 Initializing optimized background consciousness processor...")
+    try:
+        from ai.background_consciousness_processor_optimized import background_consciousness_processor
+        background_consciousness_processor.start()
+        print("[AdvancedBuddy] ✅ Optimized background consciousness processor started")
+        print(f"[AdvancedBuddy] 🧠 Inner thoughts: {'ENABLED' if ENABLE_INNER_THOUGHTS else 'DISABLED'}")
+        print(f"[AdvancedBuddy] 🔄 Self reflection: {'ENABLED' if ENABLE_SELF_REFLECTION else 'DISABLED'}")
+        print(f"[AdvancedBuddy] ⚡ Single LLM call mode: {'ENABLED' if SINGLE_LLM_CALL_MODE else 'DISABLED'}")
+    except Exception as optimized_bg_error:
+        print(f"[AdvancedBuddy] ⚠️ Optimized background processor initialization error: {optimized_bg_error}")
+        print("[AdvancedBuddy] ⚠️ Will use existing background processing")
+    
     # ✅ EMERGENCY: Initialize background consciousness processor for fast responses
     print("[AdvancedBuddy] 🚨 Initializing emergency background consciousness processor...")
     try:
@@ -3060,6 +3149,15 @@ def main():
                         print("[AdvancedBuddy] ✅ Autonomous consciousness systems shutdown complete")
                     except Exception as e:
                         print(f"[AdvancedBuddy] ⚠️ Autonomous shutdown error: {e}")
+                
+                # ✅ OPTIMIZED: Shutdown optimized background consciousness processor
+                try:
+                    print("[AdvancedBuddy] 🚀 Shutting down optimized background consciousness processor...")
+                    from ai.background_consciousness_processor_optimized import background_consciousness_processor
+                    background_consciousness_processor.stop()
+                    print("[AdvancedBuddy] ✅ Optimized background processor shutdown complete")
+                except Exception as e:
+                    print(f"[AdvancedBuddy] ⚠️ Optimized background processor shutdown error: {e}")
     
     print("[AdvancedBuddy] ✅ ADVANCED AI ASSISTANT + CONSCIOUSNESS cleanup complete!")
 

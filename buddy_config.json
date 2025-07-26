@@ -1,0 +1,27 @@
+{
+  "consciousness_settings": {
+    "enable_inner_thoughts": false,
+    "enable_self_reflection": false,
+    "enable_consciousness_background_processing": true,
+    "enable_emotional_processing": true,
+    "enable_memory_formation": true
+  },
+  "response_optimization": {
+    "single_llm_call_mode": true,
+    "local_memory_updates": true,
+    "background_consciousness_processing": true,
+    "immediate_response_priority": true
+  },
+  "performance_settings": {
+    "target_response_time_seconds": 3,
+    "max_llm_calls_per_turn": 1,
+    "enable_streaming_response": true,
+    "consciousness_processing_timeout": 10
+  },
+  "debugging": {
+    "log_consciousness_processing": false,
+    "log_memory_updates": false,
+    "log_llm_calls": true,
+    "show_performance_metrics": true
+  }
+}
