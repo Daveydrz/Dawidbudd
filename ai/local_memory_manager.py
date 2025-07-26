@@ -1,8 +1,9 @@
 """
 Local Memory Manager - Handle memory updates without LLM calls
 Created: 2025-01-17
-Purpose: Fast, local memory storage for immediate responses
-Features: JSON-based storage, pattern recognition, simple fact extraction
+Updated: 2025-01-17 - Integrated ONNX-like memory classifier
+Purpose: Fast, local memory storage with intelligent categorization
+Features: JSON-based storage, ONNX classifier, multi-language support
 """
 
 import json
@@ -12,6 +13,15 @@ import re
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, asdict
+
+# Import the new ONNX-like memory classifier
+try:
+    from ai.memory_classifier import classify_memory_type, classify_memory_type_with_confidence, get_classifier_stats
+    MEMORY_CLASSIFIER_AVAILABLE = True
+    print("[LocalMemory] 🧠 ONNX-like memory classifier loaded")
+except ImportError as e:
+    MEMORY_CLASSIFIER_AVAILABLE = False
+    print(f"[LocalMemory] ⚠️ Memory classifier not available: {e}")
 
 @dataclass
 class MemoryEntry:
@@ -78,12 +88,191 @@ class LocalMemoryManager:
             print(f"[LocalMemory] ⚠️ Error saving memory: {e}")
     
     def extract_memory_from_text(self, text: str, user_id: str) -> List[MemoryEntry]:
-        """Extract memory information from text without LLM calls"""
+        """Extract memory information using ONNX-like classifier + fallback patterns"""
+        memories = []
+        text_stripped = text.strip()
+        timestamp = datetime.now().isoformat()
+        
+        if not text_stripped:
+            return memories
+        
+        # Use ONNX-like classifier if available
+        if MEMORY_CLASSIFIER_AVAILABLE:
+            try:
+                # Get classification with confidence
+                memory_type, confidence = classify_memory_type_with_confidence(text_stripped)
+                
+                # Extract additional metadata based on classification
+                extracted_info = self._extract_classified_metadata(text_stripped, memory_type)
+                
+                memory = MemoryEntry(
+                    timestamp=timestamp,
+                    user_id=user_id,
+                    text=text,
+                    memory_type=memory_type,
+                    extracted_info=extracted_info,
+                    confidence=confidence
+                )
+                memories.append(memory)
+                
+                if confidence > 0.7:
+                    print(f"[LocalMemory] 🧠 Classified '{text_stripped[:30]}...' as {memory_type} (confidence: {confidence:.2f})")
+                
+                return memories
+                
+            except Exception as e:
+                print(f"[LocalMemory] ⚠️ Classifier error, falling back to patterns: {e}")
+        
+        # Fallback to original pattern-based extraction
+        return self._extract_memory_with_patterns(text, user_id)
+    
+    def _extract_classified_metadata(self, text: str, memory_type: str) -> Dict[str, Any]:
+        """Extract additional metadata based on classification type"""
+        text_lower = text.lower().strip()
+        
+        if memory_type == "preference":
+            return self._extract_preference_metadata(text_lower)
+        elif memory_type == "fact":
+            return self._extract_fact_metadata(text_lower) 
+        elif memory_type == "context":
+            return self._extract_context_metadata(text_lower)
+        else:
+            return {"classified_type": memory_type, "source": "onnx_classifier"}
+    
+    def _extract_preference_metadata(self, text_lower: str) -> Dict[str, Any]:
+        """Extract preference-specific metadata"""
+        # Sentiment analysis
+        sentiment = "neutral"
+        if any(word in text_lower for word in ["love", "adore", "favorite", "like", "enjoy", "prefer"]):
+            sentiment = "positive"
+        elif any(word in text_lower for word in ["hate", "dislike", "can't stand", "despise", "avoid"]):
+            sentiment = "negative"
+        
+        # Extract subject (what they like/dislike)
+        subject = "unknown"
+        
+        # Common preference patterns
+        preference_patterns = [
+            r"(?:i|my)\s+(?:really\s+)?(?:love|like|enjoy|prefer|adore)\s+(.+?)(?:\.|!|$)",
+            r"(?:i|my)\s+(?:really\s+)?(?:hate|dislike|can't\s+stand|despise)\s+(.+?)(?:\.|!|$)", 
+            r"(?:i|my)\s+(?:favorite|favourite)\s+(.+?)\s+is\s+(.+?)(?:\.|!|$)",
+            r"(.+?)\s+(?:is|are)\s+(?:my\s+)?(?:favorite|favourite)(?:\.|!|$)",
+        ]
+        
+        for pattern in preference_patterns:
+            match = re.search(pattern, text_lower)
+            if match:
+                if len(match.groups()) == 1:
+                    subject = match.group(1).strip()
+                elif len(match.groups()) == 2:
+                    subject = match.group(2).strip()  # For "favorite X is Y" patterns
+                break
+        
+        return {
+            "sentiment": sentiment,
+            "subject": subject,
+            "preference_type": "like_dislike",
+            "intensity": "high" if any(word in text_lower for word in ["love", "adore", "hate", "despise"]) else "medium",
+            "source": "onnx_classifier"
+        }
+    
+    def _extract_fact_metadata(self, text_lower: str) -> Dict[str, Any]:
+        """Extract fact-specific metadata"""
+        # Determine fact category
+        fact_category = "personal_info"
+        
+        if any(word in text_lower for word in ["name", "called"]):
+            fact_category = "identity"
+        elif any(word in text_lower for word in ["age", "years old", "born"]):
+            fact_category = "age_birth"
+        elif any(word in text_lower for word in ["live", "address", "from"]):
+            fact_category = "location"
+        elif any(word in text_lower for word in ["work", "job", "career", "profession"]):
+            fact_category = "occupation"
+        elif any(word in text_lower for word in ["family", "wife", "husband", "child", "parent", "mom", "dad"]):
+            fact_category = "family"
+        elif any(word in text_lower for word in ["allergic", "condition", "medical", "health"]):
+            fact_category = "medical"
+        elif any(word in text_lower for word in ["height", "weight", "hair", "eyes", "tall", "short"]):
+            fact_category = "physical"
+        
+        # Extract the actual fact value
+        fact_value = "unknown"
+        
+        # Common fact extraction patterns
+        fact_patterns = [
+            r"my\s+name\s+is\s+(.+?)(?:\.|!|$)",
+            r"i\s+am\s+(.+?)\s+years?\s+old(?:\.|!|$)",
+            r"i\s+live\s+(?:in|at)\s+(.+?)(?:\.|!|$)",
+            r"i\s+work\s+(?:as|at|for)\s+(.+?)(?:\.|!|$)",
+            r"my\s+(.+?)\s+is\s+(.+?)(?:\.|!|$)",
+        ]
+        
+        for pattern in fact_patterns:
+            match = re.search(pattern, text_lower)
+            if match:
+                if len(match.groups()) == 1:
+                    fact_value = match.group(1).strip()
+                elif len(match.groups()) == 2:
+                    fact_value = match.group(2).strip()  # For "my X is Y" patterns
+                break
+        
+        return {
+            "fact_category": fact_category,
+            "fact_value": fact_value,
+            "permanence": "permanent" if fact_category in ["identity", "age_birth"] else "semi_permanent",
+            "verified": False,
+            "source": "onnx_classifier"
+        }
+    
+    def _extract_context_metadata(self, text_lower: str) -> Dict[str, Any]:
+        """Extract context-specific metadata"""
+        # Determine context type
+        context_type = "general"
+        
+        if any(word in text_lower for word in ["going", "went", "at", "from", "to"]):
+            context_type = "location_activity"
+        elif any(word in text_lower for word in ["doing", "making", "working", "playing"]):
+            context_type = "current_activity"
+        elif any(word in text_lower for word in ["feel", "feeling", "tired", "happy", "sad"]):
+            context_type = "emotional_state"
+        elif any(word in text_lower for word in ["just", "finished", "completed", "done"]):
+            context_type = "recent_completion"
+        elif any(word in text_lower for word in ["about to", "going to", "will", "planning"]):
+            context_type = "future_intention"
+        
+        # Extract activity or location
+        activity = "unknown"
+        
+        # Context extraction patterns
+        context_patterns = [
+            r"i'?m\s+(?:going\s+to|at|in)\s+(?:the\s+)?(.+?)(?:\.|!|$)",
+            r"i\s+(?:just|recently)\s+(.+?)(?:\.|!|$)",
+            r"i'?m\s+(?:currently\s+)?(.+?)(?:\.|!|$)",
+            r"i\s+(?:feel|am\s+feeling)\s+(.+?)(?:\.|!|$)",
+        ]
+        
+        for pattern in context_patterns:
+            match = re.search(pattern, text_lower)
+            if match:
+                activity = match.group(1).strip()
+                break
+        
+        return {
+            "context_type": context_type,
+            "activity": activity,
+            "temporal": "current" if any(word in text_lower for word in ["now", "currently", "right now"]) else "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+        }
+    
+    def _extract_memory_with_patterns(self, text: str, user_id: str) -> List[MemoryEntry]:
+        """Fallback pattern-based extraction (original method)"""
         memories = []
         text_lower = text.lower().strip()
         timestamp = datetime.now().isoformat()
         
-        # Extract actions
+        # Extract actions (fallback)
         for pattern in self.action_patterns:
             matches = re.findall(pattern, text_lower)
             for match in matches:
@@ -91,17 +280,18 @@ class LocalMemoryManager:
                     timestamp=timestamp,
                     user_id=user_id,
                     text=text,
-                    memory_type="action",
+                    memory_type="context",  # Actions are now classified as context
                     extracted_info={
                         "action": match.strip(),
                         "pattern": pattern,
-                        "context": "user_reported_action"
+                        "context": "user_reported_action",
+                        "source": "pattern_fallback"
                     },
-                    confidence=0.9
+                    confidence=0.7  # Lower confidence for fallback
                 )
                 memories.append(memory)
         
-        # Extract preferences
+        # Extract preferences (fallback)
         for pattern in self.preference_patterns:
             matches = re.findall(pattern, text_lower)
             for match in matches:
@@ -118,13 +308,14 @@ class LocalMemoryManager:
                     extracted_info={
                         "sentiment": sentiment,
                         "subject": subject.strip(),
-                        "pattern": pattern
+                        "pattern": pattern,
+                        "source": "pattern_fallback"
                     },
-                    confidence=0.8
+                    confidence=0.6  # Lower confidence for fallback
                 )
                 memories.append(memory)
         
-        # Extract facts
+        # Extract facts (fallback)
         for pattern in self.fact_patterns:
             matches = re.findall(pattern, text_lower)
             for match in matches:
@@ -136,9 +327,10 @@ class LocalMemoryManager:
                     extracted_info={
                         "fact": match.strip(),
                         "pattern": pattern,
-                        "category": "personal_info"
+                        "category": "personal_info",
+                        "source": "pattern_fallback"
                     },
-                    confidence=0.9
+                    confidence=0.6  # Lower confidence for fallback
                 )
                 memories.append(memory)
         
@@ -152,7 +344,8 @@ class LocalMemoryManager:
                 extracted_info={
                     "topic": self._extract_simple_topic(text),
                     "length": len(text.split()),
-                    "question": "?" in text
+                    "question": "?" in text,
+                    "source": "general_fallback"
                 },
                 confidence=0.5
             )
@@ -182,14 +375,14 @@ class LocalMemoryManager:
         return "general"
     
     def store_memories(self, memories: List[MemoryEntry]):
-        """Store memories locally"""
+        """Store memories locally with enhanced categorization"""
         for memory in memories:
             user_id = memory.user_id
             
             # Initialize user if not exists
             if user_id not in self.memory_data["users"]:
                 self.memory_data["users"][user_id] = {
-                    "actions": [],
+                    "actions": [],      # Deprecated - keeping for backward compatibility
                     "preferences": [],
                     "facts": [],
                     "context": [],
@@ -202,15 +395,32 @@ class LocalMemoryManager:
                 if category not in user_data:
                     user_data[category] = []
             
-            # Map memory type to category (in case of mismatch)
+            # Map memory type appropriately
             memory_type = memory.memory_type
-            if memory_type not in ["actions", "preferences", "facts", "context"]:
-                # Default to context if unknown type
+            
+            # Actions are now stored as context events
+            if memory_type == "action":
                 memory_type = "context"
+                # Update memory type in the object too
+                memory.memory_type = "context"
+            
+            # Map singular to plural forms for storage
+            type_mapping = {
+                "preference": "preferences",
+                "fact": "facts",
+                "context": "context"
+            }
+            
+            storage_type = type_mapping.get(memory_type, "context")
+            
+            # Validate storage type 
+            if storage_type not in ["preferences", "facts", "context"]:
+                print(f"[LocalMemory] ⚠️ Unknown storage type '{storage_type}', defaulting to context")
+                storage_type = "context"
             
             # Store in appropriate category
             memory_dict = asdict(memory)
-            user_data[memory_type].append(memory_dict)
+            user_data[storage_type].append(memory_dict)
             user_data["last_activity"] = memory.timestamp
             
             # Keep only recent memories (last 100 per category)
@@ -219,6 +429,31 @@ class LocalMemoryManager:
                     user_data[category] = user_data[category][-100:]
         
         self._save_memory()
+    
+    def get_memory_summary_by_type(self, user_id: str) -> Dict[str, int]:
+        """Get count of memories by type for a user"""
+        if user_id not in self.memory_data["users"]:
+            return {"preferences": 0, "facts": 0, "context": 0}
+        
+        user_data = self.memory_data["users"][user_id]
+        return {
+            "preferences": len(user_data.get("preferences", [])),
+            "facts": len(user_data.get("facts", [])),
+            "context": len(user_data.get("context", [])),
+            "total": (len(user_data.get("preferences", [])) + 
+                     len(user_data.get("facts", [])) + 
+                     len(user_data.get("context", [])))
+        }
+    
+    def get_classifier_performance_stats(self) -> Dict[str, Any]:
+        """Get memory classifier performance statistics"""
+        if MEMORY_CLASSIFIER_AVAILABLE:
+            return get_classifier_stats()
+        else:
+            return {
+                "model_loaded": False,
+                "error": "Memory classifier not available"
+            }
     
     def get_recent_memories(self, user_id: str, limit: int = 10) -> Dict[str, Any]:
         """Get recent memories for a user"""
@@ -243,10 +478,10 @@ class LocalMemoryManager:
         return None
     
     def process_user_input(self, text: str, user_id: str) -> Dict[str, Any]:
-        """Process user input and update memory locally"""
+        """Process user input and update memory locally with enhanced reporting"""
         start_time = time.time()
         
-        # Extract memories
+        # Extract memories using ONNX-like classifier
         memories = self.extract_memory_from_text(text, user_id)
         
         # Store memories
@@ -255,40 +490,119 @@ class LocalMemoryManager:
         
         # Get context for response
         recent_memories = self.get_recent_memories(user_id, 5)
+        memory_summary = self.get_memory_summary_by_type(user_id)
         
         processing_time = time.time() - start_time
         
-        return {
+        # Enhanced reporting
+        result = {
             "memories_extracted": len(memories),
             "processing_time": processing_time,
             "recent_memories": recent_memories,
-            "last_action": self.get_last_action(user_id)
+            "last_action": self.get_last_action(user_id),
+            "memory_summary": memory_summary,
+            "classifier_used": MEMORY_CLASSIFIER_AVAILABLE
         }
+        
+        # Add memory type breakdown if memories were extracted
+        if memories:
+            memory_types = {}
+            for memory in memories:
+                mem_type = memory.memory_type
+                if mem_type in memory_types:
+                    memory_types[mem_type] += 1
+                else:
+                    memory_types[mem_type] = 1
+            result["memory_types_extracted"] = memory_types
+        
+        return result
     
     def get_memory_context_for_llm(self, user_id: str) -> str:
-        """Get memory context string for LLM prompt"""
+        """Get memory context string for LLM prompt with enhanced categorization"""
         memories = self.get_recent_memories(user_id, 5)
         context_parts = []
         
-        # Add recent actions
-        if memories["actions"]:
-            recent_actions = [m["extracted_info"]["action"] for m in memories["actions"][-3:]]
-            context_parts.append(f"Recent actions: {', '.join(recent_actions)}")
-        
-        # Add preferences
-        if memories["preferences"]:
-            recent_prefs = [
-                f"{m['extracted_info']['sentiment']} {m['extracted_info']['subject']}" 
-                for m in memories["preferences"][-2:]
-            ]
-            context_parts.append(f"Preferences: {', '.join(recent_prefs)}")
-        
-        # Add facts
+        # Add recent facts (most important for understanding user)
         if memories["facts"]:
-            recent_facts = [m["extracted_info"]["fact"] for m in memories["facts"][-2:]]
-            context_parts.append(f"Facts: {', '.join(recent_facts)}")
+            recent_facts = []
+            for fact_memory in memories["facts"][-3:]:  # Last 3 facts
+                extracted_info = fact_memory.get("extracted_info", {})
+                if extracted_info.get("source") == "onnx_classifier":
+                    # Enhanced fact formatting
+                    fact_category = extracted_info.get("fact_category", "personal")
+                    fact_value = extracted_info.get("fact_value", "unknown")
+                    recent_facts.append(f"{fact_category}: {fact_value}")
+                else:
+                    # Fallback formatting
+                    fact = extracted_info.get("fact", "unknown")
+                    recent_facts.append(fact)
+            
+            if recent_facts:
+                context_parts.append(f"Facts: {', '.join(recent_facts)}")
         
-        return " | ".join(context_parts) if context_parts else ""
+        # Add preferences (important for personality)
+        if memories["preferences"]:
+            recent_prefs = []
+            for pref_memory in memories["preferences"][-2:]:  # Last 2 preferences
+                extracted_info = pref_memory.get("extracted_info", {})
+                if extracted_info.get("source") == "onnx_classifier":
+                    # Enhanced preference formatting
+                    sentiment = extracted_info.get("sentiment", "neutral")
+                    subject = extracted_info.get("subject", "unknown")
+                    intensity = extracted_info.get("intensity", "medium")
+                    
+                    if sentiment == "positive":
+                        pref_text = f"likes {subject}" + (" (strongly)" if intensity == "high" else "")
+                    elif sentiment == "negative":
+                        pref_text = f"dislikes {subject}" + (" (strongly)" if intensity == "high" else "")
+                    else:
+                        pref_text = f"feels neutral about {subject}"
+                    
+                    recent_prefs.append(pref_text)
+                else:
+                    # Fallback formatting
+                    sentiment = extracted_info.get("sentiment", "neutral")
+                    subject = extracted_info.get("subject", "unknown")
+                    recent_prefs.append(f"{sentiment} {subject}")
+            
+            if recent_prefs:
+                context_parts.append(f"Preferences: {', '.join(recent_prefs)}")
+        
+        # Add recent context/actions (for immediate relevance)
+        if memories["context"]:
+            recent_contexts = []
+            for context_memory in memories["context"][-3:]:  # Last 3 context items
+                extracted_info = context_memory.get("extracted_info", {})
+                if extracted_info.get("source") == "onnx_classifier":
+                    # Enhanced context formatting
+                    context_type = extracted_info.get("context_type", "general")
+                    activity = extracted_info.get("activity", "unknown")
+                    
+                    if context_type == "location_activity":
+                        recent_contexts.append(f"location: {activity}")
+                    elif context_type == "current_activity":
+                        recent_contexts.append(f"doing: {activity}")
+                    elif context_type == "recent_completion":
+                        recent_contexts.append(f"completed: {activity}")
+                    else:
+                        recent_contexts.append(activity)
+                else:
+                    # Fallback formatting
+                    action = extracted_info.get("action", extracted_info.get("topic", "unknown"))
+                    recent_contexts.append(action)
+            
+            if recent_contexts:
+                context_parts.append(f"Recent: {', '.join(recent_contexts)}")
+        
+        result = " | ".join(context_parts) if context_parts else ""
+        
+        # Add classifier performance note if available
+        if MEMORY_CLASSIFIER_AVAILABLE and context_parts:
+            stats = get_classifier_stats()
+            if stats.get("performance_target_met", False):
+                result += " [AI-classified]"
+        
+        return result
     
     def cleanup_old_memories(self, days: int = 30):
         """Clean up old memories"""

@@ -123,6 +123,824 @@
         }
       ],
       "last_activity": "2025-07-26T02:55:49.563402"
+    },
+    "test_classifier_user": {
+      "actions": [],
+      "preferences": [
+        {
+          "timestamp": "2025-07-26T03:17:05.239030",
+          "user_id": "test_classifier_user",
+          "text": "I like pizza",
+          "memory_type": "preference",
+          "extracted_info": {
+            "sentiment": "positive",
+            "subject": "pizza",
+            "preference_type": "like_dislike",
+            "intensity": "medium",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T03:17:05.243602",
+          "user_id": "test_classifier_user",
+          "text": "Lubi\u0119 pizz\u0119",
+          "memory_type": "preference",
+          "extracted_info": {
+            "sentiment": "neutral",
+            "subject": "unknown",
+            "preference_type": "like_dislike",
+            "intensity": "medium",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T03:17:05.245234",
+          "user_id": "test_classifier_user",
+          "text": "Mi piace la pasta",
+          "memory_type": "preference",
+          "extracted_info": {
+            "sentiment": "neutral",
+            "subject": "unknown",
+            "preference_type": "like_dislike",
+            "intensity": "medium",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T03:21:57.475502",
+          "user_id": "test_classifier_user",
+          "text": "I like pizza",
+          "memory_type": "preference",
+          "extracted_info": {
+            "sentiment": "positive",
+            "subject": "pizza",
+            "preference_type": "like_dislike",
+            "intensity": "medium",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T03:21:57.479260",
+          "user_id": "test_classifier_user",
+          "text": "I love chocolate ice cream",
+          "memory_type": "preference",
+          "extracted_info": {
+            "sentiment": "positive",
+            "subject": "chocolate ice cream",
+            "preference_type": "like_dislike",
+            "intensity": "high",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.95
+        },
+        {
+          "timestamp": "2025-07-26T03:21:57.482517",
+          "user_id": "test_classifier_user",
+          "text": "Lubi\u0119 pizz\u0119",
+          "memory_type": "preference",
+          "extracted_info": {
+            "sentiment": "neutral",
+            "subject": "unknown",
+            "preference_type": "like_dislike",
+            "intensity": "medium",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T03:21:57.485011",
+          "user_id": "test_classifier_user",
+          "text": "Mi piace la pasta",
+          "memory_type": "preference",
+          "extracted_info": {
+            "sentiment": "neutral",
+            "subject": "unknown",
+            "preference_type": "like_dislike",
+            "intensity": "medium",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        }
+      ],
+      "facts": [
+        {
+          "timestamp": "2025-07-26T03:17:05.239709",
+          "user_id": "test_classifier_user",
+          "text": "My birthday is June 5th",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "personal_info",
+            "fact_value": "june 5th",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.95
+        },
+        {
+          "timestamp": "2025-07-26T03:17:05.241365",
+          "user_id": "test_classifier_user",
+          "text": "I love chocolate ice cream",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "personal_info",
+            "fact_value": "unknown",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.7
+        },
+        {
+          "timestamp": "2025-07-26T03:17:05.242358",
+          "user_id": "test_classifier_user",
+          "text": "I work as a software engineer",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "occupation",
+            "fact_value": "a software engineer",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T03:17:05.244627",
+          "user_id": "test_classifier_user",
+          "text": "Mam 25 lat",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "personal_info",
+            "fact_value": "unknown",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.95
+        },
+        {
+          "timestamp": "2025-07-26T03:21:57.476688",
+          "user_id": "test_classifier_user",
+          "text": "My birthday is June 5th",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "personal_info",
+            "fact_value": "june 5th",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.95
+        },
+        {
+          "timestamp": "2025-07-26T03:21:57.480306",
+          "user_id": "test_classifier_user",
+          "text": "I work as a software engineer",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "occupation",
+            "fact_value": "a software engineer",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T03:21:57.483971",
+          "user_id": "test_classifier_user",
+          "text": "Mam 25 lat",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "personal_info",
+            "fact_value": "unknown",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "context": [
+        {
+          "timestamp": "2025-07-26T03:14:58.418123",
+          "user_id": "test_classifier_user",
+          "text": "I like pizza",
+          "memory_type": "context",
+          "extracted_info": {
+            "sentiment": "positive",
+            "subject": "pizza",
+            "preference_type": "like_dislike",
+            "intensity": "medium",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T03:14:58.418781",
+          "user_id": "test_classifier_user",
+          "text": "My birthday is June 5th",
+          "memory_type": "context",
+          "extracted_info": {
+            "fact_category": "personal_info",
+            "fact_value": "june 5th",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.95
+        },
+        {
+          "timestamp": "2025-07-26T03:14:58.419719",
+          "user_id": "test_classifier_user",
+          "text": "I'm going to the shop",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "location_activity",
+            "activity": "shop",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.7
+        },
+        {
+          "timestamp": "2025-07-26T03:14:58.420238",
+          "user_id": "test_classifier_user",
+          "text": "I love chocolate ice cream",
+          "memory_type": "context",
+          "extracted_info": {
+            "sentiment": "positive",
+            "subject": "chocolate ice cream",
+            "preference_type": "like_dislike",
+            "intensity": "high",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T03:14:58.420691",
+          "user_id": "test_classifier_user",
+          "text": "I work as a software engineer",
+          "memory_type": "context",
+          "extracted_info": {
+            "fact_category": "occupation",
+            "fact_value": "a software engineer",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T03:14:58.421166",
+          "user_id": "test_classifier_user",
+          "text": "I just got back from work",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "location_activity",
+            "activity": "got back from work",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.85
+        },
+        {
+          "timestamp": "2025-07-26T03:14:58.421886",
+          "user_id": "test_classifier_user",
+          "text": "Lubi\u0119 pizz\u0119",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "general",
+            "activity": "unknown",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.5
+        },
+        {
+          "timestamp": "2025-07-26T03:14:58.422567",
+          "user_id": "test_classifier_user",
+          "text": "Mam 25 lat",
+          "memory_type": "context",
+          "extracted_info": {
+            "fact_category": "personal_info",
+            "fact_value": "unknown",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.95
+        },
+        {
+          "timestamp": "2025-07-26T03:14:58.422989",
+          "user_id": "test_classifier_user",
+          "text": "Mi piace la pasta",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "general",
+            "activity": "unknown",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.5
+        },
+        {
+          "timestamp": "2025-07-26T03:17:05.240714",
+          "user_id": "test_classifier_user",
+          "text": "I'm going to the shop",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "location_activity",
+            "activity": "shop",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.7
+        },
+        {
+          "timestamp": "2025-07-26T03:17:05.242902",
+          "user_id": "test_classifier_user",
+          "text": "I just got back from work",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "location_activity",
+            "activity": "got back from work",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.85
+        },
+        {
+          "timestamp": "2025-07-26T03:21:57.478138",
+          "user_id": "test_classifier_user",
+          "text": "I'm going to the shop",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "location_activity",
+            "activity": "shop",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.8
+        },
+        {
+          "timestamp": "2025-07-26T03:21:57.481355",
+          "user_id": "test_classifier_user",
+          "text": "I just got back from work",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "location_activity",
+            "activity": "got back from work",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.85
+        }
+      ],
+      "last_activity": "2025-07-26T03:21:57.485011"
+    },
+    "buddy_integration_test": {
+      "actions": [],
+      "preferences": [
+        {
+          "timestamp": "2025-07-26T03:17:42.316629",
+          "user_id": "buddy_integration_test",
+          "text": "I like pizza",
+          "memory_type": "preference",
+          "extracted_info": {
+            "sentiment": "positive",
+            "subject": "pizza",
+            "preference_type": "like_dislike",
+            "intensity": "medium",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T03:17:42.325916",
+          "user_id": "buddy_integration_test",
+          "text": "I hate rain",
+          "memory_type": "preference",
+          "extracted_info": {
+            "sentiment": "negative",
+            "subject": "rain",
+            "preference_type": "like_dislike",
+            "intensity": "high",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T03:18:50.065984",
+          "user_id": "buddy_integration_test",
+          "text": "I like pizza",
+          "memory_type": "preference",
+          "extracted_info": {
+            "sentiment": "positive",
+            "subject": "pizza",
+            "preference_type": "like_dislike",
+            "intensity": "medium",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T03:18:50.073317",
+          "user_id": "buddy_integration_test",
+          "text": "I hate rain",
+          "memory_type": "preference",
+          "extracted_info": {
+            "sentiment": "negative",
+            "subject": "rain",
+            "preference_type": "like_dislike",
+            "intensity": "high",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T03:21:46.827597",
+          "user_id": "buddy_integration_test",
+          "text": "I like pizza",
+          "memory_type": "preference",
+          "extracted_info": {
+            "sentiment": "positive",
+            "subject": "pizza",
+            "preference_type": "like_dislike",
+            "intensity": "medium",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T03:21:46.830361",
+          "user_id": "buddy_integration_test",
+          "text": "I hate rain",
+          "memory_type": "preference",
+          "extracted_info": {
+            "sentiment": "negative",
+            "subject": "rain",
+            "preference_type": "like_dislike",
+            "intensity": "high",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T03:21:46.834590",
+          "user_id": "buddy_integration_test",
+          "text": "I love chocolate",
+          "memory_type": "preference",
+          "extracted_info": {
+            "sentiment": "positive",
+            "subject": "chocolate",
+            "preference_type": "like_dislike",
+            "intensity": "high",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "facts": [
+        {
+          "timestamp": "2025-07-26T03:17:42.313974",
+          "user_id": "buddy_integration_test",
+          "text": "Hi, how are you today?",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "personal_info",
+            "fact_value": "unknown",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.7
+        },
+        {
+          "timestamp": "2025-07-26T03:17:42.320787",
+          "user_id": "buddy_integration_test",
+          "text": "My name is David",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "david",
+            "permanence": "permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.95
+        },
+        {
+          "timestamp": "2025-07-26T03:17:42.326723",
+          "user_id": "buddy_integration_test",
+          "text": "I work as a programmer",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "occupation",
+            "fact_value": "a programmer",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T03:17:42.327351",
+          "user_id": "buddy_integration_test",
+          "text": "I just got back home",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "personal_info",
+            "fact_value": "unknown",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.7
+        },
+        {
+          "timestamp": "2025-07-26T03:17:42.328037",
+          "user_id": "buddy_integration_test",
+          "text": "My birthday is March 15",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "personal_info",
+            "fact_value": "march 15",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.95
+        },
+        {
+          "timestamp": "2025-07-26T03:17:42.328743",
+          "user_id": "buddy_integration_test",
+          "text": "I love chocolate",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "personal_info",
+            "fact_value": "unknown",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.7
+        },
+        {
+          "timestamp": "2025-07-26T03:18:50.063282",
+          "user_id": "buddy_integration_test",
+          "text": "Hi, how are you today?",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "personal_info",
+            "fact_value": "unknown",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.7
+        },
+        {
+          "timestamp": "2025-07-26T03:18:50.070299",
+          "user_id": "buddy_integration_test",
+          "text": "My name is David",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "david",
+            "permanence": "permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.95
+        },
+        {
+          "timestamp": "2025-07-26T03:18:50.074269",
+          "user_id": "buddy_integration_test",
+          "text": "I work as a programmer",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "occupation",
+            "fact_value": "a programmer",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T03:18:50.075089",
+          "user_id": "buddy_integration_test",
+          "text": "I just got back home",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "personal_info",
+            "fact_value": "unknown",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.7
+        },
+        {
+          "timestamp": "2025-07-26T03:18:50.075898",
+          "user_id": "buddy_integration_test",
+          "text": "My birthday is March 15",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "personal_info",
+            "fact_value": "march 15",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.95
+        },
+        {
+          "timestamp": "2025-07-26T03:18:50.076893",
+          "user_id": "buddy_integration_test",
+          "text": "I love chocolate",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "personal_info",
+            "fact_value": "unknown",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.7
+        },
+        {
+          "timestamp": "2025-07-26T03:21:46.828587",
+          "user_id": "buddy_integration_test",
+          "text": "My name is David",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "david",
+            "permanence": "permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.95
+        },
+        {
+          "timestamp": "2025-07-26T03:21:46.831430",
+          "user_id": "buddy_integration_test",
+          "text": "I work as a programmer",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "occupation",
+            "fact_value": "a programmer",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T03:21:46.833571",
+          "user_id": "buddy_integration_test",
+          "text": "My birthday is March 15",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "personal_info",
+            "fact_value": "march 15",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "context": [
+        {
+          "timestamp": "2025-07-26T03:17:42.324055",
+          "user_id": "buddy_integration_test",
+          "text": "I'm going to the shop",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "location_activity",
+            "activity": "shop",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.7
+        },
+        {
+          "timestamp": "2025-07-26T03:17:42.329702",
+          "user_id": "buddy_integration_test",
+          "text": "What time is it?",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "location_activity",
+            "activity": "unknown",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.4
+        },
+        {
+          "timestamp": "2025-07-26T03:18:50.071143",
+          "user_id": "buddy_integration_test",
+          "text": "I'm going to the shop",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "location_activity",
+            "activity": "shop",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.7
+        },
+        {
+          "timestamp": "2025-07-26T03:18:50.077748",
+          "user_id": "buddy_integration_test",
+          "text": "What time is it?",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "location_activity",
+            "activity": "unknown",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.6
+        },
+        {
+          "timestamp": "2025-07-26T03:21:46.821473",
+          "user_id": "buddy_integration_test",
+          "text": "Hi, how are you today?",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "location_activity",
+            "activity": "unknown",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.8
+        },
+        {
+          "timestamp": "2025-07-26T03:21:46.829519",
+          "user_id": "buddy_integration_test",
+          "text": "I'm going to the shop",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "location_activity",
+            "activity": "shop",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.8
+        },
+        {
+          "timestamp": "2025-07-26T03:21:46.832608",
+          "user_id": "buddy_integration_test",
+          "text": "I just got back home",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "recent_completion",
+            "activity": "got back home",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.85
+        },
+        {
+          "timestamp": "2025-07-26T03:21:46.835601",
+          "user_id": "buddy_integration_test",
+          "text": "What time is it?",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "location_activity",
+            "activity": "unknown",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.8
+        }
+      ],
+      "last_activity": "2025-07-26T03:21:46.835601"
     }
   }
 }
