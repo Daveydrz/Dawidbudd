@@ -1057,8 +1057,11 @@ class LocalMemoryManager:
                         if "extracted_info" in pref_entry:
                             sentiment = pref_entry["extracted_info"].get("sentiment", "likes")
                             subject = pref_entry["extracted_info"].get("subject", "")
+                            preference_value = pref_entry["extracted_info"].get("preference_value", "")
                             if subject:
                                 recent_preferences.append(f"{sentiment} {subject}")
+                            elif preference_value:
+                                recent_preferences.append(preference_value)
                         # Content format
                         elif "content" in pref_entry:
                             recent_preferences.append(pref_entry["content"])

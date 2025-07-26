@@ -1597,6 +1597,429 @@
       ],
       "context": [],
       "last_activity": "2025-07-26T15:45:41.133442"
+    },
+    "audio_test_user": {
+      "actions": [],
+      "preferences": [],
+      "facts": [
+        {
+          "timestamp": "2025-07-26T15:47:13.797295",
+          "user_id": "audio_test_user",
+          "text": "User's name is David",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "David",
+            "name_introduction": true,
+            "source": "audio_test"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "context": [],
+      "last_activity": "2025-07-26T15:47:13.797295"
+    },
+    "final_verification_user": {
+      "actions": [],
+      "preferences": [],
+      "facts": [
+        {
+          "timestamp": "2025-07-26T15:48:52.676541",
+          "user_id": "final_verification_user",
+          "text": "User's name is David",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "David",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "immediate_extraction"
+          },
+          "confidence": 0.95
+        },
+        {
+          "timestamp": "2025-07-26T15:49:19.506599",
+          "user_id": "final_verification_user",
+          "text": "User's name is David",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "David",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "immediate_extraction"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "context": [
+        {
+          "timestamp": "2025-07-26T15:48:52.678715",
+          "user_id": "final_verification_user",
+          "text": "I'm David",
+          "memory_type": "context",
+          "extracted_info": {
+            "topic": "general",
+            "length": 2,
+            "question": false,
+            "source": "general_fallback"
+          },
+          "confidence": 0.5
+        },
+        {
+          "timestamp": "2025-07-26T15:48:52.681230",
+          "user_id": "final_verification_user",
+          "text": "User: I'm David | Buddy: Nice to meet you, David! I'll remember your name.",
+          "memory_type": "context",
+          "extracted_info": {
+            "interaction": true,
+            "user_input": "I'm David",
+            "buddy_response": "Nice to meet you, David! I'll remember your name.",
+            "source": "interaction_log"
+          },
+          "confidence": 1.0
+        },
+        {
+          "timestamp": "2025-07-26T15:49:19.508771",
+          "user_id": "final_verification_user",
+          "text": "I'm David",
+          "memory_type": "context",
+          "extracted_info": {
+            "topic": "general",
+            "length": 2,
+            "question": false,
+            "source": "general_fallback"
+          },
+          "confidence": 0.5
+        },
+        {
+          "timestamp": "2025-07-26T15:49:19.511352",
+          "user_id": "final_verification_user",
+          "text": "User: I'm David | Buddy: Nice to meet you, David! I'll remember your name.",
+          "memory_type": "context",
+          "extracted_info": {
+            "interaction": true,
+            "user_input": "I'm David",
+            "buddy_response": "Nice to meet you, David! I'll remember your name.",
+            "source": "interaction_log"
+          },
+          "confidence": 1.0
+        }
+      ],
+      "last_activity": "2025-07-26T15:49:19.511352"
+    },
+    "alice": {
+      "actions": [],
+      "preferences": [
+        {
+          "timestamp": "2025-07-26T15:48:52.683303",
+          "user_id": "alice",
+          "text": "User alice likes programming",
+          "memory_type": "preference",
+          "extracted_info": {
+            "preference_type": "hobby",
+            "preference_value": "programming",
+            "source": "class5_test"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T15:48:52.757279",
+          "user_id": "alice",
+          "text": "User alice likes programming",
+          "memory_type": "preference",
+          "extracted_info": {
+            "preference_type": "hobby",
+            "preference_value": "programming",
+            "source": "class5_test"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T15:49:19.513487",
+          "user_id": "alice",
+          "text": "User alice likes programming",
+          "memory_type": "preference",
+          "extracted_info": {
+            "preference_type": "hobby",
+            "preference_value": "programming",
+            "source": "class5_test"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T15:49:19.600843",
+          "user_id": "alice",
+          "text": "User alice likes programming",
+          "memory_type": "preference",
+          "extracted_info": {
+            "preference_type": "hobby",
+            "preference_value": "programming",
+            "source": "class5_test"
+          },
+          "confidence": 0.9
+        }
+      ],
+      "facts": [],
+      "context": [],
+      "last_activity": "2025-07-26T15:49:19.600843"
+    },
+    "completeness_test": {
+      "actions": [],
+      "preferences": [],
+      "facts": [
+        {
+          "timestamp": "2025-07-26T15:48:52.685037",
+          "user_id": "completeness_test",
+          "text": "Test memory",
+          "memory_type": "fact",
+          "extracted_info": {
+            "test": true
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T15:49:19.597400",
+          "user_id": "completeness_test",
+          "text": "Test memory",
+          "memory_type": "fact",
+          "extracted_info": {
+            "test": true
+          },
+          "confidence": 0.9
+        }
+      ],
+      "context": [],
+      "last_activity": "2025-07-26T15:49:19.597400"
+    },
+    "bob": {
+      "actions": [],
+      "preferences": [
+        {
+          "timestamp": "2025-07-26T15:49:19.515189",
+          "user_id": "bob",
+          "text": "User bob likes programming",
+          "memory_type": "preference",
+          "extracted_info": {
+            "preference_type": "hobby",
+            "preference_value": "programming",
+            "source": "class5_test"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T15:49:19.602737",
+          "user_id": "bob",
+          "text": "User bob likes programming",
+          "memory_type": "preference",
+          "extracted_info": {
+            "preference_type": "hobby",
+            "preference_value": "programming",
+            "source": "class5_test"
+          },
+          "confidence": 0.9
+        }
+      ],
+      "facts": [],
+      "context": [],
+      "last_activity": "2025-07-26T15:49:19.602737"
+    },
+    "charlie": {
+      "actions": [],
+      "preferences": [
+        {
+          "timestamp": "2025-07-26T15:49:19.517133",
+          "user_id": "charlie",
+          "text": "User charlie likes programming",
+          "memory_type": "preference",
+          "extracted_info": {
+            "preference_type": "hobby",
+            "preference_value": "programming",
+            "source": "class5_test"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T15:49:19.604911",
+          "user_id": "charlie",
+          "text": "User charlie likes programming",
+          "memory_type": "preference",
+          "extracted_info": {
+            "preference_type": "hobby",
+            "preference_value": "programming",
+            "source": "class5_test"
+          },
+          "confidence": 0.9
+        }
+      ],
+      "facts": [],
+      "context": [],
+      "last_activity": "2025-07-26T15:49:19.604911"
+    },
+    "context_test_user": {
+      "actions": [],
+      "preferences": [],
+      "facts": [
+        {
+          "timestamp": "2025-07-26T15:49:19.519100",
+          "user_id": "context_test_user",
+          "text": "I work at Google",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact": "at google",
+            "pattern": "i work (.+)",
+            "category": "personal_info",
+            "source": "pattern_fallback"
+          },
+          "confidence": 0.6
+        },
+        {
+          "timestamp": "2025-07-26T15:49:19.607000",
+          "user_id": "context_test_user",
+          "text": "I work at Google",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact": "at google",
+            "pattern": "i work (.+)",
+            "category": "personal_info",
+            "source": "pattern_fallback"
+          },
+          "confidence": 0.6
+        }
+      ],
+      "context": [
+        {
+          "timestamp": "2025-07-26T15:49:19.520983",
+          "user_id": "context_test_user",
+          "text": "User: I work at Google | Buddy: That's great! Google is a fantastic company.",
+          "memory_type": "context",
+          "extracted_info": {
+            "interaction": true,
+            "user_input": "I work at Google",
+            "buddy_response": "That's great! Google is a fantastic company.",
+            "source": "interaction_log"
+          },
+          "confidence": 1.0
+        },
+        {
+          "timestamp": "2025-07-26T15:49:19.522955",
+          "user_id": "context_test_user",
+          "text": "I'm working on AI projects",
+          "memory_type": "context",
+          "extracted_info": {
+            "action": "working on ai projects",
+            "pattern": "i'?m (.+ing .+)",
+            "context": "user_reported_action",
+            "source": "pattern_fallback"
+          },
+          "confidence": 0.7
+        },
+        {
+          "timestamp": "2025-07-26T15:49:19.524858",
+          "user_id": "context_test_user",
+          "text": "User: I'm working on AI projects | Buddy: AI projects at Google must be exciting!",
+          "memory_type": "context",
+          "extracted_info": {
+            "interaction": true,
+            "user_input": "I'm working on AI projects",
+            "buddy_response": "AI projects at Google must be exciting!",
+            "source": "interaction_log"
+          },
+          "confidence": 1.0
+        },
+        {
+          "timestamp": "2025-07-26T15:49:19.526836",
+          "user_id": "context_test_user",
+          "text": "What do you know about me?",
+          "memory_type": "context",
+          "extracted_info": {
+            "topic": "general",
+            "length": 6,
+            "question": true,
+            "source": "general_fallback"
+          },
+          "confidence": 0.5
+        },
+        {
+          "timestamp": "2025-07-26T15:49:19.528867",
+          "user_id": "context_test_user",
+          "text": "User: What do you know about me? | Buddy: You work at Google on AI projects.",
+          "memory_type": "context",
+          "extracted_info": {
+            "interaction": true,
+            "user_input": "What do you know about me?",
+            "buddy_response": "You work at Google on AI projects.",
+            "source": "interaction_log"
+          },
+          "confidence": 1.0
+        },
+        {
+          "timestamp": "2025-07-26T15:49:19.608934",
+          "user_id": "context_test_user",
+          "text": "User: I work at Google | Buddy: That's great! Google is a fantastic company.",
+          "memory_type": "context",
+          "extracted_info": {
+            "interaction": true,
+            "user_input": "I work at Google",
+            "buddy_response": "That's great! Google is a fantastic company.",
+            "source": "interaction_log"
+          },
+          "confidence": 1.0
+        },
+        {
+          "timestamp": "2025-07-26T15:49:19.611285",
+          "user_id": "context_test_user",
+          "text": "I'm working on AI projects",
+          "memory_type": "context",
+          "extracted_info": {
+            "action": "working on ai projects",
+            "pattern": "i'?m (.+ing .+)",
+            "context": "user_reported_action",
+            "source": "pattern_fallback"
+          },
+          "confidence": 0.7
+        },
+        {
+          "timestamp": "2025-07-26T15:49:19.614867",
+          "user_id": "context_test_user",
+          "text": "User: I'm working on AI projects | Buddy: AI projects at Google must be exciting!",
+          "memory_type": "context",
+          "extracted_info": {
+            "interaction": true,
+            "user_input": "I'm working on AI projects",
+            "buddy_response": "AI projects at Google must be exciting!",
+            "source": "interaction_log"
+          },
+          "confidence": 1.0
+        },
+        {
+          "timestamp": "2025-07-26T15:49:19.616987",
+          "user_id": "context_test_user",
+          "text": "What do you know about me?",
+          "memory_type": "context",
+          "extracted_info": {
+            "topic": "general",
+            "length": 6,
+            "question": true,
+            "source": "general_fallback"
+          },
+          "confidence": 0.5
+        },
+        {
+          "timestamp": "2025-07-26T15:49:19.619025",
+          "user_id": "context_test_user",
+          "text": "User: What do you know about me? | Buddy: You work at Google on AI projects.",
+          "memory_type": "context",
+          "extracted_info": {
+            "interaction": true,
+            "user_input": "What do you know about me?",
+            "buddy_response": "You work at Google on AI projects.",
+            "source": "interaction_log"
+          },
+          "confidence": 1.0
+        }
+      ],
+      "last_activity": "2025-07-26T15:49:19.619025"
     }
   }
 }
