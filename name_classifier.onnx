@@ -1,0 +1,3 @@
+# This is a dummy ONNX file for testing
+# The actual memory_classifier.onnx should be provided by the user
+# and placed in the same directory as main.py

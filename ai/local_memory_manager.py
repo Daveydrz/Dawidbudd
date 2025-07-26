@@ -14,14 +14,38 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, asdict
 
-# Import the new ONNX-like memory classifier
+# Import all ONNX classifiers
 try:
     from ai.memory_classifier import classify_memory_type, classify_memory_type_with_confidence, get_classifier_stats
     MEMORY_CLASSIFIER_AVAILABLE = True
-    print("[LocalMemory] 🧠 ONNX-like memory classifier loaded")
+    print("[LocalMemory] 🧠 ONNX memory classifier loaded")
 except ImportError as e:
     MEMORY_CLASSIFIER_AVAILABLE = False
     print(f"[LocalMemory] ⚠️ Memory classifier not available: {e}")
+
+try:
+    from ai.intent_classifier import classify_intent, classify_intent_with_confidence, get_intent_classifier_stats
+    INTENT_CLASSIFIER_AVAILABLE = True
+    print("[LocalMemory] 🎯 ONNX intent classifier loaded")
+except ImportError as e:
+    INTENT_CLASSIFIER_AVAILABLE = False
+    print(f"[LocalMemory] ⚠️ Intent classifier not available: {e}")
+
+try:
+    from ai.emotion_classifier import classify_emotion, classify_emotion_with_confidence, get_emotion_classifier_stats
+    EMOTION_CLASSIFIER_AVAILABLE = True
+    print("[LocalMemory] 😊 ONNX emotion classifier loaded")
+except ImportError as e:
+    EMOTION_CLASSIFIER_AVAILABLE = False
+    print(f"[LocalMemory] ⚠️ Emotion classifier not available: {e}")
+
+try:
+    from ai.name_classifier import classify_name, classify_name_with_confidence, extract_names_from_text, get_name_classifier_stats
+    NAME_CLASSIFIER_AVAILABLE = True
+    print("[LocalMemory] 👤 ONNX name classifier loaded")
+except ImportError as e:
+    NAME_CLASSIFIER_AVAILABLE = False
+    print(f"[LocalMemory] ⚠️ Name classifier not available: {e}")
 
 @dataclass
 class MemoryEntry:
@@ -478,10 +502,13 @@ class LocalMemoryManager:
         return None
     
     def process_user_input(self, text: str, user_id: str) -> Dict[str, Any]:
-        """Process user input and update memory locally with enhanced reporting"""
+        """Process user input and update memory locally with all ONNX classifiers"""
         start_time = time.time()
         
-        # Extract memories using ONNX-like classifier
+        # Run all ONNX classifiers (local, no LLM calls)
+        classification_results = self._classify_user_input_all(text)
+        
+        # Extract memories using ONNX memory classifier
         memories = self.extract_memory_from_text(text, user_id)
         
         # Store memories
@@ -494,14 +521,20 @@ class LocalMemoryManager:
         
         processing_time = time.time() - start_time
         
-        # Enhanced reporting
+        # Enhanced reporting with all classifier results
         result = {
             "memories_extracted": len(memories),
             "processing_time": processing_time,
             "recent_memories": recent_memories,
             "last_action": self.get_last_action(user_id),
             "memory_summary": memory_summary,
-            "classifier_used": MEMORY_CLASSIFIER_AVAILABLE
+            "classifiers_used": {
+                "memory": MEMORY_CLASSIFIER_AVAILABLE,
+                "intent": INTENT_CLASSIFIER_AVAILABLE,
+                "emotion": EMOTION_CLASSIFIER_AVAILABLE,
+                "name": NAME_CLASSIFIER_AVAILABLE
+            },
+            "classifications": classification_results
         }
         
         # Add memory type breakdown if memories were extracted
@@ -517,7 +550,93 @@ class LocalMemoryManager:
         
         return result
     
-    def get_memory_context_for_llm(self, user_id: str) -> str:
+    def _classify_user_input_all(self, text: str) -> Dict[str, Any]:
+        """Run all ONNX classifiers on user input (no LLM calls)"""
+        results = {}
+        
+        # Memory classification
+        if MEMORY_CLASSIFIER_AVAILABLE:
+            try:
+                memory_type, memory_confidence = classify_memory_type_with_confidence(text)
+                results["memory"] = {
+                    "type": memory_type,
+                    "confidence": memory_confidence
+                }
+            except Exception as e:
+                print(f"[LocalMemory] ⚠️ Memory classification error: {e}")
+                results["memory"] = {"type": "context", "confidence": 0.5}
+        
+        # Intent classification
+        if INTENT_CLASSIFIER_AVAILABLE:
+            try:
+                intent, intent_confidence = classify_intent_with_confidence(text)
+                results["intent"] = {
+                    "type": intent,
+                    "confidence": intent_confidence
+                }
+            except Exception as e:
+                print(f"[LocalMemory] ⚠️ Intent classification error: {e}")
+                results["intent"] = {"type": "casual_chat", "confidence": 0.5}
+        
+        # Emotion classification
+        if EMOTION_CLASSIFIER_AVAILABLE:
+            try:
+                emotion, emotion_confidence, intensity = classify_emotion_with_confidence(text)
+                results["emotion"] = {
+                    "type": emotion,
+                    "confidence": emotion_confidence,
+                    "intensity": intensity
+                }
+            except Exception as e:
+                print(f"[LocalMemory] ⚠️ Emotion classification error: {e}")
+                results["emotion"] = {"type": "neutral", "confidence": 0.5, "intensity": "low"}
+        
+        # Name classification
+        if NAME_CLASSIFIER_AVAILABLE:
+            try:
+                name_type, name_confidence, extracted_names = classify_name_with_confidence(text)
+                results["name"] = {
+                    "type": name_type,
+                    "confidence": name_confidence,
+                    "extracted_names": extracted_names
+                }
+            except Exception as e:
+                print(f"[LocalMemory] ⚠️ Name classification error: {e}")
+                results["name"] = {"type": "no_name", "confidence": 0.5, "extracted_names": []}
+        
+        return results
+    
+    def get_all_classifier_stats(self) -> Dict[str, Any]:
+        """Get performance statistics for all ONNX classifiers"""
+        stats = {}
+        
+        if MEMORY_CLASSIFIER_AVAILABLE:
+            try:
+                stats["memory"] = get_classifier_stats()
+            except Exception as e:
+                stats["memory"] = {"error": str(e)}
+        
+        if INTENT_CLASSIFIER_AVAILABLE:
+            try:
+                stats["intent"] = get_intent_classifier_stats()
+            except Exception as e:
+                stats["intent"] = {"error": str(e)}
+        
+        if EMOTION_CLASSIFIER_AVAILABLE:
+            try:
+                stats["emotion"] = get_emotion_classifier_stats()
+            except Exception as e:
+                stats["emotion"] = {"error": str(e)}
+        
+        if NAME_CLASSIFIER_AVAILABLE:
+            try:
+                stats["name"] = get_name_classifier_stats()
+            except Exception as e:
+                stats["name"] = {"error": str(e)}
+        
+        return stats
+
+    def get_memory_context_for_llm(self, user_id: str, include_classifications: bool = True) -> str:
         """Get memory context string for LLM prompt with enhanced categorization"""
         memories = self.get_recent_memories(user_id, 5)
         context_parts = []

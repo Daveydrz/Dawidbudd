@@ -2,8 +2,38 @@
   "users": {
     "test_user": {
       "actions": [],
-      "preferences": [],
-      "facts": [],
+      "preferences": [
+        {
+          "timestamp": "2025-07-26T10:26:55.181160",
+          "user_id": "test_user",
+          "text": "I love music and I'm feeling great today!",
+          "memory_type": "preference",
+          "extracted_info": {
+            "sentiment": "positive",
+            "subject": "music and i'm feeling great today",
+            "preference_type": "like_dislike",
+            "intensity": "high",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.7
+        }
+      ],
+      "facts": [
+        {
+          "timestamp": "2025-07-26T10:25:15.056805",
+          "user_id": "test_user",
+          "text": "I really love pizza and my name is John",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "john",
+            "permanence": "permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        }
+      ],
       "context": [
         {
           "timestamp": "2025-07-26T02:53:21.925938",
@@ -16,9 +46,23 @@
             "question": false
           },
           "confidence": 0.5
+        },
+        {
+          "timestamp": "2025-07-26T10:25:57.611532",
+          "user_id": "test_user",
+          "text": "I love music! What time is it?",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "location_activity",
+            "activity": "unknown",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
         }
       ],
-      "last_activity": "2025-07-26T02:53:21.925938"
+      "last_activity": "2025-07-26T10:26:55.181160"
     },
     "TestUser": {
       "actions": [],
@@ -1067,6 +1111,80 @@
         }
       ],
       "last_activity": "2025-07-26T03:21:46.835601"
+    },
+    "user1": {
+      "actions": [],
+      "preferences": [
+        {
+          "timestamp": "2025-07-26T10:26:55.174843",
+          "user_id": "user1",
+          "text": "I love chocolate",
+          "memory_type": "preference",
+          "extracted_info": {
+            "sentiment": "positive",
+            "subject": "chocolate",
+            "preference_type": "like_dislike",
+            "intensity": "high",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.7
+        }
+      ],
+      "facts": [],
+      "context": [
+        {
+          "timestamp": "2025-07-26T10:26:55.177814",
+          "user_id": "user1",
+          "text": "I'm going to the gym",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "location_activity",
+            "activity": "gym",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.7
+        }
+      ],
+      "last_activity": "2025-07-26T10:26:55.177814"
+    },
+    "user2": {
+      "actions": [],
+      "preferences": [
+        {
+          "timestamp": "2025-07-26T10:26:55.179302",
+          "user_id": "user2",
+          "text": "What's the weather like?",
+          "memory_type": "preference",
+          "extracted_info": {
+            "sentiment": "positive",
+            "subject": "unknown",
+            "preference_type": "like_dislike",
+            "intensity": "medium",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.7
+        }
+      ],
+      "facts": [
+        {
+          "timestamp": "2025-07-26T10:26:55.176414",
+          "user_id": "user2",
+          "text": "My name is Alice",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "alice",
+            "permanence": "permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        }
+      ],
+      "context": [],
+      "last_activity": "2025-07-26T10:26:55.179302"
     }
   }
 }
