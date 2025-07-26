@@ -224,6 +224,34 @@
             "source": "onnx_classifier"
           },
           "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T09:17:54.609617",
+          "user_id": "test_classifier_user",
+          "text": "I like pizza",
+          "memory_type": "preference",
+          "extracted_info": {
+            "sentiment": "positive",
+            "subject": "pizza",
+            "preference_type": "like_dislike",
+            "intensity": "medium",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.7
+        },
+        {
+          "timestamp": "2025-07-26T09:17:54.613859",
+          "user_id": "test_classifier_user",
+          "text": "I love chocolate ice cream",
+          "memory_type": "preference",
+          "extracted_info": {
+            "sentiment": "positive",
+            "subject": "chocolate ice cream",
+            "preference_type": "like_dislike",
+            "intensity": "high",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.7
         }
       ],
       "facts": [
@@ -324,6 +352,34 @@
             "source": "onnx_classifier"
           },
           "confidence": 0.95
+        },
+        {
+          "timestamp": "2025-07-26T09:17:54.610962",
+          "user_id": "test_classifier_user",
+          "text": "My birthday is June 5th",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "personal_info",
+            "fact_value": "june 5th",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T09:17:54.615108",
+          "user_id": "test_classifier_user",
+          "text": "I work as a software engineer",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "occupation",
+            "fact_value": "a software engineer",
+            "permanence": "semi_permanent",
+            "verified": false,
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.7
         }
       ],
       "context": [
@@ -508,9 +564,79 @@
             "source": "onnx_classifier"
           },
           "confidence": 0.85
+        },
+        {
+          "timestamp": "2025-07-26T09:17:54.612634",
+          "user_id": "test_classifier_user",
+          "text": "I'm going to the shop",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "location_activity",
+            "activity": "shop",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.7
+        },
+        {
+          "timestamp": "2025-07-26T09:17:54.616222",
+          "user_id": "test_classifier_user",
+          "text": "I just got back from work",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "location_activity",
+            "activity": "got back from work",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T09:17:54.617491",
+          "user_id": "test_classifier_user",
+          "text": "Lubi\u0119 pizz\u0119",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "general",
+            "activity": "unknown",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.5
+        },
+        {
+          "timestamp": "2025-07-26T09:17:54.618891",
+          "user_id": "test_classifier_user",
+          "text": "Mam 25 lat",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "location_activity",
+            "activity": "unknown",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.7
+        },
+        {
+          "timestamp": "2025-07-26T09:17:54.620183",
+          "user_id": "test_classifier_user",
+          "text": "Mi piace la pasta",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "general",
+            "activity": "unknown",
+            "temporal": "general",
+            "duration": "temporary",
+            "source": "onnx_classifier"
+          },
+          "confidence": 0.5
         }
       ],
-      "last_activity": "2025-07-26T03:21:57.485011"
+      "last_activity": "2025-07-26T09:17:54.620183"
     },
     "buddy_integration_test": {
       "actions": [],
