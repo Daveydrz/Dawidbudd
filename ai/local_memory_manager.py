@@ -933,6 +933,50 @@ class LocalMemoryManager:
         except Exception as e:
             print(f"[LocalMemory] ⚠️ Error adding interaction: {e}")
 
+    def get_user_context(self, user_id: str) -> Dict[str, List[str]]:
+        """Get user context for immediate responses (no LLM delay)"""
+        try:
+            if user_id not in self.memory_data:
+                return {"facts": [], "preferences": [], "context": []}
+            
+            user_memories = self.memory_data[user_id]
+            context = {"facts": [], "preferences": [], "context": []}
+            
+            # Extract recent facts (last 10)
+            recent_facts = [
+                entry["extracted_info"].get("fact", entry["text"])
+                for entry in user_memories[-20:]
+                if entry.get("memory_type") == "fact"
+            ]
+            context["facts"] = recent_facts[-10:]  # Last 10 facts
+            
+            # Extract preferences (last 5)
+            recent_preferences = [
+                f"{entry['extracted_info'].get('sentiment', 'likes')} {entry['extracted_info'].get('subject', entry['text'])}"
+                for entry in user_memories[-20:]
+                if entry.get("memory_type") == "preference"
+            ]
+            context["preferences"] = recent_preferences[-5:]  # Last 5 preferences
+            
+            # Extract recent context (last 5)
+            recent_context = [
+                entry["extracted_info"].get("action", entry["text"])
+                for entry in user_memories[-10:]
+                if entry.get("memory_type") == "context"
+            ]
+            context["context"] = recent_context[-5:]  # Last 5 context items
+            
+            print(f"[LocalMemory] 📋 Retrieved context for {user_id}: {len(context['facts'])} facts, {len(context['preferences'])} prefs, {len(context['context'])} context")
+            return context
+            
+        except Exception as e:
+            print(f"[LocalMemory] ⚠️ Error getting user context: {e}")
+            return {"facts": [], "preferences": [], "context": []}
+
 
 # Global instance
 local_memory_manager = LocalMemoryManager()
+
+def get_user_context(user_id: str) -> Dict[str, List[str]]:
+    """API function to get user context"""
+    return local_memory_manager.get_user_context(user_id)

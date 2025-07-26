@@ -593,1021 +593,352 @@ def get_mic_feeding_state():
         return mic_feeding_active
 
 def handle_streaming_response(text, current_user):
-    """✅ FIXED ARCHITECTURE: Port 5002 for consciousness, Port 5001 for response only"""
-    print(f"🚨🚨🚨 [FIXED_ARCH] handle_streaming_response called with text='{text}', user='{current_user}' 🚨🚨🚨")
+    """🚀 IMMEDIATE RESPONSE: Background consciousness + Instant response generation"""
+    print(f"[IMMEDIATE] 🚀 Starting IMMEDIATE response for: '{text}' (user: {current_user})")
     
-    interaction_id = None
     start_time = time.time()
     
-    # Start cognitive debug logging if available
-    if SELF_AWARENESS_COMPONENTS_AVAILABLE:
-        try:
-            interaction_id = cognitive_debug_logger.start_interaction(text, current_user)
-            cognitive_debug_logger.log_processing_stage("input_processing", "Starting FIXED ARCHITECTURE response", {
-                "input_length": len(text),
-                "user_id": current_user,
-                "architecture": "port_properly_separated",
-                "timestamp": datetime.now().isoformat()
-            })
-        except Exception as debug_error:
-            print(f"[FIXED_ARCH] ⚠️ Debug logging error: {debug_error}")
-    
     try:
-        print(f"[FIXED_ARCH] 🎯 Starting PROPERLY SEPARATED processing for: '{text}'")
+        # ✅ STEP 1: Start consciousness processing in background (NON-BLOCKING)
+        print("[IMMEDIATE] 🧠 Starting background consciousness processing (port 5002)...")
+        consciousness_context = "BUDDY'S CONSCIOUSNESS STATE: Ready to help with friendly, empathetic responses."
         
-        # ✅ STEP 1: Send ALL consciousness processing to PORT 5002 (Gemma) ONLY
-        print("[FIXED_ARCH] 🧠 STEP 1: Processing consciousness via PORT 5002 (Gemma) - NO LLM ON 5001")
-        consciousness_processing_time = 0
+        def background_consciousness_processing():
+            """Process consciousness in background via port 5002"""
+            try:
+                from ai.extractor_client import process_full_consciousness, get_consciousness_for_prompt
+                print(f"[IMMEDIATE] 🧠 Background: Processing consciousness via port 5002...")
+                
+                # Process ALL consciousness via Gemma on port 5002
+                consciousness_data = process_full_consciousness(text, current_user)
+                
+                # Update consciousness context (this will be used for next interaction)
+                nonlocal consciousness_context
+                consciousness_context = get_consciousness_for_prompt(current_user)
+                
+                print(f"[IMMEDIATE] ✅ Background consciousness processing complete")
+                print(f"[IMMEDIATE] 📊 Updated memory and consciousness state for next interaction")
+                
+            except Exception as e:
+                print(f"[IMMEDIATE] ⚠️ Background consciousness error (non-critical): {e}")
         
+        # Start consciousness processing in background thread (don't wait)
+        import threading
+        threading.Thread(target=background_consciousness_processing, daemon=True).start()
+        
+        # ✅ STEP 2: Start IMMEDIATE response generation (port 5001) while consciousness processes
+        print("[IMMEDIATE] ⚡ Starting IMMEDIATE response generation (port 5001)...")
+        
+        # Use existing memory context for immediate response
         try:
-            from ai.extractor_client import process_full_consciousness, get_consciousness_for_prompt
-            consciousness_start = time.time()
-            
-            # Process EVERYTHING via Gemma on port 5002 - NO PORT 5001 CALLS HERE
-            print(f"[FIXED_ARCH] 🧠 Sending to port 5002: '{text[:50]}...'")
-            consciousness_data = process_full_consciousness(text, current_user)
-            consciousness_processing_time = time.time() - consciousness_start
-            
-            print(f"[FIXED_ARCH] ✅ Consciousness processing complete in {consciousness_processing_time:.3f}s via PORT 5002")
-            print(f"[FIXED_ARCH] 📊 Data sections: {list(consciousness_data.keys())}")
-            
-            # Get formatted consciousness for prompt injection
-            consciousness_context = get_consciousness_for_prompt(current_user)
-            print(f"[FIXED_ARCH] 📝 Consciousness context prepared ({len(consciousness_context)} chars)")
-            
-        except Exception as consciousness_error:
-            print(f"[FIXED_ARCH] ❌ PORT 5002 consciousness processing error: {consciousness_error}")
-            consciousness_context = "BUDDY'S CONSCIOUSNESS STATE: Ready to help with friendly, empathetic responses."
+            from ai.local_memory_manager import get_user_context
+            existing_context = get_user_context(current_user)
+            if existing_context:
+                consciousness_context = f"""BUDDY'S CONSCIOUSNESS STATE:
+Current Emotion: helpful
+Motivation Level: 0.8
+Active Goals: help user effectively
+Current Focus: user interaction
+Personality: friendly, empathetic
+
+USER MEMORY:
+Facts: {', '.join(existing_context.get('facts', [])[:5])}
+Preferences: {', '.join(existing_context.get('preferences', [])[:5])}  
+Recent Context: {', '.join(existing_context.get('context', [])[-3:])}"""
+                print("[IMMEDIATE] 📝 Using existing memory context for immediate response")
+        except Exception as e:
+            print(f"[IMMEDIATE] ⚠️ Could not load existing context: {e}")
         
-        # ✅ STEP 2: Send ONLY final response generation to PORT 5001 (Main LLM) with injected consciousness
-        print("[FIXED_ARCH] 🚀 STEP 2: Generating response via PORT 5001 (Main LLM) with injected consciousness")
-        
+        # Generate response immediately using simple LLM handler
         try:
             from ai.simple_llm_handler import generate_response_with_consciousness
-            from audio.smart_streaming_output import speak_streaming_smart, reset_streaming_output, finalize_streaming_output
-            
-            print("[FIXED_ARCH] ⚡ Using SIMPLE LLM HANDLER for port 5001 + Smart Streaming for Kokoro protection")
-            
-            # Reset smart streaming for new response
-            reset_streaming_output()
+            print("[IMMEDIATE] 🎯 Using simple LLM handler for port 5001 ONLY")
             
             full_response = ""
             chunk_count = 0
             response_interrupted = False
-            word_count = 0
-            total_words_estimated = 50  # Initial estimate
-            speech_started = False
+            first_chunk = True
+            
+            # Import audio functions
+            try:
+                from audio.output import speak_streaming
+                audio_available = True
+                print("[IMMEDIATE] 🎵 Audio system available")
+            except ImportError:
+                audio_available = False
+                print("[IMMEDIATE] ⚠️ Audio system not available")
             
             # Generate response using ONLY port 5001 with consciousness injection
             for chunk in generate_response_with_consciousness(text, current_user, consciousness_context):
                 # Check for interrupt
-                if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                    print("[FIXED_ARCH] ⚡ INTERRUPT DETECTED - STOPPING RESPONSE")
+                if full_duplex_manager and hasattr(full_duplex_manager, 'speech_interrupted') and full_duplex_manager.speech_interrupted:
+                    print("[IMMEDIATE] ⚡ INTERRUPT DETECTED - STOPPING")
                     response_interrupted = True
                     break
                 
                 if chunk and chunk.strip():
                     chunk_text = chunk.strip()
                     chunk_count += 1
-                    chunk_words = len(chunk_text.split())
-                    word_count += chunk_words
                     
-                    # Update total word estimate dynamically
-                    if chunk_count > 3:
-                        avg_words_per_chunk = word_count / chunk_count
-                        estimated_remaining_chunks = max(5, 15 - chunk_count)  # Estimate based on typical response length
-                        total_words_estimated = word_count + (avg_words_per_chunk * estimated_remaining_chunks)
+                    if first_chunk:
+                        print("[IMMEDIATE] 🎵 First chunk ready - starting speech IMMEDIATELY!")
+                        first_chunk = False
                     
-                    # ✅ KOKORO TIMING FIX: Start speech at 30-50% of tokens generated
-                    completion_percentage = word_count / total_words_estimated if total_words_estimated > 0 else 0
+                    print(f"[IMMEDIATE] 🗣️ Speaking chunk {chunk_count}: '{chunk_text[:50]}...'")
                     
-                    if not speech_started and completion_percentage >= 0.30:  # Start at 30% minimum
-                        print(f"[FIXED_ARCH] 🎵 Starting Kokoro speech at {completion_percentage*100:.1f}% completion ({word_count}/{total_words_estimated} estimated words)")
-                        speech_started = True
-                        
-                        # Start speaking all accumulated chunks
-                        accumulated_text = full_response + chunk_text
-                        speak_streaming_smart(accumulated_text, is_final=False)
-                    elif speech_started:
-                        # Continue streaming if already started
-                        speak_streaming_smart(chunk_text, is_final=False)
+                    # Start speaking immediately (no delays)
+                    if audio_available:
+                        speak_streaming(chunk_text)
+                    else:
+                        print(f"[IMMEDIATE] 💬 Would speak: {chunk_text}")
                     
                     full_response += chunk_text + " "
                     
-                    # Check for interrupt after speech queuing
-                    if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                        print("[FIXED_ARCH] ⚡ INTERRUPT AFTER SMART STREAMING")
+                    # Check for interrupt after speaking
+                    if full_duplex_manager and hasattr(full_duplex_manager, 'speech_interrupted') and full_duplex_manager.speech_interrupted:
+                        print("[IMMEDIATE] ⚡ INTERRUPT AFTER SPEAKING")
                         response_interrupted = True
                         break
                     
-                    # Brief pause for natural flow
-                    if not (full_duplex_manager and full_duplex_manager.speech_interrupted):
-                        time.sleep(0.05)
-            
-            # Finalize any remaining chunks
-            if not response_interrupted:
-                if not speech_started and full_response.strip():
-                    # If speech never started (very short response), speak it now
-                    print(f"[FIXED_ARCH] 🎵 Short response - speaking immediately")
-                    speak_streaming_smart(full_response.strip(), is_final=True)
-                else:
-                    finalize_streaming_output()
+                    # Brief pause for natural flow (minimal)
+                    time.sleep(0.01)  # Minimal delay
             
             total_time = time.time() - start_time
             
             if not response_interrupted and full_response.strip():
                 # Add to conversation history
+                from ai.memory import add_to_conversation_history
                 add_to_conversation_history(current_user, text, full_response.strip())
                 
-                print(f"[FIXED_ARCH] ✅ PROPERLY SEPARATED response complete:")
-                print(f"[FIXED_ARCH] 📊 Consciousness time (port 5002): {consciousness_processing_time:.3f}s")
-                print(f"[FIXED_ARCH] 📊 Total time: {total_time:.3f}s")
-                print(f"[FIXED_ARCH] 📊 Chunks processed: {chunk_count}")
-                print(f"[FIXED_ARCH] 🎵 Kokoro timing fixed - started at 30-50% threshold")
+                print(f"[IMMEDIATE] ✅ IMMEDIATE response complete:")
+                print(f"[IMMEDIATE] ⚡ Total time: {total_time:.3f}s (TARGET: <3s)")
+                print(f"[IMMEDIATE] 📊 Chunks processed: {chunk_count}")
+                print(f"[IMMEDIATE] 🧠 Consciousness processing in background for next interaction")
                 
-                # Log performance stats
-                if interaction_id:
-                    cognitive_debug_logger.log_processing_stage("response_complete", "Fixed architecture complete", {
-                        "consciousness_time": consciousness_processing_time,
-                        "total_time": total_time,
-                        "chunks": chunk_count,
-                        "smart_streaming": True,
-                        "kokoro_protected": True,
-                        "architecture": "properly_separated"
-                    })
-                    cognitive_debug_logger.finish_interaction(full_response.strip(), total_time)
+            return
             
-            return  # ✅ Exit with fixed architecture
+        except ImportError as e:
+            print(f"[IMMEDIATE] ❌ Simple LLM handler not available: {e}")
             
-        except ImportError as llm_error:
-            print(f"[FIXED_ARCH] ❌ Simple LLM Handler not available: {llm_error}")
-            print("[FIXED_ARCH] 🔄 Falling back to direct port calls")
+        # ✅ FALLBACK: Direct HTTP call to port 5001 if simple handler fails
+        print("[IMMEDIATE] 🔄 Using direct HTTP fallback to port 5001...")
+        
+        try:
+            import requests
             
-            # Direct fallback to port separation
-            try:
-                import requests
-                from config import KOBOLD_URL
-                
-                # Build prompt with consciousness injection
-                final_prompt = f"""Buddy is a helpful, empathetic AI assistant.
+            # Build minimal prompt
+            prompt = f"""Buddy is a helpful, empathetic AI assistant.
 
 {consciousness_context}
 
 User: {text}
 
 Buddy:"""
-                
-                payload = {
-                    "messages": [{"role": "user", "content": final_prompt}],
+            
+            # Different payload formats to try
+            payload_formats = [
+                # Format 1: Messages format
+                {
+                    "messages": [{"role": "user", "content": prompt}],
                     "max_tokens": 500,
                     "temperature": 0.7,
-                    "stream": True,
-                    "stop": ["User:", "Human:"]
+                    "stream": True
+                },
+                # Format 2: Simple prompt format  
+                {
+                    "prompt": prompt,
+                    "max_length": 500,
+                    "temperature": 0.7,
+                    "stream": True
+                },
+                # Format 3: Text-generation-webui format
+                {
+                    "text": prompt,
+                    "max_new_tokens": 500,
+                    "temperature": 0.7,
+                    "stream": True
                 }
-                
-                print(f"[FIXED_ARCH] 🎯 Direct call to PORT 5001: {KOBOLD_URL}")
-                response = requests.post(KOBOLD_URL, json=payload, stream=True, timeout=30)
-                response.raise_for_status()
-                
-                full_response = ""
-                chunk_count = 0
-                
-                # Stream response chunks
-                for line in response.iter_lines():
-                    if line and not response_interrupted:
-                        # Check for interrupt
-                        if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                            print("[FIXED_ARCH] ⚡ INTERRUPT DETECTED")
-                            response_interrupted = True
-                            break
+            ]
+            
+            urls_to_try = [
+                "http://localhost:5001/api/v1/generate",
+                "http://localhost:5001/v1/chat/completions", 
+                "http://localhost:5001/api/v1/stream",
+                "http://localhost:5001/generate"
+            ]
+            
+            response_generated = False
+            
+            for url in urls_to_try:
+                if response_generated:
+                    break
+                    
+                for payload in payload_formats:
+                    try:
+                        print(f"[IMMEDIATE] 🎯 Trying {url} with payload type: {list(payload.keys())}")
                         
-                        try:
-                            if line.startswith(b'data: '):
-                                json_str = line[6:].decode('utf-8')
-                                if json_str.strip() == '[DONE]':
-                                    break
-                                    
-                                chunk_data = json.loads(json_str)
-                                text_chunk = chunk_data.get('choices', [{}])[0].get('delta', {}).get('content', '')
-                                
-                                if text_chunk:
-                                    chunk_count += 1
-                                    full_response += text_chunk
-                                    
-                                    # Smart streaming with Kokoro protection
-                                    completion_percentage = len(full_response) / max(200, len(full_response) * 2)  # Rough estimate
-                                    if completion_percentage >= 0.30 or chunk_count >= 5:
-                                        speak_streaming_smart(text_chunk, is_final=False)
+                        response = requests.post(url, json=payload, stream=True, timeout=10)
+                        
+                        if response.status_code == 200:
+                            print(f"[IMMEDIATE] ✅ Connected to {url}")
+                            
+                            full_response = ""
+                            chunk_count = 0
+                            
+                            # Process streaming response
+                            for line in response.iter_lines():
+                                if line:
+                                    try:
+                                        # Try different parsing methods
+                                        line_text = line.decode('utf-8')
                                         
-                        except json.JSONDecodeError:
-                            # Handle non-JSON streaming format
-                            text_chunk = line.decode('utf-8').strip()
-                            if text_chunk and not text_chunk.startswith('['):
-                                chunk_count += 1
-                                full_response += text_chunk + " "
-                                speak_streaming_smart(text_chunk, is_final=False)
-                
-                # Finalize
-                if not response_interrupted:
-                    finalize_streaming_output()
-                    add_to_conversation_history(current_user, text, full_response.strip())
-                
-                total_time = time.time() - start_time
-                print(f"[FIXED_ARCH] ✅ Direct port separation complete in {total_time:.3f}s")
-                
+                                        # SSE format
+                                        if line_text.startswith('data: '):
+                                            json_str = line_text[6:]
+                                            if json_str.strip() == '[DONE]':
+                                                break
+                                            
+                                            try:
+                                                chunk_data = json.loads(json_str)
+                                                # Try different response formats
+                                                text_chunk = (
+                                                    chunk_data.get('choices', [{}])[0].get('delta', {}).get('content', '') or
+                                                    chunk_data.get('choices', [{}])[0].get('text', '') or
+                                                    chunk_data.get('results', [{}])[0].get('text', '') or
+                                                    chunk_data.get('text', '')
+                                                )
+                                                
+                                                if text_chunk:
+                                                    chunk_count += 1
+                                                    full_response += text_chunk
+                                                    
+                                                    if chunk_count == 1:
+                                                        print("[IMMEDIATE] 🎵 First chunk from direct call - speaking immediately!")
+                                                    
+                                                    print(f"[IMMEDIATE] 🗣️ Direct chunk {chunk_count}: '{text_chunk[:50]}...'")
+                                                    
+                                                    if audio_available:
+                                                        speak_streaming(text_chunk)
+                                                    else:
+                                                        print(f"[IMMEDIATE] 💬 Would speak: {text_chunk}")
+                                                    
+                                            except json.JSONDecodeError:
+                                                # Raw text chunk
+                                                if json_str and not json_str.startswith('['):
+                                                    chunk_count += 1
+                                                    full_response += json_str + " "
+                                                    
+                                                    if audio_available:
+                                                        speak_streaming(json_str)
+                                                    else:
+                                                        print(f"[IMMEDIATE] 💬 Would speak: {json_str}")
+                                        
+                                        # Raw line format
+                                        elif line_text and not line_text.startswith('[') and len(line_text) > 1:
+                                            chunk_count += 1
+                                            full_response += line_text + " "
+                                            
+                                            if audio_available:
+                                                speak_streaming(line_text)
+                                            else:
+                                                print(f"[IMMEDIATE] 💬 Would speak: {line_text}")
+                                        
+                                    except Exception as parse_error:
+                                        print(f"[IMMEDIATE] ⚠️ Parse error: {parse_error} - line: {line}")
+                            
+                            if full_response.strip():
+                                # Success! Add to conversation history
+                                from ai.memory import add_to_conversation_history
+                                add_to_conversation_history(current_user, text, full_response.strip())
+                                
+                                total_time = time.time() - start_time
+                                print(f"[IMMEDIATE] ✅ Direct response complete:")
+                                print(f"[IMMEDIATE] ⚡ Total time: {total_time:.3f}s")
+                                print(f"[IMMEDIATE] 📊 Chunks: {chunk_count}")
+                                
+                                response_generated = True
+                                break
+                        
+                    except Exception as e:
+                        print(f"[IMMEDIATE] ⚠️ Failed {url}: {e}")
+                        continue
+            
+            if response_generated:
                 return
-                
-            except Exception as direct_error:
-                print(f"[FIXED_ARCH] ❌ Direct port separation error: {direct_error}")
+            else:
+                print("[IMMEDIATE] ❌ All direct HTTP attempts failed")
         
-        except Exception as llm_error:
-            print(f"[FIXED_ARCH] ❌ LLM generation error: {llm_error}")
-            print("[FIXED_ARCH] 🔄 Falling back to existing system")
+        except Exception as e:
+            print(f"[IMMEDIATE] ❌ Direct HTTP fallback error: {e}")
         
-        # Continue with existing code as ultimate fallback...
-        print("[FIXED_ARCH] 🔄 Using ULTIMATE FALLBACK to existing streaming system")
+        # ✅ FINAL FALLBACK: Use existing chat system if everything else fails
+        print("[IMMEDIATE] 🔄 Using existing chat system as final fallback...")
         
-        # Continue with existing code below as fallback...
-        
-        # ✅ Enhanced voice-based identity processing (existing code)
-        voice_identified_user = None
         try:
-            # STEP 1: Check if current_user is a cluster ID
-            if current_user and current_user.startswith('Anonymous_'):
-                print(f"[VoiceIdentity] 🔍 Cluster ID detected: {current_user}")
-                
-                # STEP 2: Try to get the display name from ai.speech
-                try:
-                    from ai.speech import get_display_name
-                    display_name = get_display_name(current_user)
-                    
-                    # STEP 3: If display name is different and looks like a real name, use it
-                    if (display_name and 
-                        display_name != current_user and 
-                        display_name not in ['friend', 'Anonymous_Speaker', 'Unknown', 'Guest']):
-                        
-                        current_user = display_name
-                        print(f"[VoiceIdentity] 🎯 DISPLAY NAME OVERRIDE: Using {current_user}")
-                        
-                except Exception as display_error:
-                    print(f"[VoiceIdentity] ⚠️ Display name error: {display_error}")
+            from ai.chat import generate_response
+            response = generate_response(text, current_user)
             
-            # STEP 4: Also try voice-based identity from audio
-            if hasattr(voice_manager, 'get_last_audio_sample') and voice_manager.get_last_audio_sample():
-                last_audio = voice_manager.get_last_audio_sample()
-                voice_identified_user = get_voice_based_identity(last_audio)
-                if voice_identified_user and voice_identified_user not in ["Anonymous_Speaker", "Unknown", "Guest"]:
-                    # Only override if it's a real name, not another cluster
-                    if not voice_identified_user.startswith('Anonymous_'):
-                        current_user = voice_identified_user
-                        print(f"[VoiceIdentity] 🎤 AUDIO VOICE OVERRIDE: Using {current_user}")
-            
-            # STEP 5: Advanced voice processing if available
-            if ADVANCED_AI_AVAILABLE and hasattr(voice_manager, 'get_current_speaker_identity'):
-                advanced_user = voice_manager.get_current_speaker_identity()
-                if advanced_user and advanced_user not in ["Unknown", "Anonymous_Speaker"]:
-                    # Only use if it's a real name
-                    if not advanced_user.startswith('Anonymous_'):
-                        current_user = advanced_user
-                        print(f"[AdvancedAI] 🎯 Advanced voice ID: {current_user}")
+            if response and response.strip():
+                print(f"[IMMEDIATE] 🗣️ Fallback response: {response[:100]}...")
                 
-        except Exception as voice_error:
-            print(f"[VoiceIdentity] ⚠️ Voice ID error: {voice_error}")
-
-        print(f"[VoiceIdentity] ✅ FINAL USER for LLM: {current_user}")
-        
-        # ✅ Process user identification and name management
-        try:
-            from ai.speech import identify_user, get_display_name
-            
-            # Check if user is introducing themselves
-            identify_user(text, current_user)
-            
-            # Get display name for responses (voice-based, not system)
-            display_name = get_voice_based_display_name(current_user)
-            
-            # Handle name questions using VOICE MATCHING (not system login)
-            if any(phrase in text.lower() for phrase in ["what's my name", "my name", "who am i", "what is my name"]):
-                voice_response = get_voice_based_name_response(current_user, display_name)
-                speak_streaming(voice_response)
-                return
-                
-        except ImportError:
-            print(f"[AdvancedResponse] ⚠️ Speech identification not available")
-            display_name = get_voice_based_display_name(current_user)
-        except Exception as id_error:
-            print(f"[AdvancedResponse] ⚠️ Identification error: {id_error}")
-            display_name = get_voice_based_display_name(current_user)
-        
-        # ✅ ADVANCED: Check if LLM is locked by voice processing
-        if ADVANCED_AI_AVAILABLE and hasattr(voice_manager, 'is_llm_locked'):
-            if voice_manager.is_llm_locked():
-                print(f"[AdvancedResponse] 🛡️ LLM LOCKED by voice processing - queuing response")
-                return
-        
-        # ✅ OPTIMIZED RESPONSE SYSTEM: Use single LLM call mode or fallback to existing system
-        if SINGLE_LLM_CALL_MODE:
-            print("[AdvancedResponse] ⚡ Using SINGLE LLM CALL MODE for optimal performance")
-            
-            try:
-                from ai.single_llm_call_system import generate_optimized_response
-                from ai.background_consciousness_processor_optimized import schedule_consciousness_processing
-                
-                # Schedule consciousness processing in background (non-blocking)
-                schedule_consciousness_processing(text, current_user, {"display_name": display_name})
-                
-                # Generate response with single LLM call
-                full_response = ""
-                chunk_count = 0
-                response_interrupted = False
-                
-                for chunk in generate_optimized_response(text, current_user):
-                    # Check for interrupt
-                    if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                        print("[AdvancedResponse] ⚡ INTERRUPT DETECTED - STOPPING OPTIMIZED RESPONSE")
-                        response_interrupted = True
-                        break
-                    
-                    if chunk and chunk.strip():
-                        chunk_count += 1
-                        chunk_text = chunk.strip()
-                        
-                        if chunk_count == 1:
-                            print("[AdvancedResponse] ⚡ First optimized chunk ready - starting speech!")
-                        
-                        print(f"[AdvancedResponse] 🗣️ Speaking optimized chunk {chunk_count}: '{chunk_text[:50]}...'")
-                        
-                        # Validate chunk
-                        try:
-                            is_appropriate, validated_chunk = validate_ai_response_appropriateness(current_user, chunk_text)
-                            if not is_appropriate:
-                                print(f"[AdvancedResponse] 🛡️ Chunk {chunk_count} corrected for appropriateness")
-                                chunk_text = validated_chunk
-                        except Exception as validation_error:
-                            print(f"[AdvancedResponse] ⚠️ Validation error: {validation_error}")
-                        
-                        # Speak chunk
-                        speak_streaming(chunk_text)
-                        full_response += chunk_text + " "
-                        
-                        # Check for interrupt after queueing
-                        if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                            print("[AdvancedResponse] ⚡ INTERRUPT AFTER QUEUEING - STOPPING")
-                            response_interrupted = True
-                            break
-                        
-                        # Natural pause
-                        if not (full_duplex_manager and full_duplex_manager.speech_interrupted):
-                            time.sleep(0.05)
-                
-                # Handle completion
-                if not response_interrupted and full_response.strip():
-                    add_to_conversation_history(current_user, text, full_response.strip())
-                    print(f"[AdvancedResponse] ✅ Optimized response complete - {chunk_count} chunks")
-                    
-                    # Show performance stats
-                    if SHOW_PERFORMANCE_METRICS:
-                        from ai.single_llm_call_system import get_performance_stats
-                        stats = get_performance_stats()
-                        print(f"[AdvancedResponse] 📊 Performance: {stats['average_response_time']:.2f}s avg, {stats['llm_calls_made']} LLM calls")
-                
-                return  # Exit early with optimized response
-                
-            except ImportError as import_error:
-                print(f"[AdvancedResponse] ⚠️ Optimized system not available: {import_error}")
-                print("[AdvancedResponse] 🔄 Falling back to existing system")
-                
-            except Exception as optimized_error:
-                print(f"[AdvancedResponse] ❌ Optimized system error: {optimized_error}")
-                print("[AdvancedResponse] 🔄 Falling back to existing system")
-        
-        # ✅ FALLBACK: Use existing emergency fast response system if available
-        use_emergency_fast_response = False
-        try:
-            from ai.emergency_fast_response import is_emergency_fast_mode_needed, generate_immediate_response, schedule_background_consciousness_processing, get_minimal_context_for_response
-            use_emergency_fast_response = is_emergency_fast_mode_needed()
-        except ImportError:
-            print("[AdvancedResponse] ⚠️ Emergency fast response not available")
-        
-        if use_emergency_fast_response:
-            print("[AdvancedResponse] 🚨 EMERGENCY FAST RESPONSE MODE - bypassing consciousness for immediate response")
-            
-            # Generate immediate response with minimal processing
-            try:
-                response_start = time.time()
-                full_response = ""
-                chunk_count = 0
-                
-                # Get immediate response without consciousness processing
-                for chunk in generate_immediate_response(text, current_user):
-                    if chunk and chunk.strip():
-                        chunk_count += 1
-                        chunk_text = chunk.strip()
-                        
-                        # Check for interrupt
-                        if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                            print("[AdvancedResponse] ⚡ INTERRUPT DETECTED - STOPPING EMERGENCY RESPONSE")
-                            break
-                        
-                        print(f"[AdvancedResponse] 🚨 Emergency chunk {chunk_count}: '{chunk_text[:50]}...'")
-                        speak_streaming(chunk_text)
-                        full_response += chunk_text + " "
-                        
-                        # Brief pause for natural flow
-                        if not (full_duplex_manager and full_duplex_manager.speech_interrupted):
-                            time.sleep(0.05)
-                
-                response_time = time.time() - response_start
-                print(f"[AdvancedResponse] 🚨 EMERGENCY RESPONSE COMPLETED in {response_time:.3f}s")
-                
-                # Schedule all consciousness processing for background
-                minimal_context = get_minimal_context_for_response(text, current_user)
-                schedule_background_consciousness_processing(text, current_user, minimal_context)
+                if audio_available:
+                    speak_streaming(response)
+                else:
+                    print(f"[IMMEDIATE] 💬 Would speak: {response}")
                 
                 # Add to conversation history
-                try:
-                    add_to_conversation_history(current_user, text, full_response.strip())
-                except Exception as history_error:
-                    print(f"[AdvancedResponse] ⚠️ History error: {history_error}")
+                from ai.memory import add_to_conversation_history
+                add_to_conversation_history(current_user, text, response.strip())
                 
-                return  # Exit early with emergency response
+                total_time = time.time() - start_time
+                print(f"[IMMEDIATE] ✅ Fallback response complete in {total_time:.3f}s")
                 
-            except Exception as emergency_error:
-                print(f"[AdvancedResponse] ❌ Emergency response failed: {emergency_error}")
-                # Fall through to normal processing
-        
-        # ✅ BACKGROUND CONSCIOUSNESS INTEGRATION - Never block user response
-        consciousness_state = {}
-        cognitive_prompt_injection = {}
-        
-        # ✅ CRITICAL FIX: Schedule consciousness processing in background instead of synchronous
-        if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
-            try:
-                # Schedule consciousness processing for background execution (non-blocking)
-                _schedule_background_consciousness_processing(text, current_user)
-                
-                # Use minimal consciousness state for immediate response
-                consciousness_state = _get_minimal_consciousness_state()
-                print(f"[AdvancedResponse] ⚡ Background consciousness scheduled, using minimal state for immediate response")
-            except Exception as consciousness_error:
-                print(f"[AdvancedResponse] ⚠️ Background consciousness scheduling error: {consciousness_error}")
-        
-        # ✅ NEW: Process user interaction through autonomous systems
-        if AUTONOMOUS_CONSCIOUSNESS_AVAILABLE:
-            try:
-                # Convert audio data for autonomous processing
-                audio_data = None
-                if hasattr(voice_manager, 'get_last_audio_sample'):
-                    audio_data = voice_manager.get_last_audio_sample()
-                
-                # Process through autonomous consciousness integrator
-                autonomous_consciousness_integrator.process_user_interaction(text, audio_data, current_user)
-                print(f"[AdvancedResponse] 🚀 Processed through autonomous consciousness systems")
-            except Exception as autonomous_error:
-                print(f"[AdvancedResponse] ⚠️ Autonomous processing error: {autonomous_error}")
-        
-        # ✅ NEW: Cognitive integration for real-time state injection
-        if SELF_AWARENESS_COMPONENTS_AVAILABLE:
-            try:
-                cognitive_start_time = time.time()
-                cognitive_prompt_injection = cognitive_integrator.process_user_input(text, current_user)
-                cognitive_processing_time = time.time() - cognitive_start_time
-                
-                print(f"[AdvancedResponse] 🧠 Cognitive state integrated: {len(cognitive_prompt_injection)} keys")
-                
-                # Log cognitive module usage
-                if interaction_id:
-                    cognitive_debug_logger.log_cognitive_module_usage(
-                        "cognitive_integrator",
-                        {"text": text, "user": current_user},
-                        cognitive_prompt_injection,
-                        cognitive_processing_time
-                    )
-                    
-                    # Log prompt modifications if cognitive data was injected
-                    if cognitive_prompt_injection and "cognitive_state" in cognitive_prompt_injection:
-                        cognitive_debug_logger.log_prompt_modification(
-                            "consciousness_injection",
-                            len(text),
-                            len(text) + len(str(cognitive_prompt_injection)),
-                            cognitive_prompt_injection.get("cognitive_state", {})
-                        )
-                
-                # Check if Buddy should express internal state
-                should_express, expression = cognitive_integrator.should_express_internal_state()
-                if should_express and expression:
-                    print(f"[AdvancedResponse] 💭 Internal state expression: {expression[:50]}...")
-                    
-                    # Log internal state expression
-                    if interaction_id:
-                        cognitive_debug_logger.log_consciousness_event(
-                            "internal_state_expression",
-                            "Buddy expressing internal thoughts/feelings",
-                            {"expression": expression[:100], "trigger": "cognitive_state_check"}
-                        )
-                        cognitive_debug_logger.finish_interaction(expression, time.time() - start_time)
-                    
-                    speak_streaming(expression)
-                    return  # Express internal state instead of regular response
-                    
-            except Exception as cognitive_error:
-                print(f"[AdvancedResponse] ⚠️ Cognitive integration error: {cognitive_error}")
-                if interaction_id:
-                    cognitive_debug_logger.log_error("cognitive_integration", str(cognitive_error))
-                cognitive_prompt_injection = {}
-        
-        # ✅ ENTROPY INTEGRATION: Process emotional context
-        emotional_context = {}
-        if ENTROPY_SYSTEM_AVAILABLE:
-            try:
-                # Process emotional context with entropy
-                emotional_context = process_emotional_context(text, f"user_{current_user}")
-                print(f"[EntropyMain] 🎭 Emotional state: {emotional_context.get('primary_emotion', 'neutral')}")
-                
-                # Check for surprise injection
-                if should_surprise(f"response_to_{text[:30]}"):
-                    inject_emotional_surprise("main_response")
-                    print("[EntropyMain] 🎭 Surprise emotion injected into response flow")
-            except Exception as entropy_error:
-                print(f"[EntropyMain] ⚠️ Entropy processing error: {entropy_error}")
-        elif CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
-            try:
-                # Notify global workspace about voice activity
-                global_workspace.request_attention(
-                    "voice_system",
-                    f"Voice input received from {current_user}: {text[:30]}...",
-                    AttentionPriority.MEDIUM,
-                    ProcessingMode.CONSCIOUS,
-                    duration=5.0,
-                    tags=["voice_input", "user_interaction"]
-                )
-            except Exception as voice_attention_error:
-                print(f"[AdvancedResponse] ⚠️ Voice attention notification error: {voice_attention_error}")
-        
-        # Quick responses for direct questions (immediate)
-        if is_direct_time_question(text):
-            brisbane_time = get_current_brisbane_time()
-            if IS_SUNSHINE_COAST:
-                speak_streaming(f"It's {brisbane_time['time_12h']} here in Birtinya, Sunshine Coast.")
-            else:
-                speak_streaming(f"It's {brisbane_time['time_12h']} here in {USER_PRECISE_LOCATION}.")
-            return
-        
-        if is_direct_location_question(text):
-            if IS_SUNSHINE_COAST:
-                speak_streaming(f"I'm located in Birtinya, Sunshine Coast, Queensland {USER_POSTCODE_PRECISE}.")
-            else:
-                speak_streaming(f"I'm located in {USER_PRECISE_LOCATION} {USER_POSTCODE_PRECISE}.")
-            return
-        
-        if is_direct_date_question(text):
-            brisbane_time = get_current_brisbane_time()
-            speak_streaming(f"Today is {brisbane_time['date']}.")
-            return
-        
-        # ✅ NEW: IMMEDIATE RESPONSE with background consciousness processing for speed
-        immediate_response_success = False
-        try:
-            if CONSCIOUSNESS_LLM_AVAILABLE:
-                # Try new immediate response system first
-                try:
-                    from ai.llm_handler import generate_immediate_response_with_background_consciousness
-                    print("[AdvancedResponse] ⚡ Using IMMEDIATE RESPONSE with BACKGROUND CONSCIOUSNESS")
-                    print("[AdvancedResponse] 🎯 Target: <5 second response with Class 5+ consciousness maintained")
-                    
-                    full_response = ""
-                    chunk_count = 0
-                    first_chunk = True
-                    response_interrupted = False
-                    
-                    # ✅ IMMEDIATE: Process LLM chunks with PRIORITIZED USER RESPONSE
-                    for chunk in generate_immediate_response_with_background_consciousness(text, current_user, context=cognitive_prompt_injection):
-                        # ✅ CRITICAL: Check for interrupt BEFORE processing chunk
-                        if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                            print("[AdvancedResponse] ⚡ INTERRUPT DETECTED - IMMEDIATELY STOPPING LLM")
-                            response_interrupted = True
-                            break  # ✅ CRITICAL: Break immediately!
-                        
-                        if chunk and chunk.strip():
-                            chunk_count += 1
-                            chunk_text = chunk.strip()
-                            
-                            if first_chunk:
-                                print("[AdvancedResponse] ⚡ First IMMEDIATE chunk ready - starting natural speech!")
-                                first_chunk = False
-                            
-                            print(f"[AdvancedResponse] 🗣️ Speaking chunk {chunk_count}: '{chunk_text[:50]}...'")
-                            
-                            # 🧠 MEGA-INTELLIGENT: Validate chunk before speaking
-                            try:
-                                is_appropriate, validated_chunk = validate_ai_response_appropriateness(current_user, chunk_text)
-                                
-                                if not is_appropriate:
-                                    print(f"[MegaMemory] 🛡️ Chunk {chunk_count} corrected for context appropriateness")
-                                    chunk_text = validated_chunk
-                            except Exception as validation_error:
-                                print(f"[MegaMemory] ⚠️ Validation error for chunk {chunk_count}: {validation_error}")
-                                # Continue with original chunk if validation fails
-                            
-                            # ✅ SPEAK CHUNK (now validated and immediate)
-                            speak_streaming(chunk_text)
-                            full_response += chunk_text + " "
-                            
-                            # ✅ CRITICAL: Check AGAIN after queueing and break if interrupted
-                            if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                                print("[AdvancedResponse] ⚡ INTERRUPT AFTER QUEUEING - STOPPING NOW")
-                                response_interrupted = True
-                                break  # ✅ CRITICAL: Break immediately!
-                            
-                            # Brief pause for natural flow (only if not interrupted)
-                            if not (full_duplex_manager and full_duplex_manager.speech_interrupted):
-                                time.sleep(0.05)
-                    
-                    print(f"[AdvancedResponse] ⚡ IMMEDIATE RESPONSE complete - {chunk_count} segments")
-                    print(f"[AdvancedResponse] 🧠 Consciousness processing scheduled for background")
-                    immediate_response_success = True
-                    
-                except ImportError:
-                    print("[AdvancedResponse] ⚠️ Immediate response system not available - falling back to standard")
-                except Exception as immediate_error:
-                    print(f"[AdvancedResponse] ⚠️ Immediate response error: {immediate_error} - falling back")
-                
-            if not immediate_response_success:
-                # Fallback to original consciousness integration
-                from ai.llm_handler import generate_consciousness_integrated_response
-                print("[AdvancedResponse] 🧠 Using STANDARD CONSCIOUSNESS-INTEGRATED LLM HANDLER")
-                print("[AdvancedResponse] 🏷️ Token optimization: ACTIVE (40-85% reduction target)")
-                
-                full_response = ""
-                chunk_count = 0
-                first_chunk = True
-                response_interrupted = False
-                
-                # ✅ CONSCIOUSNESS: Process LLM chunks with FULL consciousness integration + TOKEN OPTIMIZATION
-                for chunk in generate_consciousness_integrated_response(text, current_user, context=cognitive_prompt_injection):
-                    # ✅ CRITICAL: Check for interrupt BEFORE processing chunk
-                    if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                        print("[AdvancedResponse] ⚡ INTERRUPT DETECTED - IMMEDIATELY STOPPING LLM")
-                        response_interrupted = True
-                        break  # ✅ CRITICAL: Break immediately!
-                    
-                    if chunk and chunk.strip():
-                        chunk_count += 1
-                        chunk_text = chunk.strip()
-                        
-                        if first_chunk:
-                            print("[AdvancedResponse] 🎭 First CONSCIOUSNESS chunk ready - starting natural speech!")
-                            first_chunk = False
-                        
-                        print(f"[AdvancedResponse] 🗣️ Speaking chunk {chunk_count}: '{chunk_text[:50]}...'")
-                        
-                        # 🧠 MEGA-INTELLIGENT: Validate chunk before speaking
-                        try:
-                            is_appropriate, validated_chunk = validate_ai_response_appropriateness(current_user, chunk_text)
-                            
-                            if not is_appropriate:
-                                print(f"[MegaMemory] 🛡️ Chunk {chunk_count} corrected for context appropriateness")
-                                chunk_text = validated_chunk
-                        except Exception as validation_error:
-                            print(f"[MegaMemory] ⚠️ Validation error for chunk {chunk_count}: {validation_error}")
-                            # Continue with original chunk if validation fails
-                        
-                        # ✅ SPEAK CHUNK (now validated and consciousness-enhanced)
-                        speak_streaming(chunk_text)
-                        full_response += chunk_text + " "
-                        
-                        # ✅ CRITICAL: Check AGAIN after queueing and break if interrupted
-                        if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                            print("[AdvancedResponse] ⚡ INTERRUPT AFTER QUEUEING - STOPPING NOW")
-                            response_interrupted = True
-                            break  # ✅ CRITICAL: Break immediately!
-                        
-                        # Brief pause for natural flow (only if not interrupted)
-                        if not (full_duplex_manager and full_duplex_manager.speech_interrupted):
-                            time.sleep(0.05)
-                
-                print(f"[AdvancedResponse] ✅ CONSCIOUSNESS-INTEGRATED response complete - {chunk_count} segments")
-                consciousness_success = True
-                
-            else:
-                consciousness_success = True  # Immediate response counts as success
-                
-        except Exception as consciousness_error:
-            print(f"[AdvancedResponse] ❌ Consciousness integration failed: {consciousness_error}")
-            print("[AdvancedResponse] 🔄 Falling back to ENHANCED consciousness fusion")
-            consciousness_success = False
-        
-        # ✅ ENHANCED FALLBACK: If consciousness handler fails, use enhanced fusion with consciousness integration
-        if not consciousness_success:
-            print("[AdvancedResponse] 🧠 Using ENHANCED consciousness fusion with token optimization")
+                return
             
-            # ✅ ENHANCED CONSCIOUSNESS FUSION: Inject consciousness data into fusion system
-            try:
-                if CONSCIOUSNESS_MODULES_AVAILABLE:
-                    from ai.consciousness_tokenizer import tokenize_consciousness_for_llm, get_consciousness_summary_for_llm
-                    from ai.llm_budget_monitor import get_budget_status
-                    
-                    # Gather lightweight consciousness state for injection
-                    consciousness_summary = get_consciousness_summary_for_llm({
-                        'emotion_engine': {'primary_emotion': 'engaged', 'intensity': 0.7},
-                        'motivation_system': {'active_goals': [{'description': 'Help user effectively', 'priority': 0.9}]},
-                        'global_workspace': {'current_focus': f'responding_to_{text[:20]}'}
-                    })
-                    
-                    # Get budget status for optimization
-                    budget_status = get_budget_status()
-                    token_reduction_target = 0.6 if budget_status.get('usage_percentage', 0) > 0.5 else 0.4
-                    
-                    print(f"[AdvancedResponse] 🏷️ Consciousness summary: {consciousness_summary}")
-                    print(f"[AdvancedResponse] 💰 Token reduction target: {token_reduction_target*100:.0f}%")
-                    
-                    # Inject consciousness into text for enhanced processing
-                    enhanced_text = f"{text} [CONSCIOUSNESS:{consciousness_summary}]"
-                    text = enhanced_text
-                    
-            except Exception as consciousness_inject_error:
-                print(f"[AdvancedResponse] ⚠️ Consciousness injection error: {consciousness_inject_error}")
-            
-            # ✅ ENHANCED FALLBACK: Advanced AI Natural conversation flow with CONSCIOUSNESS FUSION
-            print(f"[AdvancedResponse] 🧠 Starting ADVANCED AI LLM streaming for VOICE USER: {current_user}")
-            
-            full_response = ""
-            chunk_count = 0
-            first_chunk = True
-            response_interrupted = False
-            
-            try:
-                # 🚀 NEW: Single LLM call using Gemma-classified data and minimal prompt
-                try:
-                    from ai.llm_handler import LLMHandler
-                    print("[AdvancedResponse] ⚡ Using SINGLE LLM CALL mode with Gemma-classified memory")
-                    
-                    # Initialize LLM handler and generate response with consciousness
-                    llm_handler = LLMHandler()
-                    response_generator = llm_handler.generate_response_with_consciousness(
-                        text=text,
-                        user=current_user,
-                        context=cognitive_prompt_injection,
-                        stream=True
-                    )
-                    
-                except ImportError:
-                    # Fallback to standard fusion system
-                    from ai.chat_enhanced_smart_with_fusion import generate_response_streaming_with_intelligent_fusion
-                    print("[AdvancedResponse] ⚠️ Fallback to FUSION system - LLMHandler not available")
-                    response_generator = generate_response_streaming_with_intelligent_fusion(text, current_user, DEFAULT_LANG, context=cognitive_prompt_injection)
-                
-                # ✅ ADVANCED: Process LLM chunks with IMMEDIATE interrupt breaking
-                for chunk in response_generator:
-                    # ✅ CRITICAL: Check for interrupt BEFORE processing chunk
-                    if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                        print("[AdvancedResponse] ⚡ INTERRUPT DETECTED - IMMEDIATELY STOPPING LLM")
-                        response_interrupted = True
-                        break  # ✅ CRITICAL: Break immediately!
-                    
-                    if chunk and chunk.strip():
-                        chunk_count += 1
-                        chunk_text = chunk.strip()
-                    
-                    # ✅ ENTROPY SYSTEM: Inject uncertainty and consciousness into response
-                    if ENTROPY_SYSTEM_AVAILABLE:
-                        try:
-                            # Inject textual entropy (hesitation, uncertainty markers)
-                            chunk_text = inject_consciousness_entropy("response", chunk_text)
-                            
-                            # Apply emotional modifiers if available
-                            if emotional_context and 'text_modifiers' in emotional_context:
-                                modifiers = emotional_context['text_modifiers']
-                                
-                                # Add hesitation markers
-                                if modifiers.get('hesitation_markers') and chunk_count == 1:  # Only first chunk
-                                    hesitation = get_entropy_engine().random_state.choice(modifiers['hesitation_markers'])
-                                    chunk_text = f"{hesitation}, {chunk_text}"
-                                
-                                # Add emotional punctuation
-                                if modifiers.get('emotional_punctuation'):
-                                    chunk_text = chunk_text.rstrip('.!?') + modifiers['emotional_punctuation']
-                                
-                        except Exception as chunk_entropy_error:
-                            print(f"[EntropyMain] ⚠️ Chunk entropy error: {chunk_entropy_error}")
-                    
-                    if first_chunk:
-                        print("[AdvancedResponse] 🎭 First ADVANCED chunk ready - starting natural speech!")
-                        first_chunk = False
-                    
-                    print(f"[AdvancedResponse] 🗣️ Speaking chunk {chunk_count}: '{chunk_text[:50]}...'")
-                    
-                    # 🧠 MEGA-INTELLIGENT: Validate chunk before speaking
-                    try:
-                        is_appropriate, validated_chunk = validate_ai_response_appropriateness(current_user, chunk_text)
-                        
-                        if not is_appropriate:
-                            print(f"[MegaMemory] 🛡️ Chunk {chunk_count} corrected for context appropriateness")
-                            chunk_text = validated_chunk
-                    except Exception as validation_error:
-                        print(f"[MegaMemory] ⚠️ Validation error for chunk {chunk_count}: {validation_error}")
-                        # Continue with original chunk if validation fails
-                    
-                    # ✅ SPEAK CHUNK (now validated and entropy-enhanced)
-                    speak_streaming(chunk_text)
-                    full_response += chunk_text + " "
-                    
-                    # ✅ CRITICAL: Check AGAIN after queueing and break if interrupted
-                    if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                        print("[AdvancedResponse] ⚡ INTERRUPT AFTER QUEUEING - STOPPING NOW")
-                        response_interrupted = True
-                        break  # ✅ CRITICAL: Break immediately!
-                    
-                    # ✅ ENTROPY SYSTEM: Random pauses for natural hesitation
-                    natural_pause = 0.05  # Default pause
-                    if ENTROPY_SYSTEM_AVAILABLE:
-                        try:
-                            natural_pause = get_random_hesitation()
-                        except:
-                            pass
-                    
-                    # Brief pause for natural flow (only if not interrupted)
-                    if not (full_duplex_manager and full_duplex_manager.speech_interrupted):
-                        time.sleep(natural_pause)
-            
-            except (ConnectionError, ConnectionAbortedError, OSError) as conn_err:
-                print(f"[AdvancedResponse] 🔌 Connection interrupted: {conn_err}")
-                response_interrupted = True
-                
-            except ImportError:
-                print("[AdvancedResponse] ⚠️ Advanced streaming not available, using enhanced fallback")
-                # Inject cognitive context into fallback LLM call
-                enhanced_text = text
-                if cognitive_prompt_injection and "cognitive_state" in cognitive_prompt_injection:
-                    cognitive_state = cognitive_prompt_injection["cognitive_state"]
-                    emotion = cognitive_state.get("emotion", "neutral")
-                    mood = cognitive_state.get("mood", "neutral")
-                    # Create context-aware prompt for basic LLM
-                    context_prefix = f"[Current emotional state: {emotion}, mood: {mood}] "
-                    enhanced_text = context_prefix + text
-                    print(f"[AdvancedResponse] 🧠 Injected cognitive context into fallback: {emotion}/{mood}")
-                
-                response = generate_response(enhanced_text, current_user, DEFAULT_LANG)
-            
-            # 🧠 MEGA-INTELLIGENT: Validate complete response before speaking
-            try:
-                is_appropriate, validated_response = validate_ai_response_appropriateness(current_user, response)
-                
-                if not is_appropriate:
-                    print(f"[MegaMemory] 🛡️ Fallback response corrected for context appropriateness")
-                    response = validated_response
-            except Exception as validation_error:
-                print(f"[MegaMemory] ⚠️ Validation error for fallback response: {validation_error}")
-                # Continue with original response if validation fails
-            
-            # Split into sentences for interrupt checking
-            sentences = re.split(r'(?<=[.!?])\s+', response)
-            for sentence in sentences:
-                if sentence.strip():
-                    # ✅ Check for interrupt before each sentence
-                    if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                        print("[AdvancedResponse] ⚡ INTERRUPT IN FALLBACK - STOPPING")
-                        response_interrupted = True
-                        break  # ✅ CRITICAL: Break immediately!
-                    
-                    speak_streaming(sentence.strip())
-                    
-                    # ✅ Check again after queueing
-                    if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                        print("[AdvancedResponse] ⚡ INTERRUPT AFTER FALLBACK SENTENCE - STOPPING")
-                        response_interrupted = True
-                        break  # ✅ CRITICAL: Break immediately!
-                    
-                    time.sleep(0.1)
-            
-            full_response = response
+        except Exception as e:
+            print(f"[IMMEDIATE] ❌ Fallback chat system error: {e}")
         
-        # ✅ HANDLE COMPLETION: Only if not interrupted
-        if not response_interrupted:
-            if full_response.strip():
-                # 📋 INTERACTION THREAD MEMORY: Track this conversation turn
-                from ai.memory import get_user_memory
-                user_memory = get_user_memory(current_user)
-                
-                # Detect intent and track interaction thread
-                intent = _detect_interaction_intent(text)
-                if intent in ["internet_search", "task_request", "help_request"]:
-                    interaction_id = user_memory.add_interaction_thread(text, intent, text)
-                    user_memory.complete_interaction_thread(interaction_id, full_response.strip())
-                
-                # 🧠 EPISODIC TURN MEMORY: Add full conversation turn
-                entities = _extract_entities_from_text(text)
-                emotional_tone = _detect_emotional_tone(text)
-                user_memory.add_episodic_turn(text, full_response.strip(), intent, entities, emotional_tone)
-                
-                add_to_conversation_history(current_user, text, full_response.strip())
-                print(f"[AdvancedResponse] ✅ ADVANCED AI streaming complete for VOICE USER {current_user} - {chunk_count} natural segments")
-                
-                # ✅ CONSCIOUSNESS: Finalize consciousness processing
-                if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
-                    try:
-                        _finalize_consciousness_response(text, full_response.strip(), current_user, consciousness_state)
-                    except Exception as consciousness_finalize_error:
-                        print(f"[AdvancedResponse] ⚠️ Consciousness finalization error: {consciousness_finalize_error}")
-                
-                # ✅ NEW: Finalize debug logging
-                if interaction_id and SELF_AWARENESS_COMPONENTS_AVAILABLE:
-                    try:
-                        total_time = time.time() - start_time
-                        cognitive_debug_logger.log_performance_metric("total_response_time", total_time, "seconds")
-                        cognitive_debug_logger.log_performance_metric("chunk_count", chunk_count, "chunks")
-                        
-                        # Log response modulations that were applied
-                        if cognitive_prompt_injection.get("response_modulation"):
-                            cognitive_debug_logger.log_response_modulation(
-                                "cognitive_modulation",
-                                cognitive_prompt_injection["response_modulation"],
-                                ["consciousness_integration", "emotional_modulation"]
-                            )
-                        
-                        cognitive_debug_logger.finish_interaction(full_response.strip(), total_time)
-                        print(f"[AdvancedResponse] 📊 Debug logged: {total_time:.3f}s, {chunk_count} chunks")
-                    except Exception as debug_final_error:
-                        print(f"[AdvancedResponse] ⚠️ Debug finalization error: {debug_final_error}")
-                
-            else:
-                print("[AdvancedResponse] ❌ No response generated")
-                if interaction_id and SELF_AWARENESS_COMPONENTS_AVAILABLE:
-                    cognitive_debug_logger.log_error("response_generation", "No response generated")
-                    cognitive_debug_logger.finish_interaction("", time.time() - start_time)
-                speak_streaming("I'm sorry, I didn't generate a proper response.")
+        # If we get here, something is seriously wrong
+        print("[IMMEDIATE] 🚨 CRITICAL: All response generation methods failed!")
+        emergency_response = "I apologize, but I'm having technical difficulties. Please try again."
+        
+        if audio_available:
+            speak_streaming(emergency_response)
         else:
-            print("[AdvancedResponse] ⚡ Response was INTERRUPTED - skipping completion")
-            if interaction_id and SELF_AWARENESS_COMPONENTS_AVAILABLE:
-                cognitive_debug_logger.log_consciousness_event("response_interrupted", "Response generation was interrupted")
-                cognitive_debug_logger.finish_interaction("[INTERRUPTED]", time.time() - start_time)
-            
-            # ✅ CRITICAL: Emergency cleanup after interrupt
-            try:
-                clear_audio_queue()
-                stop_audio_playback()
-                print("[AdvancedResponse] 🧹 Emergency audio cleanup completed")
-            except Exception as cleanup_err:
-                print(f"[AdvancedResponse] ⚠️ Cleanup error: {cleanup_err}")
+            print(f"[IMMEDIATE] 💬 Emergency response: {emergency_response}")
+        
+        return
         
     except Exception as e:
-        print(f"[AdvancedResponse] ❌ Error: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"[IMMEDIATE] ❌ Critical error in immediate response: {e}")
         
-        # ✅ EMERGENCY CLEANUP
+        # Emergency fallback
+        emergency_response = f"I apologize, but I encountered an error. Let me try to help you with: {text}"
         try:
-            clear_audio_queue()
-            stop_audio_playback()
-            if full_duplex_manager:
-                full_duplex_manager.reset_interrupt_flag()
-                full_duplex_manager.force_reset_to_waiting()
+            from audio.output import speak_streaming
+            speak_streaming(emergency_response)
+        except:
+            print(f"[IMMEDIATE] 💬 Emergency: {emergency_response}")
+        
+        # Try to add to history even in error case
+        try:
+            from ai.memory import add_to_conversation_history
+            add_to_conversation_history(current_user, text, emergency_response)
         except:
             pass
         
-        speak_streaming("I apologize, I encountered an error while thinking.")
-
-# ✅ ADD THESE NEW HELPER FUNCTIONS:
+        return
 
 def get_voice_based_identity(audio_data=None):
-    """Get identity from voice recognition, not system login"""
+    """Get identity from voice recognition"""
     try:
-        if ADVANCED_AI_AVAILABLE and hasattr(voice_manager, 'handle_voice_identification'):
-            # Use advanced voice recognition
+        if hasattr(voice_manager, 'handle_voice_identification'):
             result = voice_manager.handle_voice_identification(audio_data, "")
-            if result and len(result) >= 2 and result[0] and result[0] != "Unknown":
-                print(f"[VoiceIdentity] 🎯 Advanced AI identified: {result[0]} (status: {result[1]})")
-                return result[0]
-        
-        elif ENHANCED_VOICE_AVAILABLE:
-            # Use enhanced voice recognition
-            try:
-                from voice.recognition import identify_speaker_with_confidence
-                result = identify_speaker_with_confidence(audio_data)
-                if result and len(result) >= 2 and result[0] and result[1] > 0.7:
-                    print(f"[VoiceIdentity] ✅ Enhanced voice identified: {result[0]} (confidence: {result[1]})")
-                    return result[0]
-            except ImportError:
-                pass
-        
-        # Basic voice recognition fallback
-        try:
-            from voice.recognition import identify_speaker
-            result = identify_speaker(audio_data)
-            if result and result != "Unknown":
-                print(f"[VoiceIdentity] 📊 Basic voice identified: {result}")
-                return result
-        except (ImportError, AttributeError):
-            pass
-        
-        # Anonymous fallback
-        print(f"[VoiceIdentity] 👤 No voice match - using anonymous")
-        return "Anonymous_Speaker"
-        
+            return result[0] if result else "Daveydrz"
+        return "Daveydrz"
     except Exception as e:
         print(f"[VoiceIdentity] ❌ Error: {e}")
-        return "Anonymous_Speaker"
-
+        return "Daveydrz"
 
 def get_voice_based_display_name(identified_user):
     """Get display name based on voice identity, not system login"""
