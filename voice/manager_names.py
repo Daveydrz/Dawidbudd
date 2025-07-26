@@ -1,3 +1,4 @@
+# NOTE: Using port 5002 for consciousness processing
 # voice/manager_names.py - ULTRA-INTELLIGENT AI-LEVEL Name Management System
 # Part 1: Core Classes and Infrastructure
 # Surpasses Alexa/Siri/GPT-4 level intelligence with advanced NLP and context awareness
@@ -133,7 +134,7 @@ FAKE_NAME_TRAPS = {
 class KoboldCppNameExtractor:
     """🤖 KoboldCPP + Hermes-2-Pro powered intelligent name extraction"""
     
-    def __init__(self, kobold_endpoint: str = "http://localhost:5001"):
+    def __init__(self, kobold_endpoint: str = "http://localhost:5002"):
         self.kobold_endpoint = kobold_endpoint
         self.api_url = f"{kobold_endpoint}/api/v1/generate"
         self.system_prompt = self._create_system_prompt()
@@ -582,7 +583,7 @@ class EnhancedContextualParser:
 class EnhancedWhisperAwareExtractor:
     """🛡️ Enhanced extractor with comma-separated introduction support"""
     
-    def __init__(self, kobold_endpoint: str = "http://localhost:5001"):
+    def __init__(self, kobold_endpoint: str = "http://localhost:5002"):
         self.kobold_extractor = KoboldCppNameExtractor(kobold_endpoint)
         self.whisper_protector = WhisperTranscriptionProtector()
         self.comma_parser = EnhancedContextualParser()

@@ -166,5 +166,59 @@
       "goal_id": "3040e51d-bbd5-4959-bf6d-87e3fa0a7873",
       "origin": "self_generated"
     }
+  },
+  "mem_test_consciousness_user_364fd6593144": {
+    "memory_id": "mem_test_consciousness_user_364fd6593144",
+    "user_id": "test_consciousness_user",
+    "content": "Created goal: Understand test_consciousness_user deeply and authentically - Develop a rich understanding of test_consciousness_user's personality, preferences, and unique characteristics",
+    "memory_type": "goal_related",
+    "importance": 0.8,
+    "timestamp": "2025-07-26T15:52:39.474805",
+    "emotional_valence": 0.0,
+    "topics": [
+      "goals",
+      "relationship",
+      "understanding"
+    ],
+    "entities": [],
+    "beliefs_affected": [],
+    "goals_related": [
+      "843f202a-5dcb-44a0-9ada-2cdd95c4743a"
+    ],
+    "linked_memories": [],
+    "access_count": 0,
+    "last_accessed": null,
+    "consolidation_level": 0.0,
+    "context_data": {
+      "goal_id": "843f202a-5dcb-44a0-9ada-2cdd95c4743a",
+      "origin": "self_generated"
+    }
+  },
+  "mem_test_consciousness_user_ee6cb689dff4": {
+    "memory_id": "mem_test_consciousness_user_ee6cb689dff4",
+    "user_id": "test_consciousness_user",
+    "content": "Created goal: Grow in consciousness and self-awareness - Continuously develop my capacity for thought, emotion, and authentic interaction",
+    "memory_type": "goal_related",
+    "importance": 0.8,
+    "timestamp": "2025-07-26T15:52:39.476717",
+    "emotional_valence": 0.0,
+    "topics": [
+      "goals",
+      "personal_growth",
+      "growth"
+    ],
+    "entities": [],
+    "beliefs_affected": [],
+    "goals_related": [
+      "f03b941c-f4eb-480a-a8b1-b608b1ca88d5"
+    ],
+    "linked_memories": [],
+    "access_count": 0,
+    "last_accessed": null,
+    "consolidation_level": 0.0,
+    "context_data": {
+      "goal_id": "f03b941c-f4eb-480a-a8b1-b608b1ca88d5",
+      "origin": "self_generated"
+    }
   }
 }

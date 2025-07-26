@@ -4,31 +4,35 @@
     "memory_ids": [
       "mem_test_consciousness_user_76743eb9f855",
       "mem_test_consciousness_user_52dd879beffc",
-      "mem_test_consciousness_user_d97cef23ff74"
+      "mem_test_consciousness_user_d97cef23ff74",
+      "mem_test_consciousness_user_364fd6593144",
+      "mem_test_consciousness_user_ee6cb689dff4"
     ],
-    "strength": 0.30000000000000004,
+    "strength": 0.5,
     "creation_time": "2025-07-19T11:28:35.793326",
-    "last_reinforced": "2025-07-19T11:28:35.799470"
+    "last_reinforced": "2025-07-26T15:52:39.476735"
   },
   "relationship": {
     "theme": "relationship",
     "memory_ids": [
       "mem_test_consciousness_user_76743eb9f855",
-      "mem_test_consciousness_user_52dd879beffc"
+      "mem_test_consciousness_user_52dd879beffc",
+      "mem_test_consciousness_user_364fd6593144"
     ],
-    "strength": 0.2,
+    "strength": 0.30000000000000004,
     "creation_time": "2025-07-19T11:28:35.793330",
-    "last_reinforced": "2025-07-19T11:28:35.798219"
+    "last_reinforced": "2025-07-26T15:52:39.474847"
   },
   "understanding": {
     "theme": "understanding",
     "memory_ids": [
       "mem_test_consciousness_user_76743eb9f855",
-      "mem_test_consciousness_user_52dd879beffc"
+      "mem_test_consciousness_user_52dd879beffc",
+      "mem_test_consciousness_user_364fd6593144"
     ],
-    "strength": 0.2,
+    "strength": 0.30000000000000004,
     "creation_time": "2025-07-19T11:28:35.793333",
-    "last_reinforced": "2025-07-19T11:28:35.798220"
+    "last_reinforced": "2025-07-26T15:52:39.474848"
   },
   "beliefs": {
     "theme": "beliefs",
@@ -120,19 +124,21 @@
   "personal_growth": {
     "theme": "personal_growth",
     "memory_ids": [
-      "mem_test_consciousness_user_d97cef23ff74"
+      "mem_test_consciousness_user_d97cef23ff74",
+      "mem_test_consciousness_user_ee6cb689dff4"
     ],
-    "strength": 0.1,
+    "strength": 0.2,
     "creation_time": "2025-07-19T11:28:35.799470",
-    "last_reinforced": "2025-07-19T11:28:35.799471"
+    "last_reinforced": "2025-07-26T15:52:39.476737"
   },
   "growth": {
     "theme": "growth",
     "memory_ids": [
-      "mem_test_consciousness_user_d97cef23ff74"
+      "mem_test_consciousness_user_d97cef23ff74",
+      "mem_test_consciousness_user_ee6cb689dff4"
     ],
-    "strength": 0.1,
+    "strength": 0.2,
     "creation_time": "2025-07-19T11:28:35.799472",
-    "last_reinforced": "2025-07-19T11:28:35.799473"
+    "last_reinforced": "2025-07-26T15:52:39.476738"
   }
 }
