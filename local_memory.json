@@ -29,6 +29,26 @@
             "source": "pattern_fallback"
           },
           "confidence": 0.6
+        },
+        {
+          "timestamp": "2025-07-26T12:28:08.065698",
+          "user_id": "test_user",
+          "text": "I love chocolate cake",
+          "memory_type": "preference",
+          "extracted_info": {
+            "classification_source": "gemma_extractor",
+            "intent": "statement",
+            "emotion": "joy",
+            "name_introduction": false,
+            "processing_time": 2.5033950805664062e-05,
+            "gemma_classification": {
+              "memory_type": "preference",
+              "intent": "statement",
+              "emotion": "joy",
+              "name_introduction": false
+            }
+          },
+          "confidence": 0.9
         }
       ],
       "facts": [
@@ -45,6 +65,41 @@
             "source": "onnx_classifier"
           },
           "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T12:28:08.067066",
+          "user_id": "test_user",
+          "text": "My name is John",
+          "memory_type": "fact",
+          "extracted_info": {
+            "classification_source": "gemma_extractor",
+            "intent": "statement",
+            "emotion": "neutral",
+            "name_introduction": true,
+            "processing_time": 1.8358230590820312e-05,
+            "gemma_classification": {
+              "memory_type": "fact",
+              "intent": "statement",
+              "emotion": "neutral",
+              "name_introduction": true
+            }
+          },
+          "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T12:28:08.067066",
+          "user_id": "test_user",
+          "text": "User's name: John",
+          "memory_type": "fact",
+          "extracted_info": {
+            "classification_source": "gemma_extractor",
+            "fact_category": "identity",
+            "names": [
+              "John"
+            ],
+            "name_introduction": true
+          },
+          "confidence": 0.95
         }
       ],
       "context": [
@@ -100,9 +155,29 @@
             "source": "local_memory_manager"
           },
           "confidence": 1.0
+        },
+        {
+          "timestamp": "2025-07-26T12:28:08.114532",
+          "user_id": "test_user",
+          "text": "I like programming",
+          "memory_type": "context",
+          "extracted_info": {
+            "classification_source": "gemma_extractor",
+            "intent": "statement",
+            "emotion": "neutral",
+            "name_introduction": false,
+            "processing_time": 1.6927719116210938e-05,
+            "gemma_classification": {
+              "memory_type": "context",
+              "intent": "statement",
+              "emotion": "neutral",
+              "name_introduction": false
+            }
+          },
+          "confidence": 0.9
         }
       ],
-      "last_activity": "2025-07-26T11:01:13.959785"
+      "last_activity": "2025-07-26T12:28:08.114532"
     },
     "TestUser": {
       "actions": [],

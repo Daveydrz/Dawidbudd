@@ -610,6 +610,27 @@ def handle_streaming_response(text, current_user):
         except Exception as debug_error:
             print(f"[AdvancedResponse] ⚠️ Debug logging error: {debug_error}")
     
+    # ✅ NEW: GEMMA EXTRACTOR - Get classification from Gemma-2-2B on CPU (port 5002)
+    classification_result = None  
+    try:
+        from ai.extractor_client import classify_message
+        classification_start = time.time()
+        classification_result = classify_message(text)
+        classification_time = time.time() - classification_start
+        print(f"[ExtractorMain] ✅ Gemma classification complete in {classification_time:.3f}s: {classification_result}")
+        
+        # Update local memory using classification (no LLM calls!)
+        try:
+            from ai import local_memory_manager
+            local_memory_manager.update_memory(current_user, text, classification_result)
+            print(f"[ExtractorMain] 📝 Local memory updated with classification")
+        except Exception as memory_error:
+            print(f"[ExtractorMain] ⚠️ Memory update error: {memory_error}")
+            
+    except Exception as extractor_error:
+        print(f"[ExtractorMain] ⚠️ Gemma extractor error: {extractor_error}")
+        # Continue with fallback processing
+    
     try:
         print(f"[AdvancedResponse] 🎭 Starting ADVANCED AI streaming for: '{text}'")
         
@@ -1121,21 +1142,24 @@ def handle_streaming_response(text, current_user):
             response_interrupted = False
             
             try:
-                # 🚀 NEW: Use optimized latency system for sub-5-second responses
+                # 🚀 NEW: Single LLM call using Gemma-classified data and minimal prompt
                 try:
-                    from ai.latency_optimizer import generate_optimized_buddy_response, LatencyOptimizationMode
-                    print("[AdvancedResponse] ⚡ Using OPTIMIZED LATENCY system with consciousness preservation")
-                    response_generator = generate_optimized_buddy_response(
-                        user_input=text,
-                        user_id=current_user,
-                        context={'cognitive_context': cognitive_prompt_injection},
-                        optimization_mode=LatencyOptimizationMode.FAST,  # Target <5 seconds
+                    from ai.llm_handler import LLMHandler
+                    print("[AdvancedResponse] ⚡ Using SINGLE LLM CALL mode with Gemma-classified memory")
+                    
+                    # Initialize LLM handler and generate response with consciousness
+                    llm_handler = LLMHandler()
+                    response_generator = llm_handler.generate_response_with_consciousness(
+                        text=text,
+                        user=current_user,
+                        context=cognitive_prompt_injection,
                         stream=True
                     )
+                    
                 except ImportError:
                     # Fallback to standard fusion system
                     from ai.chat_enhanced_smart_with_fusion import generate_response_streaming_with_intelligent_fusion
-                    print("[AdvancedResponse] ✅ Using ADVANCED AI streaming with INTELLIGENT FUSION")
+                    print("[AdvancedResponse] ⚠️ Fallback to FUSION system - LLMHandler not available")
                     response_generator = generate_response_streaming_with_intelligent_fusion(text, current_user, DEFAULT_LANG, context=cognitive_prompt_injection)
                 
                 # ✅ ADVANCED: Process LLM chunks with IMMEDIATE interrupt breaking

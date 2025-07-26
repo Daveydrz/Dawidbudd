@@ -814,6 +814,98 @@ class LocalMemoryManager:
         print(f"[LocalMemory] ONNX processing: {result['memories_extracted']} memories extracted")
         return result
     
+    def update_memory(self, user_id: str, text: str, classification_result: Dict[str, Any]):
+        """Update memory using Gemma extractor classification results"""
+        start_time = time.time()
+        
+        if not classification_result:
+            print("[LocalMemory] ⚠️ No classification result provided")
+            return
+        
+        # Extract classification results from Gemma
+        memory_type = classification_result.get("memory_type", "context")
+        intent = classification_result.get("intent", "statement")
+        emotion = classification_result.get("emotion", "neutral") 
+        name_introduction = classification_result.get("name_introduction", False)
+        
+        print(f"[LocalMemory] 🧠 Processing Gemma classification: {memory_type}/{intent}/{emotion}")
+        
+        # Create memory entry based on Gemma classification
+        timestamp = datetime.now().isoformat()
+        
+        memory_entry = MemoryEntry(
+            timestamp=timestamp,
+            user_id=user_id,
+            text=text,
+            memory_type=memory_type,
+            extracted_info={
+                "classification_source": "gemma_extractor",
+                "intent": intent,
+                "emotion": emotion,
+                "name_introduction": name_introduction,
+                "processing_time": time.time() - start_time,
+                "gemma_classification": classification_result
+            },
+            confidence=0.9  # High confidence from Gemma model
+        )
+        
+        # Store memory based on type
+        self.store_memories([memory_entry])
+        
+        # Handle name introduction if detected
+        if name_introduction and self._extract_names_from_text(text):
+            names = self._extract_names_from_text(text)
+            print(f"[LocalMemory] 👤 Name introduction detected: {names}")
+            
+            # Store name as a fact
+            name_memory = MemoryEntry(
+                timestamp=timestamp,
+                user_id=user_id,
+                text=f"User's name: {', '.join(names)}",
+                memory_type="fact",
+                extracted_info={
+                    "classification_source": "gemma_extractor",
+                    "fact_category": "identity",
+                    "names": names,
+                    "name_introduction": True
+                },
+                confidence=0.95  # Very high confidence for name extraction
+            )
+            self.store_memories([name_memory])
+        
+        processing_time = time.time() - start_time
+        print(f"[LocalMemory] ✅ Gemma memory update complete in {processing_time:.3f}s")
+        
+        return {
+            "memory_type": memory_type,
+            "intent": intent,
+            "emotion": emotion,
+            "name_introduction": name_introduction,
+            "processing_time": processing_time
+        }
+    
+    def _extract_names_from_text(self, text: str) -> List[str]:
+        """Simple name extraction from text"""
+        # Look for patterns like "I'm [Name]", "My name is [Name]", "Call me [Name]"
+        name_patterns = [
+            r"my name is (\w+)",
+            r"i'?m (\w+)",
+            r"call me (\w+)",
+            r"i'?m called (\w+)"
+        ]
+        
+        names = []
+        text_lower = text.lower()
+        
+        for pattern in name_patterns:
+            matches = re.findall(pattern, text_lower)
+            for match in matches:
+                # Capitalize first letter and add to names
+                if len(match) > 1 and match.isalpha():
+                    names.append(match.capitalize())
+        
+        return list(set(names))  # Remove duplicates
+    
     def add_interaction(self, user_id: str, user_input: str, ai_response: str):
         """Add interaction to memory"""
         timestamp = datetime.now().isoformat()
