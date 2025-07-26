@@ -593,48 +593,143 @@ def get_mic_feeding_state():
         return mic_feeding_active
 
 def handle_streaming_response(text, current_user):
-    """✅ ENHANCED: Smart streaming with ADVANCED AI ASSISTANT features + VOICE-BASED IDENTITY + FULL CONSCIOUSNESS"""
-    print(f"🚨🚨🚨 [CRITICAL_DEBUG] handle_streaming_response called with text='{text}', user='{current_user}' 🚨🚨🚨")
+    """✅ NEW ARCHITECTURE: Port separation - 5002 for consciousness, 5001 for final response"""
+    print(f"🚨🚨🚨 [NEW_ARCH] handle_streaming_response called with text='{text}', user='{current_user}' 🚨🚨🚨")
     
-    # ✅ NEW: Start cognitive debug logging
     interaction_id = None
     start_time = time.time()
+    
+    # Start cognitive debug logging if available
     if SELF_AWARENESS_COMPONENTS_AVAILABLE:
         try:
             interaction_id = cognitive_debug_logger.start_interaction(text, current_user)
-            cognitive_debug_logger.log_processing_stage("input_processing", "Starting response generation", {
+            cognitive_debug_logger.log_processing_stage("input_processing", "Starting NEW ARCHITECTURE response", {
                 "input_length": len(text),
                 "user_id": current_user,
+                "architecture": "port_separated",
                 "timestamp": datetime.now().isoformat()
             })
         except Exception as debug_error:
-            print(f"[AdvancedResponse] ⚠️ Debug logging error: {debug_error}")
+            print(f"[NEW_ARCH] ⚠️ Debug logging error: {debug_error}")
     
-    # ✅ NEW: GEMMA EXTRACTOR - Get classification from Gemma-2-2B on CPU (port 5002)
-    classification_result = None  
     try:
-        from ai.extractor_client import classify_message
-        classification_start = time.time()
-        classification_result = classify_message(text)
-        classification_time = time.time() - classification_start
-        print(f"[ExtractorMain] ✅ Gemma classification complete in {classification_time:.3f}s: {classification_result}")
+        print(f"[NEW_ARCH] 🎯 Starting PORT SEPARATED processing for: '{text}'")
         
-        # Update local memory using classification (no LLM calls!)
+        # ✅ STEP 1: Send ALL consciousness processing to PORT 5002 (Gemma)
+        print("[NEW_ARCH] 🧠 STEP 1: Processing consciousness via PORT 5002 (Gemma)")
+        consciousness_data = None
+        consciousness_processing_time = 0
+        
         try:
-            from ai import local_memory_manager
-            local_memory_manager.update_memory(current_user, text, classification_result)
-            print(f"[ExtractorMain] 📝 Local memory updated with classification")
-        except Exception as memory_error:
-            print(f"[ExtractorMain] ⚠️ Memory update error: {memory_error}")
+            from ai.extractor_client import process_full_consciousness, get_consciousness_for_prompt
+            consciousness_start = time.time()
             
-    except Exception as extractor_error:
-        print(f"[ExtractorMain] ⚠️ Gemma extractor error: {extractor_error}")
-        # Continue with fallback processing
-    
-    try:
-        print(f"[AdvancedResponse] 🎭 Starting ADVANCED AI streaming for: '{text}'")
+            # Process EVERYTHING via Gemma on port 5002
+            consciousness_data = process_full_consciousness(text, current_user)
+            consciousness_processing_time = time.time() - consciousness_start
+            
+            print(f"[NEW_ARCH] ✅ Consciousness processing complete in {consciousness_processing_time:.3f}s")
+            print(f"[NEW_ARCH] 📊 Data sections: {list(consciousness_data.keys())}")
+            
+            # Get formatted consciousness for prompt injection
+            consciousness_context = get_consciousness_for_prompt(current_user)
+            print(f"[NEW_ARCH] 📝 Consciousness context prepared ({len(consciousness_context)} chars)")
+            
+        except Exception as consciousness_error:
+            print(f"[NEW_ARCH] ❌ Consciousness processing error: {consciousness_error}")
+            consciousness_context = "BUDDY'S CONSCIOUSNESS STATE: Ready to help with friendly, empathetic responses."
         
-        # ✅ NEW: Get voice-based identity FIRST (overrides system login)
+        # ✅ STEP 2: Send ONLY final response generation to PORT 5001 (Main LLM)
+        print("[NEW_ARCH] 🚀 STEP 2: Generating response via PORT 5001 (Main LLM)")
+        
+        try:
+            from ai.simple_llm_handler import generate_response_with_consciousness
+            from audio.smart_streaming_output import speak_streaming_smart, reset_streaming_output, finalize_streaming_output
+            
+            print("[NEW_ARCH] ⚡ Using SINGLE LLM CALL via Simple LLM Handler + Smart Streaming")
+            
+            # Reset smart streaming for new response
+            reset_streaming_output()
+            
+            full_response = ""
+            chunk_count = 0
+            response_interrupted = False
+            
+            # Generate response using ONLY port 5001 with consciousness injection
+            for chunk in generate_response_with_consciousness(text, current_user, consciousness_context):
+                # Check for interrupt
+                if full_duplex_manager and full_duplex_manager.speech_interrupted:
+                    print("[NEW_ARCH] ⚡ INTERRUPT DETECTED - STOPPING RESPONSE")
+                    response_interrupted = True
+                    break
+                
+                if chunk and chunk.strip():
+                    chunk_text = chunk.strip()
+                    chunk_count += 1
+                    
+                    # Determine if this is the final chunk (simple heuristic)
+                    is_final = False  # We'll set this properly when the loop ends
+                    
+                    # Use smart streaming (automatically handles 30-50% threshold)
+                    spoke = speak_streaming_smart(chunk_text, is_final)
+                    if spoke:
+                        print(f"[NEW_ARCH] 🎵 Smart streaming: Chunk {chunk_count} triggered speech")
+                    
+                    full_response += chunk_text + " "
+                    
+                    # Check for interrupt after speech queuing
+                    if full_duplex_manager and full_duplex_manager.speech_interrupted:
+                        print("[NEW_ARCH] ⚡ INTERRUPT AFTER SMART STREAMING")
+                        response_interrupted = True
+                        break
+                    
+                    # Brief pause for natural flow
+                    if not (full_duplex_manager and full_duplex_manager.speech_interrupted):
+                        time.sleep(0.05)
+            
+            # Finalize any remaining chunks
+            if not response_interrupted:
+                finalize_streaming_output()
+            
+            total_time = time.time() - start_time
+            
+            if not response_interrupted and full_response.strip():
+                # Add to conversation history
+                add_to_conversation_history(current_user, text, full_response.strip())
+                
+                print(f"[NEW_ARCH] ✅ PORT SEPARATED response complete:")
+                print(f"[NEW_ARCH] 📊 Consciousness time: {consciousness_processing_time:.3f}s")
+                print(f"[NEW_ARCH] 📊 Total time: {total_time:.3f}s")
+                print(f"[NEW_ARCH] 📊 Chunks processed: {chunk_count}")
+                print(f"[NEW_ARCH] 🎵 Smart streaming prevented Kokoro overwhelm")
+                
+                # Log performance stats
+                if interaction_id:
+                    cognitive_debug_logger.log_processing_stage("response_complete", "New architecture complete", {
+                        "consciousness_time": consciousness_processing_time,
+                        "total_time": total_time,
+                        "chunks": chunk_count,
+                        "smart_streaming": True,
+                        "kokoro_protected": True
+                    })
+                    cognitive_debug_logger.finish_interaction(full_response.strip(), total_time)
+            
+            return  # ✅ Exit with new architecture
+            
+        except ImportError as llm_error:
+            print(f"[NEW_ARCH] ❌ Simple LLM Handler not available: {llm_error}")
+            print("[NEW_ARCH] 🔄 Falling back to existing system")
+        
+        except Exception as llm_error:
+            print(f"[NEW_ARCH] ❌ LLM generation error: {llm_error}")
+            print("[NEW_ARCH] 🔄 Falling back to existing system")
+        
+        # ✅ FALLBACK: Use existing system if new architecture fails
+        print("[NEW_ARCH] 🔄 Using FALLBACK to existing streaming system")
+        
+        # Continue with existing code below as fallback...
+        
+        # ✅ Enhanced voice-based identity processing (existing code)
         voice_identified_user = None
         try:
             # STEP 1: Check if current_user is a cluster ID

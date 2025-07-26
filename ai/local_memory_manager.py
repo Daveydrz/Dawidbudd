@@ -14,38 +14,8 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, asdict
 
-# Import all ONNX classifiers
-try:
-    from ai.memory_classifier import classify_memory_type, classify_memory_type_with_confidence, get_classifier_stats
-    MEMORY_CLASSIFIER_AVAILABLE = True
-    print("[LocalMemory] 🧠 ONNX memory classifier loaded")
-except ImportError as e:
-    MEMORY_CLASSIFIER_AVAILABLE = False
-    print(f"[LocalMemory] ⚠️ Memory classifier not available: {e}")
-
-try:
-    from ai.intent_classifier import classify_intent, classify_intent_with_confidence, get_intent_classifier_stats
-    INTENT_CLASSIFIER_AVAILABLE = True
-    print("[LocalMemory] 🎯 ONNX intent classifier loaded")
-except ImportError as e:
-    INTENT_CLASSIFIER_AVAILABLE = False
-    print(f"[LocalMemory] ⚠️ Intent classifier not available: {e}")
-
-try:
-    from ai.emotion_classifier import classify_emotion, classify_emotion_with_confidence, get_emotion_classifier_stats
-    EMOTION_CLASSIFIER_AVAILABLE = True
-    print("[LocalMemory] 😊 ONNX emotion classifier loaded")
-except ImportError as e:
-    EMOTION_CLASSIFIER_AVAILABLE = False
-    print(f"[LocalMemory] ⚠️ Emotion classifier not available: {e}")
-
-try:
-    from ai.name_classifier import classify_name, classify_name_with_confidence, extract_names_from_text, get_name_classifier_stats
-    NAME_CLASSIFIER_AVAILABLE = True
-    print("[LocalMemory] 👤 ONNX name classifier loaded")
-except ImportError as e:
-    NAME_CLASSIFIER_AVAILABLE = False
-    print(f"[LocalMemory] ⚠️ Name classifier not available: {e}")
+# Note: ONNX classifiers moved to Gemma-2-2B processing on port 5002
+# All classification now handled via ai.extractor_client
 
 @dataclass
 class MemoryEntry:
@@ -814,23 +784,27 @@ class LocalMemoryManager:
         print(f"[LocalMemory] ONNX processing: {result['memories_extracted']} memories extracted")
         return result
     
-    def update_memory(self, user_id: str, text: str, classification_result: Dict[str, Any]):
-        """Update memory using Gemma extractor classification results"""
+    def update_memory(self, user_id: str, text: str, consciousness_data: Dict[str, Any]):
+        """Update memory using full consciousness data from Gemma extractor (port 5002)"""
         start_time = time.time()
         
-        if not classification_result:
-            print("[LocalMemory] ⚠️ No classification result provided")
+        if not consciousness_data:
+            print("[LocalMemory] ⚠️ No consciousness data provided")
             return
         
-        # Extract classification results from Gemma
-        memory_type = classification_result.get("memory_type", "context")
-        intent = classification_result.get("intent", "statement")
-        emotion = classification_result.get("emotion", "neutral") 
-        name_introduction = classification_result.get("name_introduction", False)
+        # Extract classification from consciousness data
+        classification = consciousness_data.get("classification", {})
+        memory_type = classification.get("memory_type", "context")
+        intent = classification.get("intent", "statement")
+        emotion = classification.get("emotion", "neutral") 
+        name_introduction = classification.get("name_introduction", False)
         
-        print(f"[LocalMemory] 🧠 Processing Gemma classification: {memory_type}/{intent}/{emotion}")
+        # Extract memory updates from consciousness processing
+        memory_updates = consciousness_data.get("memory_updates", {})
         
-        # Create memory entry based on Gemma classification
+        print(f"[LocalMemory] 🧠 Processing full consciousness data: {memory_type}/{intent}/{emotion}")
+        
+        # Create memory entry with full consciousness context
         timestamp = datetime.now().isoformat()
         
         memory_entry = MemoryEntry(
@@ -839,14 +813,17 @@ class LocalMemoryManager:
             text=text,
             memory_type=memory_type,
             extracted_info={
-                "classification_source": "gemma_extractor",
+                "classification_source": "gemma_consciousness_processor",
                 "intent": intent,
                 "emotion": emotion,
                 "name_introduction": name_introduction,
-                "processing_time": time.time() - start_time,
-                "gemma_classification": classification_result
+                "consciousness_data": consciousness_data,
+                "memory_updates": memory_updates,
+                "emotional_state": consciousness_data.get("emotional_state", {}),
+                "consciousness_state": consciousness_data.get("consciousness_state", {}),
+                "processing_time": time.time() - start_time
             },
-            confidence=0.9  # High confidence from Gemma model
+            confidence=0.95  # Very high confidence from full consciousness processing
         )
         
         # Store memory based on type
