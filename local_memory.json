@@ -16,6 +16,19 @@
             "source": "onnx_classifier"
           },
           "confidence": 0.7
+        },
+        {
+          "timestamp": "2025-07-26T11:00:26.110740",
+          "user_id": "test_user",
+          "text": "I like pizza",
+          "memory_type": "preference",
+          "extracted_info": {
+            "sentiment": "like",
+            "subject": "pizza",
+            "pattern": "i (like|love|prefer|enjoy) (.+)",
+            "source": "pattern_fallback"
+          },
+          "confidence": 0.6
         }
       ],
       "facts": [
@@ -60,9 +73,36 @@
             "source": "onnx_classifier"
           },
           "confidence": 0.9
+        },
+        {
+          "timestamp": "2025-07-26T11:00:58.091653",
+          "user_id": "test_user",
+          "text": "Hello, how are you?",
+          "memory_type": "context",
+          "extracted_info": {
+            "topic": "general",
+            "length": 4,
+            "question": true,
+            "source": "general_fallback"
+          },
+          "confidence": 0.5
+        },
+        {
+          "timestamp": "2025-07-26T11:01:13.959785",
+          "user_id": "test_user",
+          "text": "User said: Hello, how are you?. Buddy replied: I'm having trouble connecting to my processing systems right now....",
+          "memory_type": "context",
+          "extracted_info": {
+            "context_type": "interaction",
+            "user_input": "Hello, how are you?",
+            "ai_response": "I'm having trouble connecting to my processing systems right now.",
+            "interaction_timestamp": "2025-07-26T11:01:13.959785",
+            "source": "local_memory_manager"
+          },
+          "confidence": 1.0
         }
       ],
-      "last_activity": "2025-07-26T10:26:55.181160"
+      "last_activity": "2025-07-26T11:01:13.959785"
     },
     "TestUser": {
       "actions": [],

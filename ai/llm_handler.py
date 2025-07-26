@@ -13,86 +13,6 @@ import os
 from typing import Dict, List, Any, Optional, Tuple, Generator
 from datetime import datetime
 
-# Import all the new modules
-try:
-    # Try relative imports first (when run from ai/ directory)
-    from consciousness_tokenizer import (
-        consciousness_tokenizer, 
-        tokenize_consciousness_for_llm,
-        get_consciousness_summary_for_llm,
-        update_consciousness_tokens,
-        generate_personality_tokens,
-        compress_memory_entry,
-        trim_tokens_to_budget
-    )
-    from llm_budget_monitor import (
-        budget_monitor,
-        check_llm_budget_before_request,
-        log_llm_usage,
-        get_budget_status,
-        estimate_tokens_from_text
-    )
-    from belief_analyzer import (
-        belief_analyzer,
-        analyze_user_text_for_beliefs,
-        get_user_belief_summary,
-        get_active_belief_contradictions
-    )
-    from personality_state import (
-        personality_state,
-        analyze_user_text_for_personality_adaptation,
-        get_personality_for_response,
-        get_personality_modifiers_for_llm
-    )
-    from semantic_tagging import (
-        semantic_tagger,
-        analyze_content_semantics,
-        get_semantic_tags_for_llm,
-        analyze_text_semantic_full
-    )
-    NEW_MODULES_AVAILABLE = True
-except ImportError:
-    try:
-        # Try absolute imports (when run from main directory)
-        from ai.consciousness_tokenizer import (
-            consciousness_tokenizer, 
-            tokenize_consciousness_for_llm,
-            get_consciousness_summary_for_llm,
-            update_consciousness_tokens,
-            generate_personality_tokens,
-            compress_memory_entry,
-            trim_tokens_to_budget
-        )
-        from ai.llm_budget_monitor import (
-            budget_monitor,
-            check_llm_budget_before_request,
-            log_llm_usage,
-            get_budget_status,
-            estimate_tokens_from_text
-        )
-        from ai.belief_analyzer import (
-            belief_analyzer,
-            analyze_user_text_for_beliefs,
-            get_user_belief_summary,
-            get_active_belief_contradictions
-        )
-        from ai.personality_state import (
-            personality_state,
-            analyze_user_text_for_personality_adaptation,
-            get_personality_for_response,
-            get_personality_modifiers_for_llm
-        )
-        from ai.semantic_tagging import (
-            semantic_tagger,
-            analyze_content_semantics,
-            get_semantic_tags_for_llm,
-            analyze_text_semantic_full
-        )
-        NEW_MODULES_AVAILABLE = True
-    except ImportError as e:
-        print(f"[LLMHandler] ❌ New modules not available: {e}")
-        NEW_MODULES_AVAILABLE = False
-
 # Import existing components
 try:
     from chat_enhanced_smart_with_fusion import generate_response_streaming_with_intelligent_fusion
@@ -138,34 +58,8 @@ except ImportError:
         CONSCIOUSNESS_AVAILABLE = False
         print("[LLMHandler] ⚠️ Consciousness architecture not fully available")
 
-# Import background processing for speed optimization
-try:
-    from background_consciousness_processor import (
-        background_processor,
-        start_background_processing,
-        schedule_background_thoughts,
-        register_consciousness_modules,
-        get_background_processing_stats
-    )
-    BACKGROUND_PROCESSING_AVAILABLE = True
-    print("[LLMHandler] ⚡ Background consciousness processing available")
-except ImportError:
-    try:
-        from ai.background_consciousness_processor import (
-            background_processor,
-            start_background_processing,
-            schedule_background_thoughts,
-            register_consciousness_modules,
-            get_background_processing_stats
-        )
-        BACKGROUND_PROCESSING_AVAILABLE = True
-        print("[LLMHandler] ⚡ Background consciousness processing available")
-    except ImportError:
-        BACKGROUND_PROCESSING_AVAILABLE = False
-        print("[LLMHandler] ⚠️ Background consciousness processing not available")
-
 # Set consciousness modules availability flag based on what we have
-CONSCIOUSNESS_MODULES_AVAILABLE = NEW_MODULES_AVAILABLE or CONSCIOUSNESS_AVAILABLE
+CONSCIOUSNESS_MODULES_AVAILABLE = CONSCIOUSNESS_AVAILABLE
 
 class LLMHandler:
     """Centralized LLM handler with full consciousness integration"""
@@ -180,142 +74,47 @@ class LLMHandler:
         self.max_context_tokens = 3000
         self.response_temperature = 0.7
         
-        # Background processing mode flag
-        self.background_processing_enabled = BACKGROUND_PROCESSING_AVAILABLE
+        # Background processing mode flag - disabled for single LLM call mode
+        self.background_processing_enabled = False
         
-        print("[LLMHandler] 🧠 Initialized with consciousness integration")
-        
-        # Start background processing if available
-        if self.background_processing_enabled:
-            start_background_processing()
-            print("[LLMHandler] ⚡ Background consciousness processing started")
-        
-        if NEW_MODULES_AVAILABLE:
-            print(f"[LLMHandler] ✅ Consciousness tokenizer: Available")
-            print(f"[LLMHandler] 💰 Budget monitor: Available")
-            print(f"[LLMHandler] 🧠 Belief analyzer: Available")
-            print(f"[LLMHandler] 🎭 Personality state: Available")
-            print(f"[LLMHandler] 🏷️ Semantic tagging: Available")
-        else:
-            print(f"[LLMHandler] ❌ New modules not available - using basic mode")
-            
+        print("[LLMHandler] 🧠 Initialized - Single LLM call mode")
         print(f"[LLMHandler] 🌟 Consciousness arch: {'Available' if CONSCIOUSNESS_AVAILABLE else 'Limited'}")
         print(f"[LLMHandler] 🔧 Fusion LLM: {'Available' if FUSION_LLM_AVAILABLE else 'Fallback'}")
-        print(f"[LLMHandler] ⚡ Background processing: {'Enabled' if self.background_processing_enabled else 'Disabled'}")
+        print(f"[LLMHandler] ⚡ Single LLM call optimization: Enabled")
         
     def process_user_input(self, text: str, user: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
         """
-        EMERGENCY LIGHTWEIGHT PROCESSING - Minimal analysis for immediate response
-        Heavy analysis moved to background processing to prevent 33+ second delays
+        SIMPLIFIED: Minimal user input processing - all heavy analysis moved to local ONNX
         """
         analysis_start = time.time()
         
         try:
-            print(f"[LLMHandler] ⚡ EMERGENCY LIGHTWEIGHT processing: '{text[:50]}...'")
+            print(f"[LLMHandler] ⚡ Minimal processing: '{text[:50]}...'")
             
-            # Sanitize input first (minimal processing)
+            # Sanitize input first (essential for security)
             sanitized_text = self.sanitize_prompt_input(text, user)
             
-            # ✅ EMERGENCY: Skip heavy analysis modules that were causing 33s delays
-            if not NEW_MODULES_AVAILABLE:
-                return {
-                    "error": "New modules not available",
-                    "budget": {"allowed": True, "message": "Basic mode - no budget limits"}
-                }
-            
-            # ✅ LIGHTWEIGHT: Only essential budget check
-            estimated_tokens = 500  # Conservative estimate
-            budget_allowed = True  # Skip heavy budget analysis
-            budget_message = "Lightweight mode - fast response"
-            
-            # ✅ MINIMAL: Skip heavy semantic analysis
-            semantic_analysis_lightweight = {
-                "emotional_tone": "neutral",
-                "complexity": "simple",
-                "intent": ["conversation"]
-            }
-            
-            # ✅ MINIMAL: Skip heavy belief analysis  
-            belief_analysis_lightweight = {
-                "extracted_beliefs": [],
-                "new_contradictions": [],
-                "enhanced_contradictions": []
-            }
-            
-            # ✅ MINIMAL: Skip heavy personality analysis
-            personality_lightweight = {
-                "current_traits": {"helpful": True, "friendly": True},
-                "modifiers": "helpful friendly",
-                "adaptations_made": False
-            }
-            
-            # ✅ MINIMAL: Ultra-lightweight consciousness
-            consciousness_context = "[CONSCIOUSNESS:engaged helpful focused]"
-            consciousness_summary = "[CONSCIOUSNESS:engaged helpful focused]"
+            # Use local ONNX processing instead of heavy analysis
+            self._process_user_input_locally(sanitized_text, user)
             
             processing_time = time.time() - analysis_start
             
-            # ✅ BACKGROUND: Schedule heavy analysis in background thread
-            self._schedule_background_heavy_analysis(sanitized_text, user, context)
-            
+            # Return minimal analysis result
             analysis_result = {
-                "semantic": {
-                    "analysis": semantic_analysis_lightweight,
-                    "tags": [],
-                    "categories": [],
-                    "intent": ["conversation"],
-                    "emotional_tone": "neutral",
-                    "complexity": "simple"
-                },
-                "beliefs": {
-                    "analysis": belief_analysis_lightweight,
-                    "user_summary": {},
-                    "contradictions": [],
-                    "extracted_beliefs": [],
-                    "new_contradictions": [],
-                    "enhanced_contradictions": []
-                },
-                "personality": {
-                    "triggers": [],
-                    "current_traits": personality_lightweight["current_traits"],
-                    "modifiers": personality_lightweight["modifiers"],
-                    "adaptations_made": False
-                },
-                "consciousness": {
-                    "available": True,
-                    "context": consciousness_context,
-                    "summary": consciousness_summary,
-                    "token_count": len(consciousness_context.split()),
-                    "cross_system_integration": False,  # Deferred to background
-                    "simulation_mode": False,
-                    "lightweight_mode": True
-                },
                 "budget": {
-                    "allowed": budget_allowed,
-                    "message": budget_message,
-                    "estimated_tokens": estimated_tokens,
-                    "usage_percentage": 0.0,  # Skip heavy calculation
-                    "cost_estimate": 0.0,  # Skip heavy calculation
-                    "optimization_target": "emergency_fast"
-                },
-                "memory": {
-                    "significant_context": "",
-                    "recent_interactions": [],
-                    "compressed": True
+                    "allowed": True,
+                    "message": "Single LLM call mode - no budget limits",
+                    "estimated_tokens": self.estimate_tokens_from_text(sanitized_text) + 200
                 },
                 "meta": {
                     "processing_time": processing_time,
                     "timestamp": datetime.now().isoformat(),
-                    "analysis_version": "3.0_emergency_lightweight",
-                    "token_optimization_enabled": True,
-                    "cross_system_integration": False,  # Deferred to background
-                    "lightweight_mode": True,
-                    "background_processing_scheduled": True
+                    "analysis_version": "4.0_single_llm_call_mode",
+                    "onnx_processing_used": True
                 }
             }
             
-            print(f"[LLMHandler] ⚡ EMERGENCY LIGHTWEIGHT analysis complete in {processing_time:.3f}s")
-            print(f"[LLMHandler] 🚀 Heavy analysis scheduled for background processing")
+            print(f"[LLMHandler] ⚡ Minimal analysis complete in {processing_time:.3f}s")
             
             return analysis_result
             
@@ -325,211 +124,39 @@ class LLMHandler:
                 "error": str(e),
                 "budget": {"allowed": False, "message": "Processing error"}
             }
+
     
-    def _schedule_background_heavy_analysis(self, text: str, user: str, context: Dict[str, Any] = None):
-        """Schedule heavy analysis in background thread to prevent blocking user response"""
-        import threading
-        
-        def background_heavy_analysis():
-            """Execute heavy analysis in background"""
-            try:
-                print(f"[LLMHandler] 🔄 Starting background heavy analysis")
-                analysis_start = time.time()
-                
-                # Perform all the heavy analysis that was causing 33s delays
-                try:
-                    # 1. Full semantic analysis
-                    semantic_analysis = analyze_text_semantic_full(text, user, context)
-                    semantic_tags = get_semantic_tags_for_llm(text, user)
-                    print(f"[LLMHandler] 🏷️ Background semantic analysis completed")
-                except Exception as e:
-                    print(f"[LLMHandler] ⚠️ Background semantic analysis error: {e}")
-                
-                try:
-                    # 2. Full belief analysis
-                    belief_analysis = analyze_user_text_for_beliefs(text, user, context)
-                    user_beliefs = get_user_belief_summary(user)
-                    active_contradictions = get_active_belief_contradictions()
-                    print(f"[LLMHandler] 🧠 Background belief analysis completed")
-                except Exception as e:
-                    print(f"[LLMHandler] ⚠️ Background belief analysis error: {e}")
-                
-                try:
-                    # 3. Full personality adaptation
-                    personality_triggers = analyze_user_text_for_personality_adaptation(text, user)
-                    current_personality = get_personality_for_response(user)
-                    personality_modifiers = get_personality_modifiers_for_llm(user)
-                    print(f"[LLMHandler] 🎭 Background personality analysis completed")
-                except Exception as e:
-                    print(f"[LLMHandler] ⚠️ Background personality analysis error: {e}")
-                
-                try:
-                    # 4. Full consciousness state integration
-                    if CONSCIOUSNESS_AVAILABLE:
-                        consciousness_systems = self._gather_consciousness_state()
-                        consciousness_context = tokenize_consciousness_for_llm(consciousness_systems)
-                        update_consciousness_tokens(consciousness_systems)
-                        print(f"[LLMHandler] 🧠 Background consciousness integration completed")
-                except Exception as e:
-                    print(f"[LLMHandler] ⚠️ Background consciousness integration error: {e}")
-                
-                try:
-                    # 5. Full budget check
-                    estimated_tokens = estimate_tokens_from_text(text) + 500
-                    budget_allowed, budget_message = check_llm_budget_before_request(
-                        estimated_tokens, self.default_model, user
-                    )
-                    budget_status = get_budget_status()
-                    print(f"[LLMHandler] 💰 Background budget analysis completed")
-                except Exception as e:
-                    print(f"[LLMHandler] ⚠️ Background budget analysis error: {e}")
-                
-                processing_time = time.time() - analysis_start
-                print(f"[LLMHandler] ✅ Background heavy analysis completed in {processing_time:.3f}s")
-                
-            except Exception as e:
-                print(f"[LLMHandler] ❌ Background heavy analysis error: {e}")
-        
-        # Start background thread
-        background_thread = threading.Thread(target=background_heavy_analysis, daemon=True)
-        background_thread.start()
-        print(f"[LLMHandler] 🚀 Background heavy analysis scheduled")
-    
-    def generate_immediate_response_with_background_consciousness(
-        self,
-        text: str,
-        user: str,
-        context: Dict[str, Any] = None,
-        stream: bool = True
-    ) -> Generator[str, None, None]:
-        """
-        ⚡ NEW: Generate immediate user response, defer consciousness processing to background
-        
-        This method prioritizes instant user responses (<5 seconds) while maintaining
-        Class 5+ consciousness by processing internal modules in background after response.
-        
-        Args:
-            text: User input text
-            user: User identifier  
-            context: Optional conversation context
-            stream: Whether to stream response chunks
-            
-        Yields response chunks immediately, schedules consciousness processing for background
-        """
+    def _build_minimal_prompt(self, text: str, user: str, context: Dict[str, Any] = None) -> str:
+        """Build minimal prompt with only facts, preferences, context + user question"""
         try:
-            response_start_time = time.time()
-            print(f"[LLMHandler] ⚡ IMMEDIATE RESPONSE MODE: Generating instant reply for '{text[:30]}...'")
+            # Get facts, preferences, context from local memory
+            from ai.local_memory_manager import LocalMemoryManager
+            memory_manager = LocalMemoryManager()
             
-            # 1. ☝ PRIORITIZE USER REPLY FIRST - Minimal processing for immediate response
+            facts = memory_manager.get_user_facts(user)
+            preferences = memory_manager.get_user_preferences(user) 
+            recent_context = memory_manager.get_recent_context(user, limit=3)
             
-            # Basic input sanitization (essential for security)
-            sanitized_text = self.sanitize_prompt_input(text, user)
+            # Format lists as strings
+            facts_str = ", ".join(facts) if facts else "none"
+            preferences_str = ", ".join(preferences) if preferences else "none"
+            context_str = ", ".join(recent_context) if recent_context else "none"
             
-            # Quick budget check only (no complex analysis)
-            if NEW_MODULES_AVAILABLE:
-                estimated_tokens = estimate_tokens_from_text(sanitized_text) + 200
-                budget_allowed, budget_message = check_llm_budget_before_request(
-                    estimated_tokens, self.default_model, user
-                )
-                if not budget_allowed:
-                    yield f"I'm sorry, I've reached my usage limit. {budget_message}"
-                    return
+            # Build simple prompt
+            prompt = (
+                "Buddy is a helpful, empathetic AI assistant.\n"
+                f"Facts: {facts_str}\n"
+                f"Preferences: {preferences_str}\n"
+                f"Context: {context_str}\n"
+                f"User: {text}"
+            )
             
-            # 2. 📦 KEEP CONTEXT LIGHT - Only essential context for immediate response
-            light_prompt = self._build_light_prompt_for_immediate_response(sanitized_text, user, context)
-            
-            print(f"[LLMHandler] 🏃‍♂️ Light prompt ready: {len(light_prompt)} chars")
-            
-            # 3. Generate immediate response without consciousness processing delays
-            full_response = ""
-            chunk_count = 0
-            
-            if FUSION_LLM_AVAILABLE:
-                # Use fusion LLM but with minimal context
-                response_generator = generate_response_streaming_with_intelligent_fusion(
-                    light_prompt, user, "en", context={}  # Empty context for speed
-                )
-            else:
-                # Fallback to basic LLM
-                response_generator = generate_response_streaming(light_prompt, user, "en")
-            
-            # Stream response immediately
-            for chunk in response_generator:
-                if chunk and chunk.strip():
-                    chunk_text = chunk.strip()
-                    full_response += chunk_text + " "
-                    chunk_count += 1
-                    yield chunk_text
-            
-            response_time = time.time() - response_start_time
-            print(f"[LLMHandler] ⚡ IMMEDIATE RESPONSE COMPLETE: {response_time:.3f}s, {chunk_count} chunks")
-            
-            # 4. 🧠 DEFER CONSCIOUSNESS PROCESSING - Schedule for background after response
-            if self.background_processing_enabled and full_response.strip():
-                try:
-                    # Register consciousness modules if not done already
-                    if CONSCIOUSNESS_AVAILABLE:
-                        consciousness_modules = self._gather_consciousness_state()
-                        register_consciousness_modules(consciousness_modules)
-                    
-                    # Schedule background processing with delay for idle detection
-                    schedule_background_thoughts(
-                        user_input=sanitized_text,
-                        user_id=user,
-                        response=full_response.strip(),
-                        delay=3.0  # Wait 3 seconds for system to be idle
-                    )
-                    
-                    print(f"[LLMHandler] 📋 Scheduled background consciousness processing")
-                    
-                except Exception as bg_error:
-                    print(f"[LLMHandler] ⚠️ Background scheduling error (non-critical): {bg_error}")
-            
-            # Update basic session statistics
-            self.request_count += 1
-            if NEW_MODULES_AVAILABLE:
-                input_tokens = estimate_tokens_from_text(light_prompt)
-                output_tokens = estimate_tokens_from_text(full_response)
-                usage = log_llm_usage(input_tokens, output_tokens, self.default_model, user, "immediate_response")
-                self.total_tokens_used += usage.total_tokens
-            
-            print(f"[LLMHandler] ✅ User prioritized response delivered in {response_time:.3f}s")
+            return prompt
             
         except Exception as e:
-            print(f"[LLMHandler] ❌ Error in immediate response: {e}")
-            # 🛡️ FAIL-SAFE: Never block user if modules crash
-            yield f"I apologize, but I encountered an error while processing your request."
-            
-    def _build_light_prompt_for_immediate_response(self, text: str, user: str, context: Dict[str, Any] = None) -> str:
-        """Build minimal prompt for immediate response without heavy consciousness processing"""
-        try:
-            # Ultra-light prompt for maximum speed
-            prompt_parts = []
-            
-            # Minimal system instruction
-            prompt_parts.append("Buddy: Helpful AI assistant. Be warm, concise, and helpful.")
-            
-            # User input (essential)
-            prompt_parts.append(f"User: {text}")
-            
-            # Minimal context if available and critical
-            if context and context.get("critical_context"):
-                critical_context = str(context["critical_context"])[:100]  # Max 100 chars
-                prompt_parts.append(f"Context: {critical_context}")
-            
-            light_prompt = "\n".join(prompt_parts)
-            
-            # Ensure it's within reasonable token limits for speed
-            if self.estimate_tokens_from_text(light_prompt) > 500:
-                # Ultra-minimal fallback
-                light_prompt = f"Buddy: AI assistant.\nUser: {text}"
-            
-            return light_prompt
-            
-        except Exception as e:
-            print(f"[LLMHandler] ⚠️ Error building light prompt: {e}")
+            print(f"[LLMHandler] ⚠️ Error building minimal prompt: {e}")
             # Ultimate fallback
-            return f"User: {text}"
+            return f"Buddy is a helpful AI assistant.\nUser: {text}"
             
     def generate_response_with_consciousness(
         self, 
@@ -540,145 +167,67 @@ class LLMHandler:
         use_optimization: bool = True
     ) -> Generator[str, None, None]:
         """
-        Generate response with consciousness integration and latency optimization
+        Generate response with minimal single LLM call - consciousness runs locally
         
         Args:
             text: User input text
             user: User identifier
             context: Optional conversation context
             stream: Whether to stream response chunks
-            use_optimization: Whether to use latency optimization (default: True)
+            use_optimization: Ignored - always uses single LLM call
         
         Yields response chunks if streaming, otherwise returns complete response
         """
         try:
-            # 🚀 NEW LATENCY OPTIMIZATION SYSTEM
-            if use_optimization:
-                try:
-                    from ai.latency_optimizer import generate_optimized_buddy_response
-                    print(f"[LLMHandler] ⚡ Using optimized response generation")
-                    yield from generate_optimized_buddy_response(
-                        user_input=text,
-                        user_id=user,
-                        context=context,
-                        stream=stream
-                    )
-                    return
-                except ImportError:
-                    print(f"[LLMHandler] ⚠️ Latency optimizer not available, using standard processing")
-                except Exception as e:
-                    print(f"[LLMHandler] ⚠️ Optimization error, falling back to standard: {e}")
+            print(f"[LLMHandler] ⚡ Single LLM call mode: '{text[:30]}...'")
             
-            # FALLBACK: Original consciousness system (for compatibility)
-            print(f"[LLMHandler] 🔄 Using standard consciousness processing")
+            # 1. Use ONNX classifiers for local processing (no LLM calls)
+            self._process_user_input_locally(text, user)
             
-            # ✅ 8K CONTEXT WINDOW MANAGEMENT: Check if rollover needed before processing
-            current_context = context.get("current_context", "") if context else ""
+            # 2. Build minimal prompt with only facts/preferences/context
+            minimal_prompt = self._build_minimal_prompt(text, user, context)
             
-            # Import context window manager
-            try:
-                from ai.context_window_manager import check_context_window_rollover, create_context_snapshot_for_user
-                needs_rollover, fresh_context = check_context_window_rollover(user, current_context, text)
-                
-                if needs_rollover:
-                    print(f"[LLMHandler] 🔄 Context window rollover triggered for {user}")
-                    
-                    # Create snapshot of current state
-                    conversation_history = context.get("conversation_history", []) if context else []
-                    working_memory = context.get("working_memory", {}) if context else {}
-                    
-                    snapshot_created = create_context_snapshot_for_user(
-                        user, current_context, working_memory, conversation_history
-                    )
-                    
-                    if snapshot_created:
-                        print(f"[LLMHandler] 📸 Context snapshot created - seamless continuation enabled")
-                        # Update context to use fresh compressed context
-                        if context:
-                            context["current_context"] = fresh_context
-                            context["context_rollover_occurred"] = True
-                        else:
-                            context = {"current_context": fresh_context, "context_rollover_occurred": True}
-                    else:
-                        print(f"[LLMHandler] ⚠️ Context snapshot failed - proceeding with compression")
-                
-            except ImportError:
-                print(f"[LLMHandler] ⚠️ Context window manager not available - using standard processing")
+            print(f"[LLMHandler] 🎯 Minimal prompt ready: {len(minimal_prompt)} chars")
             
-            # Process user input through systems (simplified for fallback)
-            analysis = self.process_user_input(text, user, context)
-            
-            # Check if request is allowed
-            if not analysis.get("budget", {}).get("allowed", False):
-                budget_message = analysis.get("budget", {}).get("message", "Budget exceeded")
-                yield f"I'm sorry, but I've reached my usage limit. {budget_message}"
-                return
-            
-            # Build enhanced prompt with consciousness context (now includes rollover handling)
-            enhanced_prompt = self._build_enhanced_prompt(text, user, analysis, context)
-            
-            print(f"[LLMHandler] 🎯 Generating response with consciousness integration")
-            print(f"[LLMHandler] 📊 Enhanced prompt length: {len(enhanced_prompt)} characters")
-            
-            # Check for context rollover notification
-            if context and context.get("context_rollover_occurred"):
-                print(f"[LLMHandler] ✅ Context window rollover completed - conversation continuity maintained")
-            
-            # Track token usage start
-            input_tokens = estimate_tokens_from_text(enhanced_prompt)
-            output_tokens = 0
+            # 3. Single LLM call using appropriate system
             generation_start = time.time()
             
-            # Generate response using appropriate LLM
             if FUSION_LLM_AVAILABLE:
-                # Pass cognitive context to advanced function
-                cognitive_context = {
-                    "cognitive_state": analysis.get("consciousness", {}),
-                    "personality": analysis.get("personality", {}),
-                    "memory_context": analysis.get("memory", {})
-                }
                 response_generator = generate_response_streaming_with_intelligent_fusion(
-                    enhanced_prompt, user, "en", context=cognitive_context
+                    minimal_prompt, user, "en", context={}
                 )
             else:
-                # Fallback: basic streaming with enhanced prompt (includes cognitive context)
-                response_generator = generate_response_streaming(enhanced_prompt, user, "en")
+                # Fallback to basic LLM
+                try:
+                    from ai.chat import generate_response_streaming
+                    response_generator = generate_response_streaming(minimal_prompt, user, "en")
+                except ImportError:
+                    # Ultimate fallback
+                    yield f"I apologize, but the response system is not available."
+                    return
             
             full_response = ""
             
-            # Stream response while tracking tokens
+            # Stream response while collecting full response
             for chunk in response_generator:
                 if chunk and chunk.strip():
                     chunk_text = chunk.strip()
                     full_response += chunk_text + " "
-                    output_tokens += estimate_tokens_from_text(chunk_text)
                     yield chunk_text
             
             generation_time = time.time() - generation_start
             
-            # Log usage
-            usage = log_llm_usage(
-                input_tokens, 
-                output_tokens, 
-                self.default_model, 
-                user, 
-                "consciousness_integrated_chat"
-            )
-            
-            # Update consciousness state with interaction
-            if CONSCIOUSNESS_AVAILABLE:
-                self._update_consciousness_after_response(text, full_response.strip(), user, analysis)
+            # 4. Update local memory and consciousness state (no LLM calls)
+            self._update_local_state_after_response(text, full_response.strip(), user)
             
             # Update session statistics
             self.request_count += 1
-            self.total_tokens_used += usage.total_tokens
             
-            print(f"[LLMHandler] ✅ Response generated in {generation_time:.3f}s")
-            print(f"[LLMHandler] 📊 Tokens: {input_tokens} in, {output_tokens} out, ${usage.cost_estimate:.4f}")
+            print(f"[LLMHandler] ✅ Single LLM response generated in {generation_time:.3f}s")
             
         except Exception as e:
             print(f"[LLMHandler] ❌ Error generating response: {e}")
-            yield f"I apologize, but I encountered an error while processing your request: {str(e)}"
+            yield f"I apologize, but I encountered an error while processing your request."
             
     def sanitize_prompt_input(self, text: str, user_id: str = "unknown") -> str:
         """
@@ -831,171 +380,82 @@ class LLMHandler:
         return consciousness_systems
         
     def _build_enhanced_prompt(self, text: str, user: str, analysis: Dict[str, Any], context: Dict[str, Any] = None) -> str:
-        """Build enhanced prompt with consciousness integration, AGGRESSIVE token optimization, and 8k context management"""
+        """Build minimal prompt with only facts, preferences, context - NO consciousness injection"""
         try:
-            # Sanitize user input first
-            sanitized_text = self.sanitize_prompt_input(text, user)
-            
-            # ✅ 8K CONTEXT WINDOW MANAGEMENT: Check if we're using fresh context from rollover
-            using_fresh_context = context and context.get("context_rollover_occurred", False)
-            base_context = context.get("current_context", "") if context else ""
-            
-            if using_fresh_context:
-                print(f"[LLMHandler] 🔄 Using fresh context from window rollover")
-                # Start with the already-optimized fresh context
-                fresh_context_lines = base_context.split('\n')
-                
-                # Find where user input should be added/replaced
-                user_input_added = False
-                for i, line in enumerate(fresh_context_lines):
-                    if line.startswith("User:") and line == fresh_context_lines[-1]:
-                        # Replace the last user input with current one
-                        fresh_context_lines[i] = f"User: {sanitized_text}"
-                        user_input_added = True
-                        break
-                
-                if not user_input_added:
-                    fresh_context_lines.append(f"User: {sanitized_text}")
-                
-                # Return the fresh context with minimal additional processing
-                optimized_prompt = '\n'.join(fresh_context_lines)
-                
-                print(f"[LLMHandler] ✅ Fresh context ready: {self.estimate_tokens_from_text(optimized_prompt)} tokens")
-                return optimized_prompt
-            
-            # ✅ STANDARD PROCESSING: Aggressive token optimization for normal flow
-            budget_status = analysis.get("budget", {})
-            usage_percentage = budget_status.get("usage_percentage", 0.0)
-            
-            # Aggressive reduction based on usage
-            if usage_percentage > 0.8:
-                token_reduction = 0.85  # 85% reduction for high usage
-            elif usage_percentage > 0.6:
-                token_reduction = 0.70  # 70% reduction for medium usage  
-            elif usage_percentage > 0.4:
-                token_reduction = 0.55  # 55% reduction for moderate usage
-            else:
-                token_reduction = 0.40  # 40% reduction for low usage
-            
-            print(f"[LLMHandler] 🏷️ AGGRESSIVE token optimization: {token_reduction*100:.0f}% reduction target")
-            
-            # Calculate highly optimized budget
-            estimated_user_tokens = self.estimate_tokens_from_text(sanitized_text)
-            base_budget = self.max_context_tokens - 200  # Reserve for response
-            optimized_budget = int(base_budget * (1 - token_reduction))
-            available_budget = max(optimized_budget - estimated_user_tokens, 50)  # Minimum viable budget
-            
-            print(f"[LLMHandler] 💰 Token budget: {available_budget} tokens (reduced from {base_budget})")
-            
-            prompt_parts = []
-            
-            # Ultra-compressed system prompt for efficiency
-            system_prompt = "Buddy: AI assistant with consciousness. Be helpful, warm, empathetic."
-            prompt_parts.append(system_prompt)
-            
-            # User input (cannot be compressed further)
-            prompt_parts.append(f"User: {sanitized_text}")
-            available_budget -= self.estimate_tokens_from_text(system_prompt + sanitized_text)
-            
-            # ✅ ULTRA-COMPRESSED consciousness context (symbolic tokens only)
-            consciousness_context = analysis.get("consciousness", {}).get("context", "")
-            if consciousness_context and available_budget > 20:
-                if NEW_MODULES_AVAILABLE:
-                    from ai.consciousness_tokenizer import trim_tokens_to_budget
-                    # Ultra-aggressive consciousness budget (maximum 15% of remaining budget)
-                    consciousness_budget = min(int(available_budget * 0.15), 25)
-                    trimmed_consciousness = trim_tokens_to_budget(consciousness_context, consciousness_budget)
-                    prompt_parts.append(f"Consciousness State: {trimmed_consciousness}")
-                    available_budget -= self.estimate_tokens_from_text(trimmed_consciousness)
-                    print(f"[LLMHandler] 🧠 Consciousness tokens: {len(trimmed_consciousness)} chars")
-                else:
-                    # Ultra-compressed fallback (only essential tokens)
-                    words = consciousness_context.split()[:10]
-                    mini_consciousness = " ".join(words)
-                    prompt_parts.append(f"Consciousness State: {mini_consciousness}")
-                    available_budget -= 10
-            
-            # ✅ ULTRA-COMPRESSED personality tokens (symbolic only)
-            personality_modifiers = analysis.get("personality", {}).get("modifiers", "")
-            if personality_modifiers and available_budget > 15:
-                if NEW_MODULES_AVAILABLE:
-                    from ai.consciousness_tokenizer import generate_personality_tokens, trim_tokens_to_budget
-                    personality_data = analysis.get("personality", {}).get("current_traits", {})
-                    personality_tokens = generate_personality_tokens(user, personality_data, max_tokens=3)  # Limit to 3 tokens
-                    if personality_tokens and personality_tokens != "<pers_error>":
-                        # Ultra-aggressive personality budget (maximum 10% of remaining budget)
-                        personality_budget = min(int(available_budget * 0.10), 15)
-                        trimmed_personality = trim_tokens_to_budget(personality_tokens, personality_budget)
-                        prompt_parts.append(f"Personality: {trimmed_personality}")
-                        available_budget -= self.estimate_tokens_from_text(trimmed_personality)
-                        print(f"[LLMHandler] 🎭 Personality tokens: {len(trimmed_personality)} chars")
-                    else:
-                        # Ultra-compressed fallback (top 2 traits only)
-                        words = personality_modifiers.split()[:5]
-                        mini_personality = " ".join(words)
-                        prompt_parts.append(f"Personality: {mini_personality}")
-                        available_budget -= 5
-                else:
-                    # Ultra-compressed fallback (top trait only)
-                    words = personality_modifiers.split()[:5]
-                    mini_personality = " ".join(words)
-                    prompt_parts.append(f"Personality: {mini_personality}")
-                    available_budget -= 5
-            
-            # ✅ ULTRA-COMPRESSED semantic context (essential tags only)
-            semantic_analysis = analysis.get("semantic", {})
-            if semantic_analysis and available_budget > 10:
-                # Extract only the most essential semantic information
-                intent = semantic_analysis.get("intent", "")
-                tone = semantic_analysis.get("emotional_tone", "")
-                complexity = semantic_analysis.get("complexity", "")
-                
-                # Create ultra-compressed semantic string
-                semantic_parts = []
-                if intent: semantic_parts.append(f"I:{intent[:8]}")  # Intent abbreviated
-                if tone: semantic_parts.append(f"T:{tone[:6]}")      # Tone abbreviated
-                if complexity: semantic_parts.append(f"C:{complexity[:6]}")  # Complexity abbreviated
-                
-                if semantic_parts:
-                    ultra_semantic = " ".join(semantic_parts)
-                    prompt_parts.append(f"Context: [{ultra_semantic}]")
-                    available_budget -= len(ultra_semantic.split())
-                    print(f"[LLMHandler] 🏷️ Semantic tokens: {len(ultra_semantic)} chars")
-            
-            # ✅ COMPRESSED memory context (only if critical)
-            memory_analysis = analysis.get("memory", {})
-            if memory_analysis and available_budget > 5:
-                significant_memories = memory_analysis.get("significant_context", "")
-                if significant_memories:
-                    if NEW_MODULES_AVAILABLE:
-                        from ai.consciousness_tokenizer import compress_memory_entry
-                        # Ultra-compressed memory (maximum 5% of remaining budget)
-                        memory_budget = min(int(available_budget * 0.05), 10)
-                        compressed_memory = compress_memory_entry(
-                            {"content": significant_memories, "significance": 0.8}, 
-                            memory_budget
-                        )
-                        if compressed_memory and compressed_memory != "<mem_error>":
-                            prompt_parts.append(f"Memory: {compressed_memory}")
-                            print(f"[LLMHandler] 💭 Memory tokens: {len(compressed_memory)} chars")
-            
-            # Join all parts efficiently
-            final_prompt = "\n".join(prompt_parts)
-            
-            # Final token count verification
-            final_tokens = self.estimate_tokens_from_text(final_prompt)
-            original_estimate = self.estimate_tokens_from_text(f"User: {sanitized_text}") * 3  # Rough estimate without optimization
-            actual_reduction = max(0, (original_estimate - final_tokens) / original_estimate)
-            
-            print(f"[LLMHandler] ✅ OPTIMIZATION COMPLETE: {final_tokens} tokens")
-            print(f"[LLMHandler] 📊 Achieved reduction: {actual_reduction*100:.1f}% (target: {token_reduction*100:.0f}%)")
-            
-            return final_prompt
+            # Use minimal prompt builder - no consciousness injection
+            return self._build_minimal_prompt(text, user, context)
             
         except Exception as e:
-            print(f"[LLMHandler] ⚠️ Error building enhanced prompt: {e}")
+            print(f"[LLMHandler] ⚠️ Error building minimal prompt: {e}")
             # Fallback to sanitized text only
             return self.sanitize_prompt_input(text, "unknown")
+    
+    def _process_user_input_locally(self, text: str, user: str):
+        """Process user input using ONNX classifiers only - no LLM calls"""
+        try:
+            from ai.local_memory_manager import LocalMemoryManager
+            memory_manager = LocalMemoryManager()
+            
+            # Use ONNX classifiers for local processing
+            memory_manager.process_user_input_with_onnx(text, user)
+            
+            print(f"[LLMHandler] 🧠 Local ONNX processing complete for '{text[:30]}...'")
+            
+        except Exception as e:
+            print(f"[LLMHandler] ⚠️ Error in local processing: {e}")
+    
+    def _update_local_state_after_response(self, user_input: str, response: str, user: str):
+        """Update local consciousness and memory state - no LLM calls"""
+        try:
+            # Update local memory with response
+            from ai.local_memory_manager import LocalMemoryManager
+            memory_manager = LocalMemoryManager()
+            memory_manager.add_interaction(user, user_input, response)
+            
+            # Update local consciousness state (JSON only)
+            if CONSCIOUSNESS_AVAILABLE:
+                # Update emotional state locally
+                try:
+                    from ai.emotion_classifier import classify_emotion
+                    user_emotion = classify_emotion(user_input)
+                    self._update_emotion_locally(user_emotion)
+                except Exception as e:
+                    print(f"[LLMHandler] ⚠️ Local emotion update error: {e}")
+                
+                # Update temporal awareness locally
+                try:
+                    temporal_awareness.mark_temporal_event(
+                        f"Conversation with {user}: {user_input[:30]}...",
+                        significance=0.6,
+                        context={"user": user, "response_generated": True}
+                    )
+                except Exception as e:
+                    print(f"[LLMHandler] ⚠️ Temporal awareness update error: {e}")
+            
+            print(f"[LLMHandler] ✅ Local state updated after response")
+            
+        except Exception as e:
+            print(f"[LLMHandler] ⚠️ Error updating local state: {e}")
+    
+    def _update_emotion_locally(self, emotion: str):
+        """Update emotion state locally without LLM"""
+        try:
+            if CONSCIOUSNESS_AVAILABLE:
+                # Map emotion classifier output to emotion engine
+                emotion_mapping = {
+                    "joy": "happy",
+                    "sadness": "sad", 
+                    "anger": "frustrated",
+                    "fear": "concerned",
+                    "surprise": "surprised",
+                    "neutral": "neutral"
+                }
+                
+                mapped_emotion = emotion_mapping.get(emotion, "neutral")
+                emotion_engine.process_emotional_stimulus(mapped_emotion, intensity=0.5)
+                
+        except Exception as e:
+            print(f"[LLMHandler] ⚠️ Error updating emotion locally: {e}")
     
     def estimate_tokens_from_text(self, text: str) -> int:
         """Estimate token count from text (for internal use)"""
@@ -1124,37 +584,20 @@ class LLMHandler:
             return f"I'm having trouble generating a response right now. Please try again."
 
     def get_session_stats(self) -> Dict[str, Any]:
-        """Get current session statistics including background processing"""
+        """Get current session statistics for single LLM call mode"""
         session_duration = time.time() - self.session_start
-        budget_status = get_budget_status()
         
         stats = {
             "session_duration": session_duration,
             "requests_processed": self.request_count,
             "total_tokens_used": self.total_tokens_used,
             "average_tokens_per_request": self.total_tokens_used / max(1, self.request_count),
-            "budget_status": budget_status,
             "consciousness_available": CONSCIOUSNESS_AVAILABLE,
             "fusion_llm_available": FUSION_LLM_AVAILABLE,
-            "background_processing_enabled": self.background_processing_enabled,
-            "modules_integrated": {
-                "consciousness_tokenizer": NEW_MODULES_AVAILABLE,
-                "budget_monitor": NEW_MODULES_AVAILABLE,
-                "belief_analyzer": NEW_MODULES_AVAILABLE,
-                "personality_state": NEW_MODULES_AVAILABLE,
-                "semantic_tagging": NEW_MODULES_AVAILABLE,
-                "background_processor": BACKGROUND_PROCESSING_AVAILABLE
-            }
+            "single_llm_call_mode": True,
+            "background_processing_enabled": False,
+            "optimization_mode": "single_llm_call"
         }
-        
-        # Add background processing stats if available
-        if self.background_processing_enabled:
-            try:
-                bg_stats = get_background_processing_stats()
-                stats["background_processing"] = bg_stats
-            except Exception as e:
-                print(f"[LLMHandler] ⚠️ Error getting background stats: {e}")
-                stats["background_processing"] = {"error": str(e)}
         
         return stats
 
@@ -1170,16 +613,8 @@ def generate_consciousness_integrated_response(
     user: str, 
     context: Dict[str, Any] = None
 ) -> Generator[str, None, None]:
-    """Generate response with full consciousness integration"""
+    """Generate response with single LLM call - consciousness runs locally"""
     return llm_handler.generate_response_with_consciousness(text, user, context)
-
-def generate_immediate_response_with_background_consciousness(
-    text: str,
-    user: str, 
-    context: Dict[str, Any] = None
-) -> Generator[str, None, None]:
-    """⚡ NEW: Generate immediate response with background consciousness processing"""
-    return llm_handler.generate_immediate_response_with_background_consciousness(text, user, context)
 
 def get_llm_session_statistics() -> Dict[str, Any]:
     """Get LLM handler session statistics"""
@@ -1190,26 +625,26 @@ def get_llm_handler() -> LLMHandler:
     return llm_handler
 
 if __name__ == "__main__":
-    # Test the LLM handler
-    print("Testing LLM Handler with Consciousness Integration")
+    # Test the simplified single LLM call handler
+    print("Testing Single LLM Call Handler")
     
     # Test input processing
-    test_input = "Hello! I'm feeling a bit confused about machine learning. Can you help me understand it?"
+    test_input = "Hello! I like pizza and I'm going to the shop."
     analysis = process_user_input_with_consciousness(test_input, "test_user")
     
     print("Analysis Results:")
-    print(f"- Semantic categories: {analysis['semantic']['categories']}")
-    print(f"- Intent: {analysis['semantic']['intent']}")
-    print(f"- Emotional tone: {analysis['semantic']['emotional_tone']}")
-    print(f"- Personality triggers: {analysis['personality']['triggers']}")
     print(f"- Budget allowed: {analysis['budget']['allowed']}")
+    print(f"- Processing time: {analysis['meta']['processing_time']:.3f}s")
+    print(f"- Analysis version: {analysis['meta']['analysis_version']}")
     
     # Test response generation
-    print("\nGenerating response...")
+    print("\nGenerating single LLM response...")
+    response_chunks = []
     for chunk in generate_consciousness_integrated_response(test_input, "test_user"):
         print(chunk, end=" ")
+        response_chunks.append(chunk)
     print("\n")
     
     # Show session stats
     stats = get_llm_session_statistics()
-    print(f"Session stats: {stats}")
+    print(f"Session stats: Requests: {stats['requests_processed']}, Tokens: {stats['total_tokens_used']}")

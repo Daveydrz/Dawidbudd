@@ -737,5 +737,106 @@ class LocalMemoryManager:
         
         self._save_memory()
 
+    def get_user_facts(self, user_id: str) -> List[str]:
+        """Get user facts for LLM prompt"""
+        if user_id not in self.memory_data["users"]:
+            return []
+        
+        facts = []
+        user_facts = self.memory_data["users"][user_id].get("facts", [])
+        for fact_memory in user_facts[-5:]:  # Last 5 facts
+            extracted_info = fact_memory.get("extracted_info", {})
+            if extracted_info.get("source") == "onnx_classifier":
+                fact_value = extracted_info.get("fact_value", "unknown")
+                if fact_value != "unknown":
+                    facts.append(fact_value)
+            else:
+                fact = extracted_info.get("fact", "")
+                if fact:
+                    facts.append(fact)
+        return facts
+    
+    def get_user_preferences(self, user_id: str) -> List[str]:
+        """Get user preferences for LLM prompt"""
+        if user_id not in self.memory_data["users"]:
+            return []
+        
+        preferences = []
+        user_prefs = self.memory_data["users"][user_id].get("preferences", [])
+        for pref_memory in user_prefs[-3:]:  # Last 3 preferences
+            extracted_info = pref_memory.get("extracted_info", {})
+            if extracted_info.get("source") == "onnx_classifier":
+                sentiment = extracted_info.get("sentiment", "neutral")
+                subject = extracted_info.get("subject", "unknown")
+                if subject != "unknown":
+                    if sentiment == "positive":
+                        preferences.append(f"likes {subject}")
+                    elif sentiment == "negative":
+                        preferences.append(f"dislikes {subject}")
+                    else:
+                        preferences.append(f"neutral about {subject}")
+            else:
+                sentiment = extracted_info.get("sentiment", "")
+                subject = extracted_info.get("subject", "")
+                if subject:
+                    preferences.append(f"{sentiment} {subject}")
+        return preferences
+    
+    def get_recent_context(self, user_id: str, limit: int = 3) -> List[str]:
+        """Get recent context/actions for LLM prompt"""
+        if user_id not in self.memory_data["users"]:
+            return []
+        
+        contexts = []
+        user_contexts = self.memory_data["users"][user_id].get("context", [])
+        for context_memory in user_contexts[-limit:]:  # Last N contexts
+            extracted_info = context_memory.get("extracted_info", {})
+            if extracted_info.get("source") == "onnx_classifier":
+                activity = extracted_info.get("activity", "unknown")
+                context_type = extracted_info.get("context_type", "general")
+                if activity != "unknown":
+                    if context_type == "location_activity":
+                        contexts.append(f"at {activity}")
+                    elif context_type == "current_activity":
+                        contexts.append(f"doing {activity}")
+                    else:
+                        contexts.append(activity)
+            else:
+                action = extracted_info.get("action", "")
+                if action:
+                    contexts.append(action)
+        return contexts
+    
+    def process_user_input_with_onnx(self, text: str, user_id: str):
+        """Process user input using only ONNX classifiers - no LLM calls"""
+        # Use the existing process_user_input method which already uses ONNX
+        result = self.process_user_input(text, user_id)
+        print(f"[LocalMemory] ONNX processing: {result['memories_extracted']} memories extracted")
+        return result
+    
+    def add_interaction(self, user_id: str, user_input: str, ai_response: str):
+        """Add interaction to memory"""
+        timestamp = datetime.now().isoformat()
+        
+        # Store the interaction as context
+        interaction_memory = MemoryEntry(
+            timestamp=timestamp,
+            user_id=user_id,
+            text=f"User said: {user_input}. Buddy replied: {ai_response[:100]}...",
+            memory_type="context",
+            extracted_info={
+                "context_type": "interaction",
+                "user_input": user_input,
+                "ai_response": ai_response,
+                "interaction_timestamp": timestamp,
+                "source": "local_memory_manager"
+            },
+            confidence=1.0
+        )
+        
+        self.store_memories([interaction_memory])
+        print(f"[LocalMemory] Interaction stored for {user_id}")
+
+
 # Global instance
 local_memory_manager = LocalMemoryManager()
