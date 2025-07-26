@@ -593,31 +593,98 @@ def get_mic_feeding_state():
         return mic_feeding_active
 
 def handle_streaming_response(text, current_user):
-    """🚀 IMMEDIATE RESPONSE: Background consciousness + Instant response generation"""
+    """🚀 IMMEDIATE RESPONSE: Proper memory integration + Fast response generation"""
     print(f"[IMMEDIATE] 🚀 Starting IMMEDIATE response for: '{text}' (user: {current_user})")
     
     start_time = time.time()
     
     try:
-        # ✅ STEP 1: Start consciousness processing in background (NON-BLOCKING)
-        print("[IMMEDIATE] 🧠 Starting background consciousness processing (port 5002)...")
-        consciousness_context = "BUDDY'S CONSCIOUSNESS STATE: Ready to help with friendly, empathetic responses."
+        # ✅ STEP 1: IMMEDIATE memory processing (fast local + background Gemma)
+        print("[IMMEDIATE] 💾 Processing memory immediately...")
         
+        # Fast local memory extraction for names/facts
+        from ai.local_memory_manager import local_memory_manager
+        
+        # Check for name introduction first (critical for remembering names)
+        name_detected = False
+        extracted_name = None
+        text_lower = text.lower().strip()
+        
+        # Name patterns - check immediately
+        name_patterns = [
+            r"my name is (\w+)",
+            r"i'?m (\w+)",
+            r"call me (\w+)",
+            r"i'?m called (\w+)",
+            r"this is (\w+)"
+        ]
+        
+        for pattern in name_patterns:
+            import re
+            match = re.search(pattern, text_lower)
+            if match:
+                extracted_name = match.group(1).capitalize()
+                name_detected = True
+                print(f"[IMMEDIATE] 👤 NAME DETECTED: {extracted_name}")
+                
+                # Store name immediately as a fact
+                from ai.local_memory_manager import MemoryEntry
+                from datetime import datetime
+                
+                name_memory = MemoryEntry(
+                    timestamp=datetime.now().isoformat(),
+                    user_id=current_user,
+                    text=f"User's name is {extracted_name}",
+                    memory_type="fact",
+                    extracted_info={
+                        "fact_category": "identity",
+                        "fact_value": extracted_name,
+                        "name_introduction": True,
+                        "confidence": 0.95,
+                        "source": "immediate_extraction"
+                    },
+                    confidence=0.95
+                )
+                local_memory_manager.store_memories([name_memory])
+                print(f"[IMMEDIATE] ✅ Name '{extracted_name}' stored immediately")
+                break
+        
+        # ✅ STEP 2: Get current memory context for response (updated with new name if detected)
+        print("[IMMEDIATE] 📋 Loading current memory context...")
+        existing_context = local_memory_manager.get_user_context(current_user)
+        
+        # Build consciousness context with latest memory
+        consciousness_context = f"""BUDDY'S CONSCIOUSNESS STATE:
+Current Emotion: helpful
+Motivation Level: 0.8
+Active Goals: help user effectively, remember user information
+Current Focus: user interaction
+Personality: friendly, empathetic, good memory
+
+USER MEMORY:
+Facts: {', '.join(existing_context.get('facts', [])[:5])}
+Preferences: {', '.join(existing_context.get('preferences', [])[:5])}
+Recent Context: {', '.join(existing_context.get('context', [])[-3:])}"""
+
+        if name_detected and extracted_name:
+            consciousness_context += f"\nIMPORTANT: User just introduced themselves as {extracted_name}. Remember this name!"
+        
+        print("[IMMEDIATE] 📝 Memory context prepared for immediate response")
+        
+        # ✅ STEP 3: Start background consciousness processing (port 5002) - NON-BLOCKING
         def background_consciousness_processing():
-            """Process consciousness in background via port 5002"""
+            """Process full consciousness in background via port 5002"""
             try:
-                from ai.extractor_client import process_full_consciousness, get_consciousness_for_prompt
+                from ai.extractor_client import process_full_consciousness
                 print(f"[IMMEDIATE] 🧠 Background: Processing consciousness via port 5002...")
                 
                 # Process ALL consciousness via Gemma on port 5002
                 consciousness_data = process_full_consciousness(text, current_user)
                 
-                # Update consciousness context (this will be used for next interaction)
-                nonlocal consciousness_context
-                consciousness_context = get_consciousness_for_prompt(current_user)
+                # Update local memory with full consciousness data
+                local_memory_manager.update_memory(current_user, text, consciousness_data)
                 
                 print(f"[IMMEDIATE] ✅ Background consciousness processing complete")
-                print(f"[IMMEDIATE] 📊 Updated memory and consciousness state for next interaction")
                 
             except Exception as e:
                 print(f"[IMMEDIATE] ⚠️ Background consciousness error (non-critical): {e}")
@@ -626,30 +693,9 @@ def handle_streaming_response(text, current_user):
         import threading
         threading.Thread(target=background_consciousness_processing, daemon=True).start()
         
-        # ✅ STEP 2: Start IMMEDIATE response generation (port 5001) while consciousness processes
+        # ✅ STEP 4: Generate response immediately using port 5001 ONLY
         print("[IMMEDIATE] ⚡ Starting IMMEDIATE response generation (port 5001)...")
         
-        # Use existing memory context for immediate response
-        try:
-            from ai.local_memory_manager import get_user_context
-            existing_context = get_user_context(current_user)
-            if existing_context:
-                consciousness_context = f"""BUDDY'S CONSCIOUSNESS STATE:
-Current Emotion: helpful
-Motivation Level: 0.8
-Active Goals: help user effectively
-Current Focus: user interaction
-Personality: friendly, empathetic
-
-USER MEMORY:
-Facts: {', '.join(existing_context.get('facts', [])[:5])}
-Preferences: {', '.join(existing_context.get('preferences', [])[:5])}  
-Recent Context: {', '.join(existing_context.get('context', [])[-3:])}"""
-                print("[IMMEDIATE] 📝 Using existing memory context for immediate response")
-        except Exception as e:
-            print(f"[IMMEDIATE] ⚠️ Could not load existing context: {e}")
-        
-        # Generate response immediately using simple LLM handler
         try:
             from ai.simple_llm_handler import generate_response_with_consciousness
             print("[IMMEDIATE] 🎯 Using simple LLM handler for port 5001 ONLY")
@@ -659,16 +705,18 @@ Recent Context: {', '.join(existing_context.get('context', [])[-3:])}"""
             response_interrupted = False
             first_chunk = True
             
-            # Import audio functions
+            # Import audio functions with better error handling
+            audio_available = False
             try:
                 from audio.output import speak_streaming
                 audio_available = True
-                print("[IMMEDIATE] 🎵 Audio system available")
-            except ImportError:
+                print("[IMMEDIATE] 🎵 Audio system available - Kokoro ready")
+            except ImportError as audio_err:
+                print(f"[IMMEDIATE] ⚠️ Audio system not available: {audio_err}")
                 audio_available = False
-                print("[IMMEDIATE] ⚠️ Audio system not available")
             
             # Generate response using ONLY port 5001 with consciousness injection
+            response_chunks = []
             for chunk in generate_response_with_consciousness(text, current_user, consciousness_context):
                 # Check for interrupt
                 if full_duplex_manager and hasattr(full_duplex_manager, 'speech_interrupted') and full_duplex_manager.speech_interrupted:
@@ -679,6 +727,7 @@ Recent Context: {', '.join(existing_context.get('context', [])[-3:])}"""
                 if chunk and chunk.strip():
                     chunk_text = chunk.strip()
                     chunk_count += 1
+                    response_chunks.append(chunk_text)
                     
                     if first_chunk:
                         print("[IMMEDIATE] 🎵 First chunk ready - starting speech IMMEDIATELY!")
@@ -686,9 +735,15 @@ Recent Context: {', '.join(existing_context.get('context', [])[-3:])}"""
                     
                     print(f"[IMMEDIATE] 🗣️ Speaking chunk {chunk_count}: '{chunk_text[:50]}...'")
                     
-                    # Start speaking immediately (no delays)
+                    # Start speaking immediately (fixed audio output)
                     if audio_available:
-                        speak_streaming(chunk_text)
+                        try:
+                            success = speak_streaming(chunk_text)
+                            if not success:
+                                print(f"[IMMEDIATE] ⚠️ speak_streaming returned False - audio may not be playing")
+                        except Exception as audio_err:
+                            print(f"[IMMEDIATE] ❌ Audio error: {audio_err}")
+                            print(f"[IMMEDIATE] 💬 Would speak: {chunk_text}")
                     else:
                         print(f"[IMMEDIATE] 💬 Would speak: {chunk_text}")
                     
@@ -701,19 +756,19 @@ Recent Context: {', '.join(existing_context.get('context', [])[-3:])}"""
                         break
                     
                     # Brief pause for natural flow (minimal)
-                    time.sleep(0.01)  # Minimal delay
+                    time.sleep(0.05)  # Slightly longer for stability
             
             total_time = time.time() - start_time
             
             if not response_interrupted and full_response.strip():
-                # Add to conversation history
-                from ai.memory import add_to_conversation_history
-                add_to_conversation_history(current_user, text, full_response.strip())
+                # Add to conversation history IMMEDIATELY
+                local_memory_manager.add_interaction(current_user, text, full_response.strip())
                 
                 print(f"[IMMEDIATE] ✅ IMMEDIATE response complete:")
                 print(f"[IMMEDIATE] ⚡ Total time: {total_time:.3f}s (TARGET: <3s)")
                 print(f"[IMMEDIATE] 📊 Chunks processed: {chunk_count}")
-                print(f"[IMMEDIATE] 🧠 Consciousness processing in background for next interaction")
+                print(f"[IMMEDIATE] 🧠 Background consciousness processing for enhanced memory")
+                print(f"[IMMEDIATE] 💾 Interaction stored immediately")
                 
             return
             
@@ -727,7 +782,7 @@ Recent Context: {', '.join(existing_context.get('context', [])[-3:])}"""
             import requests
             
             # Build minimal prompt
-            prompt = f"""Buddy is a helpful, empathetic AI assistant.
+            prompt = f"""Buddy is a helpful, empathetic AI assistant with excellent memory.
 
 {consciousness_context}
 
@@ -818,7 +873,11 @@ Buddy:"""
                                                     print(f"[IMMEDIATE] 🗣️ Direct chunk {chunk_count}: '{text_chunk[:50]}...'")
                                                     
                                                     if audio_available:
-                                                        speak_streaming(text_chunk)
+                                                        try:
+                                                            speak_streaming(text_chunk)
+                                                        except Exception as audio_err:
+                                                            print(f"[IMMEDIATE] ❌ Audio error: {audio_err}")
+                                                            print(f"[IMMEDIATE] 💬 Would speak: {text_chunk}")
                                                     else:
                                                         print(f"[IMMEDIATE] 💬 Would speak: {text_chunk}")
                                                     
@@ -829,7 +888,11 @@ Buddy:"""
                                                     full_response += json_str + " "
                                                     
                                                     if audio_available:
-                                                        speak_streaming(json_str)
+                                                        try:
+                                                            speak_streaming(json_str)
+                                                        except Exception as audio_err:
+                                                            print(f"[IMMEDIATE] ❌ Audio error: {audio_err}")
+                                                            print(f"[IMMEDIATE] 💬 Would speak: {json_str}")
                                                     else:
                                                         print(f"[IMMEDIATE] 💬 Would speak: {json_str}")
                                         
@@ -839,7 +902,11 @@ Buddy:"""
                                             full_response += line_text + " "
                                             
                                             if audio_available:
-                                                speak_streaming(line_text)
+                                                try:
+                                                    speak_streaming(line_text)
+                                                except Exception as audio_err:
+                                                    print(f"[IMMEDIATE] ❌ Audio error: {audio_err}")
+                                                    print(f"[IMMEDIATE] 💬 Would speak: {line_text}")
                                             else:
                                                 print(f"[IMMEDIATE] 💬 Would speak: {line_text}")
                                         
@@ -848,13 +915,13 @@ Buddy:"""
                             
                             if full_response.strip():
                                 # Success! Add to conversation history
-                                from ai.memory import add_to_conversation_history
-                                add_to_conversation_history(current_user, text, full_response.strip())
+                                local_memory_manager.add_interaction(current_user, text, full_response.strip())
                                 
                                 total_time = time.time() - start_time
                                 print(f"[IMMEDIATE] ✅ Direct response complete:")
                                 print(f"[IMMEDIATE] ⚡ Total time: {total_time:.3f}s")
                                 print(f"[IMMEDIATE] 📊 Chunks: {chunk_count}")
+                                print(f"[IMMEDIATE] 💾 Interaction stored")
                                 
                                 response_generated = True
                                 break
@@ -882,13 +949,16 @@ Buddy:"""
                 print(f"[IMMEDIATE] 🗣️ Fallback response: {response[:100]}...")
                 
                 if audio_available:
-                    speak_streaming(response)
+                    try:
+                        speak_streaming(response)
+                    except Exception as audio_err:
+                        print(f"[IMMEDIATE] ❌ Audio error: {audio_err}")
+                        print(f"[IMMEDIATE] 💬 Would speak: {response}")
                 else:
                     print(f"[IMMEDIATE] 💬 Would speak: {response}")
                 
                 # Add to conversation history
-                from ai.memory import add_to_conversation_history
-                add_to_conversation_history(current_user, text, response.strip())
+                local_memory_manager.add_interaction(current_user, text, response.strip())
                 
                 total_time = time.time() - start_time
                 print(f"[IMMEDIATE] ✅ Fallback response complete in {total_time:.3f}s")
@@ -903,7 +973,11 @@ Buddy:"""
         emergency_response = "I apologize, but I'm having technical difficulties. Please try again."
         
         if audio_available:
-            speak_streaming(emergency_response)
+            try:
+                speak_streaming(emergency_response)
+            except Exception as audio_err:
+                print(f"[IMMEDIATE] ❌ Emergency audio error: {audio_err}")
+                print(f"[IMMEDIATE] 💬 Emergency response: {emergency_response}")
         else:
             print(f"[IMMEDIATE] 💬 Emergency response: {emergency_response}")
         
@@ -922,8 +996,7 @@ Buddy:"""
         
         # Try to add to history even in error case
         try:
-            from ai.memory import add_to_conversation_history
-            add_to_conversation_history(current_user, text, emergency_response)
+            local_memory_manager.add_interaction(current_user, text, emergency_response)
         except:
             pass
         

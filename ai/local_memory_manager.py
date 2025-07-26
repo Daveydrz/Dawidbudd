@@ -755,51 +755,115 @@ class LocalMemoryManager:
         
         print(f"[LocalMemory] 🧠 Processing full consciousness data: {memory_type}/{intent}/{emotion}")
         
-        # Create memory entry with full consciousness context
+        # Process specific memory updates from Gemma
+        stored_memories = []
         timestamp = datetime.now().isoformat()
         
-        memory_entry = MemoryEntry(
-            timestamp=timestamp,
-            user_id=user_id,
-            text=text,
-            memory_type=memory_type,
-            extracted_info={
-                "classification_source": "gemma_consciousness_processor",
-                "intent": intent,
-                "emotion": emotion,
-                "name_introduction": name_introduction,
-                "consciousness_data": consciousness_data,
-                "memory_updates": memory_updates,
-                "emotional_state": consciousness_data.get("emotional_state", {}),
-                "consciousness_state": consciousness_data.get("consciousness_state", {}),
-                "processing_time": time.time() - start_time
-            },
-            confidence=0.95  # Very high confidence from full consciousness processing
-        )
+        # Store new facts
+        new_facts = memory_updates.get("new_facts", [])
+        for fact in new_facts:
+            if fact and fact.strip():
+                fact_memory = MemoryEntry(
+                    timestamp=timestamp,
+                    user_id=user_id,
+                    text=fact,
+                    memory_type="fact",
+                    extracted_info={
+                        "fact_category": "general",
+                        "fact_value": fact,
+                        "source": "gemma_consciousness_processor",
+                        "confidence": 0.85
+                    },
+                    confidence=0.85
+                )
+                stored_memories.append(fact_memory)
         
-        # Store memory based on type
-        self.store_memories([memory_entry])
+        # Store new preferences
+        new_preferences = memory_updates.get("new_preferences", [])
+        for pref in new_preferences:
+            if pref and pref.strip():
+                pref_memory = MemoryEntry(
+                    timestamp=timestamp,
+                    user_id=user_id,
+                    text=pref,
+                    memory_type="preference",
+                    extracted_info={
+                        "preference_type": "general",
+                        "preference_value": pref,
+                        "source": "gemma_consciousness_processor",
+                        "confidence": 0.85
+                    },
+                    confidence=0.85
+                )
+                stored_memories.append(pref_memory)
         
-        # Handle name introduction if detected
-        if name_introduction and self._extract_names_from_text(text):
-            names = self._extract_names_from_text(text)
-            print(f"[LocalMemory] 👤 Name introduction detected: {names}")
-            
-            # Store name as a fact
-            name_memory = MemoryEntry(
+        # Store new context
+        new_context = memory_updates.get("new_context", [])
+        for ctx in new_context:
+            if ctx and ctx.strip():
+                ctx_memory = MemoryEntry(
+                    timestamp=timestamp,
+                    user_id=user_id,
+                    text=ctx,
+                    memory_type="context",
+                    extracted_info={
+                        "context_type": "general",
+                        "context_value": ctx,
+                        "source": "gemma_consciousness_processor",
+                        "confidence": 0.80
+                    },
+                    confidence=0.80
+                )
+                stored_memories.append(ctx_memory)
+        
+        # Store the main interaction as context if no specific updates
+        if not stored_memories:
+            main_memory = MemoryEntry(
                 timestamp=timestamp,
                 user_id=user_id,
-                text=f"User's name: {', '.join(names)}",
-                memory_type="fact",
+                text=text,
+                memory_type=memory_type,
                 extracted_info={
-                    "classification_source": "gemma_extractor",
-                    "fact_category": "identity",
-                    "names": names,
-                    "name_introduction": True
+                    "classification_source": "gemma_consciousness_processor",
+                    "intent": intent,
+                    "emotion": emotion,
+                    "name_introduction": name_introduction,
+                    "consciousness_data": consciousness_data,
+                    "processing_time": time.time() - start_time
                 },
-                confidence=0.95  # Very high confidence for name extraction
+                confidence=0.90
             )
-            self.store_memories([name_memory])
+            stored_memories.append(main_memory)
+        
+        # Store all memories
+        if stored_memories:
+            self.store_memories(stored_memories)
+            print(f"[LocalMemory] 💾 Stored {len(stored_memories)} memory entries from consciousness processing")
+        
+        # Handle name introduction if detected
+        if name_introduction or self._extract_names_from_text(text):
+            names = self._extract_names_from_text(text)
+            if names:
+                print(f"[LocalMemory] 👤 Name introduction detected: {names}")
+                
+                # Store each name as a separate fact
+                for name in names:
+                    name_memory = MemoryEntry(
+                        timestamp=timestamp,
+                        user_id=user_id,
+                        text=f"User's name is {name}",
+                        memory_type="fact",
+                        extracted_info={
+                            "fact_category": "identity",
+                            "fact_value": name,
+                            "name_introduction": True,
+                            "source": "name_extraction",
+                            "confidence": 0.95
+                        },
+                        confidence=0.95
+                    )
+                    self.store_memories([name_memory])
+                    print(f"[LocalMemory] ✅ Name '{name}' stored as fact")
         
         processing_time = time.time() - start_time
         print(f"[LocalMemory] ✅ Gemma memory update complete in {processing_time:.3f}s")
@@ -809,6 +873,7 @@ class LocalMemoryManager:
             "intent": intent,
             "emotion": emotion,
             "name_introduction": name_introduction,
+            "memories_stored": len(stored_memories),
             "processing_time": processing_time
         }
     
@@ -910,7 +975,8 @@ class LocalMemoryManager:
         try:
             # Extract memories from user input
             memories = self.extract_memory_from_text(user_input, user_id)
-            self.store_memories(memories)
+            if memories:
+                self.store_memories(memories)
             
             # Store the interaction as context
             context_memory = MemoryEntry(
@@ -932,39 +998,99 @@ class LocalMemoryManager:
             
         except Exception as e:
             print(f"[LocalMemory] ⚠️ Error adding interaction: {e}")
+            # Try a simpler approach if the above fails
+            try:
+                simple_context = MemoryEntry(
+                    timestamp=datetime.now().isoformat(),
+                    user_id=user_id,
+                    text=f"Interaction: {user_input[:50]}...",
+                    memory_type="context",
+                    extracted_info={
+                        "simple_interaction": True,
+                        "source": "fallback_interaction_log"
+                    },
+                    confidence=0.8
+                )
+                self.store_memories([simple_context])
+                print(f"[LocalMemory] 💾 Stored simple interaction for {user_id}")
+            except Exception as e2:
+                print(f"[LocalMemory] ❌ Failed to store interaction: {e2}")
 
     def get_user_context(self, user_id: str) -> Dict[str, List[str]]:
         """Get user context for immediate responses (no LLM delay)"""
         try:
-            if user_id not in self.memory_data:
+            if "users" not in self.memory_data or user_id not in self.memory_data["users"]:
                 return {"facts": [], "preferences": [], "context": []}
             
-            user_memories = self.memory_data[user_id]
+            user_memories = self.memory_data["users"][user_id]
             context = {"facts": [], "preferences": [], "context": []}
             
-            # Extract recent facts (last 10)
-            recent_facts = [
-                entry["extracted_info"].get("fact", entry["text"])
-                for entry in user_memories[-20:]
-                if entry.get("memory_type") == "fact"
-            ]
-            context["facts"] = recent_facts[-10:]  # Last 10 facts
+            # Extract recent facts (last 10) - check memory format
+            facts = user_memories.get("facts", [])
+            if facts:
+                recent_facts = []
+                for fact_entry in facts[-10:]:  # Last 10 facts
+                    if isinstance(fact_entry, dict):
+                        # New format with extracted_info
+                        if "extracted_info" in fact_entry:
+                            fact_text = fact_entry["extracted_info"].get("fact", fact_entry.get("text", ""))
+                            if fact_text:
+                                recent_facts.append(fact_text)
+                        # Content format
+                        elif "content" in fact_entry:
+                            recent_facts.append(fact_entry["content"])
+                        # Text format
+                        elif "text" in fact_entry:
+                            recent_facts.append(fact_entry["text"])
+                    else:
+                        # Simple string format
+                        recent_facts.append(str(fact_entry))
+                context["facts"] = recent_facts
             
             # Extract preferences (last 5)
-            recent_preferences = [
-                f"{entry['extracted_info'].get('sentiment', 'likes')} {entry['extracted_info'].get('subject', entry['text'])}"
-                for entry in user_memories[-20:]
-                if entry.get("memory_type") == "preference"
-            ]
-            context["preferences"] = recent_preferences[-5:]  # Last 5 preferences
+            preferences = user_memories.get("preferences", [])
+            if preferences:
+                recent_preferences = []
+                for pref_entry in preferences[-5:]:  # Last 5 preferences
+                    if isinstance(pref_entry, dict):
+                        # New format with extracted_info
+                        if "extracted_info" in pref_entry:
+                            sentiment = pref_entry["extracted_info"].get("sentiment", "likes")
+                            subject = pref_entry["extracted_info"].get("subject", "")
+                            if subject:
+                                recent_preferences.append(f"{sentiment} {subject}")
+                        # Content format
+                        elif "content" in pref_entry:
+                            recent_preferences.append(pref_entry["content"])
+                        # Text format  
+                        elif "text" in pref_entry:
+                            recent_preferences.append(pref_entry["text"])
+                    else:
+                        # Simple string format
+                        recent_preferences.append(str(pref_entry))
+                context["preferences"] = recent_preferences
             
             # Extract recent context (last 5)
-            recent_context = [
-                entry["extracted_info"].get("action", entry["text"])
-                for entry in user_memories[-10:]
-                if entry.get("memory_type") == "context"
-            ]
-            context["context"] = recent_context[-5:]  # Last 5 context items
+            contexts = user_memories.get("context", [])
+            if contexts:
+                recent_context = []
+                for ctx_entry in contexts[-5:]:  # Last 5 context items
+                    if isinstance(ctx_entry, dict):
+                        # New format with extracted_info
+                        if "extracted_info" in ctx_entry:
+                            action = ctx_entry["extracted_info"].get("action", ctx_entry.get("text", ""))
+                            if action:
+                                recent_context.append(action)
+                        # Content format
+                        elif "content" in ctx_entry:
+                            recent_context.append(ctx_entry["content"])
+                        # Text format
+                        elif "text" in ctx_entry:
+                            recent_context.append(ctx_entry["text"])
+                    else:
+                        # Simple string format
+                        recent_context.append(str(ctx_entry))
+                context["context"] = recent_context
             
             print(f"[LocalMemory] 📋 Retrieved context for {user_id}: {len(context['facts'])} facts, {len(context['preferences'])} prefs, {len(context['context'])} context")
             return context

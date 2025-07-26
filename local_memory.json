@@ -1300,6 +1300,303 @@
       ],
       "context": [],
       "last_activity": "2025-07-26T10:26:55.179302"
+    },
+    "test_david": {
+      "actions": [],
+      "preferences": [],
+      "facts": [
+        {
+          "timestamp": "2025-07-26T15:39:58.583509",
+          "user_id": "test_david",
+          "text": "My name is David",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "David",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "test"
+          },
+          "confidence": 0.95
+        },
+        {
+          "timestamp": "2025-07-26T15:41:36.523523",
+          "user_id": "test_david",
+          "text": "My name is David",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "David",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "test"
+          },
+          "confidence": 0.95
+        },
+        {
+          "timestamp": "2025-07-26T15:43:06.524408",
+          "user_id": "test_david",
+          "text": "My name is David",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "David",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "test"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "context": [],
+      "last_activity": "2025-07-26T15:43:06.524408"
+    },
+    "test_name_recognition": {
+      "actions": [],
+      "preferences": [],
+      "facts": [
+        {
+          "timestamp": "2025-07-26T15:44:31.963422",
+          "user_id": "test_name_recognition",
+          "text": "My name is David",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "David",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "immediate_extraction"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "context": [],
+      "last_activity": "2025-07-26T15:44:31.963422"
+    },
+    "pattern_test_0": {
+      "actions": [],
+      "preferences": [],
+      "facts": [
+        {
+          "timestamp": "2025-07-26T15:44:31.966108",
+          "user_id": "pattern_test_0",
+          "text": "I'm Sarah",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "Sarah",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "pattern_extraction"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "context": [],
+      "last_activity": "2025-07-26T15:44:31.966108"
+    },
+    "pattern_test_1": {
+      "actions": [],
+      "preferences": [],
+      "facts": [
+        {
+          "timestamp": "2025-07-26T15:44:31.967613",
+          "user_id": "pattern_test_1",
+          "text": "Call me John",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "John",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "pattern_extraction"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "context": [],
+      "last_activity": "2025-07-26T15:44:31.967613"
+    },
+    "pattern_test_2": {
+      "actions": [],
+      "preferences": [],
+      "facts": [
+        {
+          "timestamp": "2025-07-26T15:44:31.969206",
+          "user_id": "pattern_test_2",
+          "text": "My name is Alice",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "Alice",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "pattern_extraction"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "context": [],
+      "last_activity": "2025-07-26T15:44:31.969206"
+    },
+    "immediate_response_test": {
+      "actions": [],
+      "preferences": [],
+      "facts": [
+        {
+          "timestamp": "2025-07-26T15:44:31.970984",
+          "user_id": "immediate_response_test",
+          "text": "User's name is David",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "David",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "immediate_extraction"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "context": [],
+      "last_activity": "2025-07-26T15:44:31.970984"
+    },
+    "david_test_user": {
+      "actions": [],
+      "preferences": [],
+      "facts": [
+        {
+          "timestamp": "2025-07-26T15:45:41.122539",
+          "user_id": "david_test_user",
+          "text": "User's name is David",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "David",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "immediate_extraction"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "context": [
+        {
+          "timestamp": "2025-07-26T15:45:41.124182",
+          "user_id": "david_test_user",
+          "text": "I'm David",
+          "memory_type": "context",
+          "extracted_info": {
+            "topic": "general",
+            "length": 2,
+            "question": false,
+            "source": "general_fallback"
+          },
+          "confidence": 0.5
+        },
+        {
+          "timestamp": "2025-07-26T15:45:41.126503",
+          "user_id": "david_test_user",
+          "text": "User: I'm David | Buddy: Nice to meet you, David!",
+          "memory_type": "context",
+          "extracted_info": {
+            "interaction": true,
+            "user_input": "I'm David",
+            "buddy_response": "Nice to meet you, David!",
+            "source": "interaction_log"
+          },
+          "confidence": 1.0
+        }
+      ],
+      "last_activity": "2025-07-26T15:45:41.126503"
+    },
+    "user_alice": {
+      "actions": [],
+      "preferences": [],
+      "facts": [
+        {
+          "timestamp": "2025-07-26T15:45:41.128330",
+          "user_id": "user_alice",
+          "text": "User's name is Alice",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "Alice",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "class5_test"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "context": [],
+      "last_activity": "2025-07-26T15:45:41.128330"
+    },
+    "user_bob": {
+      "actions": [],
+      "preferences": [],
+      "facts": [
+        {
+          "timestamp": "2025-07-26T15:45:41.129879",
+          "user_id": "user_bob",
+          "text": "User's name is Bob",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "Bob",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "class5_test"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "context": [],
+      "last_activity": "2025-07-26T15:45:41.129879"
+    },
+    "user_charlie": {
+      "actions": [],
+      "preferences": [],
+      "facts": [
+        {
+          "timestamp": "2025-07-26T15:45:41.131769",
+          "user_id": "user_charlie",
+          "text": "User's name is Charlie",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "Charlie",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "class5_test"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "context": [],
+      "last_activity": "2025-07-26T15:45:41.131769"
+    },
+    "user_diana": {
+      "actions": [],
+      "preferences": [],
+      "facts": [
+        {
+          "timestamp": "2025-07-26T15:45:41.133442",
+          "user_id": "user_diana",
+          "text": "User's name is Diana",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "Diana",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "class5_test"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "context": [],
+      "last_activity": "2025-07-26T15:45:41.133442"
     }
   }
 }
