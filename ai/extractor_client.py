@@ -651,6 +651,12 @@ def classify_message(user_text: str) -> Dict[str, Any]:
 
 def get_consciousness_for_prompt(user_id: str) -> str:
     """
+    Get consciousness data formatted for LLM prompt injection
+    """
+    return extractor_client.get_consciousness_for_prompt(user_id)
+
+def get_consciousness_for_prompt(user_id: str) -> str:
+    """
     Get formatted consciousness data for LLM prompt injection
     """
     return extractor_client.get_consciousness_for_prompt(user_id)

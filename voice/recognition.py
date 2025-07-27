@@ -141,11 +141,37 @@ def check_anonymous_clusters(audio):
                     print(f"[Recognition] ⚠️ Error processing cluster {cluster_id}: {cluster_err}")
                 continue
 
-        # FIXED: Use appropriate threshold for matching
-        MATCH_THRESHOLD = 0.6  # Lower threshold for better matching
+        # FIXED: Use more permissive threshold for matching existing clusters
+        MATCH_THRESHOLD = 0.45  # Lower threshold for better matching
         
         if best_match and best_score > MATCH_THRESHOLD:
             print(f"[Recognition] ✅ Anonymous cluster match: {best_match} (confidence: {best_score:.3f})")
+            
+            # Add this embedding to the existing cluster to improve future matching
+            try:
+                if isinstance(embedding, dict):
+                    cluster_embedding = embedding
+                else:
+                    cluster_embedding = {'resemblyzer': embedding}
+                
+                # Add to existing cluster embeddings
+                if 'embeddings' not in anonymous_clusters[best_match]:
+                    anonymous_clusters[best_match]['embeddings'] = []
+                
+                anonymous_clusters[best_match]['embeddings'].append(cluster_embedding)
+                anonymous_clusters[best_match]['sample_count'] = anonymous_clusters[best_match].get('sample_count', 0) + 1
+                
+                # Keep only last 5 embeddings to avoid memory bloat
+                if len(anonymous_clusters[best_match]['embeddings']) > 5:
+                    anonymous_clusters[best_match]['embeddings'] = anonymous_clusters[best_match]['embeddings'][-5:]
+                
+                save_known_users()
+                print(f"[Recognition] 📈 Updated cluster {best_match} with new embedding")
+                
+            except Exception as update_err:
+                if DEBUG:
+                    print(f"[Recognition] ⚠️ Error updating cluster: {update_err}")
+            
             return best_match, best_score
 
         # Only create new cluster if no reasonable match found

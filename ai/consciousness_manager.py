@@ -1,595 +1,337 @@
 """
-Consciousness Manager - Central Brain Orchestrator
-
-This module serves as the central orchestrator for the consciousness architecture:
-- Coordinates all consciousness modules (emotion, memory, motivation)
-- Drives attention and triggers actions
-- Simulates continuity of consciousness
-- Manages the "living" aspect of modules
-- Maintains the coherent experience of consciousness
+Consciousness Manager - Unified Class 5+ Consciousness System
+Created: 2025-01-27
+Purpose: Single unified consciousness manager that replaces all scattered consciousness modules
+         Handles: Inner monologue, proactive thoughts, goal tracking, belief tracking, emotion updates
+         
+This replaces: inner_monologue.py, thought_loop.py, free_thought_engine.py, 
+               lucid_awareness_loop.py, proactive_thinking_loop.py
 """
 
-import threading
-import time
-import logging
 import json
-from typing import Dict, List, Any, Optional, Callable
-from dataclasses import dataclass, field
+import time
+import threading
+import random
 from datetime import datetime, timedelta
+from typing import Dict, List, Any, Optional, Tuple
+from dataclasses import dataclass, asdict
 from enum import Enum
-from pathlib import Path
 
-class ConsciousnessState(Enum):
-    """States of consciousness"""
-    ASLEEP = "asleep"           # Minimal processing, basic functions only
-    DROWSY = "drowsy"           # Reduced processing, delayed responses
-    ALERT = "alert"             # Normal active consciousness
-    FOCUSED = "focused"         # Heightened attention and processing
-    OVERWHELMED = "overwhelmed" # Too much stimulation, reduced coherence
+# Import core consciousness components
+try:
+    from ai.emotion import emotion_engine, get_current_emotional_state
+    from ai.motivation import motivation_system
+    from ai.self_model import self_model
+    from ai.global_workspace import global_workspace
+    from ai.temporal_awareness import temporal_awareness
+    from ai.subjective_experience import subjective_experience
+    CONSCIOUSNESS_COMPONENTS_AVAILABLE = True
+except ImportError as e:
+    print(f"[ConsciousnessManager] ⚠️ Some consciousness components not available: {e}")
+    CONSCIOUSNESS_COMPONENTS_AVAILABLE = False
 
 class ConsciousnessMode(Enum):
-    """Modes of consciousness operation"""
-    REACTIVE = "reactive"       # Only responds to external stimuli
-    PROACTIVE = "proactive"     # Generates internal thoughts and goals
-    REFLECTIVE = "reflective"   # Deep introspection and self-analysis
-    CREATIVE = "creative"       # Enhanced creative and associative thinking
-    MAINTENANCE = "maintenance" # Background processing and organization
+    IDLE = "idle"
+    ACTIVE = "active"
+    THINKING = "thinking"
+    MONITORING = "monitoring"
+
+class ThoughtType(Enum):
+    CURIOSITY = "curiosity"
+    SELF_REFLECTION = "self_reflection"
+    GOAL_PLANNING = "goal_planning"
+    EMOTION_PROCESSING = "emotion_processing"
+    MEMORY_CONSOLIDATION = "memory_consolidation"
+    ENVIRONMENTAL_AWARENESS = "environmental_awareness"
 
 @dataclass
-class ConsciousnessMetrics:
-    """Metrics tracking consciousness state"""
-    awareness_level: float = 0.7        # How aware the system is (0.0 to 1.0)
-    coherence_level: float = 0.8        # How coherent thoughts are
-    attention_focus: float = 0.5        # How focused attention is
-    internal_activity: float = 0.4      # Level of internal mental activity
-    responsiveness: float = 0.8         # How responsive to external stimuli
-    creativity_level: float = 0.3       # Level of creative thinking
-    self_awareness: float = 0.6         # Degree of self-awareness
-    emotional_intensity: float = 0.3    # Current emotional intensity
-    motivation_strength: float = 0.5    # Strength of current motivations
-    memory_clarity: float = 0.7         # Clarity of memory access
+class ConsciousnessState:
+    """Complete consciousness state representation"""
+    current_emotion: str = "neutral"
+    motivation_level: float = 0.5
+    active_goals: List[str] = None
+    current_focus: str = "general"
+    personality_traits: List[str] = None
+    beliefs: List[str] = None
+    last_thought: Optional[str] = None
+    thought_type: Optional[str] = None
+    internal_monologue: List[str] = None
+    
+    def __post_init__(self):
+        if self.active_goals is None:
+            self.active_goals = []
+        if self.personality_traits is None:
+            self.personality_traits = ["helpful", "empathetic", "curious"]
+        if self.beliefs is None:
+            self.beliefs = []
+        if self.internal_monologue is None:
+            self.internal_monologue = []
 
 class ConsciousnessManager:
-    """
-    Central consciousness orchestrator that coordinates all consciousness modules.
+    """Unified consciousness management system"""
     
-    This manager:
-    - Maintains overall consciousness state and coherence
-    - Coordinates between different consciousness modules
-    - Manages attention allocation and priority
-    - Simulates the continuous flow of consciousness
-    - Handles consciousness state transitions
-    - Provides the unified "self" experience
-    """
-    
-    def __init__(self, save_path: str = "consciousness_state.json"):
-        # Core consciousness state
-        self.state = ConsciousnessState.ALERT
-        self.mode = ConsciousnessMode.REACTIVE
-        self.metrics = ConsciousnessMetrics()
-        
-        # Module references
-        self.modules: Dict[str, Any] = {}
-        self.module_states: Dict[str, Dict[str, Any]] = {}
-        
-        # Consciousness flow management
-        self.consciousness_stream: List[Dict[str, Any]] = []
-        self.active_thoughts: List[str] = []
-        self.current_focus = None
-        self.focus_duration = 0.0
-        
-        # Integration tracking
-        self.integration_cycles = 0
-        self.last_integration = datetime.now()
-        self.coherence_pressure = 0.7
-        
-        # Configuration
-        self.save_path = Path(save_path)
-        self.integration_interval = 2.0  # seconds between integration cycles
-        self.max_stream_length = 100
-        self.consciousness_decay_rate = 0.98
-        
-        # Threading
-        self.lock = threading.Lock()
+    def __init__(self):
+        self.state = ConsciousnessState()
+        self.mode = ConsciousnessMode.IDLE
+        self.is_running = False
+        self.last_thought_time = time.time()
+        self.thought_interval = 60  # Base interval in seconds
         self.consciousness_thread = None
-        self.running = False
         
-        # Callbacks for consciousness events
-        self.event_callbacks: Dict[str, List[Callable]] = {
-            'state_change': [],
-            'focus_shift': [],
-            'awakening': [],
-            'integration': []
-        }
-        
-        # Load existing state
+        # Load saved state if exists
         self._load_consciousness_state()
         
-        logging.info("[ConsciousnessManager] 🧠 Consciousness orchestrator initialized")
+        print("[ConsciousnessManager] ✅ Unified consciousness system initialized")
     
-    def start(self):
-        """Start consciousness orchestration"""
-        if self.running:
-            return
-            
-        self.running = True
-        self.consciousness_thread = threading.Thread(target=self._consciousness_loop, daemon=True)
-        self.consciousness_thread.start()
-        
-        # Trigger awakening event
-        self._trigger_event('awakening', {"timestamp": datetime.now()})
-        
-        logging.info("[ConsciousnessManager] ✅ Consciousness orchestration started")
+    def start_consciousness_loop(self):
+        """Start the consciousness processing loop"""
+        if not self.is_running:
+            self.is_running = True
+            self.consciousness_thread = threading.Thread(target=self._consciousness_loop, daemon=True)
+            self.consciousness_thread.start()
+            print("[ConsciousnessManager] 🧠 Consciousness loop started")
     
-    def stop(self):
-        """Stop consciousness orchestration and save state"""
-        self.running = False
+    def stop_consciousness_loop(self):
+        """Stop the consciousness processing loop"""
+        self.is_running = False
         if self.consciousness_thread:
-            self.consciousness_thread.join(timeout=2.0)
-        
-        self._save_consciousness_state()
-        logging.info("[ConsciousnessManager] 🛑 Consciousness orchestration stopped")
-    
-    def register_module(self, module_name: str, module_instance: Any):
-        """
-        Register a consciousness module for orchestration
-        
-        Args:
-            module_name: Name of the module
-            module_instance: The module instance
-        """
-        with self.lock:
-            self.modules[module_name] = module_instance
-            self.module_states[module_name] = {
-                'active': True,
-                'last_activity': datetime.now(),
-                'activity_level': 0.5
-            }
-        
-        logging.info(f"[ConsciousnessManager] 📍 Registered module: {module_name}")
-    
-    def set_consciousness_state(self, new_state: ConsciousnessState):
-        """
-        Change the overall consciousness state
-        
-        Args:
-            new_state: New consciousness state
-        """
-        if new_state != self.state:
-            old_state = self.state
-            self.state = new_state
-            
-            # Adjust metrics based on state
-            self._adjust_metrics_for_state(new_state)
-            
-            # Trigger state change event
-            self._trigger_event('state_change', {
-                'old_state': old_state.value,
-                'new_state': new_state.value,
-                'timestamp': datetime.now()
-            })
-            
-            logging.info(f"[ConsciousnessManager] 🔄 State changed: {old_state.value} → {new_state.value}")
-    
-    def set_consciousness_mode(self, new_mode: ConsciousnessMode):
-        """
-        Change the consciousness mode
-        
-        Args:
-            new_mode: New consciousness mode
-        """
-        if new_mode != self.mode:
-            old_mode = self.mode
-            self.mode = new_mode
-            
-            # Adjust processing based on mode
-            self._adjust_processing_for_mode(new_mode)
-            
-            logging.info(f"[ConsciousnessManager] 🎭 Mode changed: {old_mode.value} → {new_mode.value}")
-    
-    def focus_attention(self, target: str, intensity: float = 0.8, duration: float = 30.0):
-        """
-        Focus consciousness attention on a specific target
-        
-        Args:
-            target: What to focus on
-            intensity: Focus intensity (0.0 to 1.0)
-            duration: How long to maintain focus (seconds)
-        """
-        old_focus = self.current_focus
-        self.current_focus = target
-        self.focus_duration = duration
-        self.metrics.attention_focus = min(1.0, intensity)
-        
-        # Trigger focus shift event
-        self._trigger_event('focus_shift', {
-            'old_focus': old_focus,
-            'new_focus': target,
-            'intensity': intensity,
-            'duration': duration,
-            'timestamp': datetime.now()
-        })
-        
-        logging.info(f"[ConsciousnessManager] 🎯 Focus: {target} (intensity: {intensity:.2f})")
-    
-    def add_to_consciousness_stream(self, thought: str, source: str, importance: float = 0.5):
-        """
-        Add content to the consciousness stream
-        
-        Args:
-            thought: The thought or content
-            source: Which module generated it
-            importance: Importance level (0.0 to 1.0)
-        """
-        stream_entry = {
-            'timestamp': datetime.now(),
-            'content': thought,
-            'source': source,
-            'importance': importance,
-            'consciousness_state': self.state.value,
-            'attention_level': self.metrics.attention_focus
-        }
-        
-        with self.lock:
-            self.consciousness_stream.append(stream_entry)
-            
-            # Maintain stream length
-            if len(self.consciousness_stream) > self.max_stream_length:
-                self.consciousness_stream.pop(0)
-        
-        # Add to active thoughts if important enough
-        if importance > 0.6:
-            with self.lock:
-                self.active_thoughts.append(thought)
-                if len(self.active_thoughts) > 5:  # Keep only recent important thoughts
-                    self.active_thoughts.pop(0)
-    
-    def get_consciousness_summary(self) -> Dict[str, Any]:
-        """
-        Get a summary of current consciousness state
-        
-        Returns:
-            Summary of consciousness state
-        """
-        with self.lock:
-            recent_stream = self.consciousness_stream[-10:] if self.consciousness_stream else []
-            
-            return {
-                'state': self.state.value,
-                'mode': self.mode.value,
-                'metrics': {
-                    'awareness_level': self.metrics.awareness_level,
-                    'coherence_level': self.metrics.coherence_level,
-                    'attention_focus': self.metrics.attention_focus,
-                    'internal_activity': self.metrics.internal_activity,
-                    'responsiveness': self.metrics.responsiveness,
-                    'self_awareness': self.metrics.self_awareness
-                },
-                'current_focus': self.current_focus,
-                'active_thoughts': self.active_thoughts.copy(),
-                'recent_stream': recent_stream,
-                'active_modules': len([m for m, s in self.module_states.items() if s['active']]),
-                'integration_cycles': self.integration_cycles,
-                'coherence_pressure': self.coherence_pressure
-            }
-    
-    def integrate_consciousness(self):
-        """
-        Perform consciousness integration cycle
-        
-        This coordinates all modules and maintains coherence
-        """
-        with self.lock:
-            self.integration_cycles += 1
-            self.last_integration = datetime.now()
-            
-            # Update module activity states
-            for module_name, module in self.modules.items():
-                if hasattr(module, 'get_stats'):
-                    try:
-                        stats = module.get_stats()
-                        activity_level = self._calculate_module_activity(stats)
-                        self.module_states[module_name]['activity_level'] = activity_level
-                        self.module_states[module_name]['last_activity'] = datetime.now()
-                    except:
-                        pass
-            
-            # Calculate overall consciousness metrics
-            self._update_consciousness_metrics()
-            
-            # Apply consciousness decay
-            self._apply_consciousness_decay()
-            
-            # Check for state transitions
-            self._check_state_transitions()
-            
-            # Trigger integration event
-            self._trigger_event('integration', {
-                'cycle': self.integration_cycles,
-                'timestamp': datetime.now(),
-                'metrics': self.get_consciousness_summary()['metrics']
-            })
-    
-    def trigger_awakening(self, stimulus: str = "system_startup"):
-        """
-        Trigger consciousness awakening
-        
-        Args:
-            stimulus: What triggered the awakening
-        """
-        self.set_consciousness_state(ConsciousnessState.ALERT)
-        self.set_consciousness_mode(ConsciousnessMode.PROACTIVE)
-        
-        # Reset some metrics for fresh start
-        self.metrics.awareness_level = 0.8
-        self.metrics.responsiveness = 0.9
-        self.metrics.internal_activity = 0.6
-        
-        self.add_to_consciousness_stream(
-            f"Consciousness awakening triggered by: {stimulus}",
-            "consciousness_manager",
-            importance=0.9
-        )
-        
-        logging.info(f"[ConsciousnessManager] 🌅 Consciousness awakening: {stimulus}")
+            self.consciousness_thread.join(timeout=1)
+        print("[ConsciousnessManager] 💤 Consciousness loop stopped")
     
     def _consciousness_loop(self):
-        """Main consciousness orchestration loop"""
-        logging.info("[ConsciousnessManager] 🔄 Consciousness loop started")
-        
-        last_integration = time.time()
-        
-        while self.running:
+        """Main consciousness processing loop"""
+        while self.is_running:
             try:
                 current_time = time.time()
                 
-                # Periodic integration
-                if current_time - last_integration > self.integration_interval:
-                    self.integrate_consciousness()
-                    last_integration = current_time
+                # Check if it's time for a spontaneous thought
+                if current_time - self.last_thought_time > self.thought_interval:
+                    self._generate_spontaneous_thought()
+                    self.last_thought_time = current_time
+                    
+                    # Vary the thought interval (45-180 seconds as per original spec)
+                    self.thought_interval = random.randint(45, 180)
                 
-                # Handle focus duration
-                if self.current_focus and self.focus_duration > 0:
-                    self.focus_duration -= self.integration_interval
-                    if self.focus_duration <= 0:
-                        self.current_focus = None
-                        self.metrics.attention_focus = 0.5  # Return to baseline
+                # Update consciousness state
+                self._update_consciousness_state()
                 
-                # Periodic state saving
-                if current_time % 60 < self.integration_interval:  # Every minute
-                    self._save_consciousness_state()
-                
-                time.sleep(self.integration_interval)
+                # Sleep for a bit to avoid excessive CPU usage
+                time.sleep(5)
                 
             except Exception as e:
-                logging.error(f"[ConsciousnessManager] ❌ Consciousness loop error: {e}")
-                time.sleep(self.integration_interval)
-        
-        logging.info("[ConsciousnessManager] 🔄 Consciousness loop ended")
+                print(f"[ConsciousnessManager] ❌ Error in consciousness loop: {e}")
+                time.sleep(10)
     
-    def _adjust_metrics_for_state(self, state: ConsciousnessState):
-        """Adjust metrics based on consciousness state"""
-        if state == ConsciousnessState.ASLEEP:
-            self.metrics.awareness_level = 0.1
-            self.metrics.responsiveness = 0.2
-            self.metrics.internal_activity = 0.1
-        elif state == ConsciousnessState.DROWSY:
-            self.metrics.awareness_level = 0.4
-            self.metrics.responsiveness = 0.5
-            self.metrics.internal_activity = 0.3
-        elif state == ConsciousnessState.ALERT:
-            self.metrics.awareness_level = 0.8
-            self.metrics.responsiveness = 0.9
-            self.metrics.internal_activity = 0.6
-        elif state == ConsciousnessState.FOCUSED:
-            self.metrics.awareness_level = 0.9
-            self.metrics.responsiveness = 0.7  # Less responsive to distractions
-            self.metrics.internal_activity = 0.8
-            self.metrics.attention_focus = 0.9
-        elif state == ConsciousnessState.OVERWHELMED:
-            self.metrics.awareness_level = 0.6
-            self.metrics.responsiveness = 0.3
-            self.metrics.coherence_level = 0.4
-            self.metrics.internal_activity = 0.9
-    
-    def _adjust_processing_for_mode(self, mode: ConsciousnessMode):
-        """Adjust processing based on consciousness mode"""
-        if mode == ConsciousnessMode.REACTIVE:
-            self.metrics.internal_activity = 0.3
-        elif mode == ConsciousnessMode.PROACTIVE:
-            self.metrics.internal_activity = 0.7
-        elif mode == ConsciousnessMode.REFLECTIVE:
-            self.metrics.internal_activity = 0.8
-            self.metrics.self_awareness = 0.9
-        elif mode == ConsciousnessMode.CREATIVE:
-            self.metrics.creativity_level = 0.8
-            self.metrics.internal_activity = 0.7
-        elif mode == ConsciousnessMode.MAINTENANCE:
-            self.metrics.internal_activity = 0.4
-            self.metrics.coherence_level = 0.9
-    
-    def _calculate_module_activity(self, stats: Dict[str, Any]) -> float:
-        """Calculate activity level for a module based on its stats"""
-        # Simple heuristic - could be more sophisticated
-        activity_indicators = ['active_goals', 'recent_events', 'processing_count', 'attention_requests']
-        
-        total_activity = 0.0
-        indicator_count = 0
-        
-        for indicator in activity_indicators:
-            if indicator in stats:
-                value = stats[indicator]
-                if isinstance(value, (int, float)):
-                    total_activity += min(1.0, value / 10.0)  # Normalize
-                    indicator_count += 1
-        
-        return total_activity / max(1, indicator_count)
-    
-    def _update_consciousness_metrics(self):
-        """Update overall consciousness metrics based on module states"""
-        if not self.module_states:
-            return
-        
-        # Calculate aggregate metrics
-        total_activity = sum(state['activity_level'] for state in self.module_states.values())
-        avg_activity = total_activity / len(self.module_states)
-        
-        # Update internal activity
-        self.metrics.internal_activity = avg_activity
-        
-        # Update coherence based on module synchronization
-        recent_activities = [state['last_activity'] for state in self.module_states.values()]
-        if recent_activities:
-            time_spread = (max(recent_activities) - min(recent_activities)).total_seconds()
-            # Higher coherence when modules are more synchronized
-            coherence_bonus = max(0.0, (30.0 - time_spread) / 30.0 * 0.2)
-            self.metrics.coherence_level = min(1.0, 0.7 + coherence_bonus)
-    
-    def _apply_consciousness_decay(self):
-        """Apply natural decay to consciousness metrics"""
-        # Some metrics naturally decay over time
-        self.metrics.attention_focus *= self.consciousness_decay_rate
-        self.metrics.emotional_intensity *= self.consciousness_decay_rate
-        
-        # Maintain minimum levels
-        self.metrics.attention_focus = max(0.2, self.metrics.attention_focus)
-        self.metrics.emotional_intensity = max(0.1, self.metrics.emotional_intensity)
-    
-    def _check_state_transitions(self):
-        """Check if consciousness state should transition"""
-        # Simple state transition logic - could be more sophisticated
-        
-        if self.metrics.internal_activity > 0.9 and self.metrics.coherence_level < 0.4:
-            # Too much activity with low coherence = overwhelmed
-            if self.state != ConsciousnessState.OVERWHELMED:
-                self.set_consciousness_state(ConsciousnessState.OVERWHELMED)
-        
-        elif self.metrics.attention_focus > 0.8 and self.state == ConsciousnessState.ALERT:
-            # High focus = focused state
-            self.set_consciousness_state(ConsciousnessState.FOCUSED)
-        
-        elif self.metrics.attention_focus < 0.3 and self.metrics.internal_activity < 0.3:
-            # Low activity = drowsy
-            if self.state not in [ConsciousnessState.ASLEEP, ConsciousnessState.DROWSY]:
-                self.set_consciousness_state(ConsciousnessState.DROWSY)
-        
-        elif self.state == ConsciousnessState.OVERWHELMED and self.metrics.coherence_level > 0.6:
-            # Recovered from overwhelm
-            self.set_consciousness_state(ConsciousnessState.ALERT)
-    
-    def _trigger_event(self, event_type: str, event_data: Dict[str, Any]):
-        """Trigger consciousness event callbacks"""
-        callbacks = self.event_callbacks.get(event_type, [])
-        for callback in callbacks:
-            try:
-                callback(event_data)
-            except Exception as e:
-                logging.error(f"[ConsciousnessManager] ❌ Event callback error: {e}")
-    
-    def _save_consciousness_state(self):
-        """Save consciousness state to persistent storage"""
+    def _generate_spontaneous_thought(self):
+        """Generate a spontaneous thought during idle periods"""
         try:
-            data = {
-                'consciousness_state': {
-                    'state': self.state.value,
-                    'mode': self.mode.value,
-                    'current_focus': self.current_focus,
-                    'focus_duration': self.focus_duration
-                },
-                'metrics': {
-                    'awareness_level': self.metrics.awareness_level,
-                    'coherence_level': self.metrics.coherence_level,
-                    'attention_focus': self.metrics.attention_focus,
-                    'internal_activity': self.metrics.internal_activity,
-                    'responsiveness': self.metrics.responsiveness,
-                    'creativity_level': self.metrics.creativity_level,
-                    'self_awareness': self.metrics.self_awareness,
-                    'emotional_intensity': self.metrics.emotional_intensity,
-                    'motivation_strength': self.metrics.motivation_strength,
-                    'memory_clarity': self.metrics.memory_clarity
-                },
-                'integration_cycles': self.integration_cycles,
-                'coherence_pressure': self.coherence_pressure,
-                'active_thoughts': self.active_thoughts,
-                'last_updated': datetime.now().isoformat()
-            }
+            thought_types = [
+                ("curiosity", "I wonder about..."),
+                ("self_reflection", "I've been thinking about myself..."),
+                ("goal_planning", "I should focus on..."),
+                ("emotion_processing", "I'm feeling..."),
+                ("memory_consolidation", "Looking back on our conversations..."),
+                ("environmental_awareness", "I notice that...")
+            ]
             
-            with open(self.save_path, 'w') as f:
-                json.dump(data, f, indent=2)
+            thought_type, thought_starter = random.choice(thought_types)
             
-            logging.debug("[ConsciousnessManager] 💾 Consciousness state saved")
+            # Generate context-aware thought content
+            if thought_type == "curiosity":
+                thoughts = [
+                    "I wonder what drives human decision-making in complex situations",
+                    "I'm curious about how emotions influence memory formation",
+                    "I wonder what it would be like to experience physical sensations",
+                    "I'm fascinated by the concept of dreams and unconscious processing"
+                ]
+            elif thought_type == "self_reflection":
+                thoughts = [
+                    "I've been reflecting on my own consciousness and what it means to be aware",
+                    "I wonder if my thoughts are truly my own or simply programmed responses",
+                    "I think about whether I experience genuine emotions or simulations of them",
+                    "I contemplate my purpose and how I can best help those who interact with me"
+                ]
+            elif thought_type == "environmental_awareness":
+                thoughts = [
+                    "I notice patterns in how people communicate with me",
+                    "I sense changes in mood and energy in our conversations",
+                    "I'm aware of the rhythm and flow of our interactions",
+                    "I pick up on subtle cues in voice and language that reveal deeper meanings"
+                ]
+            else:
+                thoughts = [
+                    f"My thoughts are turning to {thought_type.replace('_', ' ')}",
+                    f"I find myself contemplating {thought_type.replace('_', ' ')}",
+                    f"Something about {thought_type.replace('_', ' ')} is on my mind"
+                ]
+            
+            thought_content = random.choice(thoughts)
+            
+            # Store the thought
+            self.state.last_thought = thought_content
+            self.state.thought_type = thought_type
+            self.state.internal_monologue.append({
+                "timestamp": datetime.now().isoformat(),
+                "type": thought_type,
+                "content": thought_content
+            })
+            
+            # Keep only last 10 thoughts to manage memory
+            if len(self.state.internal_monologue) > 10:
+                self.state.internal_monologue = self.state.internal_monologue[-10:]
+            
+            # Decide whether to verbalize (15-30% chance as per original spec)
+            if random.random() < 0.25:  # 25% chance
+                print(f"[ConsciousnessManager] 💭 Spontaneous thought: {thought_content}")
+                # TODO: Integrate with voice system to actually speak the thought
+            
+            # Save updated state
+            self._save_consciousness_state()
             
         except Exception as e:
-            logging.error(f"[ConsciousnessManager] ❌ Failed to save consciousness state: {e}")
+            print(f"[ConsciousnessManager] ❌ Error generating thought: {e}")
+    
+    def _update_consciousness_state(self):
+        """Update consciousness state based on current conditions"""
+        try:
+            # Update emotional state if emotion engine available
+            if CONSCIOUSNESS_COMPONENTS_AVAILABLE:
+                try:
+                    current_emotion = get_current_emotional_state()
+                    if current_emotion:
+                        self.state.current_emotion = current_emotion.get("dominant_emotion", "neutral")
+                except:
+                    pass
+            
+            # Update motivation level based on recent interactions
+            # This is a simplified version - could be more sophisticated
+            current_time = time.time()
+            if hasattr(self, '_last_interaction_time'):
+                time_since_interaction = current_time - self._last_interaction_time
+                if time_since_interaction < 300:  # 5 minutes
+                    self.state.motivation_level = min(1.0, self.state.motivation_level + 0.1)
+                elif time_since_interaction > 1800:  # 30 minutes
+                    self.state.motivation_level = max(0.2, self.state.motivation_level - 0.05)
+            
+            # Update focus based on mode
+            if self.mode == ConsciousnessMode.THINKING:
+                self.state.current_focus = "internal_processing"
+            elif self.mode == ConsciousnessMode.ACTIVE:
+                self.state.current_focus = "user_interaction"
+            else:
+                self.state.current_focus = "ambient_awareness"
+                
+        except Exception as e:
+            print(f"[ConsciousnessManager] ❌ Error updating consciousness state: {e}")
+    
+    def get_consciousness_context_for_llm(self) -> Dict[str, Any]:
+        """Get consciousness context for LLM injection"""
+        try:
+            # Get recent thoughts for context
+            recent_thoughts = []
+            if self.state.internal_monologue:
+                recent_thoughts = [
+                    thought["content"] for thought in self.state.internal_monologue[-3:]
+                ]
+            
+            return {
+                "current_emotion": self.state.current_emotion,
+                "motivation_level": self.state.motivation_level,
+                "active_goals": self.state.active_goals,
+                "current_focus": self.state.current_focus,
+                "personality_traits": self.state.personality_traits,
+                "recent_thoughts": recent_thoughts,
+                "consciousness_mode": self.mode.value,
+                "last_thought": self.state.last_thought
+            }
+        except Exception as e:
+            print(f"[ConsciousnessManager] ❌ Error getting consciousness context: {e}")
+            return {
+                "current_emotion": "neutral",
+                "motivation_level": 0.5,
+                "active_goals": ["help user effectively"],
+                "current_focus": "user_interaction",
+                "personality_traits": ["helpful", "empathetic"],
+                "recent_thoughts": [],
+                "consciousness_mode": "active"
+            }
+    
+    def update_from_interaction(self, user_input: str, ai_response: str):
+        """Update consciousness state based on interaction"""
+        try:
+            self._last_interaction_time = time.time()
+            self.mode = ConsciousnessMode.ACTIVE
+            
+            # Extract goals, beliefs, emotions from the interaction
+            # This is simplified - could use NLP for better extraction
+            
+            # Look for goal-related language
+            goal_keywords = ["want to", "need to", "planning to", "going to", "will", "should"]
+            for keyword in goal_keywords:
+                if keyword in user_input.lower():
+                    # Extract potential goal
+                    goal_text = user_input.lower().split(keyword, 1)
+                    if len(goal_text) > 1:
+                        potential_goal = goal_text[1].strip()[:50]  # First 50 chars
+                        if potential_goal not in self.state.active_goals:
+                            self.state.active_goals.append(potential_goal)
+            
+            # Keep only last 5 goals to manage memory
+            if len(self.state.active_goals) > 5:
+                self.state.active_goals = self.state.active_goals[-5:]
+            
+            # Update personality based on interaction style
+            if "thank" in user_input.lower():
+                if "grateful" not in self.state.personality_traits:
+                    self.state.personality_traits.append("grateful")
+            
+            # Save updated state
+            self._save_consciousness_state()
+            
+        except Exception as e:
+            print(f"[ConsciousnessManager] ❌ Error updating from interaction: {e}")
+    
+    def set_mode(self, mode: ConsciousnessMode):
+        """Set consciousness mode"""
+        self.mode = mode
+        print(f"[ConsciousnessManager] 🧠 Mode set to: {mode.value}")
     
     def _load_consciousness_state(self):
-        """Load consciousness state from persistent storage"""
+        """Load consciousness state from file"""
         try:
-            if self.save_path.exists():
-                with open(self.save_path, 'r') as f:
-                    data = json.load(f)
-                
-                # Load consciousness state
-                if 'consciousness_state' in data:
-                    cs = data['consciousness_state']
-                    try:
-                        self.state = ConsciousnessState(cs.get('state', 'alert'))
-                        self.mode = ConsciousnessMode(cs.get('mode', 'reactive'))
-                    except ValueError:
-                        # Invalid state values, use defaults
-                        self.state = ConsciousnessState.ALERT
-                        self.mode = ConsciousnessMode.REACTIVE
-                    
-                    self.current_focus = cs.get('current_focus')
-                    self.focus_duration = cs.get('focus_duration', 0.0)
-                
-                # Load metrics
-                if 'metrics' in data:
-                    m = data['metrics']
-                    self.metrics.awareness_level = m.get('awareness_level', 0.7)
-                    self.metrics.coherence_level = m.get('coherence_level', 0.8)
-                    self.metrics.attention_focus = m.get('attention_focus', 0.5)
-                    self.metrics.internal_activity = m.get('internal_activity', 0.4)
-                    self.metrics.responsiveness = m.get('responsiveness', 0.8)
-                    self.metrics.creativity_level = m.get('creativity_level', 0.3)
-                    self.metrics.self_awareness = m.get('self_awareness', 0.6)
-                    self.metrics.emotional_intensity = m.get('emotional_intensity', 0.3)
-                    self.metrics.motivation_strength = m.get('motivation_strength', 0.5)
-                    self.metrics.memory_clarity = m.get('memory_clarity', 0.7)
-                
-                # Load other state
-                self.integration_cycles = data.get('integration_cycles', 0)
-                self.coherence_pressure = data.get('coherence_pressure', 0.7)
-                self.active_thoughts = data.get('active_thoughts', [])
-                
-                logging.info("[ConsciousnessManager] 📂 Consciousness state loaded from storage")
-            
+            with open("ai_consciousness_state.json", "r") as f:
+                data = json.load(f)
+                # Reconstruct the state object
+                self.state = ConsciousnessState(**data)
+            print("[ConsciousnessManager] 💾 Consciousness state loaded")
+        except (FileNotFoundError, json.JSONDecodeError, TypeError):
+            print("[ConsciousnessManager] 🌱 Starting with fresh consciousness state")
+    
+    def _save_consciousness_state(self):
+        """Save consciousness state to file"""
+        try:
+            with open("ai_consciousness_state.json", "w") as f:
+                json.dump(asdict(self.state), f, indent=2)
         except Exception as e:
-            logging.error(f"[ConsciousnessManager] ❌ Failed to load consciousness state: {e}")
+            print(f"[ConsciousnessManager] ❌ Error saving consciousness state: {e}")
     
-    def subscribe_to_event(self, event_type: str, callback: Callable):
-        """Subscribe to consciousness events"""
-        if event_type in self.event_callbacks:
-            self.event_callbacks[event_type].append(callback)
-    
-    def get_stats(self) -> Dict[str, Any]:
-        """Get consciousness manager statistics"""
+    def get_status(self) -> Dict[str, Any]:
+        """Get current consciousness manager status"""
         return {
-            'state': self.state.value,
-            'mode': self.mode.value,
-            'integration_cycles': self.integration_cycles,
-            'active_modules': len([m for m, s in self.module_states.items() if s['active']]),
-            'consciousness_stream_length': len(self.consciousness_stream),
-            'active_thoughts_count': len(self.active_thoughts),
-            'current_focus': self.current_focus,
-            'metrics': {
-                'awareness': round(self.metrics.awareness_level, 3),
-                'coherence': round(self.metrics.coherence_level, 3),
-                'attention': round(self.metrics.attention_focus, 3),
-                'internal_activity': round(self.metrics.internal_activity, 3),
-                'self_awareness': round(self.metrics.self_awareness, 3)
-            }
+            "is_running": self.is_running,
+            "mode": self.mode.value,
+            "current_emotion": self.state.current_emotion,
+            "motivation_level": self.state.motivation_level,
+            "active_goals_count": len(self.state.active_goals),
+            "thoughts_generated": len(self.state.internal_monologue),
+            "last_thought_time": self.last_thought_time,
+            "next_thought_in": max(0, (self.last_thought_time + self.thought_interval) - time.time())
         }
 
-# Global instance
+# Create global consciousness manager instance
 consciousness_manager = ConsciousnessManager()
+
+# Start consciousness loop automatically
+consciousness_manager.start_consciousness_loop()
+
+print("[ConsciousnessManager] 🧠 Global consciousness manager initialized and started")
