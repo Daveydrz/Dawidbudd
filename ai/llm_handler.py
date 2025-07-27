@@ -185,41 +185,54 @@ class LLMHandler:
         use_optimization: bool = True
     ) -> Generator[str, None, None]:
         """
-        Generate response with PORT SEPARATION - consciousness via 5002, response via 5001
+        Generate response with LOCAL CONSCIOUSNESS - no port separation needed
         
         Args:
             text: User input text
             user: User identifier
             context: Optional conversation context
             stream: Whether to stream response chunks
-            use_optimization: Ignored - always uses port separation
+            use_optimization: Ignored - always uses local consciousness
         
         Yields response chunks if streaming, otherwise returns complete response
         """
         try:
-            print(f"[LLMHandler] 🚨 PORT SEPARATION mode: '{text[:30]}...'")
+            print(f"[LLMHandler] 🧠 LOCAL CONSCIOUSNESS mode: '{text[:30]}...'")
             
-            # 1. ALL CONSCIOUSNESS PROCESSING VIA PORT 5002 (Gemma)
-            consciousness_data = None
+            # 1. UPDATE LOCAL CONSCIOUSNESS WITH USER INPUT
             try:
-                from ai.extractor_client import process_full_consciousness, get_consciousness_for_prompt
+                from ai.consciousness_manager import consciousness_manager
+                consciousness_manager.update_from_interaction(text, user)
+                consciousness_context = consciousness_manager.get_consciousness_context_for_llm()
                 
-                print(f"[LLMHandler] 🧠 Sending consciousness processing to PORT 5002...")
-                consciousness_data = process_full_consciousness(text, user, context)
-                consciousness_context = get_consciousness_for_prompt(user)
-                
-                print(f"[LLMHandler] ✅ Consciousness processing complete via PORT 5002")
+                print(f"[LLMHandler] ✅ Local consciousness updated")
             except Exception as consciousness_error:
-                print(f"[LLMHandler] ❌ PORT 5002 consciousness error: {consciousness_error}")
-                consciousness_context = "BUDDY'S CONSCIOUSNESS STATE: Ready to help with friendly, empathetic responses."
+                print(f"[LLMHandler] ❌ Local consciousness error: {consciousness_error}")
+                consciousness_context = {
+                    "current_emotion": "neutral",
+                    "motivation_level": 0.7,
+                    "active_goals": ["help user"],
+                    "current_focus": "user_interaction",
+                    "personality_traits": ["helpful", "empathetic"],
+                    "recent_thoughts": [],
+                    "consciousness_mode": "active"
+                }
             
-            # 2. ONLY FINAL RESPONSE GENERATION VIA PORT 5001 (Main LLM)
+            # 2. BUILD CONSCIOUSNESS-ENHANCED PROMPT
             print(f"[LLMHandler] 🎯 Sending response generation to PORT 5001...")
             
             # Build prompt with consciousness injection
+            consciousness_str = f"""Current Emotion: {consciousness_context.get('current_emotion', 'neutral')}
+Motivation: {consciousness_context.get('motivation_level', 0.7)}
+Active Goals: {', '.join(consciousness_context.get('active_goals', ['help user']))}
+Current Focus: {consciousness_context.get('current_focus', 'user interaction')}
+Personality: {', '.join(consciousness_context.get('personality_traits', ['helpful']))}
+Recent Thoughts: {', '.join(consciousness_context.get('recent_thoughts', []))}"""
+
             final_prompt = f"""Buddy is a helpful, empathetic AI assistant.
 
-{consciousness_context}
+BUDDY'S CONSCIOUSNESS STATE:
+{consciousness_str}
 
 User: {text}
 
@@ -280,7 +293,7 @@ Buddy:"""
                 yield f"I apologize, but I'm having trouble connecting to my response generation system."
             
         except Exception as e:
-            print(f"[LLMHandler] ❌ Error in port separation: {e}")
+            print(f"[LLMHandler] ❌ Error in local consciousness: {e}")
             yield f"I apologize, but I encountered an error while processing your request."
             
     def sanitize_prompt_input(self, text: str, user_id: str = "unknown") -> str:

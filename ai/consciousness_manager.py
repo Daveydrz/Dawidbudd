@@ -68,6 +68,15 @@ class ConsciousnessManager:
         self.thought_interval = 60  # Base interval in seconds
         self.consciousness_thread = None
         
+        # Initialize memory dictionary for facts extraction
+        self.memory = {
+            "name": None,
+            "likes": [],
+            "dislikes": [],
+            "facts": [],
+            "preferences": []
+        }
+        
         # Load saved state if exists
         self._load_consciousness_state()
         
@@ -250,45 +259,57 @@ class ConsciousnessManager:
         """Get consciousness context for a specific user interaction - alias for compatibility"""
         return self.get_consciousness_context_for_llm()
     
-    def update_from_interaction(self, user_input: str, ai_response: str):
-        """Update consciousness state based on interaction"""
+    def update_from_interaction(self, text, user):
+        """Update consciousness state using GPT4All extractor"""
         try:
+            from ai.extractor_llm import extract_facts
+            
+            facts = extract_facts(text)
+
+            if facts.get("name"):
+                self.memory["name"] = facts["name"]
+
+            for item in facts.get("likes", []):
+                if item not in self.memory["likes"]:
+                    self.memory["likes"].append(item)
+
+            for item in facts.get("dislikes", []):
+                if item not in self.memory["dislikes"]:
+                    self.memory["dislikes"].append(item)
+
+            self.state.current_emotion = facts.get("emotion", "neutral")
+
+            self.save_memory(user)
+            
+            # Update interaction timestamp
             self._last_interaction_time = time.time()
             self.mode = ConsciousnessMode.ACTIVE
             
-            # Extract goals, beliefs, emotions from the interaction
-            # This is simplified - could use NLP for better extraction
-            
-            # Look for goal-related language
-            goal_keywords = ["want to", "need to", "planning to", "going to", "will", "should"]
-            for keyword in goal_keywords:
-                if keyword in user_input.lower():
-                    # Extract potential goal
-                    goal_text = user_input.lower().split(keyword, 1)
-                    if len(goal_text) > 1:
-                        potential_goal = goal_text[1].strip()[:50]  # First 50 chars
-                        if potential_goal not in self.state.active_goals:
-                            self.state.active_goals.append(potential_goal)
-            
-            # Keep only last 5 goals to manage memory
-            if len(self.state.active_goals) > 5:
-                self.state.active_goals = self.state.active_goals[-5:]
-            
-            # Update personality based on interaction style
-            if "thank" in user_input.lower():
-                if "grateful" not in self.state.personality_traits:
-                    self.state.personality_traits.append("grateful")
-            
-            # Save updated state
-            self._save_consciousness_state()
-            
         except Exception as e:
             print(f"[ConsciousnessManager] ❌ Error updating from interaction: {e}")
+            # Fallback to simple processing
+            self._last_interaction_time = time.time()
+            self.mode = ConsciousnessMode.ACTIVE
     
     def set_mode(self, mode: ConsciousnessMode):
         """Set consciousness mode"""
         self.mode = mode
         print(f"[ConsciousnessManager] 🧠 Mode set to: {mode.value}")
+    
+    def save_memory(self, user):
+        """Save user memory to consciousness state"""
+        try:
+            # Update the consciousness state with memory information
+            if self.memory.get("name"):
+                if "name" not in [trait for trait in self.state.personality_traits]:
+                    self.state.personality_traits.append(f"knows user as {self.memory['name']}")
+            
+            # Save to file
+            self._save_consciousness_state()
+            print(f"[ConsciousnessManager] 💾 Memory saved for user: {user}")
+            
+        except Exception as e:
+            print(f"[ConsciousnessManager] ❌ Error saving memory: {e}")
     
     def _load_consciousness_state(self):
         """Load consciousness state from file"""
@@ -296,7 +317,10 @@ class ConsciousnessManager:
             with open("ai_consciousness_state.json", "r") as f:
                 data = json.load(f)
                 # Reconstruct the state object
-                self.state = ConsciousnessState(**data)
+                self.state = ConsciousnessState(**{k: v for k, v in data.items() if k in ConsciousnessState.__dataclass_fields__})
+                # Load memory if available
+                if "memory" in data:
+                    self.memory.update(data["memory"])
             print("[ConsciousnessManager] 💾 Consciousness state loaded")
         except (FileNotFoundError, json.JSONDecodeError, TypeError):
             print("[ConsciousnessManager] 🌱 Starting with fresh consciousness state")
@@ -304,8 +328,12 @@ class ConsciousnessManager:
     def _save_consciousness_state(self):
         """Save consciousness state to file"""
         try:
+            # Combine state and memory for saving
+            save_data = asdict(self.state)
+            save_data["memory"] = self.memory
+            
             with open("ai_consciousness_state.json", "w") as f:
-                json.dump(asdict(self.state), f, indent=2)
+                json.dump(save_data, f, indent=2)
         except Exception as e:
             print(f"[ConsciousnessManager] ❌ Error saving consciousness state: {e}")
     
