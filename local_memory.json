@@ -1055,6 +1055,42 @@
       ],
       "context": [],
       "last_activity": "2025-07-26T16:01:51.333736"
+    },
+    "Anonymous_001": {
+      "actions": [],
+      "preferences": [],
+      "facts": [
+        {
+          "timestamp": "2025-07-27T00:06:53.824923",
+          "user_id": "Anonymous_001",
+          "text": "User's name is David",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "David",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "test_introduction"
+          },
+          "confidence": 0.95
+        },
+        {
+          "timestamp": "2025-07-27T00:07:21.449992",
+          "user_id": "Anonymous_001",
+          "text": "User's name is David",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "David",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "immediate_extraction"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "context": [],
+      "last_activity": "2025-07-27T00:07:21.449992"
     }
   }
 }

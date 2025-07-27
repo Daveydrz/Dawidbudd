@@ -613,7 +613,7 @@ def handle_streaming_response(text, current_user):
         # Name patterns - check immediately
         name_patterns = [
             r"my name is (\w+)",
-            r"i'?m (\w+)",
+            r"i'?m (\w+)(?:\s+by the way|$|\.|!)",  # Fixed to handle "by the way" 
             r"call me (\w+)",
             r"i'?m called (\w+)",
             r"this is (\w+)"
@@ -647,6 +647,39 @@ def handle_streaming_response(text, current_user):
                 )
                 local_memory_manager.store_memories([name_memory])
                 print(f"[IMMEDIATE] ✅ Name '{extracted_name}' stored immediately")
+                
+                # ✅ CRITICAL: Link name to voice profile if user is currently anonymous
+                try:
+                    if current_user.startswith("Anonymous_") or current_user == "UNKNOWN":
+                        print(f"[IMMEDIATE] 🔗 Linking name '{extracted_name}' to voice profile '{current_user}'")
+                        
+                        # Try to get the voice manager and convert anonymous cluster to named user
+                        if hasattr(voice_manager, '_convert_anonymous_to_named'):
+                            success = voice_manager._convert_anonymous_to_named(current_user, extracted_name)
+                            if success:
+                                print(f"[IMMEDIATE] ✅ Voice profile converted: {current_user} → {extracted_name}")
+                                # Update current_user for the rest of this interaction
+                                current_user = extracted_name
+                            else:
+                                print(f"[IMMEDIATE] ⚠️ Voice profile conversion failed")
+                        
+                        # Also try the database conversion function directly
+                        try:
+                            from voice.database import link_anonymous_to_named, known_users, anonymous_clusters
+                            if current_user in anonymous_clusters:
+                                link_success = link_anonymous_to_named(current_user, extracted_name)
+                                if link_success:
+                                    print(f"[IMMEDIATE] ✅ Database link successful: {current_user} → {extracted_name}")
+                                    current_user = extracted_name
+                        except Exception as db_err:
+                            print(f"[IMMEDIATE] ⚠️ Database linking error: {db_err}")
+                            
+                    else:
+                        print(f"[IMMEDIATE] ℹ️ User already has known profile: {current_user}")
+                        
+                except Exception as voice_link_err:
+                    print(f"[IMMEDIATE] ⚠️ Voice linking error (non-critical): {voice_link_err}")
+                    # Continue with response generation even if voice linking fails
                 break
         
         # ✅ STEP 2: Get current memory context for response (updated with new name if detected)
@@ -709,11 +742,20 @@ Recent Context: {', '.join(existing_context.get('context', [])[-3:])}"""
             audio_available = False
             try:
                 from audio.output import speak_streaming
+                from audio.smart_streaming_output import speak_streaming_smart, reset_streaming_output, finalize_streaming_output
                 audio_available = True
-                print("[IMMEDIATE] 🎵 Audio system available - Kokoro ready")
+                reset_streaming_output()  # Reset for new response
+                print("[IMMEDIATE] 🎵 Audio system available - Kokoro ready with smart streaming")
             except ImportError as audio_err:
                 print(f"[IMMEDIATE] ⚠️ Audio system not available: {audio_err}")
                 audio_available = False
+                try:
+                    # Fallback to basic speak_streaming
+                    from audio.output import speak_streaming
+                    audio_available = True
+                    print("[IMMEDIATE] 🎵 Using basic audio system")
+                except ImportError:
+                    audio_available = False
             
             # Generate response using ONLY port 5001 with consciousness injection
             response_chunks = []
@@ -735,12 +777,22 @@ Recent Context: {', '.join(existing_context.get('context', [])[-3:])}"""
                     
                     print(f"[IMMEDIATE] 🗣️ Speaking chunk {chunk_count}: '{chunk_text[:50]}...'")
                     
-                    # Start speaking immediately (fixed audio output)
+                    # Start speaking immediately using smart streaming to prevent Kokoro overwhelm
                     if audio_available:
                         try:
-                            success = speak_streaming(chunk_text)
-                            if not success:
-                                print(f"[IMMEDIATE] ⚠️ speak_streaming returned False - audio may not be playing")
+                            # Try smart streaming first (accumulates chunks intelligently)
+                            try:
+                                is_final = False  # We'll set final on the last chunk
+                                success = speak_streaming_smart(chunk_text, is_final)
+                                if success:
+                                    print(f"[IMMEDIATE] 🎵 Smart streaming triggered for chunk {chunk_count}")
+                                else:
+                                    print(f"[IMMEDIATE] 📝 Smart streaming buffering chunk {chunk_count}")
+                            except (NameError, AttributeError):
+                                # Fallback to basic streaming if smart streaming not available
+                                success = speak_streaming(chunk_text)
+                                if not success:
+                                    print(f"[IMMEDIATE] ⚠️ speak_streaming returned False - audio may not be playing")
                         except Exception as audio_err:
                             print(f"[IMMEDIATE] ❌ Audio error: {audio_err}")
                             print(f"[IMMEDIATE] 💬 Would speak: {chunk_text}")
@@ -761,6 +813,15 @@ Recent Context: {', '.join(existing_context.get('context', [])[-3:])}"""
             total_time = time.time() - start_time
             
             if not response_interrupted and full_response.strip():
+                # Finalize smart streaming to send any remaining chunks
+                if audio_available:
+                    try:
+                        finalize_streaming_output()
+                        print(f"[IMMEDIATE] 🎵 Smart streaming finalized")
+                    except (NameError, AttributeError):
+                        # No smart streaming available
+                        pass
+                
                 # Add to conversation history IMMEDIATELY
                 local_memory_manager.add_interaction(current_user, text, full_response.strip())
                 
@@ -1043,18 +1104,55 @@ def get_voice_based_display_name(identified_user):
 
 
 def get_voice_based_name_response(identified_user, display_name):
-    """Handle 'what's my name' using voice matching, not system login"""
+    """Handle 'what's my name' using voice matching + memory system"""
     try:
+        print(f"[VoiceIdentity] 🔍 Name query for user: {identified_user}, display: {display_name}")
+        
+        # First check memory system for stored names
+        try:
+            from ai.local_memory_manager import local_memory_manager
+            user_context = local_memory_manager.get_user_context(identified_user)
+            
+            # Look for identity facts in memory
+            facts = user_context.get('facts', [])
+            for fact in facts:
+                if fact and isinstance(fact, str):
+                    # Check if this fact contains a name
+                    fact_lower = fact.lower()
+                    if 'name is' in fact_lower or 'called' in fact_lower or 'i\'m' in fact_lower:
+                        # Extract the name from the fact
+                        import re
+                        name_match = re.search(r"(?:name is|called|i'm)\s+(\w+)", fact_lower)
+                        if name_match:
+                            stored_name = name_match.group(1).capitalize()
+                            print(f"[VoiceIdentity] 💾 Found stored name: {stored_name}")
+                            return f"Your name is {stored_name}."
+                    
+                    # Also check if the fact itself is just a name
+                    if len(fact.split()) == 1 and fact.isalpha() and len(fact) > 1:
+                        print(f"[VoiceIdentity] 💾 Found stored name as fact: {fact}")
+                        return f"Your name is {fact}."
+                        
+        except Exception as memory_err:
+            print(f"[VoiceIdentity] ⚠️ Memory lookup error: {memory_err}")
+        
         # Handle system user
         if identified_user == "Daveydrz" or identified_user == SYSTEM_USER:
             return f"Based on your voice, you are Daveydrz."
         
         # Handle known voice profiles
         elif identified_user in known_users and identified_user not in ["Anonymous_Speaker", "Unknown", "Guest"]:
+            # Check if the profile has a stored name
+            profile = known_users[identified_user]
+            if isinstance(profile, dict):
+                stored_name = profile.get('name') or profile.get('real_name') or profile.get('display_name')
+                if stored_name and stored_name != identified_user:
+                    return f"Your name is {stored_name}."
+            
             return f"Your name is {display_name}."
         
         # Handle anonymous or unrecognized voices
-        elif identified_user in ["Anonymous_Speaker", "Unknown", "Guest"]:
+        elif identified_user in ["Anonymous_Speaker", "Unknown", "Guest"] or identified_user.startswith("Anonymous_"):
             return "I don't recognize your voice yet. Could you tell me your name so I can learn it?"
         
         # Handle any other identified users

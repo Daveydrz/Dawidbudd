@@ -1033,8 +1033,13 @@ class LocalMemoryManager:
                     if isinstance(fact_entry, dict):
                         # New format with extracted_info
                         if "extracted_info" in fact_entry:
-                            fact_text = fact_entry["extracted_info"].get("fact", fact_entry.get("text", ""))
-                            if fact_text:
+                            # Try multiple fact field names
+                            fact_text = (
+                                fact_entry["extracted_info"].get("fact_value") or  # Name extractions
+                                fact_entry["extracted_info"].get("fact") or       # General facts
+                                fact_entry.get("text", "")                        # Fallback to text
+                            )
+                            if fact_text and fact_text != "unknown":
                                 recent_facts.append(fact_text)
                         # Content format
                         elif "content" in fact_entry:
@@ -1062,6 +1067,11 @@ class LocalMemoryManager:
                                 recent_preferences.append(f"{sentiment} {subject}")
                             elif preference_value:
                                 recent_preferences.append(preference_value)
+                            else:
+                                # Fallback to text
+                                pref_text = pref_entry.get("text", "")
+                                if pref_text:
+                                    recent_preferences.append(pref_text)
                         # Content format
                         elif "content" in pref_entry:
                             recent_preferences.append(pref_entry["content"])
@@ -1081,7 +1091,13 @@ class LocalMemoryManager:
                     if isinstance(ctx_entry, dict):
                         # New format with extracted_info
                         if "extracted_info" in ctx_entry:
-                            action = ctx_entry["extracted_info"].get("action", ctx_entry.get("text", ""))
+                            # Try multiple context field names
+                            action = (
+                                ctx_entry["extracted_info"].get("action") or
+                                ctx_entry["extracted_info"].get("context_value") or
+                                ctx_entry["extracted_info"].get("activity") or
+                                ctx_entry.get("text", "")
+                            )
                             if action:
                                 recent_context.append(action)
                         # Content format
