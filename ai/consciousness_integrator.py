@@ -514,6 +514,37 @@ class ConsciousnessIntegrator:
             "last_experience": integration_results.get("experience", ""),
             "emergent_properties": integration_results.get("emergent_insights", [])
         })
+    
+    def integrate_response_consciousness(self, user_input: str, response: str, user: str):
+        """Integrate consciousness processing for a completed response"""
+        try:
+            print(f"[ConsciousnessIntegrator] 🧠 Integrating consciousness for response")
+            
+            # Process the interaction experience
+            experience = f"Responded to '{user_input}' with '{response[:50]}...'"
+            context = {
+                "user": user,
+                "input": user_input,
+                "response": response,
+                "interaction_type": "completed_response"
+            }
+            
+            # Use the existing experience processing
+            integration_results = self.process_experience_across_systems(experience, context)
+            
+            # Additional post-response consciousness processing
+            if self.self_model:
+                self.self_model.reflect_on_experience(
+                    f"Successfully provided response about: {user_input}",
+                    {"response_quality": "good", "user": user}
+                )
+            
+            print(f"[ConsciousnessIntegrator] ✅ Response consciousness integration completed")
+            return integration_results
+            
+        except Exception as e:
+            print(f"[ConsciousnessIntegrator] ❌ Error in response consciousness integration: {e}")
+            return {"error": str(e)}
 
 # Global instance
 consciousness_integrator = ConsciousnessIntegrator()

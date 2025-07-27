@@ -172,7 +172,8 @@ def create_new_anonymous_cluster(audio, embedding):
             'created_at': time.time(),
             'sample_count': 1,
             'quality_scores': [0.8],  # Assume good quality for new cluster
-            'last_updated': time.time()
+            'last_updated': time.time(),
+            'linked_user': None  # Will be set when user reveals their identity
         }
         
         # Add to anonymous clusters
@@ -185,6 +186,59 @@ def create_new_anonymous_cluster(audio, embedding):
     except Exception as e:
         print(f"[Recognition] ❌ Error creating anonymous cluster: {e}")
         return None
+
+def link_anonymous_cluster_to_user(cluster_id: str, username: str):
+    """Link an anonymous cluster to a named user"""
+    try:
+        from voice.database import anonymous_clusters, known_users, save_known_users
+        
+        if cluster_id not in anonymous_clusters:
+            print(f"[Recognition] ❌ Cluster {cluster_id} not found")
+            return False
+        
+        cluster_data = anonymous_clusters[cluster_id]
+        
+        # Create or update user profile
+        if username not in known_users:
+            known_users[username] = {
+                'embeddings': [],
+                'created_at': time.time(),
+                'display_name': username,
+                'voice_samples': 0,
+                'quality_scores': [],
+                'last_interaction': time.time()
+            }
+        
+        # Transfer embeddings from cluster to user
+        user_profile = known_users[username]
+        cluster_embeddings = cluster_data.get('embeddings', [])
+        
+        if 'embeddings' not in user_profile:
+            user_profile['embeddings'] = []
+        
+        # Add cluster embeddings to user profile
+        user_profile['embeddings'].extend(cluster_embeddings)
+        user_profile['voice_samples'] = len(user_profile['embeddings'])
+        
+        # Transfer quality scores
+        if 'quality_scores' not in user_profile:
+            user_profile['quality_scores'] = []
+        user_profile['quality_scores'].extend(cluster_data.get('quality_scores', []))
+        
+        # Mark cluster as linked
+        cluster_data['linked_user'] = username
+        cluster_data['linked_at'] = time.time()
+        
+        save_known_users()
+        
+        print(f"[Recognition] 🔗 Linked cluster {cluster_id} to user {username}")
+        print(f"[Recognition] 📊 User now has {len(user_profile['embeddings'])} voice samples")
+        
+        return True
+        
+    except Exception as e:
+        print(f"[Recognition] ❌ Error linking cluster to user: {e}")
+        return False
 
 def identify_speaker(audio):
     """Wrapper function for backward compatibility"""

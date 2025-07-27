@@ -600,22 +600,70 @@ def handle_streaming_response(text, current_user):
             except Exception as memory_err:
                 print(f"[BuddyFlow] ⚠️ Memory save error: {memory_err}")
             
-            # ✅ STEP 5: Schedule additional consciousness processing after response
+            # ✅ STEP 5: Execute full consciousness integration as requested by user
             if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
                 try:
-                    # Schedule self-reflection about the completed interaction
+                    print("[BuddyFlow] 🧠 Starting full consciousness integration threads...")
+                    
+                    # User specifically requested these three background threads:
+                    def integrate_consciousness_thread():
+                        """Background consciousness integration"""
+                        try:
+                            # Use consciousness integrator for full integration
+                            consciousness_integrator.integrate_response_consciousness(
+                                text, full_response, current_user
+                            )
+                            print("[BuddyFlow] 🌟 integrate_consciousness completed")
+                        except Exception as e:
+                            print(f"[BuddyFlow] ⚠️ integrate_consciousness error: {e}")
+                    
+                    def process_motives_thread():
+                        """Background motivation processing"""
+                        try:
+                            # Process motivations and goals
+                            motivation_system.process_interaction_motivation(text, current_user)
+                            motivation_system.evaluate_goal_progress(current_user, full_response)
+                            print("[BuddyFlow] 🎯 process_motives completed")
+                        except Exception as e:
+                            print(f"[BuddyFlow] ⚠️ process_motives error: {e}")
+                    
+                    def run_background_thoughts_thread():
+                        """Background thought processing"""
+                        try:
+                            # Generate background thoughts about the interaction 
+                            inner_monologue.trigger_thought(
+                                f"I just helped {current_user} with: {text[:50]}...",
+                                {"user": current_user, "response_given": True, "satisfaction": "good"},
+                                inner_monologue.ThoughtType.REFLECTION if hasattr(inner_monologue, 'ThoughtType') else "reflection"
+                            )
+                            
+                            # Trigger free thought about the interaction
+                            free_thought_engine.trigger_thought(
+                                f"That was an interesting question about {text[:30]}...",
+                                free_thought_engine.FreeThoughtType.REFLECTIVE if hasattr(free_thought_engine, 'FreeThoughtType') else None
+                            )
+                            print("[BuddyFlow] 💭 run_background_thoughts completed")
+                        except Exception as e:
+                            print(f"[BuddyFlow] ⚠️ run_background_thoughts error: {e}")
+                    
+                    # Start all three background threads as user requested
+                    threading.Thread(target=integrate_consciousness_thread, daemon=True).start()
+                    threading.Thread(target=process_motives_thread, daemon=True).start() 
+                    threading.Thread(target=run_background_thoughts_thread, daemon=True).start()
+                    
+                    # Additional consciousness processing (existing code enhanced)
                     self_model.reflect_on_experience(
                         f"Successfully responded to: {text}",
                         {"user": current_user, "response": full_response[:100], "success": True}
                     )
                     
-                    # Update temporal awareness
                     temporal_awareness.mark_temporal_event(
                         f"Conversation with {current_user}: {text[:50]}...",
                         significance=0.6,
                         context={"user": current_user, "response_length": len(full_response)}
                     )
-                    print("[BuddyFlow] 🧠 Post-response consciousness updates completed")
+                    
+                    print("[BuddyFlow] 🧠 All consciousness integration threads started")
                     
                 except Exception as post_consciousness_err:
                     print(f"[BuddyFlow] ⚠️ Post-response consciousness error: {post_consciousness_err}")
