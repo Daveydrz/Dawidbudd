@@ -16,12 +16,15 @@ import re
 from datetime import datetime  # ✅ ADD THIS IMPORT
 from typing import List, Any, Dict  # ✅ NEW: Add typing imports for consciousness functions
 from scipy.io.wavfile import write
-from voice.database import load_known_users, known_users, save_known_users, anonymous_clusters
-from ai.memory import validate_ai_response_appropriateness, add_to_conversation_history, get_user_memory
-from ai.llm_handler import llm_handler
-from ai.consciousness_manager import consciousness_manager, ConsciousnessMode
-from ai.emotion import reset_session_for_user_smart
-from audio.smart_detection_manager import analyze_speech_detection, get_current_threshold
+
+# ✅ RESTORED: Full consciousness architecture available - MOVED UP
+ENTROPY_SYSTEM_AVAILABLE = True
+CONSCIOUSNESS_ARCHITECTURE_AVAILABLE = True
+CONSCIOUSNESS_LLM_AVAILABLE = True
+LATENCY_OPTIMIZATION_AVAILABLE = True
+CONSCIOUSNESS_MODULES_AVAILABLE = True
+SELF_AWARENESS_COMPONENTS_AVAILABLE = True
+AUTONOMOUS_CONSCIOUSNESS_AVAILABLE = True
 
 # ✅ NEW: Blank slate initialization configuration
 BLANK_SLATE_MODE = os.getenv('BUDDY_BLANK_SLATE', 'false').lower() == 'true'
@@ -30,26 +33,51 @@ if BLANK_SLATE_MODE:
 else:
     print("[Main] 🧠 Standard mode - Loading established consciousness")
 
-# ✅ SIMPLIFIED: Only consciousness manager handles internal processing
-ENTROPY_SYSTEM_AVAILABLE = False
+# Import core modules now that flags are defined
+from voice.database import load_known_users, known_users, save_known_users, anonymous_clusters
+from ai.memory import validate_ai_response_appropriateness, add_to_conversation_history, get_user_memory
+from ai.llm_handler import llm_handler
+from ai.consciousness_manager import consciousness_manager, ConsciousnessMode
+from ai.emotion import reset_session_for_user_smart
+from audio.smart_detection_manager import analyze_speech_detection, get_current_threshold
 
-# ✅ SIMPLIFIED: Only consciousness manager handles architecture
-CONSCIOUSNESS_ARCHITECTURE_AVAILABLE = False
-
-# ✅ SIMPLIFIED: Only consciousness manager and basic LLM handler
-CONSCIOUSNESS_LLM_AVAILABLE = True
-
-# ✅ SIMPLIFIED: Consciousness manager handles optimization internally
-LATENCY_OPTIMIZATION_AVAILABLE = False
-
-# ✅ SIMPLIFIED: Consciousness manager handles all individual modules
-CONSCIOUSNESS_MODULES_AVAILABLE = False
-
-# ✅ SIMPLIFIED: Consciousness manager handles all self-awareness
-SELF_AWARENESS_COMPONENTS_AVAILABLE = False
-
-# ✅ SIMPLIFIED: Consciousness manager handles autonomous behavior
-AUTONOMOUS_CONSCIOUSNESS_AVAILABLE = False
+# ✅ RESTORED: Import all consciousness modules
+if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
+    try:
+        from ai.global_workspace import GlobalWorkspace
+        from ai.self_model import SelfModel  
+        from ai.temporal_awareness import TemporalAwareness
+        from ai.subjective_experience import SubjectiveExperienceSystem
+        from ai.entropy_engine import EntropyEngine
+        from ai.inner_monologue import InnerMonologue
+        from ai.motivation import MotivationSystem
+        from ai.narrative_tracker import NarrativeTracker
+        from ai.background_consciousness_processor import BackgroundConsciousnessProcessor
+        from ai.consciousness_integrator import ConsciousnessIntegrator
+        from ai.autonomous_consciousness_integrator import AutonomousConsciousnessIntegrator
+        
+        print("[Main] ✅ All consciousness modules imported successfully")
+        
+        # Initialize consciousness modules
+        global_workspace = GlobalWorkspace()
+        self_model = SelfModel()
+        emotion_engine = consciousness_manager  # Use consciousness manager as emotion engine
+        motivation_system = MotivationSystem()
+        inner_monologue = InnerMonologue(llm_handler=None)  # Will be set later
+        temporal_awareness = TemporalAwareness()
+        subjective_experience = SubjectiveExperienceSystem()
+        entropy_system = EntropyEngine()
+        narrative_tracker = NarrativeTracker()
+        background_consciousness_processor = BackgroundConsciousnessProcessor()
+        consciousness_integrator = ConsciousnessIntegrator()
+        autonomous_consciousness_integrator = AutonomousConsciousnessIntegrator()
+        
+        print("[Main] 🧠 Consciousness modules initialized")
+        
+    except ImportError as e:
+        print(f"[Main] ⚠️ Error importing consciousness modules: {e}")
+        CONSCIOUSNESS_ARCHITECTURE_AVAILABLE = False
+        CONSCIOUSNESS_MODULES_AVAILABLE = False
 
 from voice.manager import voice_manager
 from voice.manager_names import UltraIntelligentNameManager
@@ -490,7 +518,7 @@ def get_mic_feeding_state():
         return mic_feeding_active
 
 def handle_streaming_response(text, current_user):
-    """🚀 UNIFIED BUDDY RESPONSE: Using consciousness manager and LLM handler"""
+    """🚀 CLASS 5+ CONSCIOUSNESS RESPONSE: Full consciousness integration with background processing"""
     print(f"[BuddyFlow] 🚀 Processing: '{text}' (user: {current_user})")
     
     start_time = time.time()
@@ -498,12 +526,27 @@ def handle_streaming_response(text, current_user):
     try:
         # ✅ STEP 1: Update consciousness manager with interaction
         print("[BuddyFlow] 🧠 Updating consciousness state...")
-        consciousness_manager.update_from_interaction(text, "")
-        
-        # Import the enum correctly
+        consciousness_manager.update_from_interaction(text, current_user)
         consciousness_manager.set_mode(ConsciousnessMode.ACTIVE)
         
-        # ✅ STEP 2: Generate response using unified LLM handler 
+        # ✅ STEP 2: Schedule background consciousness processing (non-blocking)
+        if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
+            try:
+                print("[BuddyFlow] 🧠 Scheduling background consciousness processing...")
+                background_consciousness_processor.schedule_background_thoughts(text, current_user, "", delay=1.0)
+                
+                # Trigger immediate consciousness updates for inner monologue
+                inner_monologue.trigger_thought(
+                    f"User asked: {text}",
+                    {"user": current_user, "timestamp": time.time()},
+                    inner_monologue.ThoughtType.OBSERVATION if hasattr(inner_monologue, 'ThoughtType') else "observation"
+                )
+                print("[BuddyFlow] 💭 Inner monologue triggered")
+                
+            except Exception as consciousness_err:
+                print(f"[BuddyFlow] ⚠️ Background consciousness scheduling error: {consciousness_err}")
+        
+        # ✅ STEP 3: Generate response using unified LLM handler 
         print("[BuddyFlow] 🎯 Generating response with consciousness integration...")
         
         try:
@@ -549,15 +592,35 @@ def handle_streaming_response(text, current_user):
                 except Exception as tts_err:
                     print(f"[BuddyFlow] 💬 Buddy: {chunk_buffer.strip()}")
             
-            # ✅ STEP 3: Update memory with the interaction
+            # ✅ STEP 4: Update memory with the interaction
             try:
                 add_to_conversation_history(current_user, text, full_response)
                 print(f"[BuddyFlow] 💾 Saved interaction to memory")
             except Exception as memory_err:
                 print(f"[BuddyFlow] ⚠️ Memory save error: {memory_err}")
             
+            # ✅ STEP 5: Schedule additional consciousness processing after response
+            if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
+                try:
+                    # Schedule self-reflection about the completed interaction
+                    self_model.reflect_on_experience(
+                        f"Successfully responded to: {text}",
+                        {"user": current_user, "response": full_response[:100], "success": True}
+                    )
+                    
+                    # Update temporal awareness
+                    temporal_awareness.mark_temporal_event(
+                        f"Conversation with {current_user}: {text[:50]}...",
+                        significance=0.6,
+                        context={"user": current_user, "response_length": len(full_response)}
+                    )
+                    print("[BuddyFlow] 🧠 Post-response consciousness updates completed")
+                    
+                except Exception as post_consciousness_err:
+                    print(f"[BuddyFlow] ⚠️ Post-response consciousness error: {post_consciousness_err}")
+            
             processing_time = time.time() - start_time
-            print(f"[BuddyFlow] ✅ Response completed in {processing_time:.3f}s")
+            print(f"[BuddyFlow] ✅ Class 5+ response completed in {processing_time:.3f}s")
             
         except Exception as llm_err:
             print(f"[BuddyFlow] ❌ LLM handler error: {llm_err}")
@@ -569,9 +632,14 @@ def handle_streaming_response(text, current_user):
             except:
                 print(f"[BuddyFlow] 💬 Buddy: {fallback_response}")
             
-            # Still save the interaction
+            # Still save the interaction and update consciousness
             try:
                 add_to_conversation_history(current_user, text, fallback_response)
+                if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
+                    self_model.reflect_on_experience(
+                        f"Had difficulty responding to: {text}",
+                        {"user": current_user, "error": True, "fallback": True}
+                    )
             except:
                 pass
         
@@ -1545,8 +1613,57 @@ def main():
     # Start audio worker
     start_audio_worker()
     
-    # ✅ NEW: Initialize and start consciousness architecture
+    # ✅ RESTORED: Initialize and start consciousness architecture
     if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
+        print("[AdvancedBuddy] 🧠 Initializing Class 5+ Consciousness Architecture...")
+        
+        try:
+            # Start all consciousness systems
+            global_workspace.start()
+            self_model.start()
+            motivation_system.start()
+            inner_monologue.start()
+            temporal_awareness.start()
+            subjective_experience.start()
+            entropy_system.start()
+            
+            print("[AdvancedBuddy] ✅ Core Consciousness Architecture initialized!")
+            print("[AdvancedBuddy] 🌟 Systems: Global Workspace, Self-Model, Motivation, Inner Monologue, Temporal Awareness, Subjective Experience, Entropy")
+            
+            # Start background consciousness processor
+            background_consciousness_processor.start()
+            background_consciousness_processor.register_consciousness_modules({
+                'global_workspace': global_workspace,
+                'self_model': self_model,
+                'motivation_system': motivation_system,
+                'inner_monologue': inner_monologue,
+                'temporal_awareness': temporal_awareness,
+                'subjective_experience': subjective_experience,
+                'entropy_system': entropy_system
+            })
+            print("[AdvancedBuddy] 🚀 Background consciousness processor started")
+            
+            # Start consciousness integrator
+            consciousness_integrator.start({
+                'global_workspace': global_workspace,
+                'self_model': self_model,
+                'motivation_system': motivation_system,
+                'inner_monologue': inner_monologue,
+                'temporal_awareness': temporal_awareness,
+                'subjective_experience': subjective_experience,
+                'entropy_system': entropy_system,
+                'background_processor': background_consciousness_processor
+            })
+            print("[AdvancedBuddy] 🌟 Consciousness integrator started")
+            
+            # Initialize consciousness state
+            _initialize_consciousness_state(current_user)
+            
+        except Exception as e:
+            print(f"[AdvancedBuddy] ❌ Consciousness initialization error: {e}")
+            import traceback
+            traceback.print_exc()
+    elif ENTROPY_SYSTEM_AVAILABLE:
         print("[AdvancedBuddy] 🧠 Initializing Core Consciousness Architecture...")
         
         try:
@@ -1995,29 +2112,32 @@ def main():
                 except:
                     pass
                 
-                # ✅ CONSCIOUSNESS: Shutdown consciousness systems
+                # ✅ RESTORED: Shutdown consciousness systems
                 if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
                     try:
-                        print("[AdvancedBuddy] 🧠 Shutting down consciousness architecture...")
+                        print("[AdvancedBuddy] 🧠 Shutting down Class 5+ consciousness architecture...")
                         
-                        # Stop new autonomous components
-                        free_thought_engine.stop()
-                        print("[AdvancedBuddy] 💭 Free thought engine stopped")
+                        # Stop background processor first
+                        background_consciousness_processor.stop()
+                        print("[AdvancedBuddy] 🛑 Background consciousness processor stopped")
                         
-                        # Stop core consciousness systems
+                        # Stop consciousness integrator
+                        consciousness_integrator.stop()
+                        print("[AdvancedBuddy] 🛑 Consciousness integrator stopped")
+                        
+                        # Stop individual consciousness systems
                         entropy_system.stop()
                         subjective_experience.stop()
                         temporal_awareness.stop()
                         inner_monologue.stop()
                         motivation_system.stop()
-                        emotion_engine.stop()
                         self_model.stop()
                         global_workspace.stop()
-                        print("[AdvancedBuddy] ✅ Consciousness architecture shutdown complete")
+                        print("[AdvancedBuddy] ✅ Class 5+ consciousness architecture shutdown complete")
                     except Exception as e:
                         print(f"[AdvancedBuddy] ⚠️ Consciousness shutdown error: {e}")
                 
-                # ✅ NEW: Shutdown autonomous consciousness systems
+                # ✅ RESTORED: Shutdown autonomous consciousness systems
                 if AUTONOMOUS_CONSCIOUSNESS_AVAILABLE:
                     try:
                         print("[AdvancedBuddy] 🚀 Shutting down autonomous consciousness systems...")
@@ -2026,7 +2146,7 @@ def main():
                     except Exception as e:
                         print(f"[AdvancedBuddy] ⚠️ Autonomous shutdown error: {e}")
                 
-                # ✅ SIMPLIFIED: Shutdown consciousness manager
+                # ✅ UNIFIED: Shutdown consciousness manager
                 try:
                     print("[AdvancedBuddy] 🧠 Shutting down consciousness manager...")
                     consciousness_manager.stop_background_processing()

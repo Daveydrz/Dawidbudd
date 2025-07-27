@@ -15,7 +15,7 @@
     "county": "Brisbane",
     "timezone": "Australia/Brisbane",
     "timezone_offset": "+10:00",
-    "current_time": "2025-07-27 21:38:16 AEST",
+    "current_time": "2025-07-27 22:08:52 AEST",
     "public_ip": "unknown",
     "local_ip": "127.0.0.1",
     "isp": "Unknown",
@@ -23,5 +23,5 @@
     "source": "fallback",
     "confidence": "LOW"
   },
-  "timestamp": 1753616296.3880055
+  "timestamp": 1753618132.336749
 }

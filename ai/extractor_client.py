@@ -16,6 +16,7 @@ from datetime import datetime
 
 class ExtractorClient:
     def __init__(self, base_url: str = "http://localhost:5002"):
+        # ✅ DISABLED: Using GPT4All local processing instead of port 5002
         self.base_url = base_url
         self.api_url = f"{base_url}/api/v1/generate"
         self.session = requests.Session()
@@ -23,6 +24,7 @@ class ExtractorClient:
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         })
+        self.disabled = True  # Force use of GPT4All fallback
         
         # Load user memory for consciousness processing
         self.memory_file = "local_memory.json"

@@ -12,7 +12,18 @@ import io
 import tempfile
 import os
 import random  # For retry jitter
-from langdetect import detect
+
+# Try to import langdetect, provide fallback if not available
+try:
+    from langdetect import detect
+    LANGDETECT_AVAILABLE = True
+except ImportError:
+    print("[Audio] ⚠️ langdetect not available, using fallback language detection")
+    LANGDETECT_AVAILABLE = False
+    def detect(text):
+        # Simple fallback: assume English if we can't detect
+        return 'en'
+
 from config import *
 
 # ✅ FIX WinError 10053: Create persistent session for Kokoro API
