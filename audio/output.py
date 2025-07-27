@@ -268,8 +268,36 @@ def speak_async(text, lang=DEFAULT_LANG):
     threading.Thread(target=tts_worker, daemon=True).start()
 
 def speak_streaming(text, voice=None, lang=DEFAULT_LANG):
-    """✅ FIXED: Queue text chunk for immediate streaming TTS"""
+    """✅ ENHANCED: Queue text chunk for immediate streaming TTS with error filtering"""
     if not text or len(text.strip()) < 2:
+        return False
+    
+    # ✅ CRITICAL: Filter out error messages before sending to TTS
+    text_lower = text.lower().strip()
+    error_phrases = [
+        "i apologize",
+        "i'm sorry", 
+        "having trouble",
+        "technical difficulties",
+        "language model",
+        "please try again",
+        "connection",
+        "server error",
+        "try again later",
+        "experiencing issues",
+        "connectivity problems",
+        "unable to connect",
+        "network error"
+    ]
+    
+    # Check if this is an error message that shouldn't be spoken
+    if any(phrase in text_lower for phrase in error_phrases):
+        print(f"[StreamingTTS] 🚫 Filtered error message from TTS: '{text[:50]}...'")
+        return False
+    
+    # Additional filter for very short or generic responses
+    if len(text.strip()) < 3:
+        print(f"[StreamingTTS] 🚫 Text too short for TTS: '{text}'")
         return False
     
     # Split long text before streaming TTS

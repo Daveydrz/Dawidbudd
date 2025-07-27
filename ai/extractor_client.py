@@ -29,34 +29,70 @@ class ExtractorClient:
         self.consciousness_file = "ai_consciousness_state.json"
     
     def _extract_json_from_response(self, text: str) -> Dict[str, Any]:
-        """Enhanced JSON extraction from malformed responses"""
+        """Enhanced JSON extraction with robust parsing and fallback creation"""
+        if not text or not text.strip():
+            print("[ExtractorClient] ⚠️ Empty response from port 5002")
+            return self._create_fallback_consciousness_data("empty_response")
+        
         try:
             # First try direct JSON parsing
-            return json.loads(text)
+            parsed = json.loads(text)
+            return self._complete_consciousness_structure(parsed)
         except json.JSONDecodeError:
             pass
         
-        # Try to find JSON block in text
+        # Try to find JSON block in text using robust patterns
         import re
+        
+        # Multiple JSON extraction strategies
         json_patterns = [
-            r'\{[^{}]*"classification"[^{}]*\}',  # Simple classification block
-            r'\{.*?"classification".*?\}',        # Full classification block
-            r'\{.*\}',                           # Any JSON-like block
+            r'\{[^{}]*"classification"[^{}]*"[^"]*"[^{}]*\}',  # Simple classification block
+            r'\{.*?"classification".*?"[^"]*".*?\}',           # Full classification block with quoted values
+            r'\{(?:[^{}]|{[^{}]*})*\}',                       # Nested JSON block
+            r'\{.*?\}',                                       # Any JSON-like block
         ]
         
         for pattern in json_patterns:
-            matches = re.findall(pattern, text, re.DOTALL)
+            matches = re.findall(pattern, text, re.DOTALL | re.MULTILINE)
             for match in matches:
                 try:
-                    parsed = json.loads(match)
-                    if "classification" in parsed:
-                        # Validate and complete the structure
+                    # Clean the match
+                    clean_match = match.strip()
+                    parsed = json.loads(clean_match)
+                    if isinstance(parsed, dict) and ("classification" in parsed or "memory" in parsed or "emotion" in parsed):
                         return self._complete_consciousness_structure(parsed)
                 except json.JSONDecodeError:
                     continue
         
-        # If no JSON found, create from text analysis
+        # Try extracting key-value pairs manually
+        kv_data = self._extract_key_value_pairs(text)
+        if kv_data:
+            return self._complete_consciousness_structure(kv_data)
+        
+        # If all else fails, create from text analysis
+        print(f"[ExtractorClient] 🔧 Creating consciousness data from text analysis")
         return self._create_consciousness_from_text(text)
+    
+    def _extract_key_value_pairs(self, text: str) -> Dict[str, Any]:
+        """Extract key-value pairs from malformed JSON-like text"""
+        import re
+        
+        # Look for key-value patterns
+        patterns = [
+            r'"?(\w+)"?\s*:\s*"([^"]*)"',  # "key": "value"
+            r'"?(\w+)"?\s*:\s*([^,}\n]+)', # "key": value
+        ]
+        
+        extracted = {}
+        for pattern in patterns:
+            matches = re.findall(pattern, text)
+            for key, value in matches:
+                # Clean the value
+                clean_value = value.strip().rstrip(',').strip('"\'')
+                if clean_value and clean_value.lower() not in ['null', 'none', '']:
+                    extracted[key] = clean_value
+        
+        return extracted if extracted else None
     
     def _complete_consciousness_structure(self, partial: Dict[str, Any]) -> Dict[str, Any]:
         """Complete a partial consciousness structure"""
@@ -196,7 +232,7 @@ Message: "{user_text}"
             # Fix: Better handling of empty or malformed responses
             if not text or text == "":
                 print(f"[ExtractorClient] ⚠️ Empty response from port 5002, using fallback")
-                return self._get_fallback_consciousness_data()
+                return self._create_fallback_consciousness_data("empty_response")
             
             # Enhanced JSON extraction with multiple fallback strategies
             consciousness_data = self._extract_json_from_response(text)
@@ -400,6 +436,45 @@ Message: "{user_text}"
             "consciousness_state": self._get_fallback_section("consciousness_state"),
             "belief_updates": self._get_fallback_section("belief_updates"),
             "response_context": self._get_fallback_section("response_context")
+        }
+    
+    def _create_fallback_consciousness_data(self, reason: str) -> Dict[str, Any]:
+        """Create complete fallback consciousness data with reason"""
+        return {
+            "classification": {
+                "memory_type": "context",
+                "intent": "statement",
+                "emotion": "neutral", 
+                "name_introduction": False,
+                "fallback_reason": reason
+            },
+            "memory_updates": {
+                "new_facts": [],
+                "new_preferences": [],
+                "new_context": [f"Processed input but {reason}"]
+            },
+            "emotional_state": {
+                "detected_emotion": "neutral",
+                "buddy_emotional_response": "helpful",
+                "emotional_intensity": 0.6
+            },
+            "consciousness_state": {
+                "current_focus": "user_interaction",
+                "active_goals": ["help user"],
+                "inner_thoughts": "Ready to assist despite processing limitations",
+                "motivation_level": 0.7
+            },
+            "belief_updates": {
+                "reinforced_beliefs": [],
+                "new_beliefs": [],
+                "contradicted_beliefs": []
+            },
+            "response_context": {
+                "personality_tone": "helpful",
+                "knowledge_areas": ["general"],
+                "response_priority": "medium",
+                "fallback_mode": True
+            }
         }
     
     def _get_fallback_classification(self) -> Dict[str, Any]:
