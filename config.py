@@ -272,6 +272,10 @@ KOKORO_DEFAULT_VOICE = "af_heart"  # Australian female voice
 KOKORO_STREAMING_ENABLED = True    # Enable streaming TTS
 KOKORO_CHUNK_SIZE = 512           # Audio chunk size for streaming
 
+# ✅ ==== STREAMING CONSTANTS ====
+STREAMING_THREAD_POOL_SIZE = 4    # Thread pool size for streaming
+STREAMING_BUFFER_SIZE = 10        # Buffer size for streaming audio
+
 # ✅ Voice mapping for different languages (FastAPI voices)
 KOKORO_API_VOICES = {
     "en": "af_heart",      # Australian female (Dave's preference)

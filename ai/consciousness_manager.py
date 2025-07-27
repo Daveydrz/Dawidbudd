@@ -246,6 +246,10 @@ class ConsciousnessManager:
                 "consciousness_mode": "active"
             }
     
+    def get_consciousness_context(self, user_id: str, user_input: str) -> Dict[str, Any]:
+        """Get consciousness context for a specific user interaction - alias for compatibility"""
+        return self.get_consciousness_context_for_llm()
+    
     def update_from_interaction(self, user_input: str, ai_response: str):
         """Update consciousness state based on interaction"""
         try:
