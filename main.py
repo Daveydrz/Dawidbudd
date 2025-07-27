@@ -55,6 +55,7 @@ if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
         from ai.background_consciousness_processor import BackgroundConsciousnessProcessor
         from ai.consciousness_integrator import ConsciousnessIntegrator
         from ai.autonomous_consciousness_integrator import AutonomousConsciousnessIntegrator
+        from ai.free_thought_engine import free_thought_engine, FreeThoughtType
         
         print("[Main] ✅ All consciousness modules imported successfully")
         

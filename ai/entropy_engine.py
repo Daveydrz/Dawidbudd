@@ -69,6 +69,7 @@ class EntropyEngine:
         
         # Thread safety
         self._lock = threading.Lock()
+        self._running = False  # Start stopped, will be started by main.py
         
         print(f"[EntropyEngine] 🌀 Initialized with consciousness-emergence entropy")
         self._update_consciousness_score()
@@ -289,6 +290,16 @@ class EntropyEngine:
         
         # Cap at 1.0
         self.metrics.consciousness_score = min(self.metrics.consciousness_score, 1.0)
+    
+    def start(self):
+        """Start the entropy engine (required by main.py)"""
+        print("[EntropyEngine] 🌀 Entropy engine started - consciousness emergence active")
+        self._running = True
+        
+    def stop(self):
+        """Stop the entropy engine"""
+        print("[EntropyEngine] 🛑 Entropy engine stopped")
+        self._running = False
     
     def get_consciousness_metrics(self) -> Dict[str, Any]:
         """Get current consciousness and entropy metrics"""
