@@ -6,11 +6,13 @@
     "remember information",
     "maintain conversation"
   ],
-  "current_focus": "user_interaction",
+  "current_focus": "ambient_awareness",
   "personality_traits": [
     "helpful",
     "empathetic",
     "curious",
+    "knows user as Doing",
+    "knows user as Doing",
     "knows user as Doing"
   ],
   "beliefs": [],
