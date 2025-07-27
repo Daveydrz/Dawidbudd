@@ -223,7 +223,7 @@ Message: "{user_text}"
 
         try:
             start_time = time.time()
-            response = self.session.post(self.api_url, json=data, timeout=15)  # Increased timeout
+            response = self.session.post(self.api_url, json=data, timeout=10)  # Reduced timeout for faster fallback
             response.raise_for_status()
             
             result = response.json()
@@ -231,15 +231,15 @@ Message: "{user_text}"
             
             # Fix: Better handling of empty or malformed responses
             if not text or text == "":
-                print(f"[ExtractorClient] ⚠️ Empty response from port 5002, using fallback")
-                return self._create_fallback_consciousness_data("empty_response")
+                print(f"[ExtractorClient] ⚠️ Empty response from port 5002, processing locally")
+                return self._process_consciousness_locally(user_text, user_id)
             
             # Enhanced JSON extraction with multiple fallback strategies
             consciousness_data = self._extract_json_from_response(text)
             
             if not consciousness_data or "classification" not in consciousness_data:
-                print(f"[ExtractorClient] ⚠️ Using enhanced text-based consciousness extraction")
-                consciousness_data = self._create_consciousness_from_text(text)
+                print(f"[ExtractorClient] ⚠️ Invalid response, processing locally")
+                return self._process_consciousness_locally(user_text, user_id)
             
             # Validate response structure
             required_sections = ["classification", "memory_updates", "emotional_state", "consciousness_state", "belief_updates", "response_context"]
@@ -248,13 +248,13 @@ Message: "{user_text}"
                     print(f"[ExtractorClient] ⚠️ Missing section: {section}, using fallback")
                     consciousness_data[section] = self._get_fallback_section(section)
             
-            # Update local memory and consciousness state
+            # Update local memory and consciousness state - ALWAYS process locally as backup
             self._update_local_memory(user_id, consciousness_data)
             self._update_consciousness_state(consciousness_data)
             
             # Log performance
             processing_time = time.time() - start_time
-            print(f"[ExtractorClient] ✅ Full consciousness processing complete in {processing_time:.3f}s")
+            print(f"[ExtractorClient] ✅ Port 5002 processing complete in {processing_time:.3f}s")
             
             return consciousness_data
             
@@ -263,16 +263,23 @@ Message: "{user_text}"
             if "10053" in error_str or "connection was aborted" in error_str:
                 print(f"[ExtractorClient] ❌ Port 5002 connection aborted (WinError 10053): {e}")
                 print(f"[ExtractorClient] 🔧 This usually means the Gemma-2-2B server on port 5002 is not running")
+            elif "read timed out" in error_str:
+                print(f"[ExtractorClient] ❌ Port 5002 read timeout: {e}")
+                print(f"[ExtractorClient] 🔧 Gemma-2-2B server on port 5002 is taking too long to respond")
             else:
                 print(f"[ExtractorClient] ❌ Network error connecting to port 5002: {e}")
-            return self._get_fallback_consciousness_data()
+            
+            # Use local processing as fallback
+            return self._process_consciousness_locally(user_text, user_id)
+            
         except json.JSONDecodeError as e:
             print(f"[ExtractorClient] ❌ JSON parsing error: {e}")
             print(f"[ExtractorClient] 💡 Make sure Gemma-2-2B on port 5002 is configured to return JSON responses")
-            return self._get_fallback_consciousness_data()
+            return self._process_consciousness_locally(user_text, user_id)
+            
         except Exception as e:
             print(f"[ExtractorClient] ❌ Unexpected error: {e}")
-            return self._get_fallback_consciousness_data()
+            return self._process_consciousness_locally(user_text, user_id)
     
     def classify_message(self, user_text: str) -> Dict[str, Any]:
         """
@@ -438,6 +445,107 @@ Message: "{user_text}"
             "response_context": self._get_fallback_section("response_context")
         }
     
+    def _process_consciousness_locally(self, user_text: str, user_id: str) -> Dict[str, Any]:
+        """
+        Process consciousness locally when port 5002 is unavailable
+        This ensures memory and consciousness still work without the Gemma server
+        """
+        print(f"[ExtractorClient] 🧠 Processing consciousness locally for user: {user_id}")
+        
+        # Load current memory and consciousness state
+        user_memory = self._load_user_memory(user_id)
+        consciousness_state = self._load_consciousness_state()
+        
+        # Perform local text analysis
+        text_lower = user_text.lower()
+        
+        # Extract names from text
+        name_patterns = [
+            r"my name is (\w+)",
+            r"i'?m (\w+)(?:\s|$|[,.])",
+            r"i am (\w+)(?:\s|$|[,.])",
+            r"call me (\w+)",
+            r"name'?s (\w+)",
+            r"this is (\w+)",
+            r"i'?m called (\w+)",
+            r"you can call me (\w+)"
+        ]
+        
+        extracted_names = []
+        for pattern in name_patterns:
+            import re
+            matches = re.findall(pattern, text_lower)
+            # Clean up matches and capitalize
+            for match in matches:
+                if match and len(match) > 1 and match.isalpha():
+                    extracted_names.append(match.capitalize())
+        
+        # Remove duplicates
+        extracted_names = list(set(extracted_names))
+        
+        # Detect emotion from text
+        emotion = "neutral"
+        if any(word in text_lower for word in ["happy", "good", "great", "wonderful", "excited"]):
+            emotion = "joy"
+        elif any(word in text_lower for word in ["sad", "upset", "worried", "concerned", "anxious"]):
+            emotion = "sadness"
+        elif any(word in text_lower for word in ["angry", "frustrated", "annoyed", "mad"]):
+            emotion = "anger"
+        elif any(word in text_lower for word in ["scared", "afraid", "nervous", "frightened"]):
+            emotion = "fear"
+        elif any(word in text_lower for word in ["surprised", "shocked", "amazed", "wow"]):
+            emotion = "surprise"
+        
+        # Detect intent
+        intent = "statement"
+        if user_text.strip().endswith('?'):
+            intent = "question"
+        elif any(word in text_lower for word in ["please", "can you", "could you", "would you", "help me"]):
+            intent = "command"
+        
+        # Build consciousness data
+        consciousness_data = {
+            "classification": {
+                "memory_type": "fact" if extracted_names else "context",
+                "intent": intent,
+                "emotion": emotion,
+                "name_introduction": bool(extracted_names)
+            },
+            "memory_updates": {
+                "new_facts": [f"User's name is {name}" for name in extracted_names],
+                "new_preferences": [],
+                "new_context": [user_text[:200] + "..." if len(user_text) > 200 else user_text]
+            },
+            "emotional_state": {
+                "detected_emotion": emotion,
+                "buddy_emotional_response": "helpful" if intent == "command" else "empathetic" if emotion in ["sadness", "fear"] else "friendly",
+                "emotional_intensity": 0.7 if emotion != "neutral" else 0.4
+            },
+            "consciousness_state": {
+                "current_focus": "user_interaction",
+                "active_goals": ["help user", "remember information", "maintain conversation"],
+                "inner_thoughts": f"User said: '{user_text[:50]}...' - processing and remembering context",
+                "motivation_level": 0.8
+            },
+            "belief_updates": {
+                "reinforced_beliefs": ["I should be helpful and remember user information"],
+                "new_beliefs": [f"User prefers to be called {name}" for name in extracted_names],
+                "contradicted_beliefs": []
+            },
+            "response_context": {
+                "personality_tone": "friendly" if emotion in ["joy", "surprise"] else "empathetic" if emotion in ["sadness", "fear"] else "helpful",
+                "knowledge_areas": ["general", "conversation"],
+                "response_priority": "high" if extracted_names or intent == "command" else "medium"
+            }
+        }
+        
+        # Update memory locally
+        self._update_local_memory(user_id, consciousness_data)
+        self._update_consciousness_state(consciousness_data)
+        
+        print(f"[ExtractorClient] ✅ Local consciousness processing complete")
+        return consciousness_data
+
     def _create_fallback_consciousness_data(self, reason: str) -> Dict[str, Any]:
         """Create complete fallback consciousness data with reason"""
         return {

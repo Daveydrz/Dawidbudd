@@ -1,0 +1,13 @@
+{
+  "current_emotion": "friendly",
+  "motivation_level": 0.8,
+  "active_goals": [
+    "help user",
+    "remember information",
+    "maintain conversation"
+  ],
+  "current_focus": "user_interaction",
+  "inner_thoughts": "User said: 'Hello, my name is David...' - processing and remembering context",
+  "last_updated": "2025-07-27T04:18:36.381158",
+  "personality_state": "helpful"
+}

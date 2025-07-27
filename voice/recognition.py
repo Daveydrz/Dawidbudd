@@ -56,6 +56,10 @@ def generate_voice_embedding(audio):
 def identify_speaker_with_confidence(audio):
     """Enhanced speaker identification that stores audio for later use"""
     try:
+        # Ensure database is loaded
+        from voice.database import ensure_database_loaded
+        ensure_database_loaded()
+        
         # Store audio sample in voice manager
         if 'voice_manager' in globals():
             voice_manager.set_last_audio_sample(audio)
@@ -77,48 +81,113 @@ def identify_speaker_with_confidence(audio):
         return "Unknown", 0.0
 
 def check_anonymous_clusters(audio):
-    """🔍 Check audio against anonymous clusters"""
+    """🔍 Check audio against anonymous clusters - FIXED to properly match existing clusters"""
     try:
         if not ENHANCED_AVAILABLE:
-            return "UNKNOWN", 0.0
+            return check_anonymous_clusters_basic(audio)
 
-        from voice.database import anonymous_clusters, find_similar_clusters, create_anonymous_cluster, save_known_users
-
-        if not anonymous_clusters:
-            # ✅ Nothing exists yet, create new cluster
-            embedding = dual_voice_model_manager.generate_dual_embedding(audio)
-            if embedding is not None:
-                create_anonymous_cluster(embedding)
-                save_known_users()
-                print("[Recognition] ✅ Created new anonymous cluster")
-            return "UNKNOWN", 0.0
+        from voice.database import anonymous_clusters, save_known_users
+        
+        # Ensure anonymous_clusters is loaded
+        if not hasattr(anonymous_clusters, 'items') or not anonymous_clusters:
+            # Load the database if not already loaded
+            from voice.database import load_known_users
+            load_known_users()
 
         # Generate embedding for comparison
         embedding = dual_voice_model_manager.generate_dual_embedding(audio)
         if embedding is None:
             return "UNKNOWN", 0.0
 
-        # Find similar clusters
-        similar_clusters = find_similar_clusters(embedding, threshold=0.6)
+        # FIXED: Check all existing anonymous clusters first
+        best_match = None
+        best_score = 0.0
+        
+        print(f"[Recognition] 🔍 Checking against {len(anonymous_clusters)} anonymous clusters")
+        
+        for cluster_id, cluster_data in anonymous_clusters.items():
+            try:
+                cluster_embeddings = cluster_data.get('embeddings', [])
+                print(f"[Recognition] 🔍 Checking cluster {cluster_id} with {len(cluster_embeddings)} embeddings")
+                
+                for stored_embedding in cluster_embeddings:
+                    if isinstance(stored_embedding, dict):
+                        # Handle dual embedding format
+                        if 'resemblyzer' in stored_embedding:
+                            stored_emb = stored_embedding['resemblyzer']
+                        else:
+                            continue
+                    else:
+                        stored_emb = stored_embedding
+                    
+                    if isinstance(stored_emb, list) and len(stored_emb) == 256:
+                        try:
+                            similarity = dual_voice_model_manager.compare_dual_embeddings(
+                                {'resemblyzer': embedding['resemblyzer'] if isinstance(embedding, dict) else embedding},
+                                {'resemblyzer': stored_emb}
+                            ) if hasattr(dual_voice_model_manager, 'compare_dual_embeddings') else cosine_similarity([embedding if not isinstance(embedding, dict) else embedding['resemblyzer']], [stored_emb])[0][0]
+                            
+                            if similarity > best_score:
+                                best_match = cluster_id
+                                best_score = similarity
+                                
+                        except Exception as comp_err:
+                            if DEBUG:
+                                print(f"[Recognition] ⚠️ Comparison error for {cluster_id}: {comp_err}")
+                            continue
+                            
+            except Exception as cluster_err:
+                if DEBUG:
+                    print(f"[Recognition] ⚠️ Error processing cluster {cluster_id}: {cluster_err}")
+                continue
 
-        if similar_clusters:
-            best_cluster = similar_clusters[0]
-            cluster_id = best_cluster['cluster_id']
-            confidence = best_cluster['similarity']
+        # FIXED: Use appropriate threshold for matching
+        MATCH_THRESHOLD = 0.6  # Lower threshold for better matching
+        
+        if best_match and best_score > MATCH_THRESHOLD:
+            print(f"[Recognition] ✅ Anonymous cluster match: {best_match} (confidence: {best_score:.3f})")
+            return best_match, best_score
 
-            print(f"[Recognition] 🔗 Anonymous cluster match: {cluster_id} ({confidence:.3f})")
-            return cluster_id, confidence
-
-        # ✅ If no match, create new cluster too
-        create_anonymous_cluster(embedding)
-        save_known_users()
-        print("[Recognition] ✅ Created new anonymous cluster")
-
-        return "UNKNOWN", 0.0
+        # Only create new cluster if no reasonable match found
+        print(f"[Recognition] 🆕 No cluster match found (best: {best_score:.3f}), creating new cluster")
+        
+        # Create new anonymous cluster
+        try:
+            # Find next available cluster number
+            cluster_numbers = []
+            for cluster_id in anonymous_clusters.keys():
+                if cluster_id.startswith('Anonymous_'):
+                    try:
+                        num = int(cluster_id.split('_')[1])
+                        cluster_numbers.append(num)
+                    except:
+                        pass
+                        
+            next_num = max(cluster_numbers, default=0) + 1
+            new_cluster_id = f"Anonymous_{next_num:02d}"
+            
+            # Create cluster data
+            anonymous_clusters[new_cluster_id] = {
+                'embeddings': [embedding if not isinstance(embedding, dict) else embedding],
+                'created_at': datetime.utcnow().isoformat(),
+                'sample_count': 1,
+                'confidence_threshold': 0.6,
+                'status': 'anonymous'
+            }
+            
+            save_known_users()
+            print(f"[Recognition] ✅ Created new anonymous cluster: {new_cluster_id}")
+            return new_cluster_id, 0.8  # Return reasonable confidence for new cluster
+            
+        except Exception as create_err:
+            print(f"[Recognition] ❌ Error creating cluster: {create_err}")
+            return "UNKNOWN", 0.0
 
     except Exception as e:
         if DEBUG:
             print(f"[Recognition] ❌ Cluster check error: {e}")
+            import traceback
+            traceback.print_exc()
         return "UNKNOWN", 0.0
 
 def basic_identify_speaker_with_confidence(audio):

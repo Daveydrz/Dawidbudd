@@ -98,6 +98,10 @@ class EnhancedVoiceFlow:
     def _identify_voice(self, audio_data: Any) -> Tuple[str, str]:
         """Identify voice and return user_id and status"""
         try:
+            # Ensure database is loaded
+            from voice.database import ensure_database_loaded
+            ensure_database_loaded()
+            
             # Generate voice embedding
             embedding = generate_voice_embedding(audio_data)
             if embedding is None:
@@ -106,11 +110,20 @@ class EnhancedVoiceFlow:
             # Try to match against existing profiles
             identified_user, confidence = identify_speaker_with_confidence(audio_data)
             
-            if identified_user != "UNKNOWN" and confidence > 0.7:
+            # FIXED: Check if we got a valid anonymous cluster or known user
+            if identified_user and identified_user != "UNKNOWN" and identified_user != "Unknown" and confidence > 0.6:
                 print(f"[EnhancedVoiceFlow] ✅ Voice matched: {identified_user} (confidence: {confidence:.3f})")
                 return identified_user, "VOICE_RECOGNIZED"
             
-            # No match - create new anonymous cluster
+            # No match - but check if this was already an anonymous cluster that should have matched
+            print(f"[EnhancedVoiceFlow] 📊 No match found (user: {identified_user}, confidence: {confidence:.3f})")
+            
+            # If we got an anonymous cluster but low confidence, it might still be valid  
+            if identified_user and identified_user.startswith('Anonymous_') and confidence > 0.4:
+                print(f"[EnhancedVoiceFlow] ⚠️ Low confidence match to existing cluster: {identified_user}")
+                return identified_user, "LOW_CONFIDENCE_MATCH"
+            
+            # Truly no match - create new anonymous cluster
             anonymous_id = f"Anonymous_{self.anonymous_counter:02d}"
             self.anonymous_counter += 1
             
@@ -123,6 +136,8 @@ class EnhancedVoiceFlow:
             
         except Exception as e:
             print(f"[EnhancedVoiceFlow] ❌ Voice identification error: {e}")
+            import traceback
+            traceback.print_exc()
             return "Daveydrz", "VOICE_ERROR"
     
     def _extract_name_from_text(self, text: str) -> Optional[str]:

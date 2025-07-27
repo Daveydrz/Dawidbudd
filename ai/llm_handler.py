@@ -78,6 +78,23 @@ class LLMHandler:
         # Background processing mode flag - disabled for single LLM call mode
         self.background_processing_enabled = False
         
+    def _is_error_message(self, text: str) -> bool:
+        """Filter out error messages that shouldn't be spoken by TTS"""
+        error_phrases = [
+            "I apologize, but I'm having trouble connecting",
+            "I apologize, but I encountered an error",
+            "I'm having trouble with",
+            "connection was terminated",
+            "network error",
+            "server error",
+            "timeout error",
+            "failed to connect",
+            "connection refused"
+        ]
+        
+        text_lower = text.lower()
+        return any(phrase in text_lower for phrase in error_phrases)
+        
         print("[LLMHandler] 🧠 Initialized - Single LLM call mode")
         print(f"[LLMHandler] 🌟 Consciousness arch: {'Available' if CONSCIOUSNESS_AVAILABLE else 'Limited'}")
         print(f"[LLMHandler] 🔧 Fusion LLM: {'Available' if FUSION_LLM_AVAILABLE else 'Fallback'}")
@@ -241,13 +258,15 @@ Buddy:"""
                                 text_chunk = chunk_data.get('choices', [{}])[0].get('delta', {}).get('content', '')
                                 
                                 if text_chunk:
-                                    full_response += text_chunk
-                                    yield text_chunk
+                                    # Filter out error messages before sending to TTS
+                                    if not self._is_error_message(text_chunk):
+                                        full_response += text_chunk
+                                        yield text_chunk
                                     
                         except json.JSONDecodeError:
                             # Handle non-JSON streaming format
                             text_chunk = line.decode('utf-8').strip()
-                            if text_chunk and not text_chunk.startswith('['):
+                            if text_chunk and not text_chunk.startswith('[') and not self._is_error_message(text_chunk):
                                 full_response += text_chunk + " "
                                 yield text_chunk
                 

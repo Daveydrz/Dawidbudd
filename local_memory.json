@@ -1358,5 +1358,64 @@
       "context": [],
       "last_activity": "2025-07-27T02:57:23.178600"
     }
+  },
+  "test_user": {
+    "facts": [
+      {
+        "content": "User's name is David",
+        "timestamp": "2025-07-27T04:17:13.215504",
+        "confidence": 0.8
+      },
+      {
+        "content": "User's name is David",
+        "timestamp": "2025-07-27T04:18:09.350575",
+        "confidence": 0.8
+      },
+      {
+        "content": "User's name is David",
+        "timestamp": "2025-07-27T04:18:36.379676",
+        "confidence": 0.8
+      }
+    ],
+    "preferences": [],
+    "context": [
+      {
+        "content": "Hello, my name is David",
+        "timestamp": "2025-07-27T04:17:13.215510"
+      },
+      {
+        "content": "Hello, my name is David",
+        "timestamp": "2025-07-27T04:18:09.350583"
+      },
+      {
+        "content": "Hello, my name is David",
+        "timestamp": "2025-07-27T04:18:36.379683"
+      }
+    ]
+  },
+  "memory_test_user": {
+    "facts": [
+      {
+        "content": "User's name is Francesco",
+        "timestamp": "2025-07-27T04:17:13.219172",
+        "confidence": 0.8
+      },
+      {
+        "content": "User's name is Francesco",
+        "timestamp": "2025-07-27T04:18:09.354473",
+        "confidence": 0.8
+      }
+    ],
+    "preferences": [],
+    "context": [
+      {
+        "content": "My name is Francesco and I love pizza",
+        "timestamp": "2025-07-27T04:17:13.219178"
+      },
+      {
+        "content": "My name is Francesco and I love pizza",
+        "timestamp": "2025-07-27T04:18:09.354479"
+      }
+    ]
   }
 }
