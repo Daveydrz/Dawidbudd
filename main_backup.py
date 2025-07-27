@@ -1352,36 +1352,341 @@ def handle_full_duplex_conversation():
                     except Exception as stats_err:
                         print(f"[AdvancedAI] ⚠️ Stats error: {stats_err}")
                 
-                # Handle special conversation cases first
-                if is_direct_time_question(text):
-                    time_info = get_current_brisbane_time()
-                    speak_streaming(f"It's {time_info['time_12h']} on {time_info['day']}")
-                    continue
+                # Update current user for the response system
+                self.current_user = current_user
+                                            
+                                            if existing_cluster:
+                                                existing_cluster['last_updated'] = datetime.utcnow().isoformat()
+                                                existing_cluster['recognition_count'] = existing_cluster.get('recognition_count', 0) + 1
+                                            
+                                            if identified_user in known_users:
+                                                known_users[identified_user]['last_updated'] = datetime.utcnow().isoformat()
+                                                known_users[identified_user]['recognition_count'] = known_users[identified_user].get('recognition_count', 0) + 1
+                                                
+                                        else:
+                                            # ✅ CLUSTER WITH EMBEDDINGS: DON'T TOUCH IT!
+                                            print(f"[AdvancedAI] 🛡️ PRESERVING existing cluster {identified_user} with {len(existing_embeddings)} embeddings")
+                                            # Just update timestamp
+                                            existing_cluster['last_updated'] = datetime.utcnow().isoformat()
+                                            if identified_user in known_users:
+                                                known_users[identified_user]['last_updated'] = datetime.utcnow().isoformat()
+                                        
+                                        # Save only if we made changes and no embeddings exist
+                                        if not existing_cluster or len(existing_embeddings) == 0:
+                                            if save_known_users():
+                                                print(f"[AdvancedAI] ✅ Successfully synced {identified_user} to database")
+                                            else:
+                                                print(f"[AdvancedAI] ❌ Failed to sync {identified_user} to database")
+                            
+                        except Exception as sync_error:
+                            print(f"[AdvancedAI] ⚠️ Database sync error: {sync_error}")
+                        
+                        # Handle LLM locking/unlocking
+                        if hasattr(voice_manager, 'is_llm_locked'):
+                            if voice_manager.is_llm_locked():
+                                if not llm_locked:
+                                    pending_question = text
+                                    llm_locked = True
+                                    print(f"[AdvancedAI] 🛡️ LLM LOCKED - Question queued: '{text}'")
+                                continue
+                            else:
+                                if llm_locked:
+                                    llm_locked = False
+                                    print(f"[AdvancedAI] 🔓 LLM UNLOCKED")
+                                    
+                                    # Update current user
+                                    if identified_user and identified_user != current_user:
+                                        current_user = identified_user
+                                        print(f"[AdvancedAI] 🔄 User updated to: {current_user}")
+                                    
+                                    # Process pending question
+                                    if pending_question:
+                                        print(f"[AdvancedAI] ✅ Processing queued question: '{pending_question}'")
+                                        handle_streaming_response(pending_question, current_user)
+                                        pending_question = None
+                                        continue
+                        
+                        # Update current user
+                        if identified_user and identified_user != current_user:
+                            current_user = identified_user
+                            print(f"[AdvancedAI] 🔄 User switched to: {current_user}")
+                        
+                    except Exception as e:
+                        print(f"[AdvancedAI] ❌ Advanced voice processing error: {e}")
+                        import traceback
+                        traceback.print_exc()
+                        # Fallback to basic processing
+                        voice_recognition_in_progress = False
                 
-                if is_direct_location_question(text):
-                    speak_streaming(f"I'm located in {USER_PRECISE_LOCATION}")
-                    continue
+                elif ENHANCED_VOICE_AVAILABLE:
+                    # Enhanced voice processing
+                    try:
+                        identified_user, status = voice_manager.handle_voice_identification(audio_data, text)
+                        
+                        print(f"[Enhanced] 🔍 Status: '{status}', User: '{identified_user}'")
+                        
+                        # Handle voice processing states
+                        if status in ["NEEDS_NAME", "WAITING_FOR_NAME", "CONFIRMING_NAME", "NEEDS_TRAINING", "UNRECOGNIZED"]:
+                            if not voice_recognition_in_progress:
+                                pending_question = text
+                                voice_recognition_in_progress = True
+                                print(f"[Enhanced] 📝 Stored pending question: '{text}'")
+                            continue
+                        
+                        if status in ["RECOGNIZED", "LIKELY", "CONFIRMED", "GUEST_CREATED", "NAME_CONFIRMED"]:
+                            if identified_user and identified_user != current_user:
+                                current_user = identified_user
+                                print(f"[Enhanced] 🔄 Switched to: {current_user}")
+                            
+                            voice_recognition_in_progress = False
+                            
+                            # Add passive sample if available
+                            if ENHANCED_VOICE_AVAILABLE and current_user != "Guest":
+                                try:
+                                    enhanced_speaker_profiles.add_passive_sample(current_user, audio_data, 0.9)
+                                    enhanced_speaker_profiles.tune_threshold_for_user(current_user)
+                                except:
+                                    pass
+                            
+                            # Process pending question
+                            if pending_question:
+                                print(f"[Enhanced] ✅ Processing pending: '{pending_question}'")
+                                time.sleep(1)
+                                handle_streaming_response(pending_question, current_user)
+                                pending_question = None
+                            continue
+                        
+                    except Exception as e:
+                        print(f"[Enhanced] ❌ Enhanced voice processing error: {e}")
+                        import traceback
+                        traceback.print_exc()
+                        voice_recognition_in_progress = False
                 
-                if is_direct_date_question(text):
-                    time_info = get_current_brisbane_time()
-                    speak_streaming(f"Today is {time_info['date']}")
-                    continue
+                else:
+                    # ✅ BASIC VOICE RECOGNITION - ACTUALLY PROCESS VOICE! (FIXED!)
+                    print(f"[FullDuplex] 🔄 Using basic voice system with ACTUAL voice recognition")
+                    
+                    try:
+                        # ✅ CRITICAL: Process voice recognition to create Anonymous_001
+                        from voice.recognition import identify_speaker_with_confidence
+                        identified_user, confidence = identify_speaker_with_confidence(audio_data)
+                        
+                        print(f"[BasicVoice] 🔍 Voice recognition result: '{identified_user}' (confidence: {confidence:.3f})")
+                        
+                        # Handle voice recognition results
+                        if identified_user != "UNKNOWN" and identified_user != "Unknown":
+                            # Known user or anonymous cluster was created/matched
+                            if confidence > 0.7 or identified_user.startswith("Anonymous_"):
+                                if identified_user != current_user:
+                                    current_user = identified_user
+                                    print(f"[BasicVoice] 🔄 User switched to: {current_user}")
+                                    
+                                    # ✅ Update voice identity context
+                                    try:
+                                        update_voice_identity_context(current_user)
+                                    except:
+                                        pass
+                                        
+                        else:
+                            # Unknown user - check if anonymous cluster was created
+                            print(f"[BasicVoice] 👤 Unknown user result - checking for new anonymous clusters")
+                            
+                            from voice.database import anonymous_clusters, known_users
+                            print(f"[BasicVoice] 📊 Current anonymous clusters: {list(anonymous_clusters.keys())}")
+                            print(f"[BasicVoice] 📊 Current known users: {list(known_users.keys())}")
+                            
+                            # Check if a new anonymous cluster was created
+                            if anonymous_clusters:
+                                # Get the latest anonymous cluster
+                                anonymous_ids = [k for k in anonymous_clusters.keys() if k.startswith("Anonymous_")]
+                                if anonymous_ids:
+                                    latest_cluster = max(anonymous_ids)
+                                    current_user = latest_cluster
+                                    print(f"[BasicVoice] 🆕 Using anonymous cluster: {current_user}")
+                                    
+                                    # ✅ Update voice identity context
+                                    try:
+                                        update_voice_identity_context(current_user)
+                                    except:
+                                        pass
+                        
+                        # ✅ VERIFY: Check if user was saved to database
+                        from voice.database import known_users, anonymous_clusters
+                        total_entities = len(known_users) + len(anonymous_clusters)
+                        print(f"[BasicVoice] 📊 Total voice entities after processing: {total_entities}")
+                        print(f"[BasicVoice] 📊 Current user: {current_user}")
+                        
+                    except Exception as basic_voice_error:
+                        print(f"[BasicVoice] ❌ Basic voice recognition error: {basic_voice_error}")
+                        import traceback
+                        traceback.print_exc()
+                        
+                        # ✅ EMERGENCY: Force create anonymous cluster
+                        try:
+                            print(f"[BasicVoice] 🚨 Emergency: Forcing anonymous cluster creation...")
+                            from voice.database import create_anonymous_cluster
+                            from voice.voice_models import dual_voice_model_manager
+                            
+                            embedding = dual_voice_model_manager.generate_dual_embedding(audio_data)
+                            if embedding:
+                                cluster_id = create_anonymous_cluster(embedding)
+                                if cluster_id:
+                                    current_user = cluster_id
+                                    print(f"[BasicVoice] ✅ Emergency cluster created: {current_user}")
+                                    
+                                    # Update voice identity context
+                                    try:
+                                        update_voice_identity_context(current_user)
+                                    except:
+                                        pass
+                                else:
+                                    print(f"[BasicVoice] ❌ Emergency cluster creation failed")
+                            else:
+                                print(f"[BasicVoice] ❌ Emergency embedding generation failed")
+                                
+                        except Exception as emergency_error:
+                            print(f"[BasicVoice] ❌ Emergency creation failed: {emergency_error}")
+                            # Last resort - just continue with existing user
+                            print(f"[BasicVoice] 🆘 Continuing with existing user: {current_user}")
                 
-                # Check for conversation ending
+                # ✅ CRITICAL: Manual sync check for Advanced AI (NON-DESTRUCTIVE)
+                if ADVANCED_AI_AVAILABLE:
+                    try:
+                        # Check if voice manager internal state differs from database
+                        stats = voice_manager.get_session_stats() if hasattr(voice_manager, 'get_session_stats') else {}
+                        internal_clusters = stats.get('anonymous_clusters', 0)
+                        
+                        from voice.database import anonymous_clusters, known_users
+                        db_clusters = len(anonymous_clusters)
+                        db_users = len(known_users)
+                        
+                        if internal_clusters > 0 and db_clusters == 0 and db_users == 0:
+                            print(f"[FullDuplex] 🚨 CRITICAL: Voice manager has {internal_clusters} clusters but database is empty!")
+                            print(f"[FullDuplex] 🔧 Performing emergency database sync...")
+                            
+                            # ✅ EMERGENCY SYNC: Create placeholder only, don't overwrite existing data
+                            from datetime import datetime
+                            cluster_id = "Anonymous_001"
+                            
+                            # Only create if it doesn't exist
+                            if cluster_id not in anonymous_clusters:
+                                anonymous_clusters[cluster_id] = {
+                                    'cluster_id': cluster_id,
+                                    'embeddings': [],  # Start empty, voice manager will populate
+                                    'created_at': datetime.utcnow().isoformat(),
+                                    'last_updated': datetime.utcnow().isoformat(),
+                                    'status': 'anonymous',
+                                    'sample_count': 0,  # Will be updated when embeddings are added
+                                    'quality_scores': [],
+                                    'audio_contexts': ['emergency_sync_placeholder'],
+                                    'confidence_threshold': 0.6
+                                }
+                            
+                            # Only create if it doesn't exist
+                            if cluster_id not in known_users:
+                                known_users[cluster_id] = {
+                                    'username': cluster_id,
+                                    'status': 'anonymous',
+                                    'voice_embeddings': [],  # Start empty, voice manager will populate
+                                    'created_at': datetime.utcnow().isoformat(),
+                                    'last_updated': datetime.utcnow().isoformat(),
+                                    'is_anonymous': True,
+                                    'cluster_id': cluster_id,
+                                    'training_type': 'emergency_sync_placeholder',
+                                    'confidence_threshold': 0.6,
+                                    'recognition_count': 0,
+                                    'embedding_count': 0  # Will be updated when embeddings are added
+                                }
+                            
+                            # Save placeholders
+                            from voice.database import save_known_users
+                            if save_known_users():
+                                print(f"[FullDuplex] ✅ Emergency sync placeholder created!")
+                                current_user = cluster_id
+                            else:
+                                print(f"[FullDuplex] ❌ Emergency sync failed!")
+                                
+                    except Exception as emergency_sync_error:
+                        print(f"[FullDuplex] ❌ Emergency sync error: {emergency_sync_error}")
+                
+                # ✅ Handle training commands
+                if "train" in text.lower() and ("voice" in text.lower() or "my" in text.lower()):
+                    print(f"[FullDuplex] 🎓 Training command detected: '{text}'")
+                    
+                    # Clear any pending states
+                    voice_recognition_in_progress = False
+                    llm_locked = False
+                    pending_question = None
+                    
+                    if ADVANCED_AI_AVAILABLE:
+                        print("[FullDuplex] 🎓 ADVANCED AI voice training requested")
+                        full_duplex_manager.stop()
+                        
+                        speak_streaming("Starting advanced AI voice training with clustering optimization and quality validation.")
+                        time.sleep(2)
+                        
+                        success = voice_training_mode()
+                        if success:
+                            load_voice_profiles()
+                            current_user = "Daveydrz"
+                            speak_streaming("Advanced AI voice training complete! I now have multiple voice embeddings with clustering support for superior recognition.")
+                        else:
+                            speak_streaming("Training failed.")
+                        
+                        time.sleep(2)
+                        full_duplex_manager.start()
+                        continue
+                    elif ENHANCED_VOICE_AVAILABLE:
+                        print("[FullDuplex] 🎓 Enhanced voice training requested")
+                        full_duplex_manager.stop()
+                        
+                        speak_streaming("Starting enhanced voice training with quality validation and multiple embeddings.")
+                        time.sleep(2)
+                        
+                        success = voice_training_mode()
+                        if success:
+                            load_voice_profiles()
+                            current_user = "Daveydrz"
+                            speak_streaming("Enhanced voice training complete! I now have multiple voice embeddings for better recognition.")
+                        else:
+                            speak_streaming("Training failed.")
+                        
+                        time.sleep(2)
+                        full_duplex_manager.start()
+                        continue
+                    else:
+                        print("[FullDuplex] 🎓 Legacy voice training requested")
+                        full_duplex_manager.stop()
+                        
+                        speak_streaming("Starting voice training.")
+                        time.sleep(2)
+                        
+                        success = voice_training_mode()
+                        if success:
+                            load_voice_profiles()
+                            current_user = "Daveydrz"
+                            speak_streaming("Voice training complete!")
+                        else:
+                            speak_streaming("Training failed.")
+                        
+                        time.sleep(2)
+                        full_duplex_manager.start()
+                        continue
+                
+                # Check for conversation end
                 if should_end_conversation(text):
-                    speak_streaming("Goodbye! Have a great day!")
+                    try:
+                        from ai.speech import get_display_name
+                        display_name = get_display_name(current_user)
+                        speak_streaming(f"Goodbye {display_name}! See you later from Birtinya!")
+                    except:
+                        speak_streaming("Goodbye from Birtinya!")
                     set_conversation_state(False)
                     break
                 
-                # Handle name questions using enhanced voice flow
-                text_lower = text.lower()
-                if "what" in text_lower and "name" in text_lower and ("my" in text_lower or "your" in text_lower):
-                    if current_user == "Daveydrz":
-                        speak_streaming("You are Daveydrz.")
-                    elif current_user.startswith('Anonymous_'):
-                        speak_streaming("I don't recognize your voice yet. Could you tell me your name?")
-                    else:
-                        speak_streaming(f"Your name is {display_name}.")
+                # ✅ FINAL CHECK: Block LLM if any voice states are active
+                if voice_recognition_in_progress or llm_locked:
+                    print(f"[FullDuplex] 🛡️ Voice processing active - LLM blocked for: '{text}'")
                     continue
                 
                 # ✅ ADVANCED AI: Handle response with full features
