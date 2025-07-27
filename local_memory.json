@@ -17,10 +17,116 @@
             "source": "immediate_extraction"
           },
           "confidence": 0.95
+        },
+        {
+          "timestamp": "2025-07-27T02:49:25.844489",
+          "user_id": "test_user",
+          "text": "User's name is David Francesco",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "David Francesco",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "enhanced_response_generation"
+          },
+          "confidence": 0.95
         }
       ],
-      "context": [],
-      "last_activity": "2025-07-26T15:57:58.699727"
+      "context": [
+        {
+          "timestamp": "2025-07-27T02:43:58.437937",
+          "user_id": "test_user",
+          "text": "Hi, I'm David",
+          "memory_type": "context",
+          "extracted_info": {
+            "topic": "general",
+            "length": 3,
+            "question": false,
+            "source": "general_fallback"
+          },
+          "confidence": 0.5
+        },
+        {
+          "timestamp": "2025-07-27T02:43:58.440141",
+          "user_id": "test_user",
+          "text": "What is my name?",
+          "memory_type": "context",
+          "extracted_info": {
+            "topic": "general",
+            "length": 4,
+            "question": true,
+            "source": "general_fallback"
+          },
+          "confidence": 0.5
+        },
+        {
+          "timestamp": "2025-07-27T02:43:58.441525",
+          "user_id": "test_user",
+          "text": "User: What is my name? | Buddy: Your name is David",
+          "memory_type": "context",
+          "extracted_info": {
+            "interaction": true,
+            "user_input": "What is my name?",
+            "buddy_response": "Your name is David",
+            "source": "interaction_log"
+          },
+          "confidence": 1.0
+        },
+        {
+          "timestamp": "2025-07-27T02:46:26.234557",
+          "user_id": "test_user",
+          "text": "I'm David by the way",
+          "memory_type": "context",
+          "extracted_info": {
+            "topic": "general",
+            "length": 5,
+            "question": false,
+            "source": "general_fallback"
+          },
+          "confidence": 0.5
+        },
+        {
+          "timestamp": "2025-07-27T02:46:26.236873",
+          "user_id": "test_user",
+          "text": "What's my name?",
+          "memory_type": "context",
+          "extracted_info": {
+            "topic": "general",
+            "length": 3,
+            "question": true,
+            "source": "general_fallback"
+          },
+          "confidence": 0.5
+        },
+        {
+          "timestamp": "2025-07-27T02:53:36.325435",
+          "user_id": "test_user",
+          "text": "I'm David by the way",
+          "memory_type": "context",
+          "extracted_info": {
+            "topic": "general",
+            "length": 5,
+            "question": false,
+            "source": "general_fallback"
+          },
+          "confidence": 0.5
+        },
+        {
+          "timestamp": "2025-07-27T02:53:36.327782",
+          "user_id": "test_user",
+          "text": "What's my name?",
+          "memory_type": "context",
+          "extracted_info": {
+            "topic": "general",
+            "length": 3,
+            "question": true,
+            "source": "general_fallback"
+          },
+          "confidence": 0.5
+        }
+      ],
+      "last_activity": "2025-07-27T02:53:36.327782"
     },
     "test_user_1": {
       "actions": [],
@@ -1091,6 +1197,166 @@
       ],
       "context": [],
       "last_activity": "2025-07-27T00:07:21.449992"
+    },
+    "test_memory_fix": {
+      "actions": [],
+      "preferences": [],
+      "facts": [
+        {
+          "timestamp": "2025-07-27T02:49:25.841441",
+          "user_id": "test_memory_fix",
+          "text": "User's name is David Francesco",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "David Francesco",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "manual_fix"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "context": [
+        {
+          "timestamp": "2025-07-27T02:49:25.839211",
+          "user_id": "test_memory_fix",
+          "text": "Hi there, I'm David Francesco by the way",
+          "memory_type": "context",
+          "extracted_info": {
+            "topic": "general",
+            "length": 8,
+            "question": false,
+            "source": "general_fallback"
+          },
+          "confidence": 0.5
+        }
+      ],
+      "last_activity": "2025-07-27T02:49:25.841441"
+    },
+    "test_fallback": {
+      "actions": [],
+      "preferences": [],
+      "facts": [
+        {
+          "timestamp": "2025-07-27T02:49:25.849161",
+          "user_id": "test_fallback",
+          "text": "User's name is David Francesco",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "David Francesco",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "fallback_llm_handler"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "context": [],
+      "last_activity": "2025-07-27T02:49:25.849161"
+    },
+    "integration_test": {
+      "actions": [],
+      "preferences": [],
+      "facts": [
+        {
+          "timestamp": "2025-07-27T02:49:25.850712",
+          "user_id": "integration_test",
+          "text": "User's name is David Francesco",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "David Francesco",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "fallback_llm_handler"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "context": [],
+      "last_activity": "2025-07-27T02:49:25.850712"
+    },
+    "test_fixed": {
+      "actions": [],
+      "preferences": [],
+      "facts": [
+        {
+          "timestamp": "2025-07-27T02:52:49.225191",
+          "user_id": "test_fixed",
+          "text": "User's name is David Francesco",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "David Francesco",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "fallback_llm_handler"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "context": [],
+      "last_activity": "2025-07-27T02:52:49.225191"
+    },
+    "final_test": {
+      "actions": [],
+      "preferences": [],
+      "facts": [
+        {
+          "timestamp": "2025-07-27T02:53:26.781815",
+          "user_id": "final_test",
+          "text": "User's name is David Francesco",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "David Francesco",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "fallback_llm_handler"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "context": [
+        {
+          "timestamp": "2025-07-27T02:57:23.175307",
+          "user_id": "final_test",
+          "text": "I am David Francesco by the way",
+          "memory_type": "context",
+          "extracted_info": {
+            "topic": "general",
+            "length": 7,
+            "question": false,
+            "source": "general_fallback"
+          },
+          "confidence": 0.5
+        }
+      ],
+      "last_activity": "2025-07-27T02:57:23.175307"
+    },
+    "response_test": {
+      "actions": [],
+      "preferences": [],
+      "facts": [
+        {
+          "timestamp": "2025-07-27T02:57:23.178600",
+          "user_id": "response_test",
+          "text": "User's name is David Francesco",
+          "memory_type": "fact",
+          "extracted_info": {
+            "fact_category": "identity",
+            "fact_value": "David Francesco",
+            "name_introduction": true,
+            "confidence": 0.95,
+            "source": "fallback_llm_handler"
+          },
+          "confidence": 0.95
+        }
+      ],
+      "context": [],
+      "last_activity": "2025-07-27T02:57:23.178600"
     }
   }
 }

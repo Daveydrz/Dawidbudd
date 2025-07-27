@@ -27,7 +27,104 @@ class ExtractorClient:
         # Load user memory for consciousness processing
         self.memory_file = "local_memory.json"
         self.consciousness_file = "ai_consciousness_state.json"
+    
+    def _extract_json_from_response(self, text: str) -> Dict[str, Any]:
+        """Enhanced JSON extraction from malformed responses"""
+        try:
+            # First try direct JSON parsing
+            return json.loads(text)
+        except json.JSONDecodeError:
+            pass
         
+        # Try to find JSON block in text
+        import re
+        json_patterns = [
+            r'\{[^{}]*"classification"[^{}]*\}',  # Simple classification block
+            r'\{.*?"classification".*?\}',        # Full classification block
+            r'\{.*\}',                           # Any JSON-like block
+        ]
+        
+        for pattern in json_patterns:
+            matches = re.findall(pattern, text, re.DOTALL)
+            for match in matches:
+                try:
+                    parsed = json.loads(match)
+                    if "classification" in parsed:
+                        # Validate and complete the structure
+                        return self._complete_consciousness_structure(parsed)
+                except json.JSONDecodeError:
+                    continue
+        
+        # If no JSON found, create from text analysis
+        return self._create_consciousness_from_text(text)
+    
+    def _complete_consciousness_structure(self, partial: Dict[str, Any]) -> Dict[str, Any]:
+        """Complete a partial consciousness structure"""
+        required_sections = ["classification", "memory_updates", "emotional_state", "consciousness_state", "belief_updates", "response_context"]
+        
+        for section in required_sections:
+            if section not in partial:
+                partial[section] = self._get_fallback_section(section)
+        
+        return partial
+    
+    def _create_consciousness_from_text(self, text: str) -> Dict[str, Any]:
+        """Create consciousness data from plain text response"""
+        # Basic text analysis for consciousness data
+        text_lower = text.lower()
+        
+        # Detect emotion from text
+        emotion = "neutral"
+        if any(word in text_lower for word in ["happy", "good", "great", "wonderful"]):
+            emotion = "joy"
+        elif any(word in text_lower for word in ["sad", "upset", "worried", "concerned"]):
+            emotion = "sadness"
+        elif any(word in text_lower for word in ["angry", "frustrated", "annoyed"]):
+            emotion = "anger"
+        
+        # Extract potential facts/names
+        name_patterns = [r"name is (\w+)", r"i'?m (\w+)", r"call me (\w+)"]
+        extracted_names = []
+        for pattern in name_patterns:
+            import re
+            matches = re.findall(pattern, text_lower)
+            extracted_names.extend(matches)
+        
+        return {
+            "classification": {
+                "memory_type": "fact" if extracted_names else "context",
+                "intent": "statement",
+                "emotion": emotion,
+                "name_introduction": bool(extracted_names)
+            },
+            "memory_updates": {
+                "new_facts": [f"User's name is {name.capitalize()}" for name in extracted_names],
+                "new_preferences": [],
+                "new_context": [text[:100] + "..." if len(text) > 100 else text]
+            },
+            "emotional_state": {
+                "detected_emotion": emotion,
+                "buddy_emotional_response": "helpful",
+                "emotional_intensity": 0.6
+            },
+            "consciousness_state": {
+                "current_focus": "user_interaction",
+                "active_goals": ["help user", "remember information"],
+                "inner_thoughts": "Processing user input and extracting relevant information",
+                "motivation_level": 0.8
+            },
+            "belief_updates": {
+                "reinforced_beliefs": [],
+                "new_beliefs": [],
+                "contradicted_beliefs": []
+            },
+            "response_context": {
+                "personality_tone": "friendly",
+                "knowledge_areas": ["general"],
+                "response_priority": "high" if extracted_names else "medium"
+            }
+        }
+
     def process_full_consciousness(self, user_text: str, user_id: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
         """
         Process ALL consciousness-related tasks using Gemma-2-2B
@@ -101,20 +198,12 @@ Message: "{user_text}"
                 print(f"[ExtractorClient] ⚠️ Empty response from port 5002, using fallback")
                 return self._get_fallback_consciousness_data()
             
-            # Fix: Try to extract JSON from response, handle malformed JSON better
-            try:
-                # Look for JSON content in the response
-                json_match = re.search(r'\{.*\}', text, re.DOTALL)
-                if json_match:
-                    json_text = json_match.group(0)
-                    consciousness_data = json.loads(json_text)
-                else:
-                    print(f"[ExtractorClient] ⚠️ No JSON found in response: {text[:100]}...")
-                    return self._get_fallback_consciousness_data()
-            except json.JSONDecodeError as json_err:
-                print(f"[ExtractorClient] ❌ JSON parsing error: {json_err}")
-                print(f"[ExtractorClient] Raw response: {text[:200]}...")
-                return self._get_fallback_consciousness_data()
+            # Enhanced JSON extraction with multiple fallback strategies
+            consciousness_data = self._extract_json_from_response(text)
+            
+            if not consciousness_data or "classification" not in consciousness_data:
+                print(f"[ExtractorClient] ⚠️ Using enhanced text-based consciousness extraction")
+                consciousness_data = self._create_consciousness_from_text(text)
             
             # Validate response structure
             required_sections = ["classification", "memory_updates", "emotional_state", "consciousness_state", "belief_updates", "response_context"]

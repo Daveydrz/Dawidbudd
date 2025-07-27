@@ -593,101 +593,31 @@ def get_mic_feeding_state():
         return mic_feeding_active
 
 def handle_streaming_response(text, current_user):
-    """🚀 IMMEDIATE RESPONSE: Proper memory integration + Fast response generation"""
+    """🚀 IMMEDIATE RESPONSE: Enhanced with fallback consciousness system"""
     print(f"[IMMEDIATE] 🚀 Starting IMMEDIATE response for: '{text}' (user: {current_user})")
     
     start_time = time.time()
     
     try:
-        # ✅ STEP 1: IMMEDIATE memory processing (fast local + background Gemma)
-        print("[IMMEDIATE] 💾 Processing memory immediately...")
-        
-        # Fast local memory extraction for names/facts
+        # ✅ STEP 1: Check for fallback mode
         from ai.local_memory_manager import local_memory_manager
         
-        # Check for name introduction first (critical for remembering names)
-        name_detected = False
-        extracted_name = None
-        text_lower = text.lower().strip()
+        # Process memory and extract names immediately
+        memories = local_memory_manager.extract_memory_from_text(text, current_user)
+        if memories:
+            local_memory_manager.store_memories(memories)
+            print(f"[IMMEDIATE] 💾 Stored {len(memories)} memories")
         
-        # Name patterns - check immediately
-        name_patterns = [
-            r"my name is (\w+)",
-            r"i'?m (\w+)(?:\s+by the way|$|\.|!)",  # Fixed to handle "by the way" 
-            r"call me (\w+)",
-            r"i'?m called (\w+)",
-            r"this is (\w+)"
-        ]
+        # ✅ STEP 2: Try server-based response first
+        server_response_generated = False
         
-        for pattern in name_patterns:
-            import re
-            match = re.search(pattern, text_lower)
-            if match:
-                extracted_name = match.group(1).capitalize()
-                name_detected = True
-                print(f"[IMMEDIATE] 👤 NAME DETECTED: {extracted_name}")
-                
-                # Store name immediately as a fact
-                from ai.local_memory_manager import MemoryEntry
-                from datetime import datetime
-                
-                name_memory = MemoryEntry(
-                    timestamp=datetime.now().isoformat(),
-                    user_id=current_user,
-                    text=f"User's name is {extracted_name}",
-                    memory_type="fact",
-                    extracted_info={
-                        "fact_category": "identity",
-                        "fact_value": extracted_name,
-                        "name_introduction": True,
-                        "confidence": 0.95,
-                        "source": "immediate_extraction"
-                    },
-                    confidence=0.95
-                )
-                local_memory_manager.store_memories([name_memory])
-                print(f"[IMMEDIATE] ✅ Name '{extracted_name}' stored immediately")
-                
-                # ✅ CRITICAL: Link name to voice profile if user is currently anonymous
-                try:
-                    if current_user.startswith("Anonymous_") or current_user == "UNKNOWN":
-                        print(f"[IMMEDIATE] 🔗 Linking name '{extracted_name}' to voice profile '{current_user}'")
-                        
-                        # Try to get the voice manager and convert anonymous cluster to named user
-                        if hasattr(voice_manager, '_convert_anonymous_to_named'):
-                            success = voice_manager._convert_anonymous_to_named(current_user, extracted_name)
-                            if success:
-                                print(f"[IMMEDIATE] ✅ Voice profile converted: {current_user} → {extracted_name}")
-                                # Update current_user for the rest of this interaction
-                                current_user = extracted_name
-                            else:
-                                print(f"[IMMEDIATE] ⚠️ Voice profile conversion failed")
-                        
-                        # Also try the database conversion function directly
-                        try:
-                            from voice.database import link_anonymous_to_named, known_users, anonymous_clusters
-                            if current_user in anonymous_clusters:
-                                link_success = link_anonymous_to_named(current_user, extracted_name)
-                                if link_success:
-                                    print(f"[IMMEDIATE] ✅ Database link successful: {current_user} → {extracted_name}")
-                                    current_user = extracted_name
-                        except Exception as db_err:
-                            print(f"[IMMEDIATE] ⚠️ Database linking error: {db_err}")
-                            
-                    else:
-                        print(f"[IMMEDIATE] ℹ️ User already has known profile: {current_user}")
-                        
-                except Exception as voice_link_err:
-                    print(f"[IMMEDIATE] ⚠️ Voice linking error (non-critical): {voice_link_err}")
-                    # Continue with response generation even if voice linking fails
-                break
-        
-        # ✅ STEP 2: Get current memory context for response (updated with new name if detected)
-        print("[IMMEDIATE] 📋 Loading current memory context...")
-        existing_context = local_memory_manager.get_user_context(current_user)
-        
-        # Build consciousness context with latest memory
-        consciousness_context = f"""BUDDY'S CONSCIOUSNESS STATE:
+        try:
+            # Try the original server-based response logic
+            from ai.simple_llm_handler import generate_response_with_consciousness
+            
+            # Get consciousness context
+            user_context = local_memory_manager.get_user_context(current_user)
+            consciousness_context = f"""BUDDY'S CONSCIOUSNESS STATE:
 Current Emotion: helpful
 Motivation Level: 0.8
 Active Goals: help user effectively, remember user information
@@ -695,430 +625,110 @@ Current Focus: user interaction
 Personality: friendly, empathetic, good memory
 
 USER MEMORY:
-Facts: {', '.join(existing_context.get('facts', [])[:5])}
-Preferences: {', '.join(existing_context.get('preferences', [])[:5])}
-Recent Context: {', '.join(existing_context.get('context', [])[-3:])}"""
-
-        if name_detected and extracted_name:
-            consciousness_context += f"\nIMPORTANT: User just introduced themselves as {extracted_name}. Remember this name!"
-        
-        print("[IMMEDIATE] 📝 Memory context prepared for immediate response")
-        
-        # ✅ STEP 3: Start background consciousness processing (port 5002) - NON-BLOCKING
-        def background_consciousness_processing():
-            """Process full consciousness in background via port 5002"""
-            try:
-                from ai.extractor_client import process_full_consciousness
-                print(f"[IMMEDIATE] 🧠 Background: Processing consciousness via port 5002...")
-                
-                # Process ALL consciousness via Gemma on port 5002
-                consciousness_data = process_full_consciousness(text, current_user)
-                
-                # Update local memory with full consciousness data
-                local_memory_manager.update_memory(current_user, text, consciousness_data)
-                
-                print(f"[IMMEDIATE] ✅ Background consciousness processing complete")
-                
-            except Exception as e:
-                print(f"[IMMEDIATE] ⚠️ Background consciousness error (non-critical): {e}")
-        
-        # Start consciousness processing in background thread (don't wait)
-        import threading
-        threading.Thread(target=background_consciousness_processing, daemon=True).start()
-        
-        # ✅ STEP 4: Generate response immediately using port 5001 ONLY
-        print("[IMMEDIATE] ⚡ Starting IMMEDIATE response generation (port 5001)...")
-        
-        try:
-            from ai.simple_llm_handler import generate_response_with_consciousness
-            print("[IMMEDIATE] 🎯 Using simple LLM handler for port 5001 ONLY")
+Facts: {', '.join(user_context.get('facts', [])[:5])}
+Preferences: {', '.join(user_context.get('preferences', [])[:5])}
+Recent Context: {', '.join(user_context.get('context', [])[-3:])}"""
             
+            print("[IMMEDIATE] 🤖 Attempting server-based response...")
+            
+            # Try to generate with servers
             full_response = ""
             chunk_count = 0
-            response_interrupted = False
-            first_chunk = True
-            
-            # Import audio functions with better error handling
-            audio_available = False
-            try:
-                from audio.output import speak_streaming
-                from audio.smart_streaming_output import speak_streaming_smart, reset_streaming_output, finalize_streaming_output
-                audio_available = True
-                reset_streaming_output()  # Reset for new response
-                print("[IMMEDIATE] 🎵 Audio system available - Kokoro ready with smart streaming")
-            except ImportError as audio_err:
-                print(f"[IMMEDIATE] ⚠️ Audio system not available: {audio_err}")
-                audio_available = False
-                try:
-                    # Fallback to basic speak_streaming
-                    from audio.output import speak_streaming
-                    audio_available = True
-                    print("[IMMEDIATE] 🎵 Using basic audio system")
-                except ImportError:
-                    audio_available = False
-            
-            # Generate response using ONLY port 5001 with consciousness injection
-            response_chunks = []
-            
-            # Import response filter to prevent error messages from reaching Kokoro
-            try:
-                from ai.response_filter import filter_and_fix_response, should_speak_response
-                filter_available = True
-                print("[IMMEDIATE] 🔧 Response filter loaded - error messages will be blocked from Kokoro")
-            except ImportError:
-                filter_available = False
-                print("[IMMEDIATE] ⚠️ Response filter not available - error messages may reach Kokoro")
             
             for chunk in generate_response_with_consciousness(text, current_user, consciousness_context):
-                # Check for interrupt
-                if full_duplex_manager and hasattr(full_duplex_manager, 'speech_interrupted') and full_duplex_manager.speech_interrupted:
-                    print("[IMMEDIATE] ⚡ INTERRUPT DETECTED - STOPPING")
-                    response_interrupted = True
-                    break
-                
                 if chunk and chunk.strip():
                     chunk_text = chunk.strip()
-                    
-                    # Filter out error messages before they reach Kokoro
-                    if filter_available:
-                        filtered_chunk, was_filtered = filter_and_fix_response(chunk_text, text, extracted_name)
-                        if was_filtered:
-                            chunk_text = filtered_chunk
-                            print(f"[IMMEDIATE] 🔧 Filtered error message for Kokoro safety")
-                        
-                        # Don't speak if it shouldn't be spoken
-                        if not should_speak_response(chunk_text):
-                            print(f"[IMMEDIATE] 🚫 Skipping non-speakable chunk: '{chunk_text[:30]}...'")
-                            continue
-                    
                     chunk_count += 1
-                    response_chunks.append(chunk_text)
-                    
-                    if first_chunk:
-                        print("[IMMEDIATE] 🎵 First chunk ready - starting speech IMMEDIATELY!")
-                        first_chunk = False
-                    
-                    print(f"[IMMEDIATE] 🗣️ Speaking chunk {chunk_count}: '{chunk_text[:50]}...'")
-                    
-                    # Start speaking immediately using smart streaming to prevent Kokoro overwhelm
-                    if audio_available:
-                        try:
-                            # Try smart streaming first (accumulates chunks intelligently)
-                            try:
-                                is_final = False  # We'll set final on the last chunk
-                                success = speak_streaming_smart(chunk_text, is_final)
-                                if success:
-                                    print(f"[IMMEDIATE] 🎵 Smart streaming triggered for chunk {chunk_count}")
-                                else:
-                                    print(f"[IMMEDIATE] 📝 Smart streaming buffering chunk {chunk_count}")
-                            except (NameError, AttributeError):
-                                # Fallback to basic streaming if smart streaming not available
-                                success = speak_streaming(chunk_text)
-                                if not success:
-                                    print(f"[IMMEDIATE] ⚠️ speak_streaming returned False - audio may not be playing")
-                        except Exception as audio_err:
-                            print(f"[IMMEDIATE] ❌ Audio error: {audio_err}")
-                            print(f"[IMMEDIATE] 💬 Would speak: {chunk_text}")
-                    else:
-                        print(f"[IMMEDIATE] 💬 Would speak: {chunk_text}")
-                    
                     full_response += chunk_text + " "
                     
-                    # Check for interrupt after speaking
-                    if full_duplex_manager and hasattr(full_duplex_manager, 'speech_interrupted') and full_duplex_manager.speech_interrupted:
-                        print("[IMMEDIATE] ⚡ INTERRUPT AFTER SPEAKING")
-                        response_interrupted = True
-                        break
+                    print(f"[IMMEDIATE] 🗣️ Server chunk {chunk_count}: '{chunk_text[:50]}...'")
                     
-                    # Brief pause for natural flow (minimal)
-                    time.sleep(0.05)  # Slightly longer for stability
-            
-            total_time = time.time() - start_time
-            
-            if not response_interrupted and full_response.strip():
-                # Finalize smart streaming to send any remaining chunks
-                if audio_available:
+                    # Try to speak it
                     try:
-                        finalize_streaming_output()
-                        print(f"[IMMEDIATE] 🎵 Smart streaming finalized")
-                    except (NameError, AttributeError):
-                        # No smart streaming available
-                        pass
-                
-                # Add to conversation history IMMEDIATELY
-                local_memory_manager.add_interaction(current_user, text, full_response.strip())
-                
-                print(f"[IMMEDIATE] ✅ IMMEDIATE response complete:")
-                print(f"[IMMEDIATE] ⚡ Total time: {total_time:.3f}s (TARGET: <3s)")
-                print(f"[IMMEDIATE] 📊 Chunks processed: {chunk_count}")
-                print(f"[IMMEDIATE] 🧠 Background consciousness processing for enhanced memory")
-                print(f"[IMMEDIATE] 💾 Interaction stored immediately")
-                
-            return
-            
-        except ImportError as e:
-            print(f"[IMMEDIATE] ❌ Simple LLM handler not available: {e}")
-            
-        # ✅ FALLBACK: Direct HTTP call to port 5001 if simple handler fails
-        print("[IMMEDIATE] 🔄 Using direct HTTP fallback to port 5001...")
-        
-        try:
-            import requests
-            
-            # Build minimal prompt
-            prompt = f"""Buddy is a helpful, empathetic AI assistant with excellent memory.
-
-{consciousness_context}
-
-User: {text}
-
-Buddy:"""
-            
-            # Different payload formats to try
-            payload_formats = [
-                # Format 1: Messages format
-                {
-                    "messages": [{"role": "user", "content": prompt}],
-                    "max_tokens": 150,  # Fixed: Reduced to requested token limit (150 max)
-                    "temperature": 0.7,
-                    "stream": True
-                },
-                # Format 2: Simple prompt format  
-                {
-                    "prompt": prompt,
-                    "max_length": 150,  # Fixed: Reduced to requested token limit (150 max)
-                    "temperature": 0.7,
-                    "stream": True
-                },
-                # Format 3: Text-generation-webui format
-                {
-                    "text": prompt,
-                    "max_new_tokens": 150,  # Fixed: Reduced to requested token limit (150 max)
-                    "temperature": 0.7,
-                    "stream": True
-                }
-            ]
-            
-            urls_to_try = [
-                "http://localhost:5001/api/v1/generate",
-                "http://localhost:5001/v1/chat/completions", 
-                "http://localhost:5001/api/v1/stream",
-                "http://localhost:5001/generate"
-            ]
-            
-            response_generated = False
-            
-            for url in urls_to_try:
-                if response_generated:
-                    break
-                    
-                for payload in payload_formats:
-                    try:
-                        print(f"[IMMEDIATE] 🎯 Trying {url} with payload type: {list(payload.keys())}")
-                        
-                        response = requests.post(url, json=payload, stream=True, timeout=10)
-                        
-                        if response.status_code == 200:
-                            print(f"[IMMEDIATE] ✅ Connected to {url}")
-                            
-                            full_response = ""
-                            chunk_count = 0
-                            
-                            # Process streaming response
-                            for line in response.iter_lines():
-                                if line:
-                                    try:
-                                        # Try different parsing methods
-                                        line_text = line.decode('utf-8')
-                                        
-                                        # SSE format
-                                        if line_text.startswith('data: '):
-                                            json_str = line_text[6:]
-                                            if json_str.strip() == '[DONE]':
-                                                break
-                                            
-                                            try:
-                                                chunk_data = json.loads(json_str)
-                                                # Try different response formats
-                                                text_chunk = (
-                                                    chunk_data.get('choices', [{}])[0].get('delta', {}).get('content', '') or
-                                                    chunk_data.get('choices', [{}])[0].get('text', '') or
-                                                    chunk_data.get('results', [{}])[0].get('text', '') or
-                                                    chunk_data.get('text', '')
-                                                )
-                                                
-                                                if text_chunk:
-                                                    # Filter out error messages before they reach Kokoro
-                                                    if filter_available:
-                                                        filtered_chunk, was_filtered = filter_and_fix_response(text_chunk, text, extracted_name)
-                                                        if was_filtered:
-                                                            text_chunk = filtered_chunk
-                                                            print(f"[IMMEDIATE] 🔧 Filtered error message from direct call")
-                                                        
-                                                        # Don't speak if it shouldn't be spoken
-                                                        if not should_speak_response(text_chunk):
-                                                            print(f"[IMMEDIATE] 🚫 Skipping non-speakable direct chunk: '{text_chunk[:30]}...'")
-                                                            continue
-                                                    
-                                                    chunk_count += 1
-                                                    full_response += text_chunk
-                                                    
-                                                    if chunk_count == 1:
-                                                        print("[IMMEDIATE] 🎵 First chunk from direct call - speaking immediately!")
-                                                    
-                                                    print(f"[IMMEDIATE] 🗣️ Direct chunk {chunk_count}: '{text_chunk[:50]}...'")
-                                                    
-                                                    if audio_available:
-                                                        try:
-                                                            speak_streaming(text_chunk)
-                                                        except Exception as audio_err:
-                                                            print(f"[IMMEDIATE] ❌ Audio error: {audio_err}")
-                                                            print(f"[IMMEDIATE] 💬 Would speak: {text_chunk}")
-                                                    else:
-                                                        print(f"[IMMEDIATE] 💬 Would speak: {text_chunk}")
-                                                    
-                                            except json.JSONDecodeError:
-                                                # Raw text chunk
-                                                if json_str and not json_str.startswith('['):
-                                                    # Filter out error messages before they reach Kokoro
-                                                    if filter_available:
-                                                        filtered_chunk, was_filtered = filter_and_fix_response(json_str, text, extracted_name)
-                                                        if was_filtered:
-                                                            json_str = filtered_chunk
-                                                            print(f"[IMMEDIATE] 🔧 Filtered error message from raw JSON")
-                                                        
-                                                        # Don't speak if it shouldn't be spoken
-                                                        if not should_speak_response(json_str):
-                                                            print(f"[IMMEDIATE] 🚫 Skipping non-speakable raw JSON: '{json_str[:30]}...'")
-                                                            continue
-                                                    
-                                                    chunk_count += 1
-                                                    full_response += json_str + " "
-                                                    
-                                                    if audio_available:
-                                                        try:
-                                                            speak_streaming(json_str)
-                                                        except Exception as audio_err:
-                                                            print(f"[IMMEDIATE] ❌ Audio error: {audio_err}")
-                                                            print(f"[IMMEDIATE] 💬 Would speak: {json_str}")
-                                                    else:
-                                                        print(f"[IMMEDIATE] 💬 Would speak: {json_str}")
-                                        
-                                        # Raw line format
-                                        elif line_text and not line_text.startswith('[') and len(line_text) > 1:
-                                            # Filter out error messages before they reach Kokoro
-                                            if filter_available:
-                                                filtered_line, was_filtered = filter_and_fix_response(line_text, text, extracted_name)
-                                                if was_filtered:
-                                                    line_text = filtered_line
-                                                    print(f"[IMMEDIATE] 🔧 Filtered error message from raw line")
-                                                
-                                                # Don't speak if it shouldn't be spoken
-                                                if not should_speak_response(line_text):
-                                                    print(f"[IMMEDIATE] 🚫 Skipping non-speakable raw line: '{line_text[:30]}...'")
-                                                    continue
-                                            
-                                            chunk_count += 1
-                                            full_response += line_text + " "
-                                            
-                                            if audio_available:
-                                                try:
-                                                    speak_streaming(line_text)
-                                                except Exception as audio_err:
-                                                    print(f"[IMMEDIATE] ❌ Audio error: {audio_err}")
-                                                    print(f"[IMMEDIATE] 💬 Would speak: {line_text}")
-                                            else:
-                                                print(f"[IMMEDIATE] 💬 Would speak: {line_text}")
-                                        
-                                    except Exception as parse_error:
-                                        print(f"[IMMEDIATE] ⚠️ Parse error: {parse_error} - line: {line}")
-                            
-                            if full_response.strip():
-                                # Success! Add to conversation history
-                                local_memory_manager.add_interaction(current_user, text, full_response.strip())
-                                
-                                total_time = time.time() - start_time
-                                print(f"[IMMEDIATE] ✅ Direct response complete:")
-                                print(f"[IMMEDIATE] ⚡ Total time: {total_time:.3f}s")
-                                print(f"[IMMEDIATE] 📊 Chunks: {chunk_count}")
-                                print(f"[IMMEDIATE] 💾 Interaction stored")
-                                
-                                response_generated = True
-                                break
-                        
-                    except Exception as e:
-                        print(f"[IMMEDIATE] ⚠️ Failed {url}: {e}")
-                        continue
-            
-            if response_generated:
-                return
-            else:
-                print("[IMMEDIATE] ❌ All direct HTTP attempts failed")
-        
-        except Exception as e:
-            print(f"[IMMEDIATE] ❌ Direct HTTP fallback error: {e}")
-        
-        # ✅ FINAL FALLBACK: Use existing chat system if everything else fails
-        print("[IMMEDIATE] 🔄 Using existing chat system as final fallback...")
-        
-        try:
-            from ai.chat import generate_response
-            response = generate_response(text, current_user)
-            
-            if response and response.strip():
-                print(f"[IMMEDIATE] 🗣️ Fallback response: {response[:100]}...")
-                
-                if audio_available:
-                    try:
-                        speak_streaming(response)
+                        from audio.output import speak_streaming
+                        speak_streaming(chunk_text)
                     except Exception as audio_err:
-                        print(f"[IMMEDIATE] ❌ Audio error: {audio_err}")
-                        print(f"[IMMEDIATE] 💬 Would speak: {response}")
-                else:
-                    print(f"[IMMEDIATE] 💬 Would speak: {response}")
+                        print(f"[IMMEDIATE] 💬 Would speak: {chunk_text}")
+            
+            if full_response.strip():
+                local_memory_manager.add_interaction(current_user, text, full_response.strip())
+                server_response_generated = True
+                print(f"[IMMEDIATE] ✅ Server response generated in {time.time() - start_time:.3f}s")
+            
+        except Exception as server_err:
+            print(f"[IMMEDIATE] ⚠️ Server response failed: {server_err}")
+        
+        # ✅ STEP 3: Use enhanced fallback if servers failed
+        if not server_response_generated:
+            print("[IMMEDIATE] 🔄 Using enhanced fallback response system...")
+            
+            try:
+                from ai.fallback_llm_handler import generate_fallback_response
+                from ai.consciousness_prompt_builder import build_consciousness_prompt
                 
-                # Add to conversation history
-                local_memory_manager.add_interaction(current_user, text, response.strip())
+                # Generate intelligent fallback response
+                fallback_response = generate_fallback_response(text, current_user)
+                
+                print(f"[IMMEDIATE] 🎯 Fallback response: '{fallback_response[:100]}...'")
+                
+                # Try to speak the fallback response
+                try:
+                    from audio.output import speak_streaming
+                    
+                    # Split into chunks for natural speaking
+                    sentences = fallback_response.split('. ')
+                    for sentence in sentences:
+                        if sentence.strip():
+                            sentence_text = sentence.strip()
+                            if not sentence_text.endswith('.') and sentence != sentences[-1]:
+                                sentence_text += '.'
+                            
+                            print(f"[IMMEDIATE] 🗣️ Speaking: '{sentence_text[:50]}...'")
+                            speak_streaming(sentence_text)
+                            time.sleep(0.1)
+                
+                except ImportError:
+                    print(f"[IMMEDIATE] 💬 Audio not available - would speak: {fallback_response}")
+                except Exception as audio_err:
+                    print(f"[IMMEDIATE] ❌ Audio error: {audio_err}")
+                    print(f"[IMMEDIATE] 💬 Would speak: {fallback_response}")
+                
+                # Store the interaction
+                local_memory_manager.add_interaction(current_user, text, fallback_response)
                 
                 total_time = time.time() - start_time
                 print(f"[IMMEDIATE] ✅ Fallback response complete in {total_time:.3f}s")
                 
                 return
+                
+            except Exception as fallback_err:
+                print(f"[IMMEDIATE] ❌ Fallback response error: {fallback_err}")
+        
+        # ✅ STEP 4: Final emergency fallback
+        if not server_response_generated:
+            print("[IMMEDIATE] 🚨 Using emergency response...")
             
-        except Exception as e:
-            print(f"[IMMEDIATE] ❌ Fallback chat system error: {e}")
-        
-        # If we get here, something is seriously wrong
-        print("[IMMEDIATE] 🚨 CRITICAL: All response generation methods failed!")
-        emergency_response = "I apologize, but I'm having technical difficulties. Please try again."
-        
-        if audio_available:
+            emergency_response = "I'm here and listening. I'm having some technical difficulties with my servers, but I'm still able to help you. What would you like to talk about?"
+            
             try:
+                from audio.output import speak_streaming
                 speak_streaming(emergency_response)
-            except Exception as audio_err:
-                print(f"[IMMEDIATE] ❌ Emergency audio error: {audio_err}")
+            except:
                 print(f"[IMMEDIATE] 💬 Emergency response: {emergency_response}")
-        else:
-            print(f"[IMMEDIATE] 💬 Emergency response: {emergency_response}")
+            
+            local_memory_manager.add_interaction(current_user, text, emergency_response)
         
         return
         
     except Exception as e:
         print(f"[IMMEDIATE] ❌ Critical error in immediate response: {e}")
         
-        # Emergency fallback
-        emergency_response = f"I apologize, but I encountered an error. Let me try to help you with: {text}"
+        # Final emergency fallback
         try:
             from audio.output import speak_streaming
-            speak_streaming(emergency_response)
+            speak_streaming("I apologize, I'm having technical difficulties. Please try again.")
         except:
-            print(f"[IMMEDIATE] 💬 Emergency: {emergency_response}")
-        
-        # Try to add to history even in error case
-        try:
-            local_memory_manager.add_interaction(current_user, text, emergency_response)
-        except:
-            pass
+            print("[IMMEDIATE] 💬 Emergency: I apologize, I'm having technical difficulties.")
         
         return
 
