@@ -8,6 +8,7 @@ Features: Full consciousness analysis, memory updates, emotion processing, belie
 
 import requests
 import json
+import re
 import os
 import time
 from typing import Dict, Any, Optional, List
@@ -82,7 +83,7 @@ Message: "{user_text}"
         data = {
             "prompt": prompt,
             "max_context_length": 4096,  # Increased for consciousness processing
-            "max_length": 800,  # Increased for comprehensive response
+            "max_length": 150,  # Fixed: Reduced to requested token limit (150 max)
             "temperature": 0.1,  # Low temperature for consistent consciousness processing
             "stop_sequence": "\n\n"
         }
@@ -95,8 +96,25 @@ Message: "{user_text}"
             result = response.json()
             text = result.get("results", [{}])[0].get("text", "").strip()
             
-            # Try to parse JSON response
-            consciousness_data = json.loads(text)
+            # Fix: Better handling of empty or malformed responses
+            if not text or text == "":
+                print(f"[ExtractorClient] ⚠️ Empty response from port 5002, using fallback")
+                return self._get_fallback_consciousness_data()
+            
+            # Fix: Try to extract JSON from response, handle malformed JSON better
+            try:
+                # Look for JSON content in the response
+                json_match = re.search(r'\{.*\}', text, re.DOTALL)
+                if json_match:
+                    json_text = json_match.group(0)
+                    consciousness_data = json.loads(json_text)
+                else:
+                    print(f"[ExtractorClient] ⚠️ No JSON found in response: {text[:100]}...")
+                    return self._get_fallback_consciousness_data()
+            except json.JSONDecodeError as json_err:
+                print(f"[ExtractorClient] ❌ JSON parsing error: {json_err}")
+                print(f"[ExtractorClient] Raw response: {text[:200]}...")
+                return self._get_fallback_consciousness_data()
             
             # Validate response structure
             required_sections = ["classification", "memory_updates", "emotional_state", "consciousness_state", "belief_updates", "response_context"]
@@ -116,10 +134,16 @@ Message: "{user_text}"
             return consciousness_data
             
         except requests.exceptions.RequestException as e:
-            print(f"[ExtractorClient] ❌ Network error: {e}")
+            error_str = str(e).lower()
+            if "10053" in error_str or "connection was aborted" in error_str:
+                print(f"[ExtractorClient] ❌ Port 5002 connection aborted (WinError 10053): {e}")
+                print(f"[ExtractorClient] 🔧 This usually means the Gemma-2-2B server on port 5002 is not running")
+            else:
+                print(f"[ExtractorClient] ❌ Network error connecting to port 5002: {e}")
             return self._get_fallback_consciousness_data()
         except json.JSONDecodeError as e:
             print(f"[ExtractorClient] ❌ JSON parsing error: {e}")
+            print(f"[ExtractorClient] 💡 Make sure Gemma-2-2B on port 5002 is configured to return JSON responses")
             return self._get_fallback_consciousness_data()
         except Exception as e:
             print(f"[ExtractorClient] ❌ Unexpected error: {e}")

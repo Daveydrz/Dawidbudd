@@ -338,7 +338,7 @@ TRAINING_PHRASES = [
 
 # ==== LLM SETTINGS ====
 KOBOLD_URL = "http://localhost:5001/v1/chat/completions"
-MAX_TOKENS = 300
+MAX_TOKENS = 150  # Fixed: Reduced to requested token limit (150 max)
 TEMPERATURE = 0.7
 
 # ==== VOICE TRAINING MODES ====

@@ -46,7 +46,7 @@ Buddy:"""
         data = {
             "prompt": prompt,
             "max_context_length": 4096,
-            "max_length": 500,
+            "max_length": 150,  # Fixed: Reduced to requested token limit (150 max)
             "temperature": 0.7,
             "stream": True,
             "stop_sequence": ["User:", "Human:"]

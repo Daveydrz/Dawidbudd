@@ -759,6 +759,16 @@ Recent Context: {', '.join(existing_context.get('context', [])[-3:])}"""
             
             # Generate response using ONLY port 5001 with consciousness injection
             response_chunks = []
+            
+            # Import response filter to prevent error messages from reaching Kokoro
+            try:
+                from ai.response_filter import filter_and_fix_response, should_speak_response
+                filter_available = True
+                print("[IMMEDIATE] 🔧 Response filter loaded - error messages will be blocked from Kokoro")
+            except ImportError:
+                filter_available = False
+                print("[IMMEDIATE] ⚠️ Response filter not available - error messages may reach Kokoro")
+            
             for chunk in generate_response_with_consciousness(text, current_user, consciousness_context):
                 # Check for interrupt
                 if full_duplex_manager and hasattr(full_duplex_manager, 'speech_interrupted') and full_duplex_manager.speech_interrupted:
@@ -768,6 +778,19 @@ Recent Context: {', '.join(existing_context.get('context', [])[-3:])}"""
                 
                 if chunk and chunk.strip():
                     chunk_text = chunk.strip()
+                    
+                    # Filter out error messages before they reach Kokoro
+                    if filter_available:
+                        filtered_chunk, was_filtered = filter_and_fix_response(chunk_text, text, extracted_name)
+                        if was_filtered:
+                            chunk_text = filtered_chunk
+                            print(f"[IMMEDIATE] 🔧 Filtered error message for Kokoro safety")
+                        
+                        # Don't speak if it shouldn't be spoken
+                        if not should_speak_response(chunk_text):
+                            print(f"[IMMEDIATE] 🚫 Skipping non-speakable chunk: '{chunk_text[:30]}...'")
+                            continue
+                    
                     chunk_count += 1
                     response_chunks.append(chunk_text)
                     
@@ -856,21 +879,21 @@ Buddy:"""
                 # Format 1: Messages format
                 {
                     "messages": [{"role": "user", "content": prompt}],
-                    "max_tokens": 500,
+                    "max_tokens": 150,  # Fixed: Reduced to requested token limit (150 max)
                     "temperature": 0.7,
                     "stream": True
                 },
                 # Format 2: Simple prompt format  
                 {
                     "prompt": prompt,
-                    "max_length": 500,
+                    "max_length": 150,  # Fixed: Reduced to requested token limit (150 max)
                     "temperature": 0.7,
                     "stream": True
                 },
                 # Format 3: Text-generation-webui format
                 {
                     "text": prompt,
-                    "max_new_tokens": 500,
+                    "max_new_tokens": 150,  # Fixed: Reduced to requested token limit (150 max)
                     "temperature": 0.7,
                     "stream": True
                 }
@@ -925,6 +948,18 @@ Buddy:"""
                                                 )
                                                 
                                                 if text_chunk:
+                                                    # Filter out error messages before they reach Kokoro
+                                                    if filter_available:
+                                                        filtered_chunk, was_filtered = filter_and_fix_response(text_chunk, text, extracted_name)
+                                                        if was_filtered:
+                                                            text_chunk = filtered_chunk
+                                                            print(f"[IMMEDIATE] 🔧 Filtered error message from direct call")
+                                                        
+                                                        # Don't speak if it shouldn't be spoken
+                                                        if not should_speak_response(text_chunk):
+                                                            print(f"[IMMEDIATE] 🚫 Skipping non-speakable direct chunk: '{text_chunk[:30]}...'")
+                                                            continue
+                                                    
                                                     chunk_count += 1
                                                     full_response += text_chunk
                                                     
@@ -945,6 +980,18 @@ Buddy:"""
                                             except json.JSONDecodeError:
                                                 # Raw text chunk
                                                 if json_str and not json_str.startswith('['):
+                                                    # Filter out error messages before they reach Kokoro
+                                                    if filter_available:
+                                                        filtered_chunk, was_filtered = filter_and_fix_response(json_str, text, extracted_name)
+                                                        if was_filtered:
+                                                            json_str = filtered_chunk
+                                                            print(f"[IMMEDIATE] 🔧 Filtered error message from raw JSON")
+                                                        
+                                                        # Don't speak if it shouldn't be spoken
+                                                        if not should_speak_response(json_str):
+                                                            print(f"[IMMEDIATE] 🚫 Skipping non-speakable raw JSON: '{json_str[:30]}...'")
+                                                            continue
+                                                    
                                                     chunk_count += 1
                                                     full_response += json_str + " "
                                                     
@@ -959,6 +1006,18 @@ Buddy:"""
                                         
                                         # Raw line format
                                         elif line_text and not line_text.startswith('[') and len(line_text) > 1:
+                                            # Filter out error messages before they reach Kokoro
+                                            if filter_available:
+                                                filtered_line, was_filtered = filter_and_fix_response(line_text, text, extracted_name)
+                                                if was_filtered:
+                                                    line_text = filtered_line
+                                                    print(f"[IMMEDIATE] 🔧 Filtered error message from raw line")
+                                                
+                                                # Don't speak if it shouldn't be spoken
+                                                if not should_speak_response(line_text):
+                                                    print(f"[IMMEDIATE] 🚫 Skipping non-speakable raw line: '{line_text[:30]}...'")
+                                                    continue
+                                            
                                             chunk_count += 1
                                             full_response += line_text + " "
                                             

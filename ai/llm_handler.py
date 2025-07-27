@@ -217,7 +217,7 @@ Buddy:"""
                 
                 payload = {
                     "messages": [{"role": "user", "content": final_prompt}],
-                    "max_tokens": 500,
+                    "max_tokens": 150,  # Fixed: Reduced to requested token limit (150 max)
                     "temperature": 0.7,
                     "stream": True,
                     "stop": ["User:", "Human:"]
