@@ -17,18 +17,8 @@ from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, asdict
 from enum import Enum
 
-# Import core consciousness components
-try:
-    from ai.emotion import emotion_engine, get_current_emotional_state
-    from ai.motivation import motivation_system
-    from ai.self_model import self_model
-    from ai.global_workspace import global_workspace
-    from ai.temporal_awareness import temporal_awareness
-    from ai.subjective_experience import subjective_experience
-    CONSCIOUSNESS_COMPONENTS_AVAILABLE = True
-except ImportError as e:
-    print(f"[ConsciousnessManager] ⚠️ Some consciousness components not available: {e}")
-    CONSCIOUSNESS_COMPONENTS_AVAILABLE = False
+# Self-contained consciousness components - no external dependencies
+CONSCIOUSNESS_COMPONENTS_AVAILABLE = False  # Using internal implementations
 
 class ConsciousnessMode(Enum):
     IDLE = "idle"
@@ -314,6 +304,22 @@ class ConsciousnessManager:
                 json.dump(asdict(self.state), f, indent=2)
         except Exception as e:
             print(f"[ConsciousnessManager] ❌ Error saving consciousness state: {e}")
+    
+    def start_background_processing(self):
+        """Start background processing - alias for start_consciousness_loop"""
+        if not self.is_running:
+            self.start_consciousness_loop()
+            print("[ConsciousnessManager] 🚀 Background processing started")
+        else:
+            print("[ConsciousnessManager] ✅ Background processing already running")
+    
+    def stop_background_processing(self):
+        """Stop background processing - alias for stop_consciousness_loop"""
+        if self.is_running:
+            self.stop_consciousness_loop()
+            print("[ConsciousnessManager] ⏹️ Background processing stopped")
+        else:
+            print("[ConsciousnessManager] ✅ Background processing already stopped")
     
     def get_status(self) -> Dict[str, Any]:
         """Get current consciousness manager status"""

@@ -17,9 +17,9 @@ from datetime import datetime  # ✅ ADD THIS IMPORT
 from typing import List, Any, Dict  # ✅ NEW: Add typing imports for consciousness functions
 from scipy.io.wavfile import write
 from voice.database import load_known_users, known_users, save_known_users, anonymous_clusters
-from ai.memory import validate_ai_response_appropriateness, add_to_conversation_history, get_user_memory
+from ai.memory import validate_ai_response_appropriateness, add_to_conversation_history
 from ai.llm_handler import llm_handler
-from ai.consciousness_manager import consciousness_manager, ConsciousnessMode
+from ai.consciousness_manager import consciousness_manager
 from audio.smart_detection_manager import analyze_speech_detection, get_current_threshold
 
 # ✅ NEW: Blank slate initialization configuration
@@ -29,26 +29,131 @@ if BLANK_SLATE_MODE:
 else:
     print("[Main] 🧠 Standard mode - Loading established consciousness")
 
-# ✅ SIMPLIFIED: Only consciousness manager handles internal processing
-ENTROPY_SYSTEM_AVAILABLE = False
+# ✅ ENTROPY SYSTEM: Import consciousness emergence components (from main (2).py)
+try:
+    from ai.entropy_engine import get_entropy_engine, inject_consciousness_entropy, should_surprise, get_random_hesitation
+    from ai.emotion import get_emotional_system, process_emotional_context, inject_emotional_surprise
+    print("[Main] 🌀 Entropy and consciousness systems loaded")
+    ENTROPY_SYSTEM_AVAILABLE = True
+except ImportError as e:
+    print(f"[Main] ⚠️ Entropy system not available: {e}")
+    ENTROPY_SYSTEM_AVAILABLE = False
 
-# ✅ SIMPLIFIED: Only consciousness manager handles architecture
-CONSCIOUSNESS_ARCHITECTURE_AVAILABLE = False
+# ✅ NEW: Import full consciousness architecture modules with blank slate support
+try:
+    from ai.global_workspace import global_workspace, AttentionPriority, ProcessingMode
+    
+    # Import SelfModel class and create instance with appropriate mode
+    from ai.self_model import SelfModel, SelfAspect
+    if BLANK_SLATE_MODE:
+        self_model = SelfModel(save_path="ai_self_model_blank.json", initialize_blank=True)
+        print("[Main] 🌱 Blank slate self-model initialized")
+    else:
+        from ai.self_model import self_model
+        print("[Main] 🧠 Standard self-model loaded")
+    
+    from ai.emotion import emotion_engine, EmotionType, MoodType
+    from ai.motivation import motivation_system, MotivationType, GoalType
+    from ai.inner_monologue import inner_monologue, ThoughtType
+    from ai.temporal_awareness import temporal_awareness, TemporalScale
+    from ai.subjective_experience import subjective_experience, ExperienceType
+    from ai.entropy import entropy_system, EntropyType
+    
+    # Import new autonomous consciousness components
+    from ai.free_thought_engine import free_thought_engine, FreeThoughtType
+    from ai.narrative_tracker import narrative_tracker, NarrativeEvent, NarrativeSignificance
+    
+    print("[Main] 🧠 Full consciousness architecture loaded")
+    print("[Main] 💭 Autonomous consciousness components: Free Thought Engine, Narrative Tracker")
+    CONSCIOUSNESS_ARCHITECTURE_AVAILABLE = True
+except ImportError as e:
+    print(f"[Main] ⚠️ Full consciousness architecture not available: {e}")
+    CONSCIOUSNESS_ARCHITECTURE_AVAILABLE = False
 
-# ✅ SIMPLIFIED: Only consciousness manager and basic LLM handler
-CONSCIOUSNESS_LLM_AVAILABLE = True
+# ✅ NEW: Import consciousness-integrated modules with latency optimization
+try:
+    from ai.llm_handler import (
+        llm_handler,
+        process_user_input_with_consciousness,
+        generate_consciousness_integrated_response,
+        get_llm_session_statistics
+    )
+    print("[Main] 🧠 Consciousness-integrated LLM handler loaded")
+    CONSCIOUSNESS_LLM_AVAILABLE = True
+except ImportError as e:
+    print(f"[Main] ⚠️ Consciousness LLM handler not available: {e}")
+    CONSCIOUSNESS_LLM_AVAILABLE = False
 
-# ✅ SIMPLIFIED: Consciousness manager handles optimization internally
-LATENCY_OPTIMIZATION_AVAILABLE = False
+# ✅ NEW: Import latency optimization system for sub-5-second responses
+try:
+    from ai.latency_optimizer import (
+        set_global_optimization_mode,
+        LatencyOptimizationMode,
+        get_latency_performance_report
+    )
+    # Set default optimization mode for production
+    set_global_optimization_mode(LatencyOptimizationMode.FAST)
+    print("[Main] ⚡ Latency optimization system loaded - Target: <5 second responses")
+    LATENCY_OPTIMIZATION_AVAILABLE = True
+except ImportError as e:
+    print(f"[Main] ⚠️ Latency optimization not available: {e}")
+    LATENCY_OPTIMIZATION_AVAILABLE = False
 
-# ✅ SIMPLIFIED: Consciousness manager handles all individual modules
-CONSCIOUSNESS_MODULES_AVAILABLE = False
+try:
+    from ai.consciousness_tokenizer import tokenize_consciousness_for_llm
+    from ai.llm_budget_monitor import get_budget_status
+    from ai.belief_analyzer import get_active_belief_contradictions
+    from ai.personality_state import get_personality_summary_for_user
+    from ai.semantic_tagging import analyze_content_semantics
+    print("[Main] 🧠 Individual consciousness modules loaded")
+    CONSCIOUSNESS_MODULES_AVAILABLE = True
+except ImportError as e:
+    print(f"[Main] ⚠️ Individual consciousness modules not available: {e}")
+    CONSCIOUSNESS_MODULES_AVAILABLE = False
 
-# ✅ SIMPLIFIED: Consciousness manager handles all self-awareness
-SELF_AWARENESS_COMPONENTS_AVAILABLE = False
+# ✅ NEW: Import all self-awareness components as requested by @Daveydrz
+try:
+    from ai.memory_context_corrector import MemoryContextCorrector
+    from ai.belief_qualia_linking import BeliefQualiaLinker
+    from ai.value_system import ValueSystem
+    from ai.conscious_prompt_builder import ConsciousPromptBuilder
+    from ai.introspection_loop import IntrospectionLoop
+    from ai.emotion_response_modulator import EmotionResponseModulator
+    from ai.dialogue_confidence_filter import DialogueConfidenceFilter
+    from ai.qualia_analytics import QualiaAnalytics
+    from ai.belief_memory_refiner import BeliefMemoryRefiner
+    from ai.self_model_updater import SelfModelUpdater
+    from ai.goal_reasoning import GoalReasoner
+    from ai.motivation_reasoner import MotivationReasoner
+    from ai.cognitive_debug_logger import cognitive_debug_logger
+    
+    # ✅ NEW: Import persistent cognitive modules
+    from cognitive_modules.integration import cognitive_integrator
+    print("[Main] 🧠 All self-awareness components loaded")
+    print("[Main] 🚀 Persistent cognitive integrator loaded")
+    print("[Main] 📊 Cognitive debug logger loaded")
+    SELF_AWARENESS_COMPONENTS_AVAILABLE = True
+except ImportError as e:
+    print(f"[Main] ⚠️ Self-awareness components not available: {e}")
+    # Fallback to old cognitive integration if available
+    try:
+        from ai.cognitive_integration import cognitive_integrator
+        print("[Main] 🔄 Using fallback cognitive integrator")
+        SELF_AWARENESS_COMPONENTS_AVAILABLE = True
+    except ImportError as e2:
+        print(f"[Main] ❌ No cognitive integrator available: {e2}")
+        SELF_AWARENESS_COMPONENTS_AVAILABLE = False
 
-# ✅ SIMPLIFIED: Consciousness manager handles autonomous behavior
-AUTONOMOUS_CONSCIOUSNESS_AVAILABLE = False
+# ✅ NEW: Import autonomous consciousness systems
+try:
+    from ai.autonomous_consciousness_integrator import autonomous_consciousness_integrator, AutonomousMode
+    print("[Main] 🚀 Autonomous consciousness integrator loaded")
+    print("[Main] 💭 Autonomous systems: Proactive thinking, Calendar monitoring, Self-motivation, Dream simulation")
+    print("[Main] 🌍 Environmental awareness and Autonomous communication loaded")
+    AUTONOMOUS_CONSCIOUSNESS_AVAILABLE = True
+except ImportError as e:
+    print(f"[Main] ⚠️ Autonomous consciousness systems not available: {e}")
+    AUTONOMOUS_CONSCIOUSNESS_AVAILABLE = False
 
 from voice.voice_manager_instance import voice_manager
 from voice.manager_names import UltraIntelligentNameManager
@@ -306,9 +411,8 @@ except ImportError as e:
         print("[AdvancedBuddy] 🧹 clear_audio_queue fallback - queue clearing disabled")
         pass
 
-# ✅ SIMPLIFIED: Only consciousness manager for responses
-# from ai.chat import generate_response  # Removed - using llm_handler only
-# from ai.memory import add_to_conversation_history  # Already imported above
+from ai.chat import generate_response  # Keep for fallback
+from ai.memory import add_to_conversation_history
 from voice.database import load_known_users, known_users, anonymous_clusters
 from voice.recognition import identify_speaker
 from utils.helpers import should_end_conversation
@@ -500,6 +604,7 @@ def handle_streaming_response(text, current_user):
         consciousness_manager.update_from_interaction(text, "")
         
         # Import the enum correctly
+        from ai.consciousness_manager import ConsciousnessMode
         consciousness_manager.set_mode(ConsciousnessMode.ACTIVE)
         
         # ✅ STEP 2: Generate response using unified LLM handler 
@@ -550,6 +655,7 @@ def handle_streaming_response(text, current_user):
             
             # ✅ STEP 3: Update memory with the interaction
             try:
+                from ai.memory import add_to_conversation_history
                 add_to_conversation_history(current_user, text, full_response)
                 print(f"[BuddyFlow] 💾 Saved interaction to memory")
             except Exception as memory_err:
@@ -570,6 +676,7 @@ def handle_streaming_response(text, current_user):
             
             # Still save the interaction
             try:
+                from ai.memory import add_to_conversation_history
                 add_to_conversation_history(current_user, text, fallback_response)
             except:
                 pass
@@ -631,10 +738,16 @@ def get_voice_based_name_response(identified_user, display_name):
     try:
         print(f"[VoiceIdentity] 🔍 Name query for user: {identified_user}, display: {display_name}")
         
-        # First check memory system for stored names - simplified approach
+        # First check memory system for stored names
         try:
-            # Simple fallback - no complex memory lookup needed 
-            facts = []
+            from ai.memory import get_user_memory_facts
+            
+            # Get user facts from memory system
+            try:
+                facts = get_user_memory_facts(identified_user)
+            except:
+                # Fallback to basic memory check
+                facts = []
             
             # Look for identity facts in memory
             for fact in facts:
@@ -1204,9 +1317,10 @@ def handle_full_duplex_conversation():
                     except:
                         pass
                 
-                # ✅ Show current user identity status - simplified
+                # ✅ Show current user identity status
                 try:
-                    display_name = current_user  # Simplified - no complex display name lookup
+                    from ai.speech import get_display_name
+                    display_name = get_display_name(current_user)
                     if display_name != current_user:
                         print(f"[FullDuplex] 👤 Current user: {current_user} (known as: {display_name})")
                     else:
@@ -1469,14 +1583,39 @@ def main():
         print(f"[AdvancedBuddy] ❌ Kokoro-FastAPI not available - check server on {KOKORO_API_BASE_URL}")
         print("[AdvancedBuddy] 💡 Make sure to start Kokoro-FastAPI server first!")
     
-    # ✅ SIMPLIFIED: Initialize consciousness manager for background processing
-    print("[AdvancedBuddy] 🧠 Starting unified consciousness manager...")
+    # ✅ PERFORMANCE: Initialize async consciousness processor for background processing
+    print("[AdvancedBuddy] ⚡ Initializing async consciousness processor for performance...")
     try:
-        consciousness_manager.start_background_processing()
-        print("[AdvancedBuddy] ✅ Consciousness manager started - unified processing enabled")
-    except Exception as consciousness_error:
-        print(f"[AdvancedBuddy] ⚠️ Consciousness manager initialization error: {consciousness_error}")
-        print("[AdvancedBuddy] ⚠️ Background processing may not work optimally")
+        from ai.async_consciousness_processor import async_consciousness_processor
+        async_consciousness_processor.start()
+        print("[AdvancedBuddy] ✅ Async consciousness processor started - background processing enabled")
+    except Exception as async_error:
+        print(f"[AdvancedBuddy] ⚠️ Async consciousness processor initialization error: {async_error}")
+        print("[AdvancedBuddy] ⚠️ Performance mode may not work optimally")
+    
+    # ✅ OPTIMIZED: Initialize new optimized background consciousness processor
+    print("[AdvancedBuddy] 🚀 Initializing optimized background consciousness processor...")
+    try:
+        from ai.background_consciousness_processor_optimized import background_consciousness_processor
+        background_consciousness_processor.start()
+        print("[AdvancedBuddy] ✅ Optimized background consciousness processor started")
+        print(f"[AdvancedBuddy] 🧠 Inner thoughts: {'ENABLED' if ENABLE_INNER_THOUGHTS else 'DISABLED'}")
+        print(f"[AdvancedBuddy] 🔄 Self reflection: {'ENABLED' if ENABLE_SELF_REFLECTION else 'DISABLED'}")
+        print(f"[AdvancedBuddy] ⚡ Single LLM call mode: {'ENABLED' if SINGLE_LLM_CALL_MODE else 'DISABLED'}")
+    except Exception as optimized_bg_error:
+        print(f"[AdvancedBuddy] ⚠️ Optimized background processor initialization error: {optimized_bg_error}")
+        print("[AdvancedBuddy] ⚠️ Will use existing background processing")
+    
+    # ✅ EMERGENCY: Initialize background consciousness processor for fast responses
+    print("[AdvancedBuddy] 🚨 Initializing emergency background consciousness processor...")
+    try:
+        from ai.background_consciousness_processor import get_background_processor
+        background_processor = get_background_processor()
+        background_processor.start()
+        print("[AdvancedBuddy] ✅ Background consciousness processor started - fast responses enabled")
+    except Exception as bg_error:
+        print(f"[AdvancedBuddy] ⚠️ Background processor initialization error: {bg_error}")
+        print("[AdvancedBuddy] ⚠️ Fast response mode may not work optimally")
     
     # Load voice profiles with ADVANCED features
     print("[AdvancedBuddy] 📚 Loading ADVANCED AI voice database...")
@@ -1915,6 +2054,7 @@ def main():
                         brisbane_time = get_current_brisbane_time()
                         
                         # Get time-based greeting from memory system
+                        from ai.memory import get_user_memory
                         user_memory = get_user_memory(SYSTEM_USER)
                         time_greeting = user_memory.get_time_based_greeting(SYSTEM_USER)
                         
@@ -2025,13 +2165,14 @@ def main():
                     except Exception as e:
                         print(f"[AdvancedBuddy] ⚠️ Autonomous shutdown error: {e}")
                 
-                # ✅ SIMPLIFIED: Shutdown consciousness manager
+                # ✅ OPTIMIZED: Shutdown optimized background consciousness processor
                 try:
-                    print("[AdvancedBuddy] 🧠 Shutting down consciousness manager...")
-                    consciousness_manager.stop_background_processing()
-                    print("[AdvancedBuddy] ✅ Consciousness manager shutdown complete")
+                    print("[AdvancedBuddy] 🚀 Shutting down optimized background consciousness processor...")
+                    from ai.background_consciousness_processor_optimized import background_consciousness_processor
+                    background_consciousness_processor.stop()
+                    print("[AdvancedBuddy] ✅ Optimized background processor shutdown complete")
                 except Exception as e:
-                    print(f"[AdvancedBuddy] ⚠️ Consciousness manager shutdown error: {e}")
+                    print(f"[AdvancedBuddy] ⚠️ Optimized background processor shutdown error: {e}")
     
     print("[AdvancedBuddy] ✅ ADVANCED AI ASSISTANT + CONSCIOUSNESS cleanup complete!")
 
