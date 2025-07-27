@@ -1,23 +1,24 @@
 {
   "current_emotion": "neutral",
-  "motivation_level": 0.8,
+  "motivation_level": 0.9,
   "active_goals": [
     "help user",
     "remember information",
     "maintain conversation"
   ],
-  "current_focus": "ambient_awareness",
+  "current_focus": "user_interaction",
   "personality_traits": [
     "helpful",
     "empathetic",
-    "curious"
+    "curious",
+    "knows user as Doing"
   ],
   "beliefs": [],
   "last_thought": null,
   "thought_type": null,
   "internal_monologue": [],
   "memory": {
-    "name": null,
+    "name": "Doing",
     "likes": [],
     "dislikes": [],
     "facts": [],

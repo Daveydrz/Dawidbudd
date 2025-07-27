@@ -94,12 +94,33 @@
       "tags": [
         "factual"
       ]
+    },
+    {
+      "id": "belief_1753618702628_0",
+      "content": "how you doing?",
+      "belief_type": "factual",
+      "certainty": "moderate",
+      "source": "text_extraction",
+      "timestamp": "2025-07-27T12:18:22.628405",
+      "user": "Daveydrz",
+      "context": {
+        "background_processing": true
+      },
+      "supporting_evidence": [
+        "How are you doing?"
+      ],
+      "contradictions": [],
+      "confidence_score": 0.6,
+      "last_confirmed": "2025-07-27T12:18:22.628414",
+      "tags": [
+        "factual"
+      ]
     }
   ],
   "contradictions": [],
-  "last_updated": "2025-07-21T10:29:58.871243",
+  "last_updated": "2025-07-27T12:18:22.629544",
   "metadata": {
-    "total_beliefs": 5,
+    "total_beliefs": 6,
     "total_contradictions": 0,
     "unresolved_contradictions": 0
   }
