@@ -50,7 +50,7 @@ SELF_AWARENESS_COMPONENTS_AVAILABLE = False
 # ✅ SIMPLIFIED: Consciousness manager handles autonomous behavior
 AUTONOMOUS_CONSCIOUSNESS_AVAILABLE = False
 
-from voice.voice_manager_instance import voice_manager
+from voice.manager import voice_manager
 from voice.manager_names import UltraIntelligentNameManager
 
 voice_manager.ultra_name_manager = UltraIntelligentNameManager(voice_manager)
