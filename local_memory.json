@@ -1417,5 +1417,30 @@
         "timestamp": "2025-07-27T04:18:09.354479"
       }
     ]
+  },
+  "TestUser": {
+    "facts": [
+      {
+        "content": "User's name is David",
+        "timestamp": "2025-07-27T08:10:10.053613",
+        "confidence": 0.8
+      },
+      {
+        "content": "User's name is David",
+        "timestamp": "2025-07-27T08:19:05.485715",
+        "confidence": 0.8
+      }
+    ],
+    "preferences": [],
+    "context": [
+      {
+        "content": "Hello, I'm David",
+        "timestamp": "2025-07-27T08:10:10.053619"
+      },
+      {
+        "content": "Hello, I'm David",
+        "timestamp": "2025-07-27T08:19:05.485721"
+      }
+    ]
   }
 }

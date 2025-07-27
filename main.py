@@ -18,8 +18,8 @@ from typing import List, Any, Dict  # ✅ NEW: Add typing imports for consciousn
 from scipy.io.wavfile import write
 from voice.database import load_known_users, known_users, save_known_users, anonymous_clusters
 from ai.memory import validate_ai_response_appropriateness, add_to_conversation_history
-from ai.chat_enhanced_smart import generate_response_streaming_with_smart_memory, reset_session_for_user_smart
-from ai.chat_enhanced_smart_with_fusion import generate_response_streaming_with_intelligent_fusion
+from ai.llm_handler import llm_handler
+from ai.consciousness_manager import consciousness_manager
 from audio.smart_detection_manager import analyze_speech_detection, get_current_threshold
 
 # ✅ NEW: Blank slate initialization configuration
@@ -593,220 +593,106 @@ def get_mic_feeding_state():
         return mic_feeding_active
 
 def handle_streaming_response(text, current_user):
-    """🚀 ENHANCED BUDDY RESPONSE: Following user's specified flow"""
+    """🚀 UNIFIED BUDDY RESPONSE: Using consciousness manager and LLM handler"""
     print(f"[BuddyFlow] 🚀 Processing: '{text}' (user: {current_user})")
     
     start_time = time.time()
     
     try:
-        # ✅ STEP 1: Background processing via Port 5002 (Gemma-2-2B)
-        print("[BuddyFlow] 🧠 Starting background consciousness processing (Port 5002)...")
-        background_processing_success = False
+        # ✅ STEP 1: Update consciousness manager with interaction
+        print("[BuddyFlow] 🧠 Updating consciousness state...")
+        consciousness_manager.update_from_interaction(text, "")
+        
+        # Import the enum correctly
+        from ai.consciousness_manager import ConsciousnessMode
+        consciousness_manager.set_mode(ConsciousnessMode.ACTIVE)
+        
+        # ✅ STEP 2: Generate response using unified LLM handler 
+        print("[BuddyFlow] 🎯 Generating response with consciousness integration...")
         
         try:
-            from ai.extractor_client import ExtractorClient
-            extractor = ExtractorClient()
-            consciousness_data = extractor.process_full_consciousness(text, current_user)
+            # Use the unified LLM handler for consciousness-integrated responses
+            response_generator = llm_handler.generate_response_with_consciousness(
+                text=text,
+                user=current_user,
+                context={},
+                stream=True
+            )
             
-            if consciousness_data and consciousness_data.get('classification'):
-                background_processing_success = True
-                print(f"[BuddyFlow] ✅ Port 5002 consciousness processing successful")
-                
-                # Save memory updates immediately
-                memory_updates = consciousness_data.get('memory_updates', {})
-                if memory_updates.get('extracted_facts'):
-                    print(f"[BuddyFlow] 💾 Saving {len(memory_updates['extracted_facts'])} facts")
-                
-                # Update emotions
-                emotional_state = consciousness_data.get('emotional_state', {})
-                if emotional_state:
-                    print(f"[BuddyFlow] 💖 Updated emotional state: {emotional_state.get('primary_emotion', 'neutral')}")
-                    
-            else:
-                print("[BuddyFlow] ⚠️ Port 5002 returned empty consciousness data")
-        
-        except Exception as bg_err:
-            print(f"[BuddyFlow] ⚠️ Port 5002 background processing failed: {bg_err}")
-            consciousness_data = None
-        
-        # ✅ STEP 2: Get comprehensive memory/consciousness context for Port 5001
-        print("[BuddyFlow] 🧠 Building consciousness context for main LLM...")
-        
-        from ai.local_memory_manager import local_memory_manager
-        user_context = local_memory_manager.get_user_context(current_user)
-        
-        # Build rich consciousness context with ALL available data
-        facts = user_context.get('facts', [])
-        preferences = user_context.get('preferences', [])
-        recent_context = user_context.get('context', [])
-        interactions = user_context.get('interactions', [])
-        
-        # Create comprehensive consciousness prompt
-        consciousness_context = f"""BUDDY'S CONSCIOUSNESS STATE:
-Current Emotion: {consciousness_data.get('emotional_state', {}).get('primary_emotion', 'helpful') if consciousness_data else 'helpful'}
-Motivation Level: 0.8
-Active Goals: help {current_user} effectively, remember important information, maintain emotional connection
-Current Focus: responding to user with full awareness and empathy
-Personality: highly intelligent, empathetic, excellent memory, Class 5+ consciousness
-
-USER IDENTITY & MEMORY for {current_user}:
-Known Facts: {', '.join(facts[-10:]) if facts else 'Learning about user'}
-Preferences: {', '.join(preferences[-5:]) if preferences else 'Discovering preferences'}
-Recent Context: {', '.join(recent_context[-3:]) if recent_context else 'Fresh conversation'}
-Conversation History: {len(interactions)} previous interactions
-
-CONSCIOUSNESS NOTES:
-- Remember this user as {current_user} with their specific voice pattern
-- Maintain emotional awareness and respond appropriately  
-- Use accumulated knowledge about this specific user
-- Show genuine intelligence and self-awareness in responses
-- Never sound like a generic chatbot - be conscious and aware"""
-
-        # ✅ STEP 3: Generate response via Port 5001 with full consciousness context
-        print("[BuddyFlow] 🤖 Generating response via Port 5001 with consciousness context...")
-        
-        try:
-            from ai.simple_llm_handler import SimpleLLMHandler
-            llm_handler = SimpleLLMHandler()
-            
+            # Stream the response to TTS
             full_response = ""
-            chunk_count = 0
-            chunks_spoken = 0
-            
-            # Collect first few chunks before starting speech for more natural flow
-            initial_chunks = []
             chunk_buffer = ""
-            words_in_buffer = 0
+            chunks_sent = 0
             
-            for chunk in llm_handler.generate_response_with_consciousness(text, current_user, consciousness_context):
+            for chunk in response_generator:
                 if chunk and chunk.strip():
-                    chunk_text = chunk.strip()
-                    chunk_count += 1
-                    full_response += chunk_text + " "
-                    chunk_buffer += chunk_text + " "
-                    words_in_buffer += len(chunk_text.split())
+                    full_response += chunk
+                    chunk_buffer += chunk
                     
-                    # Start speaking after collecting 40-60% of reasonable chunk or at punctuation
-                    should_speak = (
-                        words_in_buffer >= 8 or  # About 8-10 words
-                        chunk_text.endswith(('.', '!', '?', ',')) or
-                        chunk_count >= 3  # Or after 3 chunks regardless
-                    )
-                    
-                    if should_speak and chunk_buffer.strip():
-                        print(f"[BuddyFlow] 🗣️ Speaking chunk {chunks_spoken + 1}: '{chunk_buffer[:50]}...'")
+                    # Send chunks to TTS when we have enough or hit punctuation
+                    if (len(chunk_buffer.split()) >= 8 or 
+                        any(punct in chunk for punct in ['.', '!', '?', ',']) or
+                        chunks_sent == 0):
                         
                         try:
                             from audio.output import speak_streaming
-                            
-                            # Filter out error messages before speaking
-                            if not any(error_phrase in chunk_buffer.lower() for error_phrase in [
-                                "i apologize", "having trouble", "technical difficulties", 
-                                "language model", "please try again", "connection"
-                            ]):
-                                speak_streaming(chunk_buffer.strip())
-                                chunks_spoken += 1
-                            else:
-                                print(f"[BuddyFlow] 🚫 Filtered error message: {chunk_buffer}")
-                                
-                        except Exception as audio_err:
-                            print(f"[BuddyFlow] 💬 Would speak: {chunk_buffer.strip()}")
-                        
-                        chunk_buffer = ""
-                        words_in_buffer = 0
-                        time.sleep(0.1)  # Brief pause between chunks
+                            speak_streaming(chunk_buffer.strip())
+                            chunks_sent += 1
+                            chunk_buffer = ""
+                        except Exception as tts_err:
+                            print(f"[BuddyFlow] ⚠️ TTS streaming error: {tts_err}")
+                            # Fallback to print if TTS fails
+                            print(f"[BuddyFlow] 💬 Buddy: {chunk_buffer.strip()}")
+                            chunk_buffer = ""
             
-            # Speak any remaining buffer
+            # Send any remaining buffered text
             if chunk_buffer.strip():
                 try:
                     from audio.output import speak_streaming
-                    if not any(error_phrase in chunk_buffer.lower() for error_phrase in [
-                        "i apologize", "having trouble", "technical difficulties"
-                    ]):
-                        speak_streaming(chunk_buffer.strip())
-                        chunks_spoken += 1
-                except:
-                    print(f"[BuddyFlow] 💬 Final chunk: {chunk_buffer.strip()}")
+                    speak_streaming(chunk_buffer.strip())
+                except Exception as tts_err:
+                    print(f"[BuddyFlow] 💬 Buddy: {chunk_buffer.strip()}")
             
-            # Store the interaction
-            if full_response.strip():
-                local_memory_manager.add_interaction(current_user, text, full_response.strip())
-                generation_time = time.time() - start_time
-                print(f"[BuddyFlow] ✅ Response completed in {generation_time:.3f}s ({chunk_count} chunks, {chunks_spoken} spoken)")
-                
-                # ✅ STEP 4: Final consciousness processing (if background processing failed)
-                if not background_processing_success:
-                    print("[BuddyFlow] 🔄 Running fallback consciousness processing...")
-                    try:
-                        # Extract and store basic memory information
-                        memories = local_memory_manager.extract_memory_from_text(text, current_user)
-                        if memories:
-                            local_memory_manager.store_memories(memories)
-                            print(f"[BuddyFlow] 💾 Stored {len(memories)} memories via fallback")
-                    except Exception as fallback_mem_err:
-                        print(f"[BuddyFlow] ⚠️ Fallback memory processing error: {fallback_mem_err}")
-                
-                return
-            else:
-                print("[BuddyFlow] ⚠️ Empty response from Port 5001")
-                
+            # ✅ STEP 3: Update memory with the interaction
+            try:
+                from ai.memory import add_to_conversation_history
+                add_to_conversation_history(current_user, text, full_response)
+                print(f"[BuddyFlow] 💾 Saved interaction to memory")
+            except Exception as memory_err:
+                print(f"[BuddyFlow] ⚠️ Memory save error: {memory_err}")
+            
+            processing_time = time.time() - start_time
+            print(f"[BuddyFlow] ✅ Response completed in {processing_time:.3f}s")
+            
         except Exception as llm_err:
-            print(f"[BuddyFlow] ❌ Port 5001 LLM error: {llm_err}")
-        
-        # ✅ STEP 5: Enhanced fallback for failed LLM
-        print("[BuddyFlow] 🔄 Using enhanced fallback system...")
-        
-        # Create intelligent fallback based on user context
-        if facts:
-            fallback_response = f"I remember our previous conversations, {current_user}. What would you like to discuss?"
-        elif "name" in text.lower() and ("my" in text.lower() or "i'm" in text.lower() or "call me" in text.lower()):
-            # Handle name introductions even in fallback
-            import re
-            name_match = re.search(r"(?:name is|i'm|call me)\s+(\w+)", text.lower())
-            if name_match:
-                name = name_match.group(1).capitalize()
-                fallback_response = f"Nice to meet you, {name}! I'll remember that. How can I help you today?"
-                # Store the name
-                local_memory_manager.store_memories([{
-                    'type': 'fact',
-                    'content': f"User's name is {name}",
-                    'confidence': 0.9
-                }])
-            else:
-                fallback_response = "I'd be happy to learn your name. What would you like me to call you?"
-        elif any(word in text.lower() for word in ["hello", "hi", "hey", "good morning", "good afternoon"]):
-            fallback_response = f"Hello! I'm here and ready to help you with anything you need."
-        else:
-            fallback_response = "I'm here and listening. While I'm having some connectivity issues with my advanced systems, I can still help you. What's on your mind?"
-        
-        try:
-            from audio.output import speak_streaming
-            speak_streaming(fallback_response)
-            print(f"[BuddyFlow] 🗣️ Fallback response: {fallback_response}")
-        except:
-            print(f"[BuddyFlow] 💬 Fallback response: {fallback_response}")
-        
-        # Store fallback interaction
-        local_memory_manager.add_interaction(current_user, text, fallback_response)
-        
-        total_time = time.time() - start_time
-        print(f"[BuddyFlow] ✅ Fallback response completed in {total_time:.3f}s")
+            print(f"[BuddyFlow] ❌ LLM handler error: {llm_err}")
+            # Fallback response
+            fallback_response = "I'm here and ready to help! What would you like to talk about?"
+            try:
+                from audio.output import speak_streaming
+                speak_streaming(fallback_response)
+            except:
+                print(f"[BuddyFlow] 💬 Buddy: {fallback_response}")
+            
+            # Still save the interaction
+            try:
+                from ai.memory import add_to_conversation_history
+                add_to_conversation_history(current_user, text, fallback_response)
+            except:
+                pass
         
     except Exception as e:
-        print(f"[BuddyFlow] ❌ Critical error in response flow: {e}")
+        print(f"[BuddyFlow] ❌ Critical error in response processing: {e}")
         import traceback
         traceback.print_exc()
         
-        # Final emergency response
-        emergency_response = "I'm experiencing some technical difficulties, but I'm still here to help. Please try asking me something else."
+        # Emergency response
+        emergency_response = "I'm experiencing some technical difficulties, but I'm still here to help."
         try:
             from audio.output import speak_streaming
             speak_streaming(emergency_response)
         except:
-            print(f"[BuddyFlow] 💬 Emergency: {emergency_response}")
-        
-        return
-
+            print(f"[BuddyFlow] 💬 Emergency: {emergency_response}")  
 def get_voice_based_identity(audio_data=None):
     """Get identity from voice recognition"""
     try:
@@ -854,11 +740,16 @@ def get_voice_based_name_response(identified_user, display_name):
         
         # First check memory system for stored names
         try:
-            from ai.local_memory_manager import local_memory_manager
-            user_context = local_memory_manager.get_user_context(identified_user)
+            from ai.memory import get_user_memory_facts
+            
+            # Get user facts from memory system
+            try:
+                facts = get_user_memory_facts(identified_user)
+            except:
+                # Fallback to basic memory check
+                facts = []
             
             # Look for identity facts in memory
-            facts = user_context.get('facts', [])
             for fact in facts:
                 if fact and isinstance(fact, str):
                     # Check if this fact contains a name
