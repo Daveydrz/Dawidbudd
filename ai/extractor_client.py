@@ -14,17 +14,32 @@ import time
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 
+"""
+Extractor Client - Dual-LLM HTTP System Integration
+Updated: 2025-07-28
+Purpose: Replace GPT4All with HTTP-based extraction via dual-LLM ports 5001/5002
+Features: Full consciousness analysis, memory updates, emotion processing, belief tracking
+"""
+
+import requests
+import json
+import re
+import os
+import time
+from typing import Dict, Any, Optional, List
+from datetime import datetime
+
 class ExtractorClient:
     def __init__(self, base_url: str = "http://localhost:5002"):
-        # ✅ DISABLED: Using GPT4All local processing instead of port 5002
-        self.base_url = base_url
-        self.api_url = f"{base_url}/api/v1/generate"
-        self.session = requests.Session()
-        self.session.headers.update({
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        })
-        self.disabled = True  # Force use of GPT4All fallback
+        # Use dual-LLM system instead of direct port access
+        try:
+            from ai.dual_llm_client import dual_llm_client
+            self.dual_llm = dual_llm_client
+            self.disabled = False
+            print("[ExtractorClient] ✅ Using dual-LLM system")
+        except ImportError:
+            print("[ExtractorClient] ❌ Dual-LLM system not available, using fallback")
+            self.disabled = True
         
         # Load user memory for consciousness processing
         self.memory_file = "local_memory.json"

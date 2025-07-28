@@ -14,27 +14,24 @@ import requests  # Added for direct port 5001 communication
 from typing import Dict, List, Any, Optional, Tuple, Generator
 from datetime import datetime
 
-# Import existing components
+# Import dual-LLM system (replaces GPT4All)
 try:
-    from chat_enhanced_smart_with_fusion import generate_response_streaming_with_intelligent_fusion
-    FUSION_LLM_AVAILABLE = True
-except ImportError:
+    from ai.dual_llm_client import dual_llm_client, generate_response_streaming_with_intelligent_fusion
+    DUAL_LLM_AVAILABLE = True
+    print("[LLMHandler] ✅ Dual-LLM system loaded")
+except ImportError as e:
+    DUAL_LLM_AVAILABLE = False
+    print(f"[LLMHandler] ❌ Dual-LLM system not available: {e}")
+    
+    # Fallback to archived chat functions if needed
     try:
-        from ai.chat_enhanced_smart_with_fusion import generate_response_streaming_with_intelligent_fusion
-        FUSION_LLM_AVAILABLE = True
+        import sys
+        import os
+        sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'archive', 'ai'))
+        from chat_enhanced_smart_with_fusion import generate_response_streaming_with_intelligent_fusion
+        print("[LLMHandler] ⚠️ Using archived chat functions as fallback")
     except ImportError:
-        try:
-            from chat import generate_response_streaming
-            FUSION_LLM_AVAILABLE = False
-            print("[LLMHandler] ⚠️ Using fallback LLM - fusion not available")
-        except ImportError:
-            try:
-                from ai.chat import generate_response_streaming
-                FUSION_LLM_AVAILABLE = False
-                print("[LLMHandler] ⚠️ Using fallback LLM - fusion not available")
-            except ImportError:
-                FUSION_LLM_AVAILABLE = False
-                print("[LLMHandler] ❌ No LLM modules available")
+        print("[LLMHandler] ❌ No LLM modules available")
 
 try:
     from global_workspace import global_workspace
