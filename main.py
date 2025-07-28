@@ -41,6 +41,9 @@ from ai.consciousness_manager import consciousness_manager, ConsciousnessMode
 from ai.emotion import reset_session_for_user_smart
 from audio.smart_detection_manager import analyze_speech_detection, get_current_threshold
 
+# ✅ STEP 1: Import correct GPT4All extractors as requested
+from ai.extractor_llm import extract_facts, extract_name
+
 # ✅ RESTORED: Import all consciousness modules
 if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
     try:
@@ -289,7 +292,7 @@ except Exception as e:
 
 # Set fallback instances
 advanced_context_analyzer = None
-advanced_name_manager = None
+# advanced_name_manager = None  # ✅ REMOVED: Using GPT4All extractor instead
 
 # ✅ VERIFY FINAL STATE
 print(f"[AdvancedBuddy] 🔍 Final voice_manager type: {type(voice_manager)}")
@@ -597,6 +600,34 @@ def handle_streaming_response(text, current_user):
             try:
                 add_to_conversation_history(current_user, text, full_response)
                 print(f"[BuddyFlow] 💾 Saved interaction to memory")
+                
+                # ✅ STEP 1: Extract facts from user input using GPT4All extractor as requested
+                try:
+                    facts = extract_facts(text)
+                    if facts and (facts.get("name") or facts.get("likes") or facts.get("dislikes")):
+                        print(f"[BuddyFlow] 📊 Extracted facts: {facts}")
+                        
+                        # ✅ STEP 5: Handle name detection and voice linking as requested
+                        if facts.get("name") and facts["name"] != "NONE":
+                            extracted_name = facts["name"]
+                            print(f"[BuddyFlow] 👤 User introduced themselves as: {extracted_name}")
+                            
+                            # Link anonymous cluster to user if currently anonymous
+                            if current_user.startswith("Anonymous_") or current_user.startswith("Guest_"):
+                                try:
+                                    from voice.recognition import link_anonymous_cluster_to_user
+                                    link_anonymous_cluster_to_user(current_user, extracted_name)
+                                    current_user = extracted_name  # Update current user
+                                    print(f"[BuddyFlow] 🔗 Linked {current_user} to {extracted_name}")
+                                except Exception as link_err:
+                                    print(f"[BuddyFlow] ⚠️ Voice linking error: {link_err}")
+                        
+                        # Store facts for future use (could be integrated with memory system)
+                except Exception as extract_err:
+                    print(f"[BuddyFlow] ⚠️ Facts extraction error: {extract_err}")
+                except Exception as extract_err:
+                    print(f"[BuddyFlow] ⚠️ Facts extraction error: {extract_err}")
+                    
             except Exception as memory_err:
                 print(f"[BuddyFlow] ⚠️ Memory save error: {memory_err}")
             
@@ -1069,15 +1100,13 @@ def load_voice_profiles():
         return False
 
 def extract_name_from_text(text):
-    """✅ ADVANCED: Extract name with enhanced AI processing"""
-    if ADVANCED_AI_AVAILABLE:
-        try:
-            # Use advanced name manager
-            return advanced_name_manager.extract_name_ultra_smart(text, {})
-        except:
-            pass
+    """✅ STEP 1: Extract name using GPT4All extractor as requested"""
+    # ✅ Use extract_name from ai.extractor_llm as requested
+    user_name = extract_name(text)
+    if user_name != "NONE":
+        return user_name
     
-    # Fallback to enhanced extraction
+    # Fallback to enhanced extraction if needed
     patterns = [
         r"my name is (\w+)",
         r"i'm (\w+)",
@@ -1094,20 +1123,9 @@ def extract_name_from_text(text):
         if match:
             name = match.group(1).title()
             if len(name) >= 2 and name.isalpha():  # Valid name
-                if ADVANCED_AI_AVAILABLE:
-                    # Use advanced name validation
-                    try:
-                        if advanced_name_manager.is_valid_name_enhanced(name):
-                            return name
-                    except:
-                        pass
-                elif ENHANCED_VOICE_AVAILABLE:
-                    # Use enhanced name validation
-                    try:
-                        from voice.manager_names import name_manager
-                        if name_manager.is_valid_name_enhanced(name):
-                            return name
-                    except:
+                return name
+    
+    return None
                         pass
                 
                 # Fallback validation
