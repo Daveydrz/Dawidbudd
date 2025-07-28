@@ -1375,6 +1375,11 @@
         "content": "User's name is David",
         "timestamp": "2025-07-27T04:18:36.379676",
         "confidence": 0.8
+      },
+      {
+        "content": "User's name is David",
+        "timestamp": "2025-07-28T01:25:26.911511",
+        "confidence": 0.8
       }
     ],
     "preferences": [],
@@ -1390,6 +1395,10 @@
       {
         "content": "Hello, my name is David",
         "timestamp": "2025-07-27T04:18:36.379683"
+      },
+      {
+        "content": "Hi my name is David",
+        "timestamp": "2025-07-28T01:25:26.911518"
       }
     ]
   },

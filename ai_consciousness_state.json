@@ -1,29 +1,13 @@
 {
-  "current_emotion": "neutral",
-  "motivation_level": 0.9,
+  "current_emotion": "friendly",
+  "motivation_level": 0.8,
   "active_goals": [
     "help user",
     "remember information",
     "maintain conversation"
   ],
-  "current_focus": "ambient_awareness",
-  "personality_traits": [
-    "helpful",
-    "empathetic",
-    "curious",
-    "knows user as Doing",
-    "knows user as Doing",
-    "knows user as Doing"
-  ],
-  "beliefs": [],
-  "last_thought": null,
-  "thought_type": null,
-  "internal_monologue": [],
-  "memory": {
-    "name": "Doing",
-    "likes": [],
-    "dislikes": [],
-    "facts": [],
-    "preferences": []
-  }
+  "current_focus": "user_interaction",
+  "inner_thoughts": "User said: 'Hi my name is David...' - processing and remembering context",
+  "last_updated": "2025-07-28T01:25:26.913236",
+  "personality_state": "helpful"
 }

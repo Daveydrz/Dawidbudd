@@ -28,51 +28,75 @@ def extract_facts(text: str) -> dict:
     if GPT4ALL_AVAILABLE and extractor:
         try:
             prompt = f"""
-You are an extractor. Your ONLY job is to return valid JSON.
+TASK: Extract facts from the user message below.
 
-Text: "{text}"
+Message: "{text}"
 
-Extract:
-- name (if user clearly says their OWN name)
-- likes (things user says they like)
-- dislikes (things user says they dislike)  
-- emotion (happy, sad, neutral)
-
-Return ONLY JSON. No explanation.
+Return ONLY valid JSON with these keys:
+{{
+  "name": "if user says their own name, else NONE",
+  "likes": ["list of things user likes"],
+  "dislikes": ["list of things user dislikes"],
+  "emotion": "happy, sad, angry, or neutral"
+}}
 """
-            output = extractor.generate(prompt, max_tokens=120)
-            
-            try:
-                # Try to parse JSON from output
-                json_part = output.strip()
-                if "```" in json_part:
-                    json_part = json_part.split("```")[-1]
+            output = extractor.generate(prompt, max_tokens=60).strip()
+
+            json_start = output.find("{")
+            json_end = output.rfind("}")
+            if json_start != -1 and json_end != -1:
+                json_part = output[json_start:json_end+1]
                 return json.loads(json_part)
-            except:
-                print(f"[ExtractorLLM] ⚠️ Failed to parse GPT4All output: {output}")
-                return _fallback_extract_facts(text)
-                
+            else:
+                raise ValueError("No valid JSON found")
+
         except Exception as e:
-            print(f"[ExtractorLLM] ⚠️ GPT4All generation error: {e}")
+            print(f"[ExtractorLLM] ⚠️ GPT4All failed, using fallback: {e}")
             return _fallback_extract_facts(text)
     else:
         return _fallback_extract_facts(text)
 
-def _fallback_extract_facts(text: str) -> dict:
-    """Fallback fact extraction using simple pattern matching"""
-    result = {"name": None, "likes": [], "dislikes": [], "emotion": "neutral"}
+def extract_name(text: str) -> str:
+    """Extract user's name using GPT4All-J or fallback method"""
     
+    if GPT4ALL_AVAILABLE and extractor:
+        try:
+            prompt = f"""
+TASK: If the user introduced themselves, extract their name.
+
+Message: "{text}"
+
+Return ONLY a name (e.g. "David"). 
+If no name, reply with "NONE".
+"""
+            output = extractor.generate(prompt, max_tokens=10).strip()
+            
+            # Clean the output
+            name = output.strip().strip('"').strip("'")
+            if name and name.upper() != "NONE" and len(name) <= 20 and name.replace(" ", "").isalpha():
+                return name
+            else:
+                return "NONE"
+                
+        except Exception as e:
+            print(f"[ExtractorLLM] ⚠️ GPT4All name extraction failed: {e}")
+            return _fallback_extract_name(text)
+    else:
+        return _fallback_extract_name(text)
+
+def _fallback_extract_name(text: str) -> str:
+    """Fallback name extraction using pattern matching"""
     text_lower = text.lower()
     
-    # Extract name with improved patterns
+    # Extract name with improved patterns - more specific to avoid false matches
     name_patterns = [
         r"my name is (\w+)",
-        r"i'm (\w+)",
-        r"i am (\w+)",
+        r"i'm (\w+)(?:\s|$|[,.])",  # Require word boundary after name
+        r"i am (\w+)(?:\s|$|[,.])",  # Require word boundary after name  
         r"call me (\w+)",
         r"name's (\w+)",
-        r"this is (\w+)",
-        r"it's (\w+)",
+        r"this is (\w+)(?:\s|$|[,.])",  # Be specific about introductions
+        r"you can call me (\w+)",
         r"i am called (\w+)"
     ]
     
@@ -80,9 +104,29 @@ def _fallback_extract_facts(text: str) -> dict:
         match = re.search(pattern, text_lower)
         if match:
             name = match.group(1).title()
-            if len(name) >= 2 and name.isalpha():
-                result["name"] = name
-                break
+            # More strict validation - exclude common words that aren't names
+            common_words = ["feeling", "having", "going", "doing", "getting", "saying", "thinking", 
+                          "working", "living", "coming", "looking", "trying", "being", "making",
+                          "happy", "sad", "angry", "confused", "excited", "worried", "fine", "okay",
+                          "good", "bad", "great", "terrible", "amazing", "awful", "so", "very",
+                          "really", "quite", "just", "now", "here", "there", "then", "when",
+                          "what", "where", "why", "how", "who", "which", "absolutely", "definitely"]
+            
+            if len(name) >= 2 and name.isalpha() and name.lower() not in common_words:
+                return name
+    
+    return "NONE"
+
+def _fallback_extract_facts(text: str) -> dict:
+    """Fallback fact extraction using simple pattern matching"""
+    result = {"name": None, "likes": [], "dislikes": [], "emotion": "neutral"}
+    
+    text_lower = text.lower()
+    
+    # Extract name using the same improved logic as _fallback_extract_name
+    name = _fallback_extract_name(text)
+    if name != "NONE":
+        result["name"] = name
     
     # Extract likes
     like_patterns = [
