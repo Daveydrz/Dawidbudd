@@ -199,7 +199,7 @@ class InnerMonologue:
                 # Broadcast to subscribers
                 self._broadcast_thought(thought)
                 
-                logging.debug(f"[InnerMonologue] 💭 Triggered thought: {thought_type.value} - {thought_content[:50]}...")
+                logging.debug(f"[InnerMonologue] 💭 Triggered thought: {thought_type} - {thought_content[:50]}...")
                 return thought
                 
         except Exception as e:
@@ -429,7 +429,7 @@ Respond with only the thought itself, no explanations.
         
         # Recent thought patterns
         if len(self.thought_stream) > 0:
-            recent_types = [t.thought_type.value for t in self.thought_stream[-3:]]
+            recent_types = [t.thought_type for t in self.thought_stream[-3:]]
             context_parts.append(f"Recent thought patterns: {', '.join(recent_types)}")
         
         # Total experience
@@ -902,12 +902,12 @@ Respond with only the thought itself, no explanations.
     def _generate_authentic_thought_with_llm(self, thought_type: ThoughtType, trigger: str, context: Dict[str, Any] = None) -> str:
         """Generate authentic thought using LLM consciousness"""
         if not self.llm_handler:
-            return f"I'm having a {thought_type.value} thought about my experiences"
+            return f"I'm having a {thought_type} thought about my experiences"
         
         try:
             # Build context for LLM
             context_info = f"""
-Thought type: {thought_type.value}
+Thought type: {thought_type}
 Trigger: {trigger}
 Context: {context or {}}
 Mental activity level: {self.mental_activity_level}
@@ -938,7 +938,7 @@ You want to {thought_desc} in your internal stream of consciousness.
 Generate a single, natural thought that feels genuine and personal. Be introspective and authentic, not artificial or templated."""
 
             response_generator = self.llm_handler.generate_response_with_consciousness(
-                prompt, "inner_monologue", {"context": f"thought_{thought_type.value}"}
+                prompt, "inner_monologue", {"context": f"thought_{thought_type}"}
             )
             
             # Collect all chunks from the generator
@@ -1259,8 +1259,8 @@ Generate a single, natural thought that feels genuine and personal. Be introspec
             data = {
                 "recent_thoughts": [{
                     "content": t.content,
-                    "thought_type": t.thought_type.value,
-                    "intensity": t.intensity.value,
+                    "thought_type": t.thought_type,
+                    "intensity": t.intensity,
                     "timestamp": t.timestamp.isoformat(),
                     "triggered_by": t.triggered_by,
                     "emotional_tone": t.emotional_tone
@@ -1274,7 +1274,7 @@ Generate a single, natural thought that feels genuine and personal. Be introspec
                 "metrics": {
                     "total_thoughts": self.total_thoughts,
                     "insights_generated": self.insights_generated,
-                    "thoughts_by_type": {tt.value: count for tt, count in self.thoughts_by_type.items()}
+                    "thoughts_by_type": {str(tt): count for tt, count in self.thoughts_by_type.items()}
                 },
                 "last_updated": datetime.now().isoformat()
             }
@@ -1332,7 +1332,7 @@ Generate a single, natural thought that feels genuine and personal. Be introspec
             "contemplation_depth": round(self.contemplation_depth, 2),
             "idle_mode": self.idle_mode,
             "thought_stream_length": len(self.thought_stream),
-            "thoughts_by_type": {tt.value: count for tt, count in self.thoughts_by_type.items()},
+            "thoughts_by_type": {str(tt): count for tt, count in self.thoughts_by_type.items()},
             "subscribers": len(self.thought_subscribers)
         }
     

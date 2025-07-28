@@ -1,4 +1,4 @@
-# NOTE: Using port 5002 for consciousness processing
+# NOTE: Using GPT4All for local processing (removed KoboldCPP dependency)
 # voice/manager_names.py - ULTRA-INTELLIGENT AI-LEVEL Name Management System
 # Part 1: Core Classes and Infrastructure
 # Surpasses Alexa/Siri/GPT-4 level intelligence with advanced NLP and context awareness
@@ -11,7 +11,12 @@ import difflib
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple, Set
 from collections import defaultdict, Counter
-import numpy as np
+try:
+    import numpy as np
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
+    print("[UltraIntelligentNameManager] ⚠️ NumPy not available - using fallback calculations")
 import requests
 
 try:
@@ -131,307 +136,52 @@ FAKE_NAME_TRAPS = {
     "pretty", "dirty", "empty", "heavy", "noisy", "crazy", "lazy", "easy", "idiot"
 }
 
-class KoboldCppNameExtractor:
-    """🤖 KoboldCPP + Hermes-2-Pro powered intelligent name extraction"""
+class GPT4AllNameExtractor:
+    """🤖 GPT4All-based name extraction (replacing KoboldCPP)"""
     
-    def __init__(self, kobold_endpoint: str = "http://localhost:5002"):
-        self.kobold_endpoint = kobold_endpoint
-        self.api_url = f"{kobold_endpoint}/api/v1/generate"
-        self.system_prompt = self._create_system_prompt()
-        
-    def _create_system_prompt(self) -> str:
-        """🎯 Create ultra-precise system prompt for Hermes-2-Pro"""
-        return """<|im_start|>system
-You are an expert name extraction specialist. Your ONLY job is to determine if someone is introducing THEMSELVES by stating their own name.
-
-ABSOLUTE RULES - NO EXCEPTIONS:
-1. Extract a name ONLY if the person is clearly saying their OWN name
-2. DO NOT extract modifiers: "just", "still", "really", "very", "quite", "pretty", "already", "currently"
-3. DO NOT extract activities: "doing", "going", "working", "thinking", "checking", "testing", "trying"
-4. DO NOT extract states: "fine", "good", "okay", "busy", "tired", "ready", "here", "there"
-5. DO NOT extract if ANY modifier comes after "I'm"
-6. DO NOT extract if ANY activity word comes after "I'm"
-7. Return ONLY the name or "NONE" - absolutely nothing else
-
-CRITICAL EXAMPLES - MEMORIZE THESE:
-✅ "My name is David" → David
-✅ "I'm David" → David (ONLY if David is clearly a name, not followed by anything)
-✅ "I'm Sarah by the way" → Sarah  
-✅ "I'm David, Anna's friend" → David (proper comma separation)
-✅ "Call me Francesco" → Francesco
-✅ "Hello, my name is David" → David
-
-❌ "I'm just thinking" → NONE (modifier + activity - NEVER extract "just")
-❌ "I'm just checking if you working correctly" → NONE (modifier + activity - NEVER extract "just")
-❌ "I'm doing something important" → NONE (activity - NEVER extract "doing")
-❌ "I'm really working" → NONE (modifier + activity - NEVER extract "really")
-❌ "I'm still busy" → NONE (modifier + state - NEVER extract "still")
-❌ "I'm quite tired" → NONE (modifier + state - NEVER extract "quite")
-❌ "I'm very good" → NONE (modifier + state - NEVER extract "very")
-❌ "I'm pretty ready" → NONE (modifier + state - NEVER extract "pretty")
-❌ "I'm currently working" → NONE (modifier + activity - NEVER extract "currently")
-❌ "I'm David working" → NONE (name + activity - invalid context)
-❌ "I'm David's friend" → NONE (possessive relationship)
-❌ "I'm tired" → NONE (state only)
-❌ "I'm working" → NONE (activity only)
-❌ "I'm here" → NONE (location only)
-❌ "I'm going" → NONE (activity only)
-
-ULTRA-CRITICAL PATTERNS TO REJECT:
-- "I'm [modifier] [anything]" = ALWAYS NONE
-- "I'm [activity]" = ALWAYS NONE  
-- "I'm [state]" = ALWAYS NONE
-- "I'm [name] [activity]" = ALWAYS NONE
-- "I'm [name]'s [anything]" = ALWAYS NONE
-
-ONLY VALID PATTERNS:
-- "My name is [Name]"
-- "Call me [Name]"
-- "I'm [Name]" (where Name is clearly a person's name, standing alone)
-- "I'm [Name], [context]" (with proper comma)
-- "Hello/Hi, I'm [Name]"
-
-If you see ANY modifier or activity word, respond "NONE" immediately.
-If the pattern doesn't match the valid patterns exactly, respond "NONE".
-
-Respond with ONLY the extracted name or "NONE". No explanations, no other text.
-<|im_end|>"""
-
+    def __init__(self):
+        try:
+            from ai.extractor_llm import extract_name
+            self.extract_name_func = extract_name
+            print("[GPT4AllExtractor] ✅ Using GPT4All for name extraction")
+        except ImportError:
+            print("[GPT4AllExtractor] ⚠️ Fallback to pattern-based extraction")
+            self.extract_name_func = None
+    
     def extract_name(self, text: str) -> Optional[str]:
-        """🤖 Use optimized LLM with token compression"""
+        """🤖 Extract name using GPT4All"""
+        print(f"[GPT4AllExtractor] 🤖 Analyzing: '{text}'")
         
-        print(f"[KoboldExtractor] 🤖 Analyzing: '{text}'")
-        
-        try:
-            # Use the new optimized name extraction
-            from ai.llm_optimized import extract_name_optimized
-            
-            result = extract_name_optimized(text)
-            
-            if result:
-                # Additional validation using existing strict validation
-                if self._validate_extracted_name(result):
-                    print(f"[KoboldExtractor] ✅ VALIDATED: {result}")
+        if self.extract_name_func:
+            try:
+                result = self.extract_name_func(text)
+                if result and result.upper() != "NONE":
+                    print(f"[GPT4AllExtractor] ✅ EXTRACTED: {result}")
                     return result
-                else:
-                    print(f"[KoboldExtractor] 🛡️ VALIDATION FAILED: {result}")
-                    return None
-            
-            return None
-            
-        except Exception as e:
-            print(f"[KoboldExtractor] ❌ Error: {e}")
-            # Fallback to original method if optimized version fails
-            return self._extract_name_fallback(text)
+            except Exception as e:
+                print(f"[GPT4AllExtractor] ❌ Error: {e}")
+        
+        # Pattern-based fallback
+        return self._pattern_based_extraction(text)
     
-    def _extract_name_fallback(self, text: str) -> Optional[str]:
-        """Fallback to original extraction method"""
-        try:
-            # Original implementation for fallback
-            prompt = f"""{self.system_prompt}
-<|im_start|>user
-Text: "{text}"
-
-Is this person introducing themselves by stating their own name? Extract the name if yes, or respond "NONE" if no.
-<|im_end|>
-<|im_start|>assistant
-"""
-
-            payload = {
-                "prompt": prompt,
-                "max_context_length": 2048,
-                "max_length": 20,
-                "temperature": 0.1,
-                "top_p": 0.9,
-                "top_k": 40,
-                "rep_pen": 1.1,
-                "rep_pen_range": 64,
-                "stop_sequence": ["<|im_end|>", "\n", ".", "!"],
-                "trim_stop": True,
-                "quiet": True
-            }
-            
-            response = requests.post(
-                self.api_url,
-                json=payload,
-                headers={"Content-Type": "application/json"},
-                timeout=30
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                generated_text = result.get("results", [{}])[0].get("text", "").strip()
-                
-                print(f"[KoboldExtractor] 🤖 Fallback response: '{generated_text}'")
-                
-                if generated_text.upper() == "NONE" or not generated_text:
-                    return None
-                
-                name = self._clean_hermes_response(generated_text)
-                
-                if name and self._validate_extracted_name(name):
-                    print(f"[KoboldExtractor] ✅ FALLBACK VALIDATED: {name}")
+    def _pattern_based_extraction(self, text: str) -> Optional[str]:
+        """Simple pattern-based name extraction as fallback"""
+        patterns = [
+            r"my name is (\w+)",
+            r"call me (\w+)", 
+            r"i'?m (\w+)$",
+            r"i am (\w+)$"
+        ]
+        
+        text_lower = text.lower().strip()
+        for pattern in patterns:
+            match = re.search(pattern, text_lower)
+            if match:
+                name = match.group(1).title()
+                # Basic validation
+                if len(name) >= 2 and name.isalpha():
                     return name
-                else:
-                    print(f"[KoboldExtractor] 🛡️ FALLBACK INVALID: {name}")
-                    return None
-            else:
-                print(f"[KoboldExtractor] ❌ Fallback API Error: {response.status_code}")
-                return None
-                
-        except Exception as e:
-            print(f"[KoboldExtractor] ❌ Fallback Error: {e}")
-            return None
-    
-    def _clean_hermes_response(self, response: str) -> Optional[str]:
-        """🔒 FOOL-PROOF response cleaning with strict validation"""
-
-        if not response:
-            return None
-
-        # Remove common prefixes/suffixes
-        response = re.sub(r'^(name:\s*|the\s+name\s+is\s*|answer:\s*|result:\s*)', '', response.lower())
-        response = re.sub(r'\s*(is\s+the\s+name|\.|\!|\?|,)$', '', response)
-
-        # Get first word only
-        words = response.split()
-        if not words:
-            return None
-
-        potential_name = words[0].strip()
-
-        # Must be alphabetic and reasonable length
-        if not potential_name.isalpha() or len(potential_name) < 2 or len(potential_name) > 20:
-            return None
-
-        # 🚨 DOUBLE-CHECK: Make sure it's not a blocked word
-        blocked_responses = {
-            'none', 'null', 'nothing', 'empty', 'unknown', 'unclear',
-            'just', 'still', 'really', 'very', 'quite', 'pretty',
-            'doing', 'going', 'working', 'checking', 'thinking',
-            'fine', 'good', 'okay', 'busy', 'tired', 'ready'
-        }
-
-        if potential_name.lower() in blocked_responses:
-            print(f"[KoboldExtractor] 🚨 BLOCKED IN CLEANUP: {potential_name}")
-            return None
-
-        return potential_name.title()
-    
-    def _validate_extracted_name(self, name: str) -> bool:
-        """🔒 FOOL-PROOF validation with zero tolerance for errors"""
-
-        if not name or len(name) < 2 or len(name) > 25:
-            print(f"[KoboldExtractor] 🛡️ LENGTH INVALID: {name}")
-            return False
-
-        if not name.isalpha():
-            print(f"[KoboldExtractor] 🛡️ NON-ALPHA: {name}")
-            return False
-
-        name_lower = name.lower()
-
-        # 🚨 ZERO TOLERANCE: Block ALL modifiers
-        modifiers = {
-            'just', 'still', 'really', 'very', 'quite', 'pretty', 'already',
-            'currently', 'now', 'always', 'never', 'sometimes', 'often',
-            'usually', 'actually', 'finally', 'probably', 'definitely',
-            'exactly', 'precisely', 'completely', 'absolutely', 'totally'
-        }
-        if name_lower in modifiers:
-            print(f"[KoboldExtractor] 🚨 MODIFIER BLOCKED: {name}")
-            return False
-
-        # 🚨 ZERO TOLERANCE: Block ALL activities
-        activities = {
-            'doing', 'going', 'working', 'checking', 'thinking', 'being',
-            'getting', 'having', 'making', 'taking', 'coming', 'leaving',
-            'trying', 'looking', 'waiting', 'planning', 'hoping', 'learning',
-            'teaching', 'helping', 'studying', 'reading', 'writing', 'listening',
-            'watching', 'playing', 'singing', 'dancing', 'cooking', 'cleaning',
-            'testing', 'verifying', 'confirming', 'validating', 'examining'
-        }
-        if name_lower in activities:
-            print(f"[KoboldExtractor] 🚨 ACTIVITY BLOCKED: {name}")
-            return False
-
-        # 🚨 ZERO TOLERANCE: Block ALL states
-        states = {
-            'fine', 'good', 'great', 'okay', 'well', 'bad', 'tired', 'busy',
-            'ready', 'sorry', 'happy', 'sad', 'angry', 'excited', 'confused',
-            'here', 'there', 'home', 'work', 'back', 'away', 'online', 'offline',
-            'late', 'early', 'free', 'available', 'unavailable'
-        }
-        if name_lower in states:
-            print(f"[KoboldExtractor] 🚨 STATE BLOCKED: {name}")
-            return False
-
-        # 🚨 ZERO TOLERANCE: Block conversational words
-        conversational = {
-            'hello', 'hi', 'hey', 'thanks', 'thank', 'sorry', 'excuse',
-            'please', 'yes', 'yeah', 'yep', 'no', 'nope', 'maybe', 'perhaps',
-            'what', 'when', 'where', 'why', 'how', 'who', 'which'
-        }
-        if name_lower in conversational:
-            print(f"[KoboldExtractor] 🚨 CONVERSATIONAL BLOCKED: {name}")
-            return False
-
-        # 🚨 ZERO TOLERANCE: Block obvious non-names
-        non_names = {
-            'none', 'null', 'nothing', 'empty', 'unknown', 'unclear',
-            'something', 'anything', 'everything', 'nothing', 'someone',
-            'anyone', 'everyone', 'nobody'
-        }
-        if name_lower in non_names:
-            print(f"[KoboldExtractor] 🚨 NON-NAME BLOCKED: {name}")
-            return False
-
-        # ✅ WHITELIST: Only allow known legitimate names
-        legitimate_names = {
-            'david', 'daveydrz', 'davey', 'dave', 'francesco', 'frank', 'franco',
-            'michael', 'mike', 'sarah', 'anna', 'john', 'james', 'robert', 'mary',
-            'patricia', 'jennifer', 'linda', 'elizabeth', 'barbara', 'susan',
-            'jessica', 'thomas', 'charles', 'christopher', 'daniel', 'matthew',
-            'anthony', 'mark', 'donald', 'steven', 'paul', 'andrew', 'joshua',
-            'kenneth', 'kevin', 'brian', 'george', 'timothy', 'ronald', 'jason'
-        }
-
-        if name_lower in legitimate_names:
-            print(f"[KoboldExtractor] ✅ LEGITIMATE NAME: {name}")
-            return True
-        else:
-            print(f"[KoboldExtractor] 🚨 NOT IN WHITELIST: {name}")
-            return False
-    
-    def test_connection(self) -> bool:
-        """🔍 Test KoboldCPP connection"""
-        try:
-            response = requests.get(f"{self.kobold_endpoint}/api/v1/model", timeout=5)
-            if response.status_code == 200:
-                model_info = response.json()
-                print(f"[KoboldExtractor] ✅ Connected to: {model_info.get('result', 'Unknown Model')}")
-                return True
-            else:
-                print(f"[KoboldExtractor] ❌ Connection failed: {response.status_code}")
-                return False
-        except Exception as e:
-            print(f"[KoboldExtractor] ❌ Connection error: {e}")
-            return False
-    
-    def test_connection(self) -> bool:
-        """🔍 Test KoboldCPP connection"""
-        try:
-            response = requests.get(f"{self.kobold_endpoint}/api/v1/model", timeout=5)
-            if response.status_code == 200:
-                model_info = response.json()
-                print(f"[KoboldExtractor] ✅ Connected to: {model_info.get('result', 'Unknown Model')}")
-                return True
-            else:
-                print(f"[KoboldExtractor] ❌ Connection failed: {response.status_code}")
-                return False
-        except Exception as e:
-            print(f"[KoboldExtractor] ❌ Connection error: {e}")
-            return False
+        return None
 
 class WhisperTranscriptionProtector:
     """🎙️ WHISPER-AWARE protection against transcription errors"""
@@ -583,16 +333,12 @@ class EnhancedContextualParser:
 class EnhancedWhisperAwareExtractor:
     """🛡️ Enhanced extractor with comma-separated introduction support"""
     
-    def __init__(self, kobold_endpoint: str = "http://localhost:5002"):
-        self.kobold_extractor = KoboldCppNameExtractor(kobold_endpoint)
+    def __init__(self):
+        self.gpt4all_extractor = GPT4AllNameExtractor()
         self.whisper_protector = WhisperTranscriptionProtector()
         self.comma_parser = EnhancedContextualParser()
         
-        # Test connection
-        if self.kobold_extractor.test_connection():
-            print("[EnhancedExtractor] ✅ KoboldCPP connection established")
-        else:
-            print("[EnhancedExtractor] ⚠️ KoboldCPP connection failed")
+        print("[EnhancedExtractor] ✅ GPT4All extractor initialized")
     
     def extract_name_enhanced_aware(self, text: str) -> Optional[str]:
         """🛡️ Enhanced extraction with comma-separated introduction support"""
@@ -606,10 +352,10 @@ class EnhancedWhisperAwareExtractor:
             potential_name = comma_analysis['primary_name']
             print(f"[EnhancedExtractor] 🔍 Comma-separated introduction: {potential_name}")
             
-            # Validate with Hermes-2-Pro
-            hermes_result = self.kobold_extractor.extract_name(text)
+            # Validate with GPT4All
+            gpt4all_result = self.gpt4all_extractor.extract_name(text)
             
-            if hermes_result and hermes_result.lower() == potential_name.lower():
+            if gpt4all_result and gpt4all_result.lower() == potential_name.lower():
                 # Check for Whisper errors
                 whisper_check = self.whisper_protector.detect_whisper_transcription_errors(text, potential_name)
                 
@@ -618,16 +364,16 @@ class EnhancedWhisperAwareExtractor:
                     return potential_name
         
         # Step 2: Standard extraction
-        hermes_result = self.kobold_extractor.extract_name(text)
+        gpt4all_result = self.gpt4all_extractor.extract_name(text)
         
-        if hermes_result:
-            whisper_check = self.whisper_protector.detect_whisper_transcription_errors(text, hermes_result)
+        if gpt4all_result:
+            whisper_check = self.whisper_protector.detect_whisper_transcription_errors(text, gpt4all_result)
             
             if not whisper_check['is_likely_error']:
-                print(f"[EnhancedExtractor] ✅ STANDARD EXTRACTION: {hermes_result}")
-                return hermes_result
+                print(f"[EnhancedExtractor] ✅ STANDARD EXTRACTION: {gpt4all_result}")
+                return gpt4all_result
         
-        # 🔧 NEW: Step 3: Fallback pattern extraction for Hermes inconsistency
+        # 🔧 NEW: Step 3: Fallback pattern extraction for GPT4All inconsistency
         fallback_result = self._fallback_pattern_extraction(text)
         if fallback_result:
             whisper_check = self.whisper_protector.detect_whisper_transcription_errors(text, fallback_result)
@@ -1374,7 +1120,12 @@ class ConfidencePredictor:
                 confidence += self.feature_weights[feature]
         
         # Apply sigmoid function for better distribution
-        confidence = 1 / (1 + np.exp(-confidence))
+        if NUMPY_AVAILABLE:
+            confidence = 1 / (1 + np.exp(-confidence))
+        else:
+            # Fallback sigmoid approximation
+            import math
+            confidence = 1 / (1 + math.exp(-confidence))
         
         return max(0.0, min(1.0, confidence))
     
@@ -1549,7 +1300,7 @@ class UltraIntelligentNameManager:
         
         return {n.lower() for n in nicknames}
 
-    def process_audio_with_smart_voice(self, audio_data: np.ndarray, sample_rate: int = 16000) -> Tuple[str, str]:
+    def process_audio_with_smart_voice(self, audio_data, sample_rate: int = 16000) -> Tuple[str, str]:
         """🎯 Process audio with smart voice recognition (MAIN ENTRY POINT)"""
         
         if not SMART_VOICE_AVAILABLE:
@@ -1634,7 +1385,7 @@ class UltraIntelligentNameManager:
             print(f"[UltraIntelligentNameManager] ❌ Smart voice confirmation error: {e}")
             return "Error", "SMART_VOICE_CONFIRMATION_ERROR"
 
-    def register_with_smart_voice(self, username: str, audio_data: np.ndarray, sample_rate: int = 16000) -> bool:
+    def register_with_smart_voice(self, username: str, audio_data, sample_rate: int = 16000) -> bool:
         """🎯 Register new user with smart voice system"""
         
         if not SMART_VOICE_AVAILABLE:
@@ -1654,7 +1405,7 @@ class UltraIntelligentNameManager:
             print(f"[UltraIntelligentNameManager] ❌ Smart voice registration error: {e}")
             return False
 
-    def force_smart_voice_check(self, claimed_username: str, audio_data: np.ndarray, sample_rate: int = 16000) -> Tuple[str, str]:
+    def force_smart_voice_check(self, claimed_username: str, audio_data, sample_rate: int = 16000) -> Tuple[str, str]:
         """🎯 Handle when user claims to be specific person"""
         
         if not SMART_VOICE_AVAILABLE:
@@ -3646,37 +3397,34 @@ def test_enhanced_system():
                 print(f"  '{text}' → {result}")
                 break
 
-def test_kobold_connection():
-    """🔍 Test KoboldCPP connection"""
+def test_gpt4all_connection():
+    """🔍 Test GPT4All connection"""
     
-    print("\n🤖 TESTING KOBOLDCPP CONNECTION")
+    print("\n🤖 TESTING GPT4ALL CONNECTION")
     print("=" * 40)
     
     try:
-        extractor = KoboldCppNameExtractor()
-        connected = extractor.test_connection()
+        extractor = GPT4AllNameExtractor()
         
-        if connected:
-            print("✅ KoboldCPP connection successful")
-            
-            # Test simple extraction
-            test_text = "My name is David"
-            result = extractor.extract_name(test_text)
-            print(f"🎯 Test extraction result: {result}")
-            
+        # Test simple extraction
+        test_text = "My name is David"
+        result = extractor.extract_name(test_text)
+        print(f"🎯 Test extraction result: {result}")
+        
+        if result:
+            print("✅ GPT4All extraction working")
         else:
-            print("❌ KoboldCPP connection failed")
-            print("💡 Make sure KoboldCPP is running on http://localhost:5001")
+            print("⚠️ GPT4All extraction returned no result")
             
     except Exception as e:
-        print(f"❌ KoboldCPP test error: {e}")
+        print(f"❌ GPT4All test error: {e}")
 
 if __name__ == "__main__":
     print("🧠 ULTRA-INTELLIGENT NAME MANAGER - STANDALONE TEST")
     print("=" * 60)
     
-    # Test KoboldCPP connection first
-    test_kobold_connection()
+    # Test GPT4All connection first
+    test_gpt4all_connection()
     
     # Test the enhanced system
     test_enhanced_system()

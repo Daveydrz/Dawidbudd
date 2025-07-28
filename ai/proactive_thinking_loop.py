@@ -140,6 +140,14 @@ class ProactiveThinkingLoop:
                 print(f"[ProactiveThinking] 💭 (Would verbalize): {thought}")
         except Exception as e:
             print(f"[ProactiveThinking] ❌ Error verbalizing thought: {e}")
+    
+    def register_voice_system(self, voice_system):
+        """Register voice system for proactive communication"""
+        try:
+            self.voice_system = voice_system
+            print("[ProactiveThinking] 🔗 Voice system registered successfully")
+        except Exception as e:
+            print(f"[ProactiveThinking] ❌ Error registering voice system: {e}")
 
 # Create global instance
 proactive_thinking_loop = ProactiveThinkingLoop()

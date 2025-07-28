@@ -46,7 +46,10 @@ Return ONLY valid JSON with these keys:
             json_end = output.rfind("}")
             if json_start != -1 and json_end != -1:
                 json_part = output[json_start:json_end+1]
-                return json.loads(json_part)
+                try:
+                    return json.loads(json_part)
+                except json.JSONDecodeError:
+                    raise ValueError("Invalid JSON format")
             else:
                 raise ValueError("No valid JSON found")
 
