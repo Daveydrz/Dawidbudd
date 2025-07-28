@@ -34,6 +34,15 @@ class ProactiveThinkingLoop:
         self.thought_interval_min = 45  # minimum seconds between thoughts
         self.thought_interval_max = 180  # maximum seconds between thoughts
         self.verbalization_chance = 0.20  # 20% chance to verbalize thoughts
+        self.modules = {}  # Dictionary to store registered consciousness modules
+        
+    def register_consciousness_module(self, name: str, module: any):
+        """Register a consciousness module for integration"""
+        try:
+            self.modules[name] = module
+            print(f"[ProactiveThinking] 🔗 Registered consciousness module: {name}")
+        except Exception as e:
+            print(f"[ProactiveThinking] ❌ Error registering module {name}: {e}")
         
     def start(self):
         """Start the proactive thinking loop"""

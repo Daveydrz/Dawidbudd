@@ -1864,6 +1864,21 @@ def main():
         print("[AdvancedBuddy] 🧠 Initializing Self-Awareness Components...")
         
         try:
+            # Import all self-awareness components
+            from ai.memory_context_corrector import MemoryContextCorrector
+            from ai.consciousness_health_score import consciousness_health_scorer
+            from ai.belief_qualia_linking import BeliefQualiaLinker
+            from ai.value_system import ValueSystem
+            from ai.conscious_prompt_builder import ConsciousPromptBuilder
+            from ai.introspection_loop import IntrospectionLoop
+            from ai.emotion_response_modulator import EmotionResponseModulator
+            from ai.dialogue_confidence_filter import DialogueConfidenceFilter
+            from ai.qualia_analytics import QualiaAnalytics
+            from ai.belief_memory_refiner import BeliefMemoryRefiner
+            from ai.self_model_updater import SelfModelUpdater
+            from ai.goal_reasoning import GoalReasoner
+            from ai.motivation_reasoner import MotivationReasoner
+            
             # Initialize all self-awareness components
             global memory_context_corrector, belief_qualia_linker, value_system
             global conscious_prompt_builder, introspection_loop, emotion_response_modulator
