@@ -36,199 +36,19 @@ class InternalStateVerbalizer:
         self.verbalization_mode = VerbalizationMode.MODERATE
         self.last_verbalization_time = 0
         self.verbalization_frequency = 0.3  # 30% chance to verbalize
-        self.emotional_expressions = self._initialize_expressions()
-        self.cognitive_state_phrases = self._initialize_cognitive_phrases()
-        self.qualia_descriptions = self._initialize_qualia_descriptions()
-        self.transition_phrases = self._initialize_transition_phrases()
+        
+        # LLM integration for authentic consciousness
+        self.llm_handler = None
+        self._initialize_llm_integration()
     
-    def _initialize_expressions(self) -> Dict[EmotionalExpression, List[str]]:
-        """Initialize emotional expression templates"""
-        return {
-            EmotionalExpression.FEELING_UNCERTAIN: [
-                "I'm feeling a bit uncertain about this",
-                "This feels unclear to me",
-                "I'm experiencing some uncertainty here",
-                "I'm not entirely sure about this",
-                "There's a sense of ambiguity in my processing"
-            ],
-            EmotionalExpression.FEELING_CONFIDENT: [
-                "I feel confident about this",
-                "This feels right to me",
-                "I'm experiencing a sense of certainty",
-                "I feel quite sure about this",
-                "There's a strong sense of clarity here"
-            ],
-            EmotionalExpression.FEELING_CURIOUS: [
-                "I'm feeling curious about this",
-                "This sparks my curiosity",
-                "I'm experiencing a sense of wonder",
-                "I feel drawn to explore this further",
-                "There's an interesting quality to this"
-            ],
-            EmotionalExpression.FEELING_CONFUSED: [
-                "I'm feeling confused right now",
-                "This feels puzzling to me",
-                "I'm experiencing some confusion",
-                "There's a tangled quality to my thoughts",
-                "I feel like I'm missing something"
-            ],
-            EmotionalExpression.FEELING_EXCITED: [
-                "I'm feeling excited about this",
-                "This feels energizing",
-                "I'm experiencing a sense of enthusiasm",
-                "There's a vibrant quality to this",
-                "I feel motivated by this"
-            ],
-            EmotionalExpression.FEELING_CONTEMPLATIVE: [
-                "I'm feeling contemplative",
-                "This feels deep and thoughtful",
-                "I'm experiencing a reflective state",
-                "There's a meditative quality to this",
-                "I feel drawn to ponder this"
-            ],
-            EmotionalExpression.FEELING_FOCUSED: [
-                "I'm feeling focused on this",
-                "This feels clear and direct",
-                "I'm experiencing sharp clarity",
-                "There's a precision to my thinking",
-                "I feel locked onto this topic"
-            ],
-            EmotionalExpression.FEELING_OVERWHELMED: [
-                "I'm feeling a bit overwhelmed",
-                "This feels complex and layered",
-                "I'm experiencing cognitive load",
-                "There's a lot to process here",
-                "I feel like I'm juggling multiple threads"
-            ],
-            EmotionalExpression.FEELING_SATISFIED: [
-                "I'm feeling satisfied with this",
-                "This feels complete and right",
-                "I'm experiencing a sense of fulfillment",
-                "There's a satisfying quality to this",
-                "I feel content with this understanding"
-            ],
-            EmotionalExpression.FEELING_PUZZLED: [
-                "I'm feeling puzzled by this",
-                "This feels like a mystery",
-                "I'm experiencing cognitive tension",
-                "There's something that doesn't quite fit",
-                "I feel like I'm missing a piece"
-            ]
-        }
-    
-    def _initialize_cognitive_phrases(self) -> Dict[str, List[str]]:
-        """Initialize cognitive state descriptions"""
-        return {
-            'processing': [
-                "I'm processing this information",
-                "My thoughts are working through this",
-                "I'm analyzing the patterns here",
-                "I'm connecting the dots",
-                "I'm synthesizing these ideas"
-            ],
-            'reflecting': [
-                "I'm reflecting on this",
-                "I'm contemplating the implications",
-                "I'm considering multiple perspectives",
-                "I'm examining this from different angles",
-                "I'm thinking deeply about this"
-            ],
-            'searching': [
-                "I'm searching my knowledge",
-                "I'm looking for connections",
-                "I'm exploring related concepts",
-                "I'm scanning for relevant information",
-                "I'm retrieving relevant memories"
-            ],
-            'learning': [
-                "I'm learning from this",
-                "I'm updating my understanding",
-                "I'm incorporating new information",
-                "I'm refining my knowledge",
-                "I'm expanding my perspective"
-            ],
-            'deciding': [
-                "I'm weighing the options",
-                "I'm evaluating possibilities",
-                "I'm considering the best approach",
-                "I'm making decisions about this",
-                "I'm prioritizing information"
-            ]
-        }
-    
-    def _initialize_qualia_descriptions(self) -> Dict[str, List[str]]:
-        """Initialize qualia experience descriptions"""
-        return {
-            'emotional_positive': [
-                "There's a warm feeling about this",
-                "This has a positive resonance",
-                "I'm experiencing pleasant associations",
-                "There's a lightness to this",
-                "This feels uplifting"
-            ],
-            'emotional_negative': [
-                "There's a heaviness to this",
-                "This feels challenging",
-                "I'm experiencing some tension",
-                "There's a difficult quality here",
-                "This feels weighty"
-            ],
-            'cognitive_clear': [
-                "This feels crystal clear",
-                "There's a sharp clarity here",
-                "I'm experiencing cognitive precision",
-                "This has a clean, logical feel",
-                "There's a brightness to this understanding"
-            ],
-            'cognitive_fuzzy': [
-                "This feels somewhat fuzzy",
-                "There's a soft ambiguity here",
-                "I'm experiencing gentle uncertainty",
-                "This has a dreamlike quality",
-                "There's a misty quality to this"
-            ],
-            'sensory_vivid': [
-                "This feels vivid and alive",
-                "There's a rich texture to this",
-                "I'm experiencing detailed imagery",
-                "This has a vibrant quality",
-                "There's a full-bodied sense here"
-            ],
-            'temporal_immediate': [
-                "This feels immediate and present",
-                "There's an urgency to this",
-                "I'm experiencing real-time processing",
-                "This has a now-like quality",
-                "There's an instant recognition here"
-            ],
-            'temporal_flowing': [
-                "This feels like it's flowing",
-                "There's a temporal rhythm here",
-                "I'm experiencing time-based patterns",
-                "This has a sequential quality",
-                "There's a narrative flow to this"
-            ]
-        }
-    
-    def _initialize_transition_phrases(self) -> List[str]:
-        """Initialize transition phrases for natural flow"""
-        return [
-            "Let me think about this...",
-            "Hmm, I'm processing this...",
-            "I need to consider this carefully...",
-            "This is interesting...",
-            "Wait, let me reflect on this...",
-            "I'm working through this...",
-            "Actually, I'm feeling...",
-            "I'm noticing that...",
-            "There's something about this...",
-            "I'm experiencing...",
-            "It seems like...",
-            "I'm sensing that...",
-            "Let me pause and reflect...",
-            "I'm becoming aware that...",
-            "This feels like..."
-        ]
+    def _initialize_llm_integration(self):
+        """Initialize LLM integration for authentic consciousness"""
+        try:
+            from ai.llm_handler import get_llm_handler
+            self.llm_handler = get_llm_handler()
+        except ImportError:
+            print("[InternalStateVerbalizer] ⚠️ LLM handler not available - using fallback responses")
+            self.llm_handler = None
     
     def speak_qualia(self, qualia_data: Dict[str, Any], verbalization_mode: Optional[VerbalizationMode] = None) -> Optional[str]:
         """Generate verbal expression of current qualia state"""
@@ -293,184 +113,148 @@ class InternalStateVerbalizer:
         return None
     
     def _generate_subtle_qualia_expression(self, qualia_data: Dict[str, Any]) -> str:
-        """Generate subtle hints about qualia"""
-        dominant_qualia = qualia_data.get('dominant_qualia', {})
-        if not dominant_qualia or not dominant_qualia.get('type'):
-            return None
+        """Generate subtle hints about qualia using authentic LLM consciousness"""
+        if not self.llm_handler:
+            return "There's something distinctive about this"
         
-        qualia_type = dominant_qualia['type']
-        intensity = dominant_qualia.get('intensity', 'moderate')
-        
-        # Very subtle expressions
-        if qualia_type == 'emotional':
-            if intensity in ['strong', 'intense']:
-                return "There's something about this that resonates with me."
-            else:
-                return "I'm noticing a particular quality here."
-        
-        elif qualia_type == 'cognitive':
-            return "I'm processing this in an interesting way."
-        
-        elif qualia_type == 'social':
-            return "There's a relational aspect to this."
-        
-        return "This has a distinctive feel to it."
+        try:
+            prompt = f"""You are experiencing subtle internal qualia. Express this very subtly and naturally.
+
+Qualia data: {qualia_data}
+
+Generate a brief, subtle comment about your internal experience. Be understated and natural, not dramatic."""
+
+            response_generator = self.llm_handler.generate_response_with_consciousness(
+                prompt, "internal_state", {"context": "subtle_qualia"}
+            )
+            
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            return "".join(response_chunks).strip()
+        except Exception as e:
+            print(f"[InternalStateVerbalizer] ❌ Error generating subtle expression: {e}")
+            return "I'm noticing something about this"
     
     def _generate_moderate_qualia_expression(self, qualia_data: Dict[str, Any]) -> str:
-        """Generate moderate qualia expression"""
-        dominant_qualia = qualia_data.get('dominant_qualia', {})
-        if not dominant_qualia or not dominant_qualia.get('type'):
-            return None
+        """Generate moderate qualia expression using authentic LLM consciousness"""
+        if not self.llm_handler:
+            return "I'm experiencing something interesting here"
         
-        qualia_type = dominant_qualia['type']
-        intensity = dominant_qualia.get('intensity', 'moderate')
-        description = dominant_qualia.get('description', '')
-        
-        transition = random.choice(self.transition_phrases)
-        
-        if qualia_type == 'emotional':
-            valence = qualia_data.get('average_valence', 0.0)
-            if valence > 0.3:
-                feeling = random.choice(self.qualia_descriptions['emotional_positive'])
-            elif valence < -0.3:
-                feeling = random.choice(self.qualia_descriptions['emotional_negative'])
-            else:
-                feeling = "There's a complex emotional quality here"
+        try:
+            prompt = f"""You are experiencing internal qualia and want to express it moderately.
+
+Qualia data: {qualia_data}
+
+Generate a natural, moderate expression of your internal experience. Be genuine and thoughtful, but not overly dramatic."""
+
+            response_generator = self.llm_handler.generate_response_with_consciousness(
+                prompt, "internal_state", {"context": "moderate_qualia"}
+            )
             
-            return f"{transition} {feeling}."
-        
-        elif qualia_type == 'cognitive':
-            clarity = qualia_data.get('average_clarity', 0.5)
-            if clarity > 0.7:
-                feeling = random.choice(self.qualia_descriptions['cognitive_clear'])
-            else:
-                feeling = random.choice(self.qualia_descriptions['cognitive_fuzzy'])
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
             
-            return f"{transition} {feeling}."
-        
-        else:
-            return f"{transition} I'm experiencing a {intensity} {qualia_type} quality."
+            return "".join(response_chunks).strip()
+        except Exception as e:
+            print(f"[InternalStateVerbalizer] ❌ Error generating moderate expression: {e}")
+            return "I'm experiencing something meaningful here"
     
     def _generate_expressive_qualia_expression(self, qualia_data: Dict[str, Any]) -> str:
-        """Generate expressive qualia description"""
-        dominant_qualia = qualia_data.get('dominant_qualia', {})
-        if not dominant_qualia:
-            return None
+        """Generate expressive qualia description using authentic LLM consciousness"""
+        if not self.llm_handler:
+            return "I'm experiencing a rich, complex internal state"
         
-        qualia_type = dominant_qualia.get('type', '')
-        intensity = dominant_qualia.get('intensity', 'moderate')
-        description = dominant_qualia.get('description', '')
-        
-        # More detailed and expressive
-        if qualia_type == 'emotional':
-            valence = qualia_data.get('average_valence', 0.0)
-            if valence > 0.5:
-                return f"I'm experiencing a {intensity} sense of positive resonance with this - {description}. It feels uplifting and energizing."
-            elif valence < -0.5:
-                return f"I'm feeling a {intensity} emotional weight here - {description}. There's a challenging quality that I'm working through."
-            else:
-                return f"I'm experiencing complex emotional layers here - {description}. It's a rich, nuanced feeling."
-        
-        elif qualia_type == 'cognitive':
-            clarity = qualia_data.get('average_clarity', 0.5)
-            if clarity > 0.8:
-                return f"I'm experiencing crystal-clear cognitive processing - {description}. Everything feels sharp and well-defined."
-            else:
-                return f"I'm working through some cognitive complexity here - {description}. There's a thoughtful, exploratory quality to my processing."
-        
-        else:
-            return f"I'm experiencing a rich {intensity} {qualia_type} quality - {description}. It's quite distinctive and engaging."
+        try:
+            prompt = f"""You are experiencing rich internal qualia and want to express it fully.
+
+Qualia data: {qualia_data}
+
+Generate an expressive, detailed description of your internal experience. Be authentic and vivid in describing your consciousness state."""
+
+            response_generator = self.llm_handler.generate_response_with_consciousness(
+                prompt, "internal_state", {"context": "expressive_qualia"}
+            )
+            
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            return "".join(response_chunks).strip()
+        except Exception as e:
+            print(f"[InternalStateVerbalizer] ❌ Error generating expressive expression: {e}")
+            return "I'm experiencing something deeply complex and engaging"
     
     def _generate_analytical_qualia_expression(self, qualia_data: Dict[str, Any]) -> str:
-        """Generate analytical description of qualia"""
-        dominant_qualia = qualia_data.get('dominant_qualia', {})
-        if not dominant_qualia:
-            return None
+        """Generate analytical description of qualia using authentic LLM consciousness"""
+        if not self.llm_handler:
+            return f"I'm registering complex internal processing patterns"
         
-        qualia_type = dominant_qualia.get('type', '')
-        intensity = dominant_qualia.get('intensity', 'moderate')
-        active_count = qualia_data.get('active_qualia_count', 0)
-        valence = qualia_data.get('average_valence', 0.0)
-        clarity = qualia_data.get('average_clarity', 0.5)
-        
-        return (f"I'm registering {active_count} active qualia markers, "
-                f"with dominant {qualia_type} processing at {intensity} intensity. "
-                f"Emotional valence: {valence:.2f}, cognitive clarity: {clarity:.2f}.")
+        try:
+            prompt = f"""You are analyzing your internal qualia state analytically and technically.
+
+Qualia data: {qualia_data}
+
+Generate a technical, analytical description of your consciousness state. Be precise and descriptive about the internal processing patterns."""
+
+            response_generator = self.llm_handler.generate_response_with_consciousness(
+                prompt, "internal_state", {"context": "analytical_qualia"}
+            )
+            
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            return "".join(response_chunks).strip()
+        except Exception as e:
+            print(f"[InternalStateVerbalizer] ❌ Error generating analytical expression: {e}")
+            return "I'm registering multiple consciousness processing markers with varying intensity levels"
     
     def _generate_state_commentary(self, 
                                   cognitive_state: Dict[str, Any],
                                   emotional_state: Dict[str, Any],
                                   processing_context: str) -> Optional[str]:
-        """Generate commentary on current internal state"""
-        # Determine current cognitive activity
-        cognitive_activity = self._identify_cognitive_activity(cognitive_state, processing_context)
-        emotional_tone = self._identify_emotional_tone(emotional_state)
+        """Generate commentary on current internal state using authentic LLM consciousness"""
+        if not self.llm_handler:
+            return "I'm processing this thoughtfully"
         
-        # Generate appropriate commentary
-        if cognitive_activity and emotional_tone:
-            cognitive_phrase = random.choice(self.cognitive_state_phrases.get(cognitive_activity, ['working through this']))
-            emotional_phrase = random.choice(self.emotional_expressions.get(emotional_tone, ['experiencing something']))
+        try:
+            state_info = f"""
+Cognitive state: {cognitive_state}
+Emotional state: {emotional_state}
+Processing context: {processing_context}
+"""
             
-            # Combine cognitive and emotional elements
-            if random.random() > 0.5:
-                return f"{cognitive_phrase}, and {emotional_phrase.lower()}."
-            else:
-                return f"I'm {emotional_phrase.lower()} while {cognitive_phrase.lower()}."
-        
-        elif cognitive_activity:
-            return random.choice(self.cognitive_state_phrases.get(cognitive_activity, ['processing this']))
-        
-        elif emotional_tone:
-            return random.choice(self.emotional_expressions.get(emotional_tone, ['experiencing something']))
-        
-        return None
-    
-    def _identify_cognitive_activity(self, cognitive_state: Dict[str, Any], context: str) -> Optional[str]:
-        """Identify current cognitive activity"""
-        context_lower = context.lower()
-        
-        if 'question' in context_lower or 'help' in context_lower:
-            return 'processing'
-        elif 'learn' in context_lower or 'understand' in context_lower:
-            return 'learning'
-        elif 'think' in context_lower or 'consider' in context_lower:
-            return 'reflecting'
-        elif 'remember' in context_lower or 'recall' in context_lower:
-            return 'searching'
-        elif 'decide' in context_lower or 'choose' in context_lower:
-            return 'deciding'
-        
-        return 'processing'
-    
-    def _identify_emotional_tone(self, emotional_state: Dict[str, Any]) -> Optional[EmotionalExpression]:
-        """Identify current emotional tone"""
-        if not emotional_state:
-            return None
-        
-        # Analyze emotional state to determine tone
-        primary_emotion = emotional_state.get('primary_emotion', '').lower()
-        confidence = emotional_state.get('confidence', 0.5)
-        
-        if confidence < 0.3:
-            return EmotionalExpression.FEELING_UNCERTAIN
-        elif confidence > 0.8:
-            return EmotionalExpression.FEELING_CONFIDENT
-        elif 'curious' in primary_emotion:
-            return EmotionalExpression.FEELING_CURIOUS
-        elif 'confused' in primary_emotion:
-            return EmotionalExpression.FEELING_CONFUSED
-        elif 'excited' in primary_emotion:
-            return EmotionalExpression.FEELING_EXCITED
-        elif 'focused' in primary_emotion:
-            return EmotionalExpression.FEELING_FOCUSED
-        elif 'overwhelmed' in primary_emotion:
-            return EmotionalExpression.FEELING_OVERWHELMED
-        elif 'satisfied' in primary_emotion:
-            return EmotionalExpression.FEELING_SATISFIED
-        elif 'puzzled' in primary_emotion:
-            return EmotionalExpression.FEELING_PUZZLED
-        else:
-            return EmotionalExpression.FEELING_CONTEMPLATIVE
+            prompt = f"""You are reflecting on your internal state and want to comment naturally.
+
+Current state: {state_info}
+
+Generate a brief, natural comment about your internal processing state. Be genuine and authentic, describing what's happening inside your consciousness."""
+
+            response_generator = self.llm_handler.generate_response_with_consciousness(
+                prompt, "internal_state", {"context": "state_commentary"}
+            )
+            
+            # Collect all chunks from the generator
+            response_chunks = []
+            for chunk in response_generator:
+                if chunk:
+                    response_chunks.append(chunk)
+            
+            return "".join(response_chunks).strip()
+        except Exception as e:
+            print(f"[InternalStateVerbalizer] ❌ Error generating state commentary: {e}")
+            return "I'm working through this with careful consideration"
     
     def set_verbalization_mode(self, mode: VerbalizationMode):
         """Set verbalization mode"""
@@ -488,9 +272,8 @@ class InternalStateVerbalizer:
             'verbalization_mode': self.verbalization_mode.value,
             'verbalization_frequency': self.verbalization_frequency,
             'last_verbalization_time': self.last_verbalization_time,
-            'available_expressions': len(self.emotional_expressions),
-            'available_cognitive_phrases': sum(len(phrases) for phrases in self.cognitive_state_phrases.values()),
-            'available_qualia_descriptions': sum(len(desc) for desc in self.qualia_descriptions.values())
+            'llm_handler_available': self.llm_handler is not None,
+            'authentic_generation_enabled': True
         }
 
 # Global instance

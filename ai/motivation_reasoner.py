@@ -816,6 +816,26 @@ class MotivationReasoner:
                 
         except Exception as e:
             print(f"[MotivationReasoner] ❌ Error saving decision data: {e}")
+    
+    def process_pending_decisions(self):
+        """Process pending decisions and motivations (maintenance method)"""
+        try:
+            # Simple implementation - check for decisions that need follow-up
+            pending_decisions = [d for d in self.decisions.values() if not d.outcome]
+            
+            if pending_decisions:
+                # Process up to 3 pending decisions
+                for decision in pending_decisions[:3]:
+                    # Simulate decision processing
+                    if decision.urgency == DecisionUrgency.IMMEDIATE:
+                        # Mark as processed
+                        decision.outcome = {"status": "processed", "timestamp": datetime.now().isoformat()}
+                        
+            # Save updated state
+            self.save_decision_data()
+            
+        except Exception as e:
+            print(f"[MotivationReasoner] ❌ Error processing pending decisions: {e}")
 
 # Global instance
 motivation_reasoner = MotivationReasoner()

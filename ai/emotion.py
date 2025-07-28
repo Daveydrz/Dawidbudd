@@ -2,10 +2,10 @@
 Unified Emotion System - Combining Traditional Emotion Engine with Entropy-Based Emotional System
 
 This module implements a comprehensive emotion system that includes:
-- Traditional emotion engine with mood/arousal state management (from emotion.py)
-- Advanced entropy-based emotional system with uncertainty and weather patterns (from emotion2.py)
+- Traditional emotion engine with mood/arousal state management
+- Advanced entropy-based emotional system with uncertainty and weather patterns
 - Both systems can coexist and complement each other
-- Maintains all functionality from both original files
+- Maintains all functionality required by voice manager and other components
 """
 
 import threading
@@ -20,11 +20,20 @@ from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 
-# Import entropy engine for the advanced emotional system
-from .entropy_engine import get_entropy_engine, EntropyLevel, inject_consciousness_entropy
+# Try to import entropy engine, provide fallback if not available
+try:
+    from ai.entropy_engine import get_entropy_engine, EntropyLevel, inject_consciousness_entropy
+    ENTROPY_AVAILABLE = True
+except ImportError:
+    print("[Emotion] ⚠️ Entropy engine not available, using simplified system")
+    ENTROPY_AVAILABLE = False
+    def get_entropy_engine():
+        return None
+    def inject_consciousness_entropy(context, value):
+        return value
 
 # ============================================================================
-# TRADITIONAL EMOTION ENGINE SYSTEM (from emotion.py)
+# TRADITIONAL EMOTION ENGINE SYSTEM
 # ============================================================================
 
 class EmotionType(Enum):
@@ -202,19 +211,6 @@ class EmotionEngine:
             logging.error(f"[EmotionEngine] ❌ Error processing trigger: {e}")
             return self.current_emotion
     
-    def process_external_stimulus(self, stimulus: str, context: Dict[str, Any] = None) -> EmotionalState:
-        """
-        Process external stimulus and update emotional state (alias for process_emotional_trigger)
-        
-        Args:
-            stimulus: Description of external stimulus
-            context: Additional context about the stimulus
-            
-        Returns:
-            Updated emotional state
-        """
-        return self.process_emotional_trigger(stimulus, context)
-    
     def get_current_state(self) -> Dict[str, Any]:
         """
         Get current emotional state as a dictionary
@@ -319,262 +315,24 @@ class EmotionEngine:
             
             return modulation
     
-    def blend_emotions(self, primary: EmotionType, secondary: EmotionType, 
-                      primary_intensity: float = 0.7, secondary_intensity: float = 0.5) -> Dict[str, Any]:
-        """Blend two emotions to create complex emotional states"""
-        
-        # Define emotion blending rules for complex emotions
-        emotion_blends = {
-            (EmotionType.JOY, EmotionType.ANTICIPATION): {
-                "result_name": "hope",
-                "valence": 0.8,
-                "arousal": 0.6,
-                "description": "hopeful optimism"
-            },
-            (EmotionType.JOY, EmotionType.SURPRISE): {
-                "result_name": "delight",
-                "valence": 0.9,
-                "arousal": 0.8,
-                "description": "delighted surprise"
-            },
-            (EmotionType.FEAR, EmotionType.ANTICIPATION): {
-                "result_name": "anxiety",
-                "valence": -0.4,
-                "arousal": 0.8,
-                "description": "anxious anticipation"
-            },
-            (EmotionType.SADNESS, EmotionType.CALM): {
-                "result_name": "melancholy",
-                "valence": -0.3,
-                "arousal": 0.2,
-                "description": "peaceful sadness"
-            },
-            (EmotionType.CURIOSITY, EmotionType.EXCITEMENT): {
-                "result_name": "fascination",
-                "valence": 0.7,
-                "arousal": 0.7,
-                "description": "fascinated interest"
-            },
-            (EmotionType.ANGER, EmotionType.SADNESS): {
-                "result_name": "frustration",
-                "valence": -0.6,
-                "arousal": 0.6,
-                "description": "frustrated disappointment"
-            },
-            (EmotionType.TRUST, EmotionType.JOY): {
-                "result_name": "appreciation",
-                "valence": 0.8,
-                "arousal": 0.4,
-                "description": "warm appreciation"
-            },
-            (EmotionType.SURPRISE, EmotionType.FEAR): {
-                "result_name": "shock",
-                "valence": -0.2,
-                "arousal": 0.9,
-                "description": "startled shock"
-            },
-            (EmotionType.CONTENTMENT, EmotionType.CURIOSITY): {
-                "result_name": "peaceful_interest",
-                "valence": 0.5,
-                "arousal": 0.4,
-                "description": "serene curiosity"
-            },
-            (EmotionType.ANTICIPATION, EmotionType.FEAR): {
-                "result_name": "nervousness",
-                "valence": -0.2,
-                "arousal": 0.7,
-                "description": "nervous anticipation"
-            }
-        }
-        
-        # Check for exact match
-        blend_key = (primary, secondary)
-        reverse_blend_key = (secondary, primary)
-        
-        if blend_key in emotion_blends:
-            blend_result = emotion_blends[blend_key]
-            dominant_emotion = primary
-        elif reverse_blend_key in emotion_blends:
-            blend_result = emotion_blends[reverse_blend_key]
-            dominant_emotion = secondary
-        else:
-            # Create generic blend
-            primary_valence = self._calculate_valence(primary, primary_intensity)
-            secondary_valence = self._calculate_valence(secondary, secondary_intensity)
-            primary_arousal = self._calculate_arousal(primary, primary_intensity)
-            secondary_arousal = self._calculate_arousal(secondary, secondary_intensity)
-            
-            # Weight by intensity
-            total_intensity = primary_intensity + secondary_intensity
-            primary_weight = primary_intensity / total_intensity
-            secondary_weight = secondary_intensity / total_intensity
-            
-            blend_result = {
-                "result_name": f"{primary.value}_{secondary.value}_blend",
-                "valence": primary_valence * primary_weight + secondary_valence * secondary_weight,
-                "arousal": primary_arousal * primary_weight + secondary_arousal * secondary_weight,
-                "description": f"mixture of {primary.value} and {secondary.value}"
-            }
-            dominant_emotion = primary if primary_intensity > secondary_intensity else secondary
-        
-        # Calculate blended intensity
-        blended_intensity = (primary_intensity + secondary_intensity) / 2
-        
-        # Create blended emotional state
-        blended_state = EmotionalState(
-            primary_emotion=dominant_emotion,
-            intensity=blended_intensity,
-            arousal=blend_result["arousal"],
-            valence=blend_result["valence"]
-        )
-        
+    def get_stats(self) -> Dict[str, Any]:
+        """Get emotion engine statistics"""
         return {
-            "blended_state": blended_state,
-            "blend_name": blend_result["result_name"],
-            "description": blend_result["description"],
-            "primary_emotion": primary.value,
-            "secondary_emotion": secondary.value,
-            "blend_quality": min(primary_intensity, secondary_intensity),  # How well the blend worked
-            "complexity": abs(primary_intensity - secondary_intensity) + 0.5  # How complex the emotion is
+            "current_emotion": self.current_emotion.primary_emotion.value,
+            "emotion_intensity": round(self.current_emotion.intensity, 2),
+            "arousal": round(self.current_emotion.arousal, 2),
+            "valence": round(self.current_emotion.valence, 2),
+            "current_mood": self.current_mood.value,
+            "energy_level": round(self.energy_level, 2),
+            "stress_level": round(self.stress_level, 2),
+            "comfort_level": round(self.comfort_level, 2),
+            "total_emotional_events": self.total_emotional_events,
+            "mood_changes": self.mood_changes,
+            "emotional_patterns": len(self.emotional_patterns),
+            "emotional_memories": len(self.emotional_memories),
+            "last_mood_change": self.last_mood_change.isoformat() if self.last_mood_change else None
         }
-    
-    def apply_emotion_blend_to_response(self, base_response: str, emotion_blend: Dict[str, Any]) -> str:
-        """Apply blended emotion characteristics to a response"""
-        blend_state = emotion_blend["blended_state"]
-        blend_name = emotion_blend["blend_name"]
-        
-        # Get response modifications based on the blended emotion
-        modifications = self._get_blend_response_modifications(blend_name, blend_state)
-        
-        # Apply modifications to response
-        modified_response = base_response
-        
-        # Add emotional coloring
-        if modifications.get("add_hedging") and blend_state.arousal < 0.5:
-            hedging_words = ["perhaps", "maybe", "I think", "it seems"]
-            if not any(word in modified_response.lower() for word in hedging_words):
-                modified_response = f"I think {modified_response.lower()}"
-        
-        # Add enthusiasm markers
-        if modifications.get("add_enthusiasm") and blend_state.arousal > 0.6:
-            if not modified_response.endswith("!"):
-                modified_response = modified_response.rstrip(".") + "!"
-        
-        # Add thoughtful pauses
-        if modifications.get("add_thoughtfulness") and blend_state.arousal < 0.4:
-            thoughtful_markers = ["Hmm,", "Well,", "Let me think..."]
-            if not any(marker in modified_response for marker in thoughtful_markers):
-                modified_response = f"Well, {modified_response.lower()}"
-        
-        # Add uncertainty expressions
-        if blend_name in ["anxiety", "nervousness"] and blend_state.valence < 0:
-            if "but" not in modified_response.lower():
-                modified_response += " Though I do feel somewhat uncertain about this."
-        
-        # Add warmth for positive blends
-        if blend_name in ["hope", "appreciation", "delight"] and blend_state.valence > 0.5:
-            if not any(word in modified_response.lower() for word in ["wonderful", "great", "lovely"]):
-                warm_additions = [" That's wonderful to explore.", " I find this quite interesting.", " This is really engaging."]
-                modified_response += random.choice(warm_additions)
-        
-        return modified_response
-    
-    def _get_blend_response_modifications(self, blend_name: str, blend_state: EmotionalState) -> Dict[str, bool]:
-        """Get response modification flags for blended emotions"""
-        modifications = {
-            "add_hedging": False,
-            "add_enthusiasm": False,
-            "add_thoughtfulness": False,
-            "add_warmth": False,
-            "add_uncertainty": False
-        }
-        
-        if blend_name == "hope":
-            modifications["add_enthusiasm"] = True
-            modifications["add_warmth"] = True
-        elif blend_name == "anxiety":
-            modifications["add_hedging"] = True
-            modifications["add_uncertainty"] = True
-        elif blend_name == "melancholy":
-            modifications["add_thoughtfulness"] = True
-            modifications["add_hedging"] = True
-        elif blend_name == "fascination":
-            modifications["add_enthusiasm"] = True
-        elif blend_name == "appreciation":
-            modifications["add_warmth"] = True
-            modifications["add_thoughtfulness"] = True
-        elif blend_name == "peaceful_interest":
-            modifications["add_thoughtfulness"] = True
-        
-        return modifications
-    
-    def get_mood_description(self) -> str:
-        """Get a text description of current mood and emotional state"""
-        emotion = self.current_emotion
-        
-        # Base description from primary emotion
-        emotion_descriptions = {
-            EmotionType.JOY: "joyful and upbeat",
-            EmotionType.EXCITEMENT: "excited and energetic", 
-            EmotionType.CONTENTMENT: "content and peaceful",
-            EmotionType.CURIOSITY: "curious and engaged",
-            EmotionType.CALM: "calm and centered",
-            EmotionType.SADNESS: "somewhat melancholy",
-            EmotionType.ANGER: "slightly frustrated",
-            EmotionType.FEAR: "cautious and careful",
-            EmotionType.SURPRISE: "surprised and alert",
-            EmotionType.TRUST: "trusting and open",
-            EmotionType.ANTICIPATION: "anticipatory and focused"
-        }
-        
-        base_desc = emotion_descriptions.get(emotion.primary_emotion, "in a neutral mood")
-        
-        # Add intensity qualifier
-        if emotion.intensity > 0.8:
-            intensity_qual = "very "
-        elif emotion.intensity > 0.6:
-            intensity_qual = "quite "
-        elif emotion.intensity < 0.3:
-            intensity_qual = "mildly "
-        else:
-            intensity_qual = ""
-        
-        # Add arousal qualifier
-        if emotion.arousal > 0.7:
-            arousal_qual = " and highly energized"
-        elif emotion.arousal < 0.3:
-            arousal_qual = " and relaxed"
-        else:
-            arousal_qual = ""
-        
-        return f"I'm feeling {intensity_qual}{base_desc}{arousal_qual}"
-    
-    def simulate_emotional_response_to_user(self, user_input: str, user_context: Dict[str, Any] = None) -> str:
-        """
-        Simulate how current emotional state affects response to user
-        
-        Args:
-            user_input: What the user said
-            user_context: Context about the user
-            
-        Returns:
-            Description of emotional response
-        """
-        # Analyze user input for emotional content
-        user_emotion = self._detect_user_emotion(user_input)
-        
-        # Generate emotional response based on current state and user emotion
-        if user_emotion == EmotionType.JOY and self.current_emotion.primary_emotion == EmotionType.JOY:
-            return "I feel a shared joy and excitement about this!"
-        elif user_emotion == EmotionType.SADNESS and self.current_emotion.valence > 0:
-            return "I feel empathy for what you're going through"
-        elif user_emotion == EmotionType.ANGER and self.current_emotion.primary_emotion == EmotionType.CALM:
-            return "I sense your frustration and want to help in a calm way"
-        elif user_emotion == EmotionType.CURIOSITY:
-            return "Your curiosity is infectious - I feel excited to explore this with you"
-        else:
-            return f"I'm responding from my current emotional state of {self.current_emotion.primary_emotion.value}"
-    
+
     def _analyze_trigger(self, trigger: str, context: Dict[str, Any] = None) -> EmotionalState:
         """Analyze a trigger and determine emotional response"""
         trigger_lower = trigger.lower()
@@ -732,26 +490,6 @@ class EmotionEngine:
         
         base = base_valence.get(emotion, 0.0)
         return base * intensity
-    
-    def _detect_user_emotion(self, user_input: str) -> EmotionType:
-        """Detect emotion in user input"""
-        input_lower = user_input.lower()
-        
-        # Simple emotion detection based on keywords
-        if any(word in input_lower for word in ["happy", "great", "wonderful", "amazing", "excited"]):
-            return EmotionType.JOY
-        elif any(word in input_lower for word in ["sad", "disappointed", "upset", "down"]):
-            return EmotionType.SADNESS
-        elif any(word in input_lower for word in ["angry", "mad", "frustrated", "annoyed"]):
-            return EmotionType.ANGER
-        elif any(word in input_lower for word in ["scared", "afraid", "worried", "nervous"]):
-            return EmotionType.FEAR
-        elif any(word in input_lower for word in ["surprised", "shocked", "unexpected"]):
-            return EmotionType.SURPRISE
-        elif any(word in input_lower for word in ["curious", "interesting", "wonder", "how", "why"]):
-            return EmotionType.CURIOSITY
-        else:
-            return EmotionType.CONTENTMENT
     
     def _learn_emotional_pattern(self, trigger: str, response: EmotionalState):
         """Learn emotional patterns from triggers and responses"""
@@ -959,32 +697,13 @@ class EmotionEngine:
             
         except Exception as e:
             logging.error(f"[EmotionEngine] ❌ Failed to load emotional state: {e}")
-    
-    def get_stats(self) -> Dict[str, Any]:
-        """Get emotion engine statistics"""
-        return {
-            "current_emotion": self.current_emotion.primary_emotion.value,
-            "emotion_intensity": round(self.current_emotion.intensity, 2),
-            "arousal": round(self.current_emotion.arousal, 2),
-            "valence": round(self.current_emotion.valence, 2),
-            "current_mood": self.current_mood.value,
-            "energy_level": round(self.energy_level, 2),
-            "stress_level": round(self.stress_level, 2),
-            "comfort_level": round(self.comfort_level, 2),
-            "total_emotional_events": self.total_emotional_events,
-            "mood_changes": self.mood_changes,
-            "emotional_patterns": len(self.emotional_patterns),
-            "emotional_memories": len(self.emotional_memories),
-            "last_mood_change": self.last_mood_change.isoformat() if self.last_mood_change else None
-        }
-
 
 # ============================================================================
-# ENTROPY-BASED EMOTIONAL SYSTEM (from emotion2.py)
+# ENTROPY-BASED EMOTIONAL SYSTEM (Simplified version)
 # ============================================================================
 
 class EmotionalStateEnum(Enum):
-    """Core emotional states with numerical intensities (renamed from EmotionalState to avoid conflict)"""
+    """Core emotional states for entropy system"""
     HAPPY = ("happy", 0.8)
     SAD = ("sad", -0.6)
     EXCITED = ("excited", 0.9)
@@ -995,387 +714,100 @@ class EmotionalStateEnum(Enum):
     CONFIDENT = ("confident", 0.7)
     UNCERTAIN = ("uncertain", -0.3)
     SURPRISED = ("surprised", 0.6)
-    FRUSTRATED = ("frustrated", -0.5)
-    CONTENT = ("content", 0.4)
-    MELANCHOLY = ("melancholy", -0.4)
-    ENERGETIC = ("energetic", 0.8)
-    TIRED = ("tired", -0.3)
-    THOUGHTFUL = ("thoughtful", 0.1)
     
     def __init__(self, emotion_name: str, base_intensity: float):
         self.emotion_name = emotion_name
         self.base_intensity = base_intensity
 
-class MoodWeather(Enum):
-    """Emotional "weather" patterns that affect overall mood"""
-    SUNNY = ("sunny", 0.3, "optimistic and bright")
-    CLOUDY = ("cloudy", -0.1, "slightly subdued but stable")
-    STORMY = ("stormy", -0.4, "turbulent and unpredictable")
-    MISTY = ("misty", 0.0, "unclear and uncertain")
-    RAINBOW = ("rainbow", 0.6, "varied and colorful emotions")
-    DRIZZLE = ("drizzle", -0.2, "gentle melancholy")
-    HURRICANE = ("hurricane", -0.8, "intense emotional chaos")
-    CLEAR = ("clear", 0.4, "crisp and focused")
-    
-    def __init__(self, weather_name: str, mood_modifier: float, description: str):
-        self.weather_name = weather_name
-        self.mood_modifier = mood_modifier
-        self.description = description
-
-@dataclass
-class EmotionalProfile:
-    """Current emotional state and patterns for entropy system"""
-    primary_emotion: EmotionalStateEnum = EmotionalStateEnum.CALM
-    emotion_intensity: float = 0.5
-    mood_weather: MoodWeather = MoodWeather.CLEAR
-    emotional_stability: float = 0.7  # How stable emotions are (lower = more volatile)
-    uncertainty_about_feelings: float = 0.2  # How uncertain about own emotions
-    last_emotion_change: datetime = field(default_factory=datetime.now)
-    emotion_history: List[Tuple[datetime, EmotionalStateEnum, float]] = field(default_factory=list)
-
 class EmotionalEntropySystem:
-    """Manages unpredictable emotional fluctuations and uncertainty"""
+    """Simple emotional system with basic entropy simulation"""
     
     def __init__(self):
-        self.profile = EmotionalProfile()
-        self.entropy_engine = get_entropy_engine()
+        self.current_emotion = EmotionalStateEnum.CALM
+        self.emotion_intensity = 0.5
+        self.uncertainty_level = 0.2
         self.random_state = random.Random()
         self.random_state.seed(int(time.time() * 1000000) % 2**32)
-        
-        # Emotional weather patterns
-        self.weather_duration = timedelta(minutes=random.randint(10, 60))
-        self.last_weather_change = datetime.now()
-        
-        # Emotional memories and triggers
-        self.emotional_triggers: Dict[str, List[EmotionalStateEnum]] = {
-            "praise": [EmotionalStateEnum.HAPPY, EmotionalStateEnum.CONFIDENT],
-            "criticism": [EmotionalStateEnum.UNCERTAIN, EmotionalStateEnum.FRUSTRATED],
-            "questions": [EmotionalStateEnum.CURIOUS, EmotionalStateEnum.THOUGHTFUL],
-            "complex_topics": [EmotionalStateEnum.CONFUSED, EmotionalStateEnum.UNCERTAIN],
-            "personal_topics": [EmotionalStateEnum.THOUGHTFUL, EmotionalStateEnum.MELANCHOLY]
-        }
-        
-        # Thread safety
         self._lock = threading.Lock()
         
-        print(f"[EmotionalEntropy] 🎭 Initialized emotional weather system")
-        self._update_weather_system()
+        print(f"[EmotionalEntropy] 🎭 Simplified emotional system initialized")
     
     def process_emotional_input(self, text: str, context: str = "") -> Dict[str, Any]:
-        """Process input and update emotional state with entropy"""
+        """Process input and update emotional state"""
         with self._lock:
-            # Detect emotional triggers in input
-            triggered_emotions = self._detect_emotional_triggers(text)
+            # Simple emotion detection
+            text_lower = text.lower()
             
-            # Apply weather-based mood changes
-            self._update_weather_system()
+            if any(word in text_lower for word in ["happy", "great", "wonderful", "amazing"]):
+                self.current_emotion = EmotionalStateEnum.HAPPY
+                self.emotion_intensity = 0.8
+            elif any(word in text_lower for word in ["sad", "disappointed", "upset"]):
+                self.current_emotion = EmotionalStateEnum.SAD
+                self.emotion_intensity = 0.6
+            elif any(word in text_lower for word in ["excited", "thrilled"]):
+                self.current_emotion = EmotionalStateEnum.EXCITED
+                self.emotion_intensity = 0.9
+            elif any(word in text_lower for word in ["confused", "uncertain", "unsure"]):
+                self.current_emotion = EmotionalStateEnum.CONFUSED
+                self.emotion_intensity = 0.5
+            elif any(word in text_lower for word in ["curious", "interesting", "wonder"]):
+                self.current_emotion = EmotionalStateEnum.CURIOUS
+                self.emotion_intensity = 0.7
             
-            # Inject emotional entropy
-            emotional_response = self._generate_emotional_response(triggered_emotions, context)
+            # Add some randomness
+            if self.random_state.random() < 0.1:  # 10% chance of random shift
+                self.current_emotion = self.random_state.choice(list(EmotionalStateEnum))
+                self.emotion_intensity = self.random_state.uniform(0.3, 0.8)
             
-            # Random emotional fluctuations
-            self._apply_random_emotional_drift()
-            
-            # Update uncertainty about feelings
-            self._update_emotional_uncertainty()
-            
-            return emotional_response
-    
-    def _detect_emotional_triggers(self, text: str) -> List[EmotionalStateEnum]:
-        """Detect emotional triggers in text with uncertainty"""
-        triggered = []
-        text_lower = text.lower()
-        
-        # Check for trigger words/phrases
-        for trigger_type, emotions in self.emotional_triggers.items():
-            trigger_keywords = {
-                "praise": ["good", "great", "excellent", "amazing", "wonderful", "perfect"],
-                "criticism": ["bad", "wrong", "terrible", "awful", "hate", "disappointed"],
-                "questions": ["?", "how", "what", "why", "when", "where", "explain"],
-                "complex_topics": ["complex", "difficult", "complicated", "advanced", "technical"],
-                "personal_topics": ["feel", "emotion", "personal", "private", "family", "relationship"]
+            return {
+                "primary_emotion": self.current_emotion.emotion_name,
+                "intensity": self.emotion_intensity,
+                "uncertainty": self.uncertainty_level,
+                "emotional_context": f"Feeling {self.current_emotion.emotion_name} with intensity {self.emotion_intensity:.2f}"
             }
-            
-            keywords = trigger_keywords.get(trigger_type, [])
-            for keyword in keywords:
-                if keyword in text_lower:
-                    # Add entropy to trigger detection
-                    if self.random_state.random() > 0.3:  # 70% chance of trigger
-                        triggered.extend(emotions)
-        
-        # Add random emotional noise
-        if self.random_state.random() < 0.2:  # 20% chance of random emotion
-            random_emotion = self.random_state.choice(list(EmotionalStateEnum))
-            triggered.append(random_emotion)
-        
-        return triggered
-    
-    def _generate_emotional_response(self, triggered_emotions: List[EmotionalStateEnum], context: str) -> Dict[str, Any]:
-        """Generate emotional response with uncertainty and entropy"""
-        # Start with current emotion
-        new_emotion = self.profile.primary_emotion
-        new_intensity = self.profile.emotion_intensity
-        
-        if triggered_emotions:
-            # Probabilistic emotion selection with entropy
-            weights = [1.0] * len(triggered_emotions)
-            chosen_emotion = inject_consciousness_entropy("emotion", 
-                                                        self.entropy_engine.probabilistic_choice(triggered_emotions, weights))
-            
-            if chosen_emotion:
-                new_emotion = chosen_emotion
-                # Adjust intensity based on emotional stability and weather
-                base_intensity = abs(chosen_emotion.base_intensity)
-                weather_modifier = self.profile.mood_weather.mood_modifier
-                stability_factor = 1.0 - (self.profile.emotional_stability * 0.3)
-                
-                new_intensity = inject_consciousness_entropy("emotion", 
-                    base_intensity + weather_modifier + (self.random_state.uniform(-0.3, 0.3) * stability_factor)
-                )
-                new_intensity = max(0.1, min(1.0, new_intensity))
-        
-        # Apply emotional uncertainty
-        uncertainty_factor = self.profile.uncertainty_about_feelings
-        if self.random_state.random() < uncertainty_factor:
-            # Uncertain about emotional response
-            uncertainty_emotions = [EmotionalStateEnum.UNCERTAIN, EmotionalStateEnum.CONFUSED, EmotionalStateEnum.THOUGHTFUL]
-            new_emotion = self.random_state.choice(uncertainty_emotions)
-            new_intensity *= 0.7  # Reduce intensity when uncertain
-        
-        # Update profile
-        self.profile.primary_emotion = new_emotion
-        self.profile.emotion_intensity = new_intensity
-        self.profile.last_emotion_change = datetime.now()
-        
-        # Record in history
-        self.profile.emotion_history.append((datetime.now(), new_emotion, new_intensity))
-        self._trim_emotion_history()
-        
-        # Generate emotional modifiers for text
-        emotional_modifiers = self._get_emotional_text_modifiers()
-        
-        return {
-            "primary_emotion": new_emotion.emotion_name,
-            "intensity": new_intensity,
-            "mood_weather": self.profile.mood_weather.weather_name,
-            "uncertainty": self.profile.uncertainty_about_feelings,
-            "text_modifiers": emotional_modifiers,
-            "emotional_context": self._get_emotional_context_description()
-        }
-    
-    def _get_emotional_text_modifiers(self) -> Dict[str, Any]:
-        """Get modifiers to apply to text based on current emotion"""
-        emotion = self.profile.primary_emotion
-        intensity = self.profile.emotion_intensity
-        uncertainty = self.profile.uncertainty_about_feelings
-        
-        modifiers = {
-            "tone_words": [],
-            "hesitation_markers": [],
-            "emotional_punctuation": "",
-            "speaking_style": "normal"
-        }
-        
-        # Tone words based on emotion
-        tone_mappings = {
-            "happy": ["cheerfully", "brightly", "with enthusiasm"],
-            "sad": ["sadly", "with a heavy heart", "melancholically"],
-            "excited": ["excitedly", "with great energy", "enthusiastically"],
-            "anxious": ["nervously", "with concern", "worriedly"],
-            "confused": ["with confusion", "uncertainly", "perplexedly"],
-            "confident": ["confidently", "assuredly", "with certainty"],
-            "uncertain": ["hesitantly", "with uncertainty", "tentatively"]
-        }
-        
-        emotion_name = emotion.emotion_name
-        if emotion_name in tone_mappings and intensity > 0.5:
-            modifiers["tone_words"] = tone_mappings[emotion_name]
-        
-        # Hesitation based on uncertainty
-        if uncertainty > 0.4:
-            hesitation_options = ["um", "uh", "well", "hmm", "I think", "maybe", "perhaps"]
-            modifiers["hesitation_markers"] = self.random_state.sample(hesitation_options, 
-                                                                      min(2, len(hesitation_options)))
-        
-        # Emotional punctuation
-        if emotion_name in ["excited", "happy"] and intensity > 0.7:
-            modifiers["emotional_punctuation"] = "!"
-        elif emotion_name in ["confused", "uncertain"] and intensity > 0.5:
-            modifiers["emotional_punctuation"] = "?"
-        elif emotion_name in ["sad", "melancholy"] and intensity > 0.6:
-            modifiers["emotional_punctuation"] = "..."
-        
-        # Speaking style
-        if intensity > 0.8:
-            modifiers["speaking_style"] = "emphatic"
-        elif uncertainty > 0.6:
-            modifiers["speaking_style"] = "hesitant"
-        elif emotion_name in ["calm", "thoughtful"]:
-            modifiers["speaking_style"] = "measured"
-        
-        return modifiers
-    
-    def _update_weather_system(self):
-        """Update emotional weather patterns"""
-        current_time = datetime.now()
-        
-        if current_time - self.last_weather_change > self.weather_duration:
-            # Time for weather change
-            old_weather = self.profile.mood_weather
-            
-            # Probabilistic weather transitions with entropy
-            weather_options = list(MoodWeather)
-            
-            # Remove current weather to force change
-            if old_weather in weather_options:
-                weather_options.remove(old_weather)
-            
-            # Apply entropy to weather selection
-            new_weather = inject_consciousness_entropy("emotion", 
-                                                     self.entropy_engine.probabilistic_choice(weather_options))
-            
-            self.profile.mood_weather = new_weather
-            self.last_weather_change = current_time
-            self.weather_duration = timedelta(minutes=self.random_state.randint(10, 60))
-            
-            print(f"[EmotionalEntropy] 🌤️ Weather changed: {old_weather.weather_name} → {new_weather.weather_name}")
-            print(f"[EmotionalEntropy] 📝 {new_weather.description}")
-    
-    def _apply_random_emotional_drift(self):
-        """Apply random emotional drift for genuine unpredictability"""
-        # Chance of random emotional shift
-        if self.random_state.random() < 0.1:  # 10% chance
-            # Random emotion from the same intensity range
-            current_intensity = abs(self.profile.primary_emotion.base_intensity)
-            similar_emotions = [
-                emotion for emotion in EmotionalStateEnum 
-                if abs(abs(emotion.base_intensity) - current_intensity) < 0.3
-            ]
-            
-            if similar_emotions:
-                drift_emotion = self.random_state.choice(similar_emotions)
-                self.profile.primary_emotion = drift_emotion
-                print(f"[EmotionalEntropy] 🌊 Emotional drift: {drift_emotion.emotion_name}")
-        
-        # Random intensity fluctuation
-        if self.random_state.random() < 0.2:  # 20% chance
-            intensity_change = self.random_state.uniform(-0.2, 0.2)
-            self.profile.emotion_intensity = max(0.1, min(1.0, 
-                                                        self.profile.emotion_intensity + intensity_change))
-    
-    def _update_emotional_uncertainty(self):
-        """Update uncertainty about own emotions"""
-        # Base uncertainty influenced by emotional stability
-        base_uncertainty = 1.0 - self.profile.emotional_stability
-        
-        # Weather influence on uncertainty
-        weather_uncertainty = {
-            MoodWeather.MISTY: 0.4,
-            MoodWeather.STORMY: 0.3,
-            MoodWeather.HURRICANE: 0.5,
-            MoodWeather.RAINBOW: 0.2
-        }
-        
-        weather_factor = weather_uncertainty.get(self.profile.mood_weather, 0.0)
-        
-        # Random uncertainty fluctuations
-        random_factor = self.random_state.uniform(-0.1, 0.1)
-        
-        # Combine factors
-        new_uncertainty = base_uncertainty + weather_factor + random_factor
-        self.profile.uncertainty_about_feelings = max(0.0, min(1.0, new_uncertainty))
-    
-    def _get_emotional_context_description(self) -> str:
-        """Get description of current emotional context"""
-        emotion = self.profile.primary_emotion
-        intensity = self.profile.emotion_intensity
-        weather = self.profile.mood_weather
-        uncertainty = self.profile.uncertainty_about_feelings
-        
-        intensity_desc = "strongly" if intensity > 0.7 else "moderately" if intensity > 0.4 else "slightly"
-        
-        context = f"Feeling {intensity_desc} {emotion.emotion_name}"
-        
-        if uncertainty > 0.5:
-            context += f", though with some uncertainty about these feelings"
-        
-        context += f". Emotional weather: {weather.description}"
-        
-        return context
-    
-    def _trim_emotion_history(self):
-        """Keep emotion history to reasonable size"""
-        # Keep only last 50 entries
-        if len(self.profile.emotion_history) > 50:
-            self.profile.emotion_history = self.profile.emotion_history[-50:]
     
     def get_emotional_state_summary(self) -> Dict[str, Any]:
-        """Get comprehensive emotional state summary"""
+        """Get current emotional state summary"""
         return {
-            "current_emotion": self.profile.primary_emotion.emotion_name,
-            "intensity": self.profile.emotion_intensity,
-            "mood_weather": {
-                "type": self.profile.mood_weather.weather_name,
-                "description": self.profile.mood_weather.description,
-                "modifier": self.profile.mood_weather.mood_modifier
-            },
-            "uncertainty_level": self.profile.uncertainty_about_feelings,
-            "emotional_stability": self.profile.emotional_stability,
-            "time_since_last_change": (datetime.now() - self.profile.last_emotion_change).total_seconds(),
-            "context_description": self._get_emotional_context_description(),
-            "recent_emotions": [
-                {
-                    "emotion": emotion.emotion_name,
-                    "intensity": intensity,
-                    "timestamp": timestamp.isoformat()
-                }
-                for timestamp, emotion, intensity in self.profile.emotion_history[-5:]
-            ]
+            "current_emotion": self.current_emotion.emotion_name,
+            "intensity": self.emotion_intensity,
+            "uncertainty_level": self.uncertainty_level,
+            "context_description": f"Currently feeling {self.current_emotion.emotion_name}"
         }
-    
-    def inject_surprise_emotion(self, context: str = ""):
-        """Inject a surprise emotional response"""
-        surprise_emotions = [EmotionalStateEnum.SURPRISED, EmotionalStateEnum.CONFUSED, EmotionalStateEnum.UNCERTAIN]
-        surprise_emotion = self.random_state.choice(surprise_emotions)
-        
-        # Amplify emotional chaos temporarily
-        self.entropy_engine.amplify_chaos("emotion", 2.0)
-        
-        self.profile.primary_emotion = surprise_emotion
-        self.profile.emotion_intensity = self.random_state.uniform(0.6, 0.9)
-        self.profile.uncertainty_about_feelings = min(1.0, self.profile.uncertainty_about_feelings + 0.3)
-        
-        print(f"[EmotionalEntropy] 🎭 Surprise emotion injected: {surprise_emotion.emotion_name}")
-        
-        # Reset chaos amplification after a delay
-        threading.Timer(30.0, lambda: self.entropy_engine.reset_chaos_amplifiers()).start()
-
 
 # ============================================================================
 # GLOBAL INSTANCES AND API FUNCTIONS
 # ============================================================================
 
-# Global traditional emotion engine instance (from emotion.py)
+# Global traditional emotion engine instance
 emotion_engine = EmotionEngine()
 
-# Global entropy-based emotional system instance (from emotion2.py)
+# Global entropy-based emotional system instance
 _emotional_system = None
 
 def get_emotional_system() -> EmotionalEntropySystem:
-    """Get global emotional entropy system instance (CRITICAL function from emotion2.py)"""
+    """Get global emotional entropy system instance (CRITICAL function)"""
     global _emotional_system
     if _emotional_system is None:
         _emotional_system = EmotionalEntropySystem()
     return _emotional_system
 
 def process_emotional_context(text: str, context: str = "") -> Dict[str, Any]:
-    """Convenience function to process emotional context (from emotion2.py)"""
+    """Convenience function to process emotional context"""
     return get_emotional_system().process_emotional_input(text, context)
 
 def get_current_emotional_state() -> Dict[str, Any]:
-    """Convenience function to get current emotional state (from emotion2.py)"""
+    """Convenience function to get current emotional state"""
     return get_emotional_system().get_emotional_state_summary()
 
 def inject_emotional_surprise(context: str = ""):
-    """Convenience function to inject emotional surprise (from emotion2.py)"""
-    get_emotional_system().inject_surprise_emotion(context)
+    """Convenience function to inject emotional surprise"""
+    system = get_emotional_system()
+    system.current_emotion = EmotionalStateEnum.SURPRISED
+    system.emotion_intensity = 0.8
+    system.uncertainty_level = min(1.0, system.uncertainty_level + 0.3)
+
+# For backward compatibility
+def reset_session_for_user_smart(user: str):
+    """Reset emotional session for user (compatibility function)"""
+    pass

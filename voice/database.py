@@ -298,6 +298,30 @@ def convert_numpy_for_json(obj):
                 pass
         return obj
 
+def ensure_database_loaded():
+    """Ensure the voice database is properly loaded with all clusters"""
+    global known_users, anonymous_clusters
+    
+    try:
+        if not known_users and not anonymous_clusters:
+            print("[Database] 🔄 Database not loaded, loading now...")
+            load_known_users()
+        
+        # Verify clusters are loaded
+        cluster_count = len(anonymous_clusters)
+        user_count = len(known_users)
+        
+        print(f"[Database] ✅ Database loaded: {user_count} users, {cluster_count} clusters")
+        
+        if cluster_count == 0:
+            print("[Database] ⚠️ No anonymous clusters found - this might be expected for new systems")
+        
+        return True
+        
+    except Exception as e:
+        print(f"[Database] ❌ Error ensuring database loaded: {e}")
+        return False
+
 def save_known_users():
     """🚀 BULLETPROOF: Save with embedding preservation verification"""
     try:

@@ -734,12 +734,36 @@ class GoalReasoner:
                 data = json.load(f)
             
             for goal_data in data.get('goals', []):
+                # Handle both old and new enum formats
+                goal_type_value = goal_data['goal_type']
+                if isinstance(goal_type_value, str) and '.' in goal_type_value:
+                    goal_type_value = goal_type_value.split('.')[-1].lower()
+                
+                priority_value = goal_data['priority']
+                if isinstance(priority_value, str) and '.' in priority_value:
+                    priority_value = priority_value.split('.')[-1].lower()
+                
+                source_value = goal_data['source']
+                if isinstance(source_value, str) and '.' in source_value:
+                    source_value = source_value.split('.')[-1].lower()
+                
+                try:
+                    goal_type = GoalType(goal_type_value)
+                    priority = GoalPriority(priority_value)
+                    source = GoalSource(source_value)
+                except ValueError as e:
+                    # Fallback values if enum conversion fails
+                    goal_type = GoalType.SHORT_TERM
+                    priority = GoalPriority.MEDIUM
+                    source = GoalSource.SYSTEM_NEED
+                    print(f"[GoalReasoner] ⚠️ Enum conversion error: {e}, using fallback values")
+                
                 goal = GeneratedGoal(
                     goal_id=goal_data['goal_id'],
                     description=goal_data['description'],
-                    goal_type=GoalType(goal_data['goal_type']),
-                    priority=GoalPriority(goal_data['priority']),
-                    source=GoalSource(goal_data['source']),
+                    goal_type=goal_type,
+                    priority=priority,
+                    source=source,
                     triggering_factors=goal_data['triggering_factors'],
                     success_criteria=goal_data['success_criteria'],
                     related_beliefs=goal_data['related_beliefs'],
@@ -765,17 +789,50 @@ class GoalReasoner:
     def save_goal_data(self):
         """Save goal data to file"""
         try:
+            # Convert goals to dictionaries with proper enum handling
+            goals_list = []
+            for goal in self.generated_goals.values():
+                goal_dict = {
+                    'goal_id': goal.goal_id,
+                    'description': goal.description,
+                    'goal_type': goal.goal_type.value if hasattr(goal.goal_type, 'value') else str(goal.goal_type),
+                    'priority': goal.priority.value if hasattr(goal.priority, 'value') else str(goal.priority),
+                    'source': goal.source.value if hasattr(goal.source, 'value') else str(goal.source),
+                    'triggering_factors': goal.triggering_factors,
+                    'context': goal.context,
+                    'user_id': goal.user_id,
+                    'created_at': goal.created_at.isoformat() if isinstance(goal.created_at, datetime) else goal.created_at,
+                    'deadline': goal.deadline.isoformat() if isinstance(goal.deadline, datetime) else goal.deadline,
+                    'progress': goal.progress,
+                    'is_active': goal.is_active,
+                    'completion_criteria': goal.completion_criteria,
+                    'emotional_weight': goal.emotional_weight,
+                    'reasoning': goal.reasoning
+                }
+                goals_list.append(goal_dict)
+            
             data = {
-                'goals': [asdict(goal) for goal in self.generated_goals.values()],
+                'goals': goals_list,
                 'last_updated': datetime.now().isoformat(),
                 'total_goals': len(self.generated_goals)
             }
             
             with open(self.save_path, 'w') as f:
-                json.dump(data, f, indent=2, default=str)
+                json.dump(data, f, indent=2)
                 
         except Exception as e:
             print(f"[GoalReasoner] ❌ Error saving goal data: {e}")
+    
+    def generate_goals_from_context(self, context: str) -> List[Dict[str, Any]]:
+        """Generate goals based on context (simplified implementation)"""
+        try:
+            # This is a simplified implementation that returns existing goals
+            # In a full implementation, this would analyze the context and generate new goals
+            active_goals = self.get_active_goals()
+            return [asdict(goal) for goal in active_goals[:3]]  # Return up to 3 goals
+        except Exception as e:
+            print(f"[GoalReasoner] ❌ Error generating goals from context: {e}")
+            return []
 
 # Global instance
 goal_reasoner = GoalReasoner()

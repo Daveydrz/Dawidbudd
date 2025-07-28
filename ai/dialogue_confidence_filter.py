@@ -526,14 +526,32 @@ class DialogueConfidenceFilter:
                 data = json.load(f)
                 
             for instance_data in data.get('instances', []):
+                # Handle both old and new enum formats
+                uncertainty_type_value = instance_data['uncertainty_type']
+                if isinstance(uncertainty_type_value, str) and '.' in uncertainty_type_value:
+                    uncertainty_type_value = uncertainty_type_value.split('.')[-1].lower()
+                
+                strategy_value = instance_data['suggested_strategy']
+                if isinstance(strategy_value, str) and '.' in strategy_value:
+                    strategy_value = strategy_value.split('.')[-1].lower()
+                
+                try:
+                    uncertainty_type = UncertaintyType(uncertainty_type_value)
+                    strategy = ClarificationStrategy(strategy_value)
+                except ValueError as e:
+                    # Fallback values if enum conversion fails
+                    uncertainty_type = UncertaintyType.KNOWLEDGE_GAP
+                    strategy = ClarificationStrategy.ASK_DIRECT_QUESTION
+                    print(f"[DialogueConfidenceFilter] ⚠️ Enum conversion error: {e}, using fallback values")
+                
                 instance = UncertaintyInstance(
                     instance_id=instance_data['instance_id'],
-                    uncertainty_type=UncertaintyType(instance_data['uncertainty_type']),
+                    uncertainty_type=uncertainty_type,
                     confidence_score=instance_data['confidence_score'],
                     context=instance_data['context'],
                     query=instance_data['query'],
                     detected_indicators=instance_data['detected_indicators'],
-                    suggested_strategy=ClarificationStrategy(instance_data['suggested_strategy']),
+                    suggested_strategy=strategy,
                     clarification_text=instance_data['clarification_text'],
                     timestamp=instance_data['timestamp'],
                     resolved=instance_data.get('resolved', False)
@@ -556,8 +574,32 @@ class DialogueConfidenceFilter:
                 'total_instances': len(self.uncertainty_instances)
             }
             
+            # Convert enum values to their string values for JSON serialization
+            def convert_enums(obj):
+                if hasattr(obj, '__dict__'):
+                    # Handle dataclass objects
+                    result = {}
+                    for k, v in obj.__dict__.items():
+                        if hasattr(v, 'value'):
+                            result[k] = v.value
+                        elif isinstance(v, datetime):
+                            result[k] = v.isoformat()
+                        elif isinstance(v, (list, dict)):
+                            result[k] = v  # Let JSON handle these
+                        else:
+                            result[k] = v
+                    return result
+                elif isinstance(obj, dict):
+                    return {k: (v.value if hasattr(v, 'value') else v) for k, v in obj.items()}
+                elif hasattr(obj, 'value'):
+                    return obj.value
+                elif isinstance(obj, datetime):
+                    return obj.isoformat()
+                else:
+                    return str(obj)
+            
             with open(self.save_path, 'w') as f:
-                json.dump(data, f, indent=2, default=str)
+                json.dump(data, f, indent=2, default=convert_enums)
                 
         except Exception as e:
             print(f"[DialogueConfidenceFilter] ❌ Error saving uncertainty history: {e}")

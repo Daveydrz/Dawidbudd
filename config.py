@@ -4,8 +4,82 @@ Updated: 2025-01-08 06:23:11 (UTC) - ADVANCED AI ASSISTANT
 FEATURES: Advanced AI Assistant with clustering, anonymous voice collection, same-name handling, passive learning, Alexa/Siri-level intelligence
 """
 import os
+import json
 from datetime import datetime
 import pytz
+
+# ✅ Load Buddy Configuration
+def load_buddy_config():
+    """Load buddy configuration from JSON file"""
+    config_path = "buddy_config.json"
+    default_config = {
+        "consciousness_settings": {
+            "enable_inner_thoughts": False,
+            "enable_self_reflection": False,
+            "enable_consciousness_background_processing": True,
+            "enable_emotional_processing": True,
+            "enable_memory_formation": True
+        },
+        "response_optimization": {
+            "single_llm_call_mode": True,
+            "local_memory_updates": True,
+            "background_consciousness_processing": True,
+            "immediate_response_priority": True
+        },
+        "performance_settings": {
+            "target_response_time_seconds": 3,
+            "max_llm_calls_per_turn": 1,
+            "enable_streaming_response": True,
+            "consciousness_processing_timeout": 10
+        },
+        "debugging": {
+            "log_consciousness_processing": False,
+            "log_memory_updates": False,
+            "log_llm_calls": True,
+            "show_performance_metrics": True
+        }
+    }
+    
+    try:
+        if os.path.exists(config_path):
+            with open(config_path, 'r') as f:
+                config = json.load(f)
+            print(f"[Config] ✅ Loaded buddy configuration from {config_path}")
+            return config
+        else:
+            # Create default config file
+            with open(config_path, 'w') as f:
+                json.dump(default_config, f, indent=2)
+            print(f"[Config] 📄 Created default buddy configuration at {config_path}")
+            return default_config
+    except Exception as e:
+        print(f"[Config] ⚠️ Error loading config, using defaults: {e}")
+        return default_config
+
+# Load the configuration
+BUDDY_CONFIG = load_buddy_config()
+
+# ✅ Extract configuration values for easy access
+ENABLE_INNER_THOUGHTS = BUDDY_CONFIG["consciousness_settings"]["enable_inner_thoughts"]
+ENABLE_SELF_REFLECTION = BUDDY_CONFIG["consciousness_settings"]["enable_self_reflection"]
+ENABLE_CONSCIOUSNESS_BACKGROUND_PROCESSING = BUDDY_CONFIG["consciousness_settings"]["enable_consciousness_background_processing"]
+ENABLE_EMOTIONAL_PROCESSING = BUDDY_CONFIG["consciousness_settings"]["enable_emotional_processing"]
+ENABLE_MEMORY_FORMATION = BUDDY_CONFIG["consciousness_settings"]["enable_memory_formation"]
+
+SINGLE_LLM_CALL_MODE = BUDDY_CONFIG["response_optimization"]["single_llm_call_mode"]
+LOCAL_MEMORY_UPDATES = BUDDY_CONFIG["response_optimization"]["local_memory_updates"]
+BACKGROUND_CONSCIOUSNESS_PROCESSING = BUDDY_CONFIG["response_optimization"]["background_consciousness_processing"]
+IMMEDIATE_RESPONSE_PRIORITY = BUDDY_CONFIG["response_optimization"]["immediate_response_priority"]
+
+TARGET_RESPONSE_TIME_SECONDS = BUDDY_CONFIG["performance_settings"]["target_response_time_seconds"]
+MAX_LLM_CALLS_PER_TURN = BUDDY_CONFIG["performance_settings"]["max_llm_calls_per_turn"]
+ENABLE_STREAMING_RESPONSE = BUDDY_CONFIG["performance_settings"]["enable_streaming_response"]
+CONSCIOUSNESS_PROCESSING_TIMEOUT = BUDDY_CONFIG["performance_settings"]["consciousness_processing_timeout"]
+
+LOG_CONSCIOUSNESS_PROCESSING = BUDDY_CONFIG["debugging"]["log_consciousness_processing"]
+LOG_MEMORY_UPDATES = BUDDY_CONFIG["debugging"]["log_memory_updates"]
+LOG_LLM_CALLS = BUDDY_CONFIG["debugging"]["log_llm_calls"]
+SHOW_PERFORMANCE_METRICS = BUDDY_CONFIG["debugging"]["show_performance_metrics"]
 
 # ==== PRECISE LOCATION & TIME DETECTION ====
 try:
@@ -198,6 +272,10 @@ KOKORO_DEFAULT_VOICE = "af_heart"  # Australian female voice
 KOKORO_STREAMING_ENABLED = True    # Enable streaming TTS
 KOKORO_CHUNK_SIZE = 512           # Audio chunk size for streaming
 
+# ✅ ==== STREAMING CONSTANTS ====
+STREAMING_THREAD_POOL_SIZE = 4    # Thread pool size for streaming
+STREAMING_BUFFER_SIZE = 10        # Buffer size for streaming audio
+
 # ✅ Voice mapping for different languages (FastAPI voices)
 KOKORO_API_VOICES = {
     "en": "af_heart",      # Australian female (Dave's preference)
@@ -264,7 +342,7 @@ TRAINING_PHRASES = [
 
 # ==== LLM SETTINGS ====
 KOBOLD_URL = "http://localhost:5001/v1/chat/completions"
-MAX_TOKENS = 80
+MAX_TOKENS = 150  # Fixed: Reduced to requested token limit (150 max)
 TEMPERATURE = 0.7
 
 # ==== VOICE TRAINING MODES ====
@@ -532,8 +610,8 @@ STREAMING_PROFESSIONAL_MODE = True            # Professional speech delivery
 
 # ✅ ==== SMART RESPONSE SETTINGS ====
 SMART_RESPONSE_TIMING = True                   # ✅ NEW: Smart response timing
-MIN_WORDS_FOR_FIRST_CHUNK = 8                 # ✅ NEW: Minimum words before first chunk
-TARGET_COMPLETION_PERCENTAGE = 0.45           # ✅ NEW: Target 45% completion
+MIN_WORDS_FOR_FIRST_CHUNK = 3                 # ✅ PERFORMANCE: Reduced for immediate response  
+TARGET_COMPLETION_PERCENTAGE = 0.05           # ✅ PERFORMANCE: 5% for immediate streaming
 PRIORITIZE_COMPLETE_PHRASES = True             # ✅ NEW: Avoid cutting words
 NATURAL_BREAK_DETECTION = True                # ✅ NEW: Detect natural speech breaks
 
@@ -827,3 +905,15 @@ print(f"[Config] 🎭 Smart Responsive: {SMART_RESPONSE_TIMING}")
 
 print(f"[Config] 📅 CURRENT DATE & TIME: Auto-detected Brisbane time - System properly configured")
 print(f"[Config] 🚀 ADVANCED AI ASSISTANT BUDDY READY with ALEXA/SIRI-LEVEL INTELLIGENCE")
+
+# ✅ Display Buddy Configuration Status
+print(f"\n[Config] ⚙️ BUDDY PERFORMANCE CONFIGURATION:")
+print(f"  🧠 Inner Thoughts: {'ENABLED' if ENABLE_INNER_THOUGHTS else 'DISABLED'}")
+print(f"  🔄 Self Reflection: {'ENABLED' if ENABLE_SELF_REFLECTION else 'DISABLED'}")
+print(f"  ⚡ Single LLM Call Mode: {'ENABLED' if SINGLE_LLM_CALL_MODE else 'DISABLED'}")
+print(f"  💾 Local Memory Updates: {'ENABLED' if LOCAL_MEMORY_UPDATES else 'DISABLED'}")
+print(f"  🎯 Target Response Time: {TARGET_RESPONSE_TIME_SECONDS}s")
+print(f"  📊 Max LLM Calls Per Turn: {MAX_LLM_CALLS_PER_TURN}")
+print(f"  🌊 Background Consciousness: {'ENABLED' if BACKGROUND_CONSCIOUSNESS_PROCESSING else 'DISABLED'}")
+print(f"  🔧 Immediate Response Priority: {'ENABLED' if IMMEDIATE_RESPONSE_PRIORITY else 'DISABLED'}")
+print(f"[Config] 📈 Performance Mode: {'OPTIMIZED FOR SPEED' if SINGLE_LLM_CALL_MODE else 'FULL CONSCIOUSNESS'}")

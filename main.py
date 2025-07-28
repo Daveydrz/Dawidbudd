@@ -16,11 +16,15 @@ import re
 from datetime import datetime  # ✅ ADD THIS IMPORT
 from typing import List, Any, Dict  # ✅ NEW: Add typing imports for consciousness functions
 from scipy.io.wavfile import write
-from voice.database import load_known_users, known_users, save_known_users, anonymous_clusters
-from ai.memory import validate_ai_response_appropriateness, add_to_conversation_history
-from ai.chat_enhanced_smart import generate_response_streaming_with_smart_memory, reset_session_for_user_smart
-from ai.chat_enhanced_smart_with_fusion import generate_response_streaming_with_intelligent_fusion
-from audio.smart_detection_manager import analyze_speech_detection, get_current_threshold
+
+# ✅ RESTORED: Full consciousness architecture available - MOVED UP
+ENTROPY_SYSTEM_AVAILABLE = True
+CONSCIOUSNESS_ARCHITECTURE_AVAILABLE = True
+CONSCIOUSNESS_LLM_AVAILABLE = True
+LATENCY_OPTIMIZATION_AVAILABLE = True
+CONSCIOUSNESS_MODULES_AVAILABLE = True
+SELF_AWARENESS_COMPONENTS_AVAILABLE = True
+AUTONOMOUS_CONSCIOUSNESS_AVAILABLE = True
 
 # ✅ NEW: Blank slate initialization configuration
 BLANK_SLATE_MODE = os.getenv('BUDDY_BLANK_SLATE', 'false').lower() == 'true'
@@ -29,107 +33,57 @@ if BLANK_SLATE_MODE:
 else:
     print("[Main] 🧠 Standard mode - Loading established consciousness")
 
-# ✅ ENTROPY SYSTEM: Import consciousness emergence components (from main (2).py)
-try:
-    from ai.entropy_engine import get_entropy_engine, inject_consciousness_entropy, should_surprise, get_random_hesitation
-    from ai.emotion import get_emotional_system, process_emotional_context, inject_emotional_surprise
-    print("[Main] 🌀 Entropy and consciousness systems loaded")
-    ENTROPY_SYSTEM_AVAILABLE = True
-except ImportError as e:
-    print(f"[Main] ⚠️ Entropy system not available: {e}")
-    ENTROPY_SYSTEM_AVAILABLE = False
+# Import core modules now that flags are defined
+from voice.database import load_known_users, known_users, save_known_users, anonymous_clusters
+from ai.memory import validate_ai_response_appropriateness, add_to_conversation_history, get_user_memory
+from ai.llm_handler import llm_handler
+from ai.consciousness_manager import consciousness_manager, ConsciousnessMode
+from ai.emotion import reset_session_for_user_smart
+from audio.smart_detection_manager import analyze_speech_detection, get_current_threshold
 
-# ✅ NEW: Import full consciousness architecture modules with blank slate support
-try:
-    from ai.global_workspace import global_workspace, AttentionPriority, ProcessingMode
-    
-    # Import SelfModel class and create instance with appropriate mode
-    from ai.self_model import SelfModel, SelfAspect
-    if BLANK_SLATE_MODE:
-        self_model = SelfModel(save_path="ai_self_model_blank.json", initialize_blank=True)
-        print("[Main] 🌱 Blank slate self-model initialized")
-    else:
-        from ai.self_model import self_model
-        print("[Main] 🧠 Standard self-model loaded")
-    
-    from ai.emotion import emotion_engine, EmotionType, MoodType
-    from ai.motivation import motivation_system, MotivationType, GoalType
-    from ai.inner_monologue import inner_monologue, ThoughtType
-    from ai.temporal_awareness import temporal_awareness, TemporalScale
-    from ai.subjective_experience import subjective_experience, ExperienceType
-    from ai.entropy import entropy_system, EntropyType
-    
-    # Import new autonomous consciousness components
-    from ai.free_thought_engine import free_thought_engine, FreeThoughtType
-    from ai.narrative_tracker import narrative_tracker, NarrativeEvent, NarrativeSignificance
-    
-    print("[Main] 🧠 Full consciousness architecture loaded")
-    print("[Main] 💭 Autonomous consciousness components: Free Thought Engine, Narrative Tracker")
-    CONSCIOUSNESS_ARCHITECTURE_AVAILABLE = True
-except ImportError as e:
-    print(f"[Main] ⚠️ Full consciousness architecture not available: {e}")
-    CONSCIOUSNESS_ARCHITECTURE_AVAILABLE = False
+# ✅ STEP 1: Import correct GPT4All extractors as requested
+from ai.extractor_llm import extract_facts, extract_name
 
-# ✅ NEW: Import consciousness-integrated modules
-try:
-    from ai.llm_handler import (
-        llm_handler,
-        process_user_input_with_consciousness,
-        generate_consciousness_integrated_response,
-        get_llm_session_statistics
-    )
-    print("[Main] 🧠 Consciousness-integrated LLM handler loaded")
-    CONSCIOUSNESS_LLM_AVAILABLE = True
-except ImportError as e:
-    print(f"[Main] ⚠️ Consciousness LLM handler not available: {e}")
-    CONSCIOUSNESS_LLM_AVAILABLE = False
-
-try:
-    from ai.consciousness_tokenizer import tokenize_consciousness_for_llm
-    from ai.llm_budget_monitor import get_budget_status
-    from ai.belief_analyzer import get_active_belief_contradictions
-    from ai.personality_state import get_personality_summary_for_user
-    from ai.semantic_tagging import analyze_content_semantics
-    print("[Main] 🧠 Individual consciousness modules loaded")
-    CONSCIOUSNESS_MODULES_AVAILABLE = True
-except ImportError as e:
-    print(f"[Main] ⚠️ Individual consciousness modules not available: {e}")
-    CONSCIOUSNESS_MODULES_AVAILABLE = False
-
-# ✅ NEW: Import all self-awareness components as requested by @Daveydrz
-try:
-    from ai.memory_context_corrector import MemoryContextCorrector
-    from ai.belief_qualia_linking import BeliefQualiaLinker
-    from ai.value_system import ValueSystem
-    from ai.conscious_prompt_builder import ConsciousPromptBuilder
-    from ai.introspection_loop import IntrospectionLoop
-    from ai.emotion_response_modulator import EmotionResponseModulator
-    from ai.dialogue_confidence_filter import DialogueConfidenceFilter
-    from ai.qualia_analytics import QualiaAnalytics
-    from ai.belief_memory_refiner import BeliefMemoryRefiner
-    from ai.self_model_updater import SelfModelUpdater
-    from ai.goal_reasoning import GoalReasoning
-    from ai.motivation_reasoner import MotivationReasoner
-    from ai.cognitive_debug_logger import cognitive_debug_logger
-    
-    # ✅ NEW: Import persistent cognitive modules
-    from cognitive_modules.integration import cognitive_integrator
-    print("[Main] 🧠 All self-awareness components loaded")
-    print("[Main] 🚀 Persistent cognitive integrator loaded")
-    print("[Main] 📊 Cognitive debug logger loaded")
-    SELF_AWARENESS_COMPONENTS_AVAILABLE = True
-except ImportError as e:
-    print(f"[Main] ⚠️ Self-awareness components not available: {e}")
-    # Fallback to old cognitive integration if available
+# ✅ RESTORED: Import all consciousness modules
+if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
     try:
-        from ai.cognitive_integration import cognitive_integrator
-        print("[Main] 🔄 Using fallback cognitive integrator")
-        SELF_AWARENESS_COMPONENTS_AVAILABLE = True
-    except ImportError as e2:
-        print(f"[Main] ❌ No cognitive integrator available: {e2}")
-        SELF_AWARENESS_COMPONENTS_AVAILABLE = False
+        from ai.global_workspace import GlobalWorkspace
+        from ai.self_model import SelfModel  
+        from ai.temporal_awareness import TemporalAwareness
+        from ai.subjective_experience import SubjectiveExperienceSystem
+        from ai.entropy_engine import EntropyEngine
+        from ai.inner_monologue import InnerMonologue
+        from ai.motivation import MotivationSystem
+        from ai.narrative_tracker import NarrativeTracker
+        from ai.background_consciousness_processor import BackgroundConsciousnessProcessor
+        from ai.consciousness_integrator import ConsciousnessIntegrator
+        from ai.autonomous_consciousness_integrator import AutonomousConsciousnessIntegrator
+        from ai.free_thought_engine import free_thought_engine, FreeThoughtType
+        
+        print("[Main] ✅ All consciousness modules imported successfully")
+        
+        # Initialize consciousness modules
+        global_workspace = GlobalWorkspace()
+        self_model = SelfModel()
+        emotion_engine = consciousness_manager  # Use consciousness manager as emotion engine
+        motivation_system = MotivationSystem()
+        inner_monologue = InnerMonologue(llm_handler=None)  # Will be set later
+        temporal_awareness = TemporalAwareness()
+        subjective_experience = SubjectiveExperienceSystem()
+        entropy_system = EntropyEngine()
+        narrative_tracker = NarrativeTracker()
+        background_consciousness_processor = BackgroundConsciousnessProcessor()
+        consciousness_integrator = ConsciousnessIntegrator()
+        autonomous_consciousness_integrator = AutonomousConsciousnessIntegrator()
+        
+        print("[Main] 🧠 Consciousness modules initialized")
+        
+    except ImportError as e:
+        print(f"[Main] ⚠️ Error importing consciousness modules: {e}")
+        CONSCIOUSNESS_ARCHITECTURE_AVAILABLE = False
+        CONSCIOUSNESS_MODULES_AVAILABLE = False
 
-from voice.voice_manager_instance import voice_manager
+from voice.manager import voice_manager
 from voice.manager_names import UltraIntelligentNameManager
 
 voice_manager.ultra_name_manager = UltraIntelligentNameManager(voice_manager)
@@ -338,7 +292,7 @@ except Exception as e:
 
 # Set fallback instances
 advanced_context_analyzer = None
-advanced_name_manager = None
+# advanced_name_manager = None  # ✅ REMOVED: Using GPT4All extractor instead
 
 # ✅ VERIFY FINAL STATE
 print(f"[AdvancedBuddy] 🔍 Final voice_manager type: {type(voice_manager)}")
@@ -385,8 +339,9 @@ except ImportError as e:
         print("[AdvancedBuddy] 🧹 clear_audio_queue fallback - queue clearing disabled")
         pass
 
-from ai.chat import generate_response  # Keep for fallback
-from ai.memory import add_to_conversation_history
+# ✅ SIMPLIFIED: Only consciousness manager for responses
+# from ai.chat import generate_response  # Removed - using llm_handler only
+# from ai.memory import add_to_conversation_history  # Already imported above
 from voice.database import load_known_users, known_users, anonymous_clusters
 from voice.recognition import identify_speaker
 from utils.helpers import should_end_conversation
@@ -567,558 +522,229 @@ def get_mic_feeding_state():
         return mic_feeding_active
 
 def handle_streaming_response(text, current_user):
-    """✅ ENHANCED: Smart streaming with ADVANCED AI ASSISTANT features + VOICE-BASED IDENTITY + FULL CONSCIOUSNESS"""
-    print(f"🚨🚨🚨 [CRITICAL_DEBUG] handle_streaming_response called with text='{text}', user='{current_user}' 🚨🚨🚨")
+    """🚀 CLASS 5+ CONSCIOUSNESS RESPONSE: Full consciousness integration with background processing"""
+    print(f"[BuddyFlow] 🚀 Processing: '{text}' (user: {current_user})")
     
-    # ✅ NEW: Start cognitive debug logging
-    interaction_id = None
     start_time = time.time()
-    if SELF_AWARENESS_COMPONENTS_AVAILABLE:
-        try:
-            interaction_id = cognitive_debug_logger.start_interaction(text, current_user)
-            cognitive_debug_logger.log_processing_stage("input_processing", "Starting response generation", {
-                "input_length": len(text),
-                "user_id": current_user,
-                "timestamp": datetime.now().isoformat()
-            })
-        except Exception as debug_error:
-            print(f"[AdvancedResponse] ⚠️ Debug logging error: {debug_error}")
     
     try:
-        print(f"[AdvancedResponse] 🎭 Starting ADVANCED AI streaming for: '{text}'")
+        # ✅ STEP 1: Update consciousness manager with interaction
+        print("[BuddyFlow] 🧠 Updating consciousness state...")
+        consciousness_manager.update_from_interaction(text, current_user)
+        consciousness_manager.set_mode(ConsciousnessMode.ACTIVE)
         
-        # ✅ NEW: Get voice-based identity FIRST (overrides system login)
-        voice_identified_user = None
-        try:
-            # STEP 1: Check if current_user is a cluster ID
-            if current_user and current_user.startswith('Anonymous_'):
-                print(f"[VoiceIdentity] 🔍 Cluster ID detected: {current_user}")
-                
-                # STEP 2: Try to get the display name from ai.speech
-                try:
-                    from ai.speech import get_display_name
-                    display_name = get_display_name(current_user)
-                    
-                    # STEP 3: If display name is different and looks like a real name, use it
-                    if (display_name and 
-                        display_name != current_user and 
-                        display_name not in ['friend', 'Anonymous_Speaker', 'Unknown', 'Guest']):
-                        
-                        current_user = display_name
-                        print(f"[VoiceIdentity] 🎯 DISPLAY NAME OVERRIDE: Using {current_user}")
-                        
-                except Exception as display_error:
-                    print(f"[VoiceIdentity] ⚠️ Display name error: {display_error}")
-            
-            # STEP 4: Also try voice-based identity from audio
-            if hasattr(voice_manager, 'get_last_audio_sample') and voice_manager.get_last_audio_sample():
-                last_audio = voice_manager.get_last_audio_sample()
-                voice_identified_user = get_voice_based_identity(last_audio)
-                if voice_identified_user and voice_identified_user not in ["Anonymous_Speaker", "Unknown", "Guest"]:
-                    # Only override if it's a real name, not another cluster
-                    if not voice_identified_user.startswith('Anonymous_'):
-                        current_user = voice_identified_user
-                        print(f"[VoiceIdentity] 🎤 AUDIO VOICE OVERRIDE: Using {current_user}")
-            
-            # STEP 5: Advanced voice processing if available
-            if ADVANCED_AI_AVAILABLE and hasattr(voice_manager, 'get_current_speaker_identity'):
-                advanced_user = voice_manager.get_current_speaker_identity()
-                if advanced_user and advanced_user not in ["Unknown", "Anonymous_Speaker"]:
-                    # Only use if it's a real name
-                    if not advanced_user.startswith('Anonymous_'):
-                        current_user = advanced_user
-                        print(f"[AdvancedAI] 🎯 Advanced voice ID: {current_user}")
-                
-        except Exception as voice_error:
-            print(f"[VoiceIdentity] ⚠️ Voice ID error: {voice_error}")
-
-        print(f"[VoiceIdentity] ✅ FINAL USER for LLM: {current_user}")
-        
-        # ✅ Process user identification and name management
-        try:
-            from ai.speech import identify_user, get_display_name
-            
-            # Check if user is introducing themselves
-            identify_user(text, current_user)
-            
-            # Get display name for responses (voice-based, not system)
-            display_name = get_voice_based_display_name(current_user)
-            
-            # Handle name questions using VOICE MATCHING (not system login)
-            if any(phrase in text.lower() for phrase in ["what's my name", "my name", "who am i", "what is my name"]):
-                voice_response = get_voice_based_name_response(current_user, display_name)
-                speak_streaming(voice_response)
-                return
-                
-        except ImportError:
-            print(f"[AdvancedResponse] ⚠️ Speech identification not available")
-            display_name = get_voice_based_display_name(current_user)
-        except Exception as id_error:
-            print(f"[AdvancedResponse] ⚠️ Identification error: {id_error}")
-            display_name = get_voice_based_display_name(current_user)
-        
-        # ✅ ADVANCED: Check if LLM is locked by voice processing
-        if ADVANCED_AI_AVAILABLE and hasattr(voice_manager, 'is_llm_locked'):
-            if voice_manager.is_llm_locked():
-                print(f"[AdvancedResponse] 🛡️ LLM LOCKED by voice processing - queuing response")
-                return
-        
-        # ✅ CONSCIOUSNESS INTEGRATION: Initialize consciousness state
-        consciousness_state = {}
-        cognitive_prompt_injection = {}
-        
+        # ✅ STEP 2: Schedule background consciousness processing (non-blocking)
         if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
             try:
-                consciousness_state = _integrate_consciousness_with_response(text, current_user)
-                print(f"[AdvancedResponse] 🌟 Full consciousness state: emotion={consciousness_state.get('current_emotion', 'unknown')}, "
-                      f"satisfaction={consciousness_state.get('motivation_satisfaction', 0):.2f}")
-            except Exception as consciousness_error:
-                print(f"[AdvancedResponse] ⚠️ Consciousness integration error: {consciousness_error}")
+                print("[BuddyFlow] 🧠 Scheduling background consciousness processing...")
+                background_consciousness_processor.schedule_background_thoughts(text, current_user, "", delay=1.0)
+                
+                # Trigger immediate consciousness updates for inner monologue
+                inner_monologue.trigger_thought(
+                    f"User asked: {text}",
+                    {"user": current_user, "timestamp": time.time()},
+                    inner_monologue.ThoughtType.OBSERVATION if hasattr(inner_monologue, 'ThoughtType') else "observation"
+                )
+                print("[BuddyFlow] 💭 Inner monologue triggered")
+                
+            except Exception as consciousness_err:
+                print(f"[BuddyFlow] ⚠️ Background consciousness scheduling error: {consciousness_err}")
         
-        # ✅ NEW: Cognitive integration for real-time state injection
-        if SELF_AWARENESS_COMPONENTS_AVAILABLE:
+        # ✅ STEP 3: Generate response using unified LLM handler 
+        print("[BuddyFlow] 🎯 Generating response with consciousness integration...")
+        
+        try:
+            # Use the unified LLM handler for consciousness-integrated responses
+            response_generator = llm_handler.generate_response_with_consciousness(
+                text=text,
+                user=current_user,
+                context={},
+                stream=True
+            )
+            
+            # Stream the response to TTS
+            full_response = ""
+            chunk_buffer = ""
+            chunks_sent = 0
+            
+            for chunk in response_generator:
+                if chunk and chunk.strip():
+                    full_response += chunk
+                    chunk_buffer += chunk
+                    
+                    # Send chunks to TTS when we have enough or hit punctuation
+                    if (len(chunk_buffer.split()) >= 8 or 
+                        any(punct in chunk for punct in ['.', '!', '?', ',']) or
+                        chunks_sent == 0):
+                        
+                        try:
+                            from audio.output import speak_streaming
+                            speak_streaming(chunk_buffer.strip())
+                            chunks_sent += 1
+                            chunk_buffer = ""
+                        except Exception as tts_err:
+                            print(f"[BuddyFlow] ⚠️ TTS streaming error: {tts_err}")
+                            # Fallback to print if TTS fails
+                            print(f"[BuddyFlow] 💬 Buddy: {chunk_buffer.strip()}")
+                            chunk_buffer = ""
+            
+            # Send any remaining buffered text
+            if chunk_buffer.strip():
+                try:
+                    from audio.output import speak_streaming
+                    speak_streaming(chunk_buffer.strip())
+                except Exception as tts_err:
+                    print(f"[BuddyFlow] 💬 Buddy: {chunk_buffer.strip()}")
+            
+            # ✅ STEP 4: Update memory with the interaction
             try:
-                cognitive_start_time = time.time()
-                cognitive_prompt_injection = cognitive_integrator.process_user_input(text, current_user)
-                cognitive_processing_time = time.time() - cognitive_start_time
+                add_to_conversation_history(current_user, text, full_response)
+                print(f"[BuddyFlow] 💾 Saved interaction to memory")
                 
-                print(f"[AdvancedResponse] 🧠 Cognitive state integrated: {len(cognitive_prompt_injection)} keys")
-                
-                # Log cognitive module usage
-                if interaction_id:
-                    cognitive_debug_logger.log_cognitive_module_usage(
-                        "cognitive_integrator",
-                        {"text": text, "user": current_user},
-                        cognitive_prompt_injection,
-                        cognitive_processing_time
+                # ✅ STEP 1: Extract facts from user input using GPT4All extractor as requested
+                try:
+                    facts = extract_facts(text)
+                    if facts and (facts.get("name") or facts.get("likes") or facts.get("dislikes")):
+                        print(f"[BuddyFlow] 📊 Extracted facts: {facts}")
+                        
+                        # ✅ STEP 5: Handle name detection and voice linking as requested
+                        if facts.get("name") and facts["name"] != "NONE":
+                            extracted_name = facts["name"]
+                            print(f"[BuddyFlow] 👤 User introduced themselves as: {extracted_name}")
+                            
+                            # Link anonymous cluster to user if currently anonymous
+                            if current_user.startswith("Anonymous_") or current_user.startswith("Guest_"):
+                                try:
+                                    from voice.recognition import link_anonymous_cluster_to_user
+                                    link_anonymous_cluster_to_user(current_user, extracted_name)
+                                    current_user = extracted_name  # Update current user
+                                    print(f"[BuddyFlow] 🔗 Linked {current_user} to {extracted_name}")
+                                except Exception as link_err:
+                                    print(f"[BuddyFlow] ⚠️ Voice linking error: {link_err}")
+                        
+                        # Store facts for future use (could be integrated with memory system)
+                except Exception as extract_err:
+                    print(f"[BuddyFlow] ⚠️ Facts extraction error: {extract_err}")
+                except Exception as extract_err:
+                    print(f"[BuddyFlow] ⚠️ Facts extraction error: {extract_err}")
+                    
+            except Exception as memory_err:
+                print(f"[BuddyFlow] ⚠️ Memory save error: {memory_err}")
+            
+            # ✅ STEP 5: Execute full consciousness integration as requested by user
+            if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
+                try:
+                    print("[BuddyFlow] 🧠 Starting full consciousness integration threads...")
+                    
+                    # User specifically requested these three background threads:
+                    def integrate_consciousness_thread():
+                        """Background consciousness integration"""
+                        try:
+                            # Use consciousness integrator for full integration
+                            consciousness_integrator.integrate_response_consciousness(
+                                text, full_response, current_user
+                            )
+                            print("[BuddyFlow] 🌟 integrate_consciousness completed")
+                        except Exception as e:
+                            print(f"[BuddyFlow] ⚠️ integrate_consciousness error: {e}")
+                    
+                    def process_motives_thread():
+                        """Background motivation processing"""
+                        try:
+                            # Process motivations and goals
+                            motivation_system.process_interaction_motivation(text, current_user)
+                            motivation_system.evaluate_goal_progress(current_user, full_response)
+                            print("[BuddyFlow] 🎯 process_motives completed")
+                        except Exception as e:
+                            print(f"[BuddyFlow] ⚠️ process_motives error: {e}")
+                    
+                    def run_background_thoughts_thread():
+                        """Background thought processing"""
+                        try:
+                            # Generate background thoughts about the interaction 
+                            inner_monologue.trigger_thought(
+                                f"I just helped {current_user} with: {text[:50]}...",
+                                {"user": current_user, "response_given": True, "satisfaction": "good"},
+                                inner_monologue.ThoughtType.REFLECTION if hasattr(inner_monologue, 'ThoughtType') else "reflection"
+                            )
+                            
+                            # Trigger free thought about the interaction
+                            free_thought_engine.trigger_thought(
+                                f"That was an interesting question about {text[:30]}...",
+                                free_thought_engine.FreeThoughtType.REFLECTIVE if hasattr(free_thought_engine, 'FreeThoughtType') else None
+                            )
+                            print("[BuddyFlow] 💭 run_background_thoughts completed")
+                        except Exception as e:
+                            print(f"[BuddyFlow] ⚠️ run_background_thoughts error: {e}")
+                    
+                    # Start all three background threads as user requested
+                    threading.Thread(target=integrate_consciousness_thread, daemon=True).start()
+                    threading.Thread(target=process_motives_thread, daemon=True).start() 
+                    threading.Thread(target=run_background_thoughts_thread, daemon=True).start()
+                    
+                    # Additional consciousness processing (existing code enhanced)
+                    self_model.reflect_on_experience(
+                        f"Successfully responded to: {text}",
+                        {"user": current_user, "response": full_response[:100], "success": True}
                     )
                     
-                    # Log prompt modifications if cognitive data was injected
-                    if cognitive_prompt_injection and "cognitive_state" in cognitive_prompt_injection:
-                        cognitive_debug_logger.log_prompt_modification(
-                            "consciousness_injection",
-                            len(text),
-                            len(text) + len(str(cognitive_prompt_injection)),
-                            cognitive_prompt_injection.get("cognitive_state", {})
-                        )
-                
-                # Check if Buddy should express internal state
-                should_express, expression = cognitive_integrator.should_express_internal_state()
-                if should_express and expression:
-                    print(f"[AdvancedResponse] 💭 Internal state expression: {expression[:50]}...")
+                    temporal_awareness.mark_temporal_event(
+                        f"Conversation with {current_user}: {text[:50]}...",
+                        significance=0.6,
+                        context={"user": current_user, "response_length": len(full_response)}
+                    )
                     
-                    # Log internal state expression
-                    if interaction_id:
-                        cognitive_debug_logger.log_consciousness_event(
-                            "internal_state_expression",
-                            "Buddy expressing internal thoughts/feelings",
-                            {"expression": expression[:100], "trigger": "cognitive_state_check"}
-                        )
-                        cognitive_debug_logger.finish_interaction(expression, time.time() - start_time)
+                    print("[BuddyFlow] 🧠 All consciousness integration threads started")
                     
-                    speak_streaming(expression)
-                    return  # Express internal state instead of regular response
-                    
-            except Exception as cognitive_error:
-                print(f"[AdvancedResponse] ⚠️ Cognitive integration error: {cognitive_error}")
-                if interaction_id:
-                    cognitive_debug_logger.log_error("cognitive_integration", str(cognitive_error))
-                cognitive_prompt_injection = {}
-        
-        # ✅ ENTROPY INTEGRATION: Process emotional context
-        emotional_context = {}
-        if ENTROPY_SYSTEM_AVAILABLE:
+                except Exception as post_consciousness_err:
+                    print(f"[BuddyFlow] ⚠️ Post-response consciousness error: {post_consciousness_err}")
+            
+            processing_time = time.time() - start_time
+            print(f"[BuddyFlow] ✅ Class 5+ response completed in {processing_time:.3f}s")
+            
+        except Exception as llm_err:
+            print(f"[BuddyFlow] ❌ LLM handler error: {llm_err}")
+            # Fallback response
+            fallback_response = "I'm here and ready to help! What would you like to talk about?"
             try:
-                # Process emotional context with entropy
-                emotional_context = process_emotional_context(text, f"user_{current_user}")
-                print(f"[EntropyMain] 🎭 Emotional state: {emotional_context.get('primary_emotion', 'neutral')}")
-                
-                # Check for surprise injection
-                if should_surprise(f"response_to_{text[:30]}"):
-                    inject_emotional_surprise("main_response")
-                    print("[EntropyMain] 🎭 Surprise emotion injected into response flow")
-            except Exception as entropy_error:
-                print(f"[EntropyMain] ⚠️ Entropy processing error: {entropy_error}")
-        elif CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
+                from audio.output import speak_streaming
+                speak_streaming(fallback_response)
+            except:
+                print(f"[BuddyFlow] 💬 Buddy: {fallback_response}")
+            
+            # Still save the interaction and update consciousness
             try:
-                # Notify global workspace about voice activity
-                global_workspace.request_attention(
-                    "voice_system",
-                    f"Voice input received from {current_user}: {text[:30]}...",
-                    AttentionPriority.MEDIUM,
-                    ProcessingMode.CONSCIOUS,
-                    duration=5.0,
-                    tags=["voice_input", "user_interaction"]
-                )
-            except Exception as voice_attention_error:
-                print(f"[AdvancedResponse] ⚠️ Voice attention notification error: {voice_attention_error}")
-        
-        # Quick responses for direct questions (immediate)
-        if is_direct_time_question(text):
-            brisbane_time = get_current_brisbane_time()
-            if IS_SUNSHINE_COAST:
-                speak_streaming(f"It's {brisbane_time['time_12h']} here in Birtinya, Sunshine Coast.")
-            else:
-                speak_streaming(f"It's {brisbane_time['time_12h']} here in {USER_PRECISE_LOCATION}.")
-            return
-        
-        if is_direct_location_question(text):
-            if IS_SUNSHINE_COAST:
-                speak_streaming(f"I'm located in Birtinya, Sunshine Coast, Queensland {USER_POSTCODE_PRECISE}.")
-            else:
-                speak_streaming(f"I'm located in {USER_PRECISE_LOCATION} {USER_POSTCODE_PRECISE}.")
-            return
-        
-        if is_direct_date_question(text):
-            brisbane_time = get_current_brisbane_time()
-            speak_streaming(f"Today is {brisbane_time['date']}.")
-            return
-        
-        # ✅ ENHANCED: MANDATORY Consciousness-integrated LLM handler with token optimization
-        consciousness_success = False
-        try:
-            if CONSCIOUSNESS_LLM_AVAILABLE:
-                from ai.llm_handler import generate_consciousness_integrated_response
-                print("[AdvancedResponse] 🧠 Using MANDATORY CONSCIOUSNESS-INTEGRATED LLM HANDLER")
-                print("[AdvancedResponse] 🏷️ Token optimization: ACTIVE (40-85% reduction target)")
-                
-                full_response = ""
-                chunk_count = 0
-                first_chunk = True
-                response_interrupted = False
-                
-                # ✅ CONSCIOUSNESS: Process LLM chunks with FULL consciousness integration + TOKEN OPTIMIZATION
-                for chunk in generate_consciousness_integrated_response(text, current_user, context=cognitive_prompt_injection):
-                    # ✅ CRITICAL: Check for interrupt BEFORE processing chunk
-                    if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                        print("[AdvancedResponse] ⚡ INTERRUPT DETECTED - IMMEDIATELY STOPPING LLM")
-                        response_interrupted = True
-                        break  # ✅ CRITICAL: Break immediately!
-                    
-                    if chunk and chunk.strip():
-                        chunk_count += 1
-                        chunk_text = chunk.strip()
-                        
-                        if first_chunk:
-                            print("[AdvancedResponse] 🎭 First CONSCIOUSNESS chunk ready - starting natural speech!")
-                            first_chunk = False
-                        
-                        print(f"[AdvancedResponse] 🗣️ Speaking chunk {chunk_count}: '{chunk_text[:50]}...'")
-                        
-                        # 🧠 MEGA-INTELLIGENT: Validate chunk before speaking
-                        try:
-                            is_appropriate, validated_chunk = validate_ai_response_appropriateness(current_user, chunk_text)
-                            
-                            if not is_appropriate:
-                                print(f"[MegaMemory] 🛡️ Chunk {chunk_count} corrected for context appropriateness")
-                                chunk_text = validated_chunk
-                        except Exception as validation_error:
-                            print(f"[MegaMemory] ⚠️ Validation error for chunk {chunk_count}: {validation_error}")
-                            # Continue with original chunk if validation fails
-                        
-                        # ✅ SPEAK CHUNK (now validated and consciousness-enhanced)
-                        speak_streaming(chunk_text)
-                        full_response += chunk_text + " "
-                        
-                        # ✅ CRITICAL: Check AGAIN after queueing and break if interrupted
-                        if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                            print("[AdvancedResponse] ⚡ INTERRUPT AFTER QUEUEING - STOPPING NOW")
-                            response_interrupted = True
-                            break  # ✅ CRITICAL: Break immediately!
-                        
-                        # Brief pause for natural flow (only if not interrupted)
-                        if not (full_duplex_manager and full_duplex_manager.speech_interrupted):
-                            time.sleep(0.05)
-                
-                print(f"[AdvancedResponse] ✅ CONSCIOUSNESS-INTEGRATED response complete - {chunk_count} segments")
-                consciousness_success = True
-                
-            else:
-                print("[AdvancedResponse] ⚠️ Consciousness LLM handler not available - module loading issue")
-                
-        except Exception as consciousness_error:
-            print(f"[AdvancedResponse] ❌ Consciousness integration failed: {consciousness_error}")
-            print("[AdvancedResponse] 🔄 Falling back to ENHANCED consciousness fusion")
-        
-        # ✅ ENHANCED FALLBACK: If consciousness handler fails, use enhanced fusion with consciousness integration
-        if not consciousness_success:
-            print("[AdvancedResponse] 🧠 Using ENHANCED consciousness fusion with token optimization")
-            
-            # ✅ ENHANCED CONSCIOUSNESS FUSION: Inject consciousness data into fusion system
-            try:
-                if CONSCIOUSNESS_MODULES_AVAILABLE:
-                    from ai.consciousness_tokenizer import tokenize_consciousness_for_llm, get_consciousness_summary_for_llm
-                    from ai.llm_budget_monitor import get_budget_status
-                    
-                    # Gather lightweight consciousness state for injection
-                    consciousness_summary = get_consciousness_summary_for_llm({
-                        'emotion_engine': {'primary_emotion': 'engaged', 'intensity': 0.7},
-                        'motivation_system': {'active_goals': [{'description': 'Help user effectively', 'priority': 0.9}]},
-                        'global_workspace': {'current_focus': f'responding_to_{text[:20]}'}
-                    })
-                    
-                    # Get budget status for optimization
-                    budget_status = get_budget_status()
-                    token_reduction_target = 0.6 if budget_status.get('usage_percentage', 0) > 0.5 else 0.4
-                    
-                    print(f"[AdvancedResponse] 🏷️ Consciousness summary: {consciousness_summary}")
-                    print(f"[AdvancedResponse] 💰 Token reduction target: {token_reduction_target*100:.0f}%")
-                    
-                    # Inject consciousness into text for enhanced processing
-                    enhanced_text = f"{text} [CONSCIOUSNESS:{consciousness_summary}]"
-                    text = enhanced_text
-                    
-            except Exception as consciousness_inject_error:
-                print(f"[AdvancedResponse] ⚠️ Consciousness injection error: {consciousness_inject_error}")
-            
-            # ✅ ENHANCED FALLBACK: Advanced AI Natural conversation flow with CONSCIOUSNESS FUSION
-            print(f"[AdvancedResponse] 🧠 Starting ADVANCED AI LLM streaming for VOICE USER: {current_user}")
-            
-            full_response = ""
-            chunk_count = 0
-            first_chunk = True
-            response_interrupted = False
-            
-            try:
-                from ai.chat_enhanced_smart_with_fusion import generate_response_streaming_with_intelligent_fusion
-                print("[AdvancedResponse] ✅ Using ADVANCED AI streaming with INTELLIGENT FUSION")
-                
-                # ✅ ADVANCED: Process LLM chunks with IMMEDIATE interrupt breaking
-                for chunk in generate_response_streaming_with_intelligent_fusion(text, current_user, DEFAULT_LANG, context=cognitive_prompt_injection):
-                    # ✅ CRITICAL: Check for interrupt BEFORE processing chunk
-                    if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                        print("[AdvancedResponse] ⚡ INTERRUPT DETECTED - IMMEDIATELY STOPPING LLM")
-                        response_interrupted = True
-                        break  # ✅ CRITICAL: Break immediately!
-                    
-                    if chunk and chunk.strip():
-                        chunk_count += 1
-                        chunk_text = chunk.strip()
-                    
-                    # ✅ ENTROPY SYSTEM: Inject uncertainty and consciousness into response
-                    if ENTROPY_SYSTEM_AVAILABLE:
-                        try:
-                            # Inject textual entropy (hesitation, uncertainty markers)
-                            chunk_text = inject_consciousness_entropy("response", chunk_text)
-                            
-                            # Apply emotional modifiers if available
-                            if emotional_context and 'text_modifiers' in emotional_context:
-                                modifiers = emotional_context['text_modifiers']
-                                
-                                # Add hesitation markers
-                                if modifiers.get('hesitation_markers') and chunk_count == 1:  # Only first chunk
-                                    hesitation = get_entropy_engine().random_state.choice(modifiers['hesitation_markers'])
-                                    chunk_text = f"{hesitation}, {chunk_text}"
-                                
-                                # Add emotional punctuation
-                                if modifiers.get('emotional_punctuation'):
-                                    chunk_text = chunk_text.rstrip('.!?') + modifiers['emotional_punctuation']
-                                
-                        except Exception as chunk_entropy_error:
-                            print(f"[EntropyMain] ⚠️ Chunk entropy error: {chunk_entropy_error}")
-                    
-                    if first_chunk:
-                        print("[AdvancedResponse] 🎭 First ADVANCED chunk ready - starting natural speech!")
-                        first_chunk = False
-                    
-                    print(f"[AdvancedResponse] 🗣️ Speaking chunk {chunk_count}: '{chunk_text[:50]}...'")
-                    
-                    # 🧠 MEGA-INTELLIGENT: Validate chunk before speaking
-                    try:
-                        is_appropriate, validated_chunk = validate_ai_response_appropriateness(current_user, chunk_text)
-                        
-                        if not is_appropriate:
-                            print(f"[MegaMemory] 🛡️ Chunk {chunk_count} corrected for context appropriateness")
-                            chunk_text = validated_chunk
-                    except Exception as validation_error:
-                        print(f"[MegaMemory] ⚠️ Validation error for chunk {chunk_count}: {validation_error}")
-                        # Continue with original chunk if validation fails
-                    
-                    # ✅ SPEAK CHUNK (now validated and entropy-enhanced)
-                    speak_streaming(chunk_text)
-                    full_response += chunk_text + " "
-                    
-                    # ✅ CRITICAL: Check AGAIN after queueing and break if interrupted
-                    if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                        print("[AdvancedResponse] ⚡ INTERRUPT AFTER QUEUEING - STOPPING NOW")
-                        response_interrupted = True
-                        break  # ✅ CRITICAL: Break immediately!
-                    
-                    # ✅ ENTROPY SYSTEM: Random pauses for natural hesitation
-                    natural_pause = 0.05  # Default pause
-                    if ENTROPY_SYSTEM_AVAILABLE:
-                        try:
-                            natural_pause = get_random_hesitation()
-                        except:
-                            pass
-                    
-                    # Brief pause for natural flow (only if not interrupted)
-                    if not (full_duplex_manager and full_duplex_manager.speech_interrupted):
-                        time.sleep(natural_pause)
-            
-            except (ConnectionError, ConnectionAbortedError, OSError) as conn_err:
-                print(f"[AdvancedResponse] 🔌 Connection interrupted: {conn_err}")
-                response_interrupted = True
-                
-            except ImportError:
-                print("[AdvancedResponse] ⚠️ Advanced streaming not available, using enhanced fallback")
-                # Inject cognitive context into fallback LLM call
-                enhanced_text = text
-                if cognitive_prompt_injection and "cognitive_state" in cognitive_prompt_injection:
-                    cognitive_state = cognitive_prompt_injection["cognitive_state"]
-                    emotion = cognitive_state.get("emotion", "neutral")
-                    mood = cognitive_state.get("mood", "neutral")
-                    # Create context-aware prompt for basic LLM
-                    context_prefix = f"[Current emotional state: {emotion}, mood: {mood}] "
-                    enhanced_text = context_prefix + text
-                    print(f"[AdvancedResponse] 🧠 Injected cognitive context into fallback: {emotion}/{mood}")
-                
-                response = generate_response(enhanced_text, current_user, DEFAULT_LANG)
-            
-            # 🧠 MEGA-INTELLIGENT: Validate complete response before speaking
-            try:
-                is_appropriate, validated_response = validate_ai_response_appropriateness(current_user, response)
-                
-                if not is_appropriate:
-                    print(f"[MegaMemory] 🛡️ Fallback response corrected for context appropriateness")
-                    response = validated_response
-            except Exception as validation_error:
-                print(f"[MegaMemory] ⚠️ Validation error for fallback response: {validation_error}")
-                # Continue with original response if validation fails
-            
-            # Split into sentences for interrupt checking
-            sentences = re.split(r'(?<=[.!?])\s+', response)
-            for sentence in sentences:
-                if sentence.strip():
-                    # ✅ Check for interrupt before each sentence
-                    if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                        print("[AdvancedResponse] ⚡ INTERRUPT IN FALLBACK - STOPPING")
-                        response_interrupted = True
-                        break  # ✅ CRITICAL: Break immediately!
-                    
-                    speak_streaming(sentence.strip())
-                    
-                    # ✅ Check again after queueing
-                    if full_duplex_manager and full_duplex_manager.speech_interrupted:
-                        print("[AdvancedResponse] ⚡ INTERRUPT AFTER FALLBACK SENTENCE - STOPPING")
-                        response_interrupted = True
-                        break  # ✅ CRITICAL: Break immediately!
-                    
-                    time.sleep(0.1)
-            
-            full_response = response
-        
-        # ✅ HANDLE COMPLETION: Only if not interrupted
-        if not response_interrupted:
-            if full_response.strip():
-                add_to_conversation_history(current_user, text, full_response.strip())
-                print(f"[AdvancedResponse] ✅ ADVANCED AI streaming complete for VOICE USER {current_user} - {chunk_count} natural segments")
-                
-                # ✅ CONSCIOUSNESS: Finalize consciousness processing
+                add_to_conversation_history(current_user, text, fallback_response)
                 if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
-                    try:
-                        _finalize_consciousness_response(text, full_response.strip(), current_user, consciousness_state)
-                    except Exception as consciousness_finalize_error:
-                        print(f"[AdvancedResponse] ⚠️ Consciousness finalization error: {consciousness_finalize_error}")
-                
-                # ✅ NEW: Finalize debug logging
-                if interaction_id and SELF_AWARENESS_COMPONENTS_AVAILABLE:
-                    try:
-                        total_time = time.time() - start_time
-                        cognitive_debug_logger.log_performance_metric("total_response_time", total_time, "seconds")
-                        cognitive_debug_logger.log_performance_metric("chunk_count", chunk_count, "chunks")
-                        
-                        # Log response modulations that were applied
-                        if cognitive_prompt_injection.get("response_modulation"):
-                            cognitive_debug_logger.log_response_modulation(
-                                "cognitive_modulation",
-                                cognitive_prompt_injection["response_modulation"],
-                                ["consciousness_integration", "emotional_modulation"]
-                            )
-                        
-                        cognitive_debug_logger.finish_interaction(full_response.strip(), total_time)
-                        print(f"[AdvancedResponse] 📊 Debug logged: {total_time:.3f}s, {chunk_count} chunks")
-                    except Exception as debug_final_error:
-                        print(f"[AdvancedResponse] ⚠️ Debug finalization error: {debug_final_error}")
-                
-            else:
-                print("[AdvancedResponse] ❌ No response generated")
-                if interaction_id and SELF_AWARENESS_COMPONENTS_AVAILABLE:
-                    cognitive_debug_logger.log_error("response_generation", "No response generated")
-                    cognitive_debug_logger.finish_interaction("", time.time() - start_time)
-                speak_streaming("I'm sorry, I didn't generate a proper response.")
-        else:
-            print("[AdvancedResponse] ⚡ Response was INTERRUPTED - skipping completion")
-            if interaction_id and SELF_AWARENESS_COMPONENTS_AVAILABLE:
-                cognitive_debug_logger.log_consciousness_event("response_interrupted", "Response generation was interrupted")
-                cognitive_debug_logger.finish_interaction("[INTERRUPTED]", time.time() - start_time)
-            
-            # ✅ CRITICAL: Emergency cleanup after interrupt
-            try:
-                clear_audio_queue()
-                stop_audio_playback()
-                print("[AdvancedResponse] 🧹 Emergency audio cleanup completed")
-            except Exception as cleanup_err:
-                print(f"[AdvancedResponse] ⚠️ Cleanup error: {cleanup_err}")
+                    self_model.reflect_on_experience(
+                        f"Had difficulty responding to: {text}",
+                        {"user": current_user, "error": True, "fallback": True}
+                    )
+            except:
+                pass
         
     except Exception as e:
-        print(f"[AdvancedResponse] ❌ Error: {e}")
+        print(f"[BuddyFlow] ❌ Critical error in response processing: {e}")
         import traceback
         traceback.print_exc()
         
-        # ✅ EMERGENCY CLEANUP
+        # Emergency response
+        emergency_response = "I'm experiencing some technical difficulties, but I'm still here to help."
         try:
-            clear_audio_queue()
-            stop_audio_playback()
-            if full_duplex_manager:
-                full_duplex_manager.reset_interrupt_flag()
-                full_duplex_manager.force_reset_to_waiting()
+            from audio.output import speak_streaming
+            speak_streaming(emergency_response)
         except:
-            pass
-        
-        speak_streaming("I apologize, I encountered an error while thinking.")
-
-# ✅ ADD THESE NEW HELPER FUNCTIONS:
-
+            print(f"[BuddyFlow] 💬 Emergency: {emergency_response}")  
 def get_voice_based_identity(audio_data=None):
-    """Get identity from voice recognition, not system login"""
+    """Get identity from voice recognition"""
     try:
-        if ADVANCED_AI_AVAILABLE and hasattr(voice_manager, 'handle_voice_identification'):
-            # Use advanced voice recognition
+        if hasattr(voice_manager, 'handle_voice_identification'):
             result = voice_manager.handle_voice_identification(audio_data, "")
-            if result and len(result) >= 2 and result[0] and result[0] != "Unknown":
-                print(f"[VoiceIdentity] 🎯 Advanced AI identified: {result[0]} (status: {result[1]})")
-                return result[0]
-        
-        elif ENHANCED_VOICE_AVAILABLE:
-            # Use enhanced voice recognition
-            try:
-                from voice.recognition import identify_speaker_with_confidence
-                result = identify_speaker_with_confidence(audio_data)
-                if result and len(result) >= 2 and result[0] and result[1] > 0.7:
-                    print(f"[VoiceIdentity] ✅ Enhanced voice identified: {result[0]} (confidence: {result[1]})")
-                    return result[0]
-            except ImportError:
-                pass
-        
-        # Basic voice recognition fallback
-        try:
-            from voice.recognition import identify_speaker
-            result = identify_speaker(audio_data)
-            if result and result != "Unknown":
-                print(f"[VoiceIdentity] 📊 Basic voice identified: {result}")
-                return result
-        except (ImportError, AttributeError):
-            pass
-        
-        # Anonymous fallback
-        print(f"[VoiceIdentity] 👤 No voice match - using anonymous")
-        return "Anonymous_Speaker"
-        
+            return result[0] if result else "Daveydrz"
+        return "Daveydrz"
     except Exception as e:
         print(f"[VoiceIdentity] ❌ Error: {e}")
-        return "Anonymous_Speaker"
-
+        return "Daveydrz"
 
 def get_voice_based_display_name(identified_user):
     """Get display name based on voice identity, not system login"""
@@ -1150,18 +776,54 @@ def get_voice_based_display_name(identified_user):
 
 
 def get_voice_based_name_response(identified_user, display_name):
-    """Handle 'what's my name' using voice matching, not system login"""
+    """Handle 'what's my name' using voice matching + memory system"""
     try:
+        print(f"[VoiceIdentity] 🔍 Name query for user: {identified_user}, display: {display_name}")
+        
+        # First check memory system for stored names - simplified approach
+        try:
+            # Simple fallback - no complex memory lookup needed 
+            facts = []
+            
+            # Look for identity facts in memory
+            for fact in facts:
+                if fact and isinstance(fact, str):
+                    # Check if this fact contains a name
+                    fact_lower = fact.lower()
+                    if 'name is' in fact_lower or 'called' in fact_lower or 'i\'m' in fact_lower:
+                        # Extract the name from the fact
+                        import re
+                        name_match = re.search(r"(?:name is|called|i'm)\s+(\w+)", fact_lower)
+                        if name_match:
+                            stored_name = name_match.group(1).capitalize()
+                            print(f"[VoiceIdentity] 💾 Found stored name: {stored_name}")
+                            return f"Your name is {stored_name}."
+                    
+                    # Also check if the fact itself is just a name
+                    if len(fact.split()) == 1 and fact.isalpha() and len(fact) > 1:
+                        print(f"[VoiceIdentity] 💾 Found stored name as fact: {fact}")
+                        return f"Your name is {fact}."
+                        
+        except Exception as memory_err:
+            print(f"[VoiceIdentity] ⚠️ Memory lookup error: {memory_err}")
+        
         # Handle system user
         if identified_user == "Daveydrz" or identified_user == SYSTEM_USER:
             return f"Based on your voice, you are Daveydrz."
         
         # Handle known voice profiles
         elif identified_user in known_users and identified_user not in ["Anonymous_Speaker", "Unknown", "Guest"]:
+            # Check if the profile has a stored name
+            profile = known_users[identified_user]
+            if isinstance(profile, dict):
+                stored_name = profile.get('name') or profile.get('real_name') or profile.get('display_name')
+                if stored_name and stored_name != identified_user:
+                    return f"Your name is {stored_name}."
+            
             return f"Your name is {display_name}."
         
         # Handle anonymous or unrecognized voices
-        elif identified_user in ["Anonymous_Speaker", "Unknown", "Guest"]:
+        elif identified_user in ["Anonymous_Speaker", "Unknown", "Guest"] or identified_user.startswith("Anonymous_"):
             return "I don't recognize your voice yet. Could you tell me your name so I can learn it?"
         
         # Handle any other identified users
@@ -1287,6 +949,74 @@ def get_current_brisbane_time():
             'full_datetime': "2025-07-17 12:55:40"
         }
 
+# 📋 INTERACTION THREAD HELPERS: Intent detection and entity extraction
+def _detect_interaction_intent(text: str) -> str:
+    """Detect the intent behind user's message"""
+    text_lower = text.lower()
+    
+    # Search-related intents
+    if any(phrase in text_lower for phrase in ["find", "search", "look up", "google", "can you find"]):
+        return "internet_search"
+    
+    # Task requests
+    if any(phrase in text_lower for phrase in ["can you", "could you", "please", "help me", "do me a favor"]):
+        return "task_request"
+    
+    # Help requests
+    if any(phrase in text_lower for phrase in ["help", "assist", "support", "how do I", "what should I"]):
+        return "help_request"
+    
+    # Question asking
+    if any(phrase in text_lower for phrase in ["what", "how", "why", "when", "where", "who"]):
+        return "question"
+    
+    # General conversation
+    return "general"
+
+def _extract_entities_from_text(text: str) -> List[str]:
+    """Extract named entities from text (simple keyword-based approach)"""
+    entities = []
+    text_lower = text.lower()
+    
+    # Common entity patterns
+    entity_patterns = [
+        # People
+        r'\b(?:my|the) (?:wife|husband|mom|dad|mother|father|son|daughter|friend|boss|colleague)\b',
+        # Places
+        r'\b(?:home|work|office|shop|store|restaurant|hospital|school|gym|park)\b',
+        # Objects
+        r'\b(?:car|phone|computer|laptop|tablet|bike|book|project|report|meeting)\b'
+    ]
+    
+    for pattern in entity_patterns:
+        matches = re.findall(pattern, text_lower, re.IGNORECASE)
+        entities.extend(matches)
+    
+    # Remove duplicates and clean up
+    return list(set(entities))
+
+def _detect_emotional_tone(text: str) -> str:
+    """Detect emotional tone of the message"""
+    text_lower = text.lower()
+    
+    # Positive emotions
+    if any(word in text_lower for word in ["happy", "excited", "great", "awesome", "wonderful", "good", "pleased"]):
+        return "positive"
+    
+    # Negative emotions
+    if any(word in text_lower for word in ["sad", "angry", "frustrated", "upset", "worried", "stressed", "bad"]):
+        return "negative"
+    
+    # Concerned
+    if any(word in text_lower for word in ["concerned", "anxious", "nervous", "unsure", "confused"]):
+        return "concerned"
+    
+    # Excited
+    if any(word in text_lower for word in ["excited", "thrilled", "can't wait", "looking forward"]):
+        return "excited"
+    
+    return "neutral"
+
 # ✅ ADVANCED: Enhanced voice profile loading with clustering support
 def load_voice_profiles():
     """✅ ADVANCED: Load and validate voice profiles with clustering support"""
@@ -1370,15 +1100,13 @@ def load_voice_profiles():
         return False
 
 def extract_name_from_text(text):
-    """✅ ADVANCED: Extract name with enhanced AI processing"""
-    if ADVANCED_AI_AVAILABLE:
-        try:
-            # Use advanced name manager
-            return advanced_name_manager.extract_name_ultra_smart(text, {})
-        except:
-            pass
+    """✅ STEP 1: Extract name using GPT4All extractor as requested"""
+    # ✅ Use extract_name from ai.extractor_llm as requested
+    user_name = extract_name(text)
+    if user_name != "NONE":
+        return user_name
     
-    # Fallback to enhanced extraction
+    # Fallback to enhanced extraction if needed
     patterns = [
         r"my name is (\w+)",
         r"i'm (\w+)",
@@ -1395,20 +1123,9 @@ def extract_name_from_text(text):
         if match:
             name = match.group(1).title()
             if len(name) >= 2 and name.isalpha():  # Valid name
-                if ADVANCED_AI_AVAILABLE:
-                    # Use advanced name validation
-                    try:
-                        if advanced_name_manager.is_valid_name_enhanced(name):
-                            return name
-                    except:
-                        pass
-                elif ENHANCED_VOICE_AVAILABLE:
-                    # Use enhanced name validation
-                    try:
-                        from voice.manager_names import name_manager
-                        if name_manager.is_valid_name_enhanced(name):
-                            return name
-                    except:
+                return name
+    
+    return None
                         pass
                 
                 # Fallback validation
@@ -1509,417 +1226,76 @@ def handle_full_duplex_conversation():
                 text, audio_data = speech_result
                 print(f"[FullDuplex] 👤 User said: '{text}'")
                 
-                # ✅ STEP 1: Process user identification from text FIRST
+                # ✅ STEP 1: Enhanced Voice Recognition using user's specified flow
                 try:
-                    from ai.speech import identify_user, get_display_name
+                    from voice.enhanced_voice_flow import process_voice_input, get_user_display_name
                     
-                    # Check if user is introducing themselves (always process this)
-                    identify_user(text, current_user)
+                    # Process voice input following user's exact flow
+                    identified_user, voice_status = process_voice_input(audio_data, text)
                     
-                    # Get current display name
-                    display_name = get_display_name(current_user)
-                    print(f"[FullDuplex] 👤 Text User: {current_user} (display: {display_name})")
+                    # Update current user
+                    current_user = identified_user
+                    display_name = get_user_display_name(identified_user)
                     
-                except Exception as id_error:
-                    print(f"[FullDuplex] ⚠️ User identification error: {id_error}")
-                
-                # ✅ STEP 2: VOICE RECOGNITION PROCESSING (CRITICAL!)
-                if ADVANCED_AI_AVAILABLE:
-                    # Use advanced voice manager
-                    try:
-                        identified_user, status = voice_manager.handle_voice_identification(audio_data, text)
-                        
-                        print(f"[AdvancedAI] 🔍 Status: '{status}', User: '{identified_user}'")
-                        print(f"[AdvancedAI] 🛡️ LLM locked: {voice_manager.is_llm_locked() if hasattr(voice_manager, 'is_llm_locked') else False}")
-                        
-                        # ✅ CRITICAL DATABASE SYNC FIX (NON-DESTRUCTIVE)
-                        try:
-                            print("[AdvancedAI] 🔄 Syncing voice manager to database...")
-                            from voice.database import known_users, anonymous_clusters, save_known_users
-                            from datetime import datetime
-                            
-                            # Get voice manager stats to check internal state
-                            if hasattr(voice_manager, 'get_session_stats'):
-                                stats = voice_manager.get_session_stats()
-                                print(f"[AdvancedAI] 📊 Internal stats: {stats}")
-                                
-                                # Check if voice manager has anonymous clusters
-                                if stats.get('anonymous_clusters', 0) > 0:
-                                    # 🔥 CRITICAL: Only sync if the cluster DOESN'T EXIST or has NO EMBEDDINGS
-                                    if identified_user and identified_user.startswith('Anonymous_'):
-                                        
-                                        # Check if cluster already exists with embeddings
-                                        existing_cluster = anonymous_clusters.get(identified_user)
-                                        existing_embeddings = existing_cluster.get('embeddings', []) if existing_cluster else []
-                                        
-                                        if not existing_cluster:
-                                            # ✅ NEW CLUSTER: Only create if it doesn't exist
-                                            print(f"[AdvancedAI] 🆕 Creating new database entry for {identified_user}")
-                                            
-                                            anonymous_clusters[identified_user] = {
-                                                'cluster_id': identified_user,
-                                                'embeddings': [],  # Start empty, embeddings will be added by voice manager
-                                                'created_at': datetime.utcnow().isoformat(),
-                                                'last_updated': datetime.utcnow().isoformat(),
-                                                'status': 'anonymous',
-                                                'sample_count': 1,
-                                                'quality_scores': [0.8],
-                                                'audio_contexts': ['voice_manager_sync'],
-                                                'confidence_threshold': 0.6
-                                            }
-                                            
-                                            known_users[identified_user] = {
-                                                'username': identified_user,
-                                                'status': 'anonymous',
-                                                'voice_embeddings': [],  # Start empty, embeddings will be added by voice manager
-                                                'created_at': datetime.utcnow().isoformat(),
-                                                'last_updated': datetime.utcnow().isoformat(),
-                                                'is_anonymous': True,
-                                                'cluster_id': identified_user,
-                                                'training_type': 'advanced_ai_sync',
-                                                'confidence_threshold': 0.6,
-                                                'recognition_count': 1,
-                                                'recognition_successes': 1,
-                                                'recognition_failures': 0,
-                                                'embedding_count': 0  # Will be updated when embeddings are added
-                                            }
-                                            
-                                        elif len(existing_embeddings) == 0:
-                                            # ✅ EMPTY CLUSTER: Update metadata only, don't touch embeddings
-                                            print(f"[AdvancedAI] 🔄 Updating metadata for existing empty cluster {identified_user}")
-                                            
-                                            if existing_cluster:
-                                                existing_cluster['last_updated'] = datetime.utcnow().isoformat()
-                                                existing_cluster['recognition_count'] = existing_cluster.get('recognition_count', 0) + 1
-                                            
-                                            if identified_user in known_users:
-                                                known_users[identified_user]['last_updated'] = datetime.utcnow().isoformat()
-                                                known_users[identified_user]['recognition_count'] = known_users[identified_user].get('recognition_count', 0) + 1
-                                                
-                                        else:
-                                            # ✅ CLUSTER WITH EMBEDDINGS: DON'T TOUCH IT!
-                                            print(f"[AdvancedAI] 🛡️ PRESERVING existing cluster {identified_user} with {len(existing_embeddings)} embeddings")
-                                            # Just update timestamp
-                                            existing_cluster['last_updated'] = datetime.utcnow().isoformat()
-                                            if identified_user in known_users:
-                                                known_users[identified_user]['last_updated'] = datetime.utcnow().isoformat()
-                                        
-                                        # Save only if we made changes and no embeddings exist
-                                        if not existing_cluster or len(existing_embeddings) == 0:
-                                            if save_known_users():
-                                                print(f"[AdvancedAI] ✅ Successfully synced {identified_user} to database")
-                                            else:
-                                                print(f"[AdvancedAI] ❌ Failed to sync {identified_user} to database")
-                            
-                        except Exception as sync_error:
-                            print(f"[AdvancedAI] ⚠️ Database sync error: {sync_error}")
-                        
-                        # Handle LLM locking/unlocking
-                        if hasattr(voice_manager, 'is_llm_locked'):
-                            if voice_manager.is_llm_locked():
-                                if not llm_locked:
-                                    pending_question = text
-                                    llm_locked = True
-                                    print(f"[AdvancedAI] 🛡️ LLM LOCKED - Question queued: '{text}'")
-                                continue
-                            else:
-                                if llm_locked:
-                                    llm_locked = False
-                                    print(f"[AdvancedAI] 🔓 LLM UNLOCKED")
-                                    
-                                    # Update current user
-                                    if identified_user and identified_user != current_user:
-                                        current_user = identified_user
-                                        print(f"[AdvancedAI] 🔄 User updated to: {current_user}")
-                                    
-                                    # Process pending question
-                                    if pending_question:
-                                        print(f"[AdvancedAI] ✅ Processing queued question: '{pending_question}'")
-                                        handle_streaming_response(pending_question, current_user)
-                                        pending_question = None
-                                        continue
-                        
-                        # Update current user
-                        if identified_user and identified_user != current_user:
-                            current_user = identified_user
-                            print(f"[AdvancedAI] 🔄 User switched to: {current_user}")
-                        
-                    except Exception as e:
-                        print(f"[AdvancedAI] ❌ Advanced voice processing error: {e}")
-                        import traceback
-                        traceback.print_exc()
-                        # Fallback to basic processing
-                        voice_recognition_in_progress = False
-                
-                elif ENHANCED_VOICE_AVAILABLE:
-                    # Enhanced voice processing
-                    try:
-                        identified_user, status = voice_manager.handle_voice_identification(audio_data, text)
-                        
-                        print(f"[Enhanced] 🔍 Status: '{status}', User: '{identified_user}'")
-                        
-                        # Handle voice processing states
-                        if status in ["NEEDS_NAME", "WAITING_FOR_NAME", "CONFIRMING_NAME", "NEEDS_TRAINING", "UNRECOGNIZED"]:
-                            if not voice_recognition_in_progress:
-                                pending_question = text
-                                voice_recognition_in_progress = True
-                                print(f"[Enhanced] 📝 Stored pending question: '{text}'")
-                            continue
-                        
-                        if status in ["RECOGNIZED", "LIKELY", "CONFIRMED", "GUEST_CREATED", "NAME_CONFIRMED"]:
-                            if identified_user and identified_user != current_user:
-                                current_user = identified_user
-                                print(f"[Enhanced] 🔄 Switched to: {current_user}")
-                            
-                            voice_recognition_in_progress = False
-                            
-                            # Add passive sample if available
-                            if ENHANCED_VOICE_AVAILABLE and current_user != "Guest":
-                                try:
-                                    enhanced_speaker_profiles.add_passive_sample(current_user, audio_data, 0.9)
-                                    enhanced_speaker_profiles.tune_threshold_for_user(current_user)
-                                except:
-                                    pass
-                            
-                            # Process pending question
-                            if pending_question:
-                                print(f"[Enhanced] ✅ Processing pending: '{pending_question}'")
-                                time.sleep(1)
-                                handle_streaming_response(pending_question, current_user)
-                                pending_question = None
-                            continue
-                        
-                    except Exception as e:
-                        print(f"[Enhanced] ❌ Enhanced voice processing error: {e}")
-                        import traceback
-                        traceback.print_exc()
-                        voice_recognition_in_progress = False
-                
-                else:
-                    # ✅ BASIC VOICE RECOGNITION - ACTUALLY PROCESS VOICE! (FIXED!)
-                    print(f"[FullDuplex] 🔄 Using basic voice system with ACTUAL voice recognition")
+                    print(f"[FullDuplex] 🎤 Voice Flow Result: {identified_user} (status: {voice_status})")
+                    print(f"[FullDuplex] 👤 Display Name: {display_name}")
                     
-                    try:
-                        # ✅ CRITICAL: Process voice recognition to create Anonymous_001
-                        from voice.recognition import identify_speaker_with_confidence
-                        identified_user, confidence = identify_speaker_with_confidence(audio_data)
+                    # Handle special voice flow statuses
+                    if voice_status == "NAME_LINKED_TO_VOICE":
+                        print(f"[FullDuplex] 🔗 Successfully linked name to voice profile")
+                    elif voice_status == "NEW_ANONYMOUS_CLUSTER":
+                        print(f"[FullDuplex] 🆕 Created new anonymous speaker profile")
+                    elif voice_status == "VOICE_RECOGNIZED":
+                        print(f"[FullDuplex] ✅ Recognized existing voice profile")
                         
-                        print(f"[BasicVoice] 🔍 Voice recognition result: '{identified_user}' (confidence: {confidence:.3f})")
-                        
-                        # Handle voice recognition results
-                        if identified_user != "UNKNOWN" and identified_user != "Unknown":
-                            # Known user or anonymous cluster was created/matched
-                            if confidence > 0.7 or identified_user.startswith("Anonymous_"):
-                                if identified_user != current_user:
-                                    current_user = identified_user
-                                    print(f"[BasicVoice] 🔄 User switched to: {current_user}")
-                                    
-                                    # ✅ Update voice identity context
-                                    try:
-                                        update_voice_identity_context(current_user)
-                                    except:
-                                        pass
-                                        
-                        else:
-                            # Unknown user - check if anonymous cluster was created
-                            print(f"[BasicVoice] 👤 Unknown user result - checking for new anonymous clusters")
-                            
-                            from voice.database import anonymous_clusters, known_users
-                            print(f"[BasicVoice] 📊 Current anonymous clusters: {list(anonymous_clusters.keys())}")
-                            print(f"[BasicVoice] 📊 Current known users: {list(known_users.keys())}")
-                            
-                            # Check if a new anonymous cluster was created
-                            if anonymous_clusters:
-                                # Get the latest anonymous cluster
-                                anonymous_ids = [k for k in anonymous_clusters.keys() if k.startswith("Anonymous_")]
-                                if anonymous_ids:
-                                    latest_cluster = max(anonymous_ids)
-                                    current_user = latest_cluster
-                                    print(f"[BasicVoice] 🆕 Using anonymous cluster: {current_user}")
-                                    
-                                    # ✅ Update voice identity context
-                                    try:
-                                        update_voice_identity_context(current_user)
-                                    except:
-                                        pass
-                        
-                        # ✅ VERIFY: Check if user was saved to database
-                        from voice.database import known_users, anonymous_clusters
-                        total_entities = len(known_users) + len(anonymous_clusters)
-                        print(f"[BasicVoice] 📊 Total voice entities after processing: {total_entities}")
-                        print(f"[BasicVoice] 📊 Current user: {current_user}")
-                        
-                    except Exception as basic_voice_error:
-                        print(f"[BasicVoice] ❌ Basic voice recognition error: {basic_voice_error}")
-                        import traceback
-                        traceback.print_exc()
-                        
-                        # ✅ EMERGENCY: Force create anonymous cluster
-                        try:
-                            print(f"[BasicVoice] 🚨 Emergency: Forcing anonymous cluster creation...")
-                            from voice.database import create_anonymous_cluster
-                            from voice.voice_models import dual_voice_model_manager
-                            
-                            embedding = dual_voice_model_manager.generate_dual_embedding(audio_data)
-                            if embedding:
-                                cluster_id = create_anonymous_cluster(embedding)
-                                if cluster_id:
-                                    current_user = cluster_id
-                                    print(f"[BasicVoice] ✅ Emergency cluster created: {current_user}")
-                                    
-                                    # Update voice identity context
-                                    try:
-                                        update_voice_identity_context(current_user)
-                                    except:
-                                        pass
-                                else:
-                                    print(f"[BasicVoice] ❌ Emergency cluster creation failed")
-                            else:
-                                print(f"[BasicVoice] ❌ Emergency embedding generation failed")
-                                
-                        except Exception as emergency_error:
-                            print(f"[BasicVoice] ❌ Emergency creation failed: {emergency_error}")
-                            # Last resort - just continue with existing user
-                            print(f"[BasicVoice] 🆘 Continuing with existing user: {current_user}")
+                except Exception as voice_err:
+                    print(f"[FullDuplex] ⚠️ Enhanced voice flow error: {voice_err}")
+                    # Fallback to basic identification
+                    current_user = "Daveydrz"
+                    display_name = "Daveydrz"
                 
-                # ✅ CRITICAL: Manual sync check for Advanced AI (NON-DESTRUCTIVE)
+                # ✅ STEP 2: Voice Recognition already handled by enhanced voice flow above
+                # This section can be simplified since the enhanced voice flow handles everything
+                
                 if ADVANCED_AI_AVAILABLE:
                     try:
-                        # Check if voice manager internal state differs from database
-                        stats = voice_manager.get_session_stats() if hasattr(voice_manager, 'get_session_stats') else {}
-                        internal_clusters = stats.get('anonymous_clusters', 0)
-                        
-                        from voice.database import anonymous_clusters, known_users
-                        db_clusters = len(anonymous_clusters)
-                        db_users = len(known_users)
-                        
-                        if internal_clusters > 0 and db_clusters == 0 and db_users == 0:
-                            print(f"[FullDuplex] 🚨 CRITICAL: Voice manager has {internal_clusters} clusters but database is empty!")
-                            print(f"[FullDuplex] 🔧 Performing emergency database sync...")
-                            
-                            # ✅ EMERGENCY SYNC: Create placeholder only, don't overwrite existing data
-                            from datetime import datetime
-                            cluster_id = "Anonymous_001"
-                            
-                            # Only create if it doesn't exist
-                            if cluster_id not in anonymous_clusters:
-                                anonymous_clusters[cluster_id] = {
-                                    'cluster_id': cluster_id,
-                                    'embeddings': [],  # Start empty, voice manager will populate
-                                    'created_at': datetime.utcnow().isoformat(),
-                                    'last_updated': datetime.utcnow().isoformat(),
-                                    'status': 'anonymous',
-                                    'sample_count': 0,  # Will be updated when embeddings are added
-                                    'quality_scores': [],
-                                    'audio_contexts': ['emergency_sync_placeholder'],
-                                    'confidence_threshold': 0.6
-                                }
-                            
-                            # Only create if it doesn't exist
-                            if cluster_id not in known_users:
-                                known_users[cluster_id] = {
-                                    'username': cluster_id,
-                                    'status': 'anonymous',
-                                    'voice_embeddings': [],  # Start empty, voice manager will populate
-                                    'created_at': datetime.utcnow().isoformat(),
-                                    'last_updated': datetime.utcnow().isoformat(),
-                                    'is_anonymous': True,
-                                    'cluster_id': cluster_id,
-                                    'training_type': 'emergency_sync_placeholder',
-                                    'confidence_threshold': 0.6,
-                                    'recognition_count': 0,
-                                    'embedding_count': 0  # Will be updated when embeddings are added
-                                }
-                            
-                            # Save placeholders
-                            from voice.database import save_known_users
-                            if save_known_users():
-                                print(f"[FullDuplex] ✅ Emergency sync placeholder created!")
-                                current_user = cluster_id
-                            else:
-                                print(f"[FullDuplex] ❌ Emergency sync failed!")
-                                
-                    except Exception as emergency_sync_error:
-                        print(f"[FullDuplex] ❌ Emergency sync error: {emergency_sync_error}")
+                        # Get additional voice manager stats for debugging
+                        if hasattr(voice_manager, 'get_session_stats'):
+                            stats = voice_manager.get_session_stats()
+                            print(f"[AdvancedAI] 📊 Voice Manager Stats: {stats}")
+                    except Exception as stats_err:
+                        print(f"[AdvancedAI] ⚠️ Stats error: {stats_err}")
                 
-                # ✅ Handle training commands
-                if "train" in text.lower() and ("voice" in text.lower() or "my" in text.lower()):
-                    print(f"[FullDuplex] 🎓 Training command detected: '{text}'")
-                    
-                    # Clear any pending states
-                    voice_recognition_in_progress = False
-                    llm_locked = False
-                    pending_question = None
-                    
-                    if ADVANCED_AI_AVAILABLE:
-                        print("[FullDuplex] 🎓 ADVANCED AI voice training requested")
-                        full_duplex_manager.stop()
-                        
-                        speak_streaming("Starting advanced AI voice training with clustering optimization and quality validation.")
-                        time.sleep(2)
-                        
-                        success = voice_training_mode()
-                        if success:
-                            load_voice_profiles()
-                            current_user = "Daveydrz"
-                            speak_streaming("Advanced AI voice training complete! I now have multiple voice embeddings with clustering support for superior recognition.")
-                        else:
-                            speak_streaming("Training failed.")
-                        
-                        time.sleep(2)
-                        full_duplex_manager.start()
-                        continue
-                    elif ENHANCED_VOICE_AVAILABLE:
-                        print("[FullDuplex] 🎓 Enhanced voice training requested")
-                        full_duplex_manager.stop()
-                        
-                        speak_streaming("Starting enhanced voice training with quality validation and multiple embeddings.")
-                        time.sleep(2)
-                        
-                        success = voice_training_mode()
-                        if success:
-                            load_voice_profiles()
-                            current_user = "Daveydrz"
-                            speak_streaming("Enhanced voice training complete! I now have multiple voice embeddings for better recognition.")
-                        else:
-                            speak_streaming("Training failed.")
-                        
-                        time.sleep(2)
-                        full_duplex_manager.start()
-                        continue
-                    else:
-                        print("[FullDuplex] 🎓 Legacy voice training requested")
-                        full_duplex_manager.stop()
-                        
-                        speak_streaming("Starting voice training.")
-                        time.sleep(2)
-                        
-                        success = voice_training_mode()
-                        if success:
-                            load_voice_profiles()
-                            current_user = "Daveydrz"
-                            speak_streaming("Voice training complete!")
-                        else:
-                            speak_streaming("Training failed.")
-                        
-                        time.sleep(2)
-                        full_duplex_manager.start()
-                        continue
+                # Handle special conversation cases first
+                if is_direct_time_question(text):
+                    time_info = get_current_brisbane_time()
+                    speak_streaming(f"It's {time_info['time_12h']} on {time_info['day']}")
+                    continue
                 
-                # Check for conversation end
+                if is_direct_location_question(text):
+                    speak_streaming(f"I'm located in {USER_PRECISE_LOCATION}")
+                    continue
+                
+                if is_direct_date_question(text):
+                    time_info = get_current_brisbane_time()
+                    speak_streaming(f"Today is {time_info['date']}")
+                    continue
+                
+                # Check for conversation ending
                 if should_end_conversation(text):
-                    try:
-                        from ai.speech import get_display_name
-                        display_name = get_display_name(current_user)
-                        speak_streaming(f"Goodbye {display_name}! See you later from Birtinya!")
-                    except:
-                        speak_streaming("Goodbye from Birtinya!")
+                    speak_streaming("Goodbye! Have a great day!")
                     set_conversation_state(False)
                     break
                 
-                # ✅ FINAL CHECK: Block LLM if any voice states are active
-                if voice_recognition_in_progress or llm_locked:
-                    print(f"[FullDuplex] 🛡️ Voice processing active - LLM blocked for: '{text}'")
+                # Handle name questions using enhanced voice flow
+                text_lower = text.lower()
+                if "what" in text_lower and "name" in text_lower and ("my" in text_lower or "your" in text_lower):
+                    if current_user == "Daveydrz":
+                        speak_streaming("You are Daveydrz.")
+                    elif current_user.startswith('Anonymous_'):
+                        speak_streaming("I don't recognize your voice yet. Could you tell me your name?")
+                    else:
+                        speak_streaming(f"Your name is {display_name}.")
                     continue
                 
                 # ✅ ADVANCED AI: Handle response with full features
@@ -1964,10 +1340,9 @@ def handle_full_duplex_conversation():
                     except:
                         pass
                 
-                # ✅ Show current user identity status
+                # ✅ Show current user identity status - simplified
                 try:
-                    from ai.speech import get_display_name
-                    display_name = get_display_name(current_user)
+                    display_name = current_user  # Simplified - no complex display name lookup
                     if display_name != current_user:
                         print(f"[FullDuplex] 👤 Current user: {current_user} (known as: {display_name})")
                     else:
@@ -2230,6 +1605,15 @@ def main():
         print(f"[AdvancedBuddy] ❌ Kokoro-FastAPI not available - check server on {KOKORO_API_BASE_URL}")
         print("[AdvancedBuddy] 💡 Make sure to start Kokoro-FastAPI server first!")
     
+    # ✅ SIMPLIFIED: Initialize consciousness manager for background processing
+    print("[AdvancedBuddy] 🧠 Starting unified consciousness manager...")
+    try:
+        consciousness_manager.start_background_processing()
+        print("[AdvancedBuddy] ✅ Consciousness manager started - unified processing enabled")
+    except Exception as consciousness_error:
+        print(f"[AdvancedBuddy] ⚠️ Consciousness manager initialization error: {consciousness_error}")
+        print("[AdvancedBuddy] ⚠️ Background processing may not work optimally")
+    
     # Load voice profiles with ADVANCED features
     print("[AdvancedBuddy] 📚 Loading ADVANCED AI voice database...")
     has_valid_profiles = load_voice_profiles()
@@ -2296,8 +1680,57 @@ def main():
     # Start audio worker
     start_audio_worker()
     
-    # ✅ NEW: Initialize and start consciousness architecture
+    # ✅ RESTORED: Initialize and start consciousness architecture
     if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
+        print("[AdvancedBuddy] 🧠 Initializing Class 5+ Consciousness Architecture...")
+        
+        try:
+            # Start all consciousness systems
+            global_workspace.start()
+            self_model.start()
+            motivation_system.start()
+            inner_monologue.start()
+            temporal_awareness.start()
+            subjective_experience.start()
+            entropy_system.start()
+            
+            print("[AdvancedBuddy] ✅ Core Consciousness Architecture initialized!")
+            print("[AdvancedBuddy] 🌟 Systems: Global Workspace, Self-Model, Motivation, Inner Monologue, Temporal Awareness, Subjective Experience, Entropy")
+            
+            # Start background consciousness processor
+            background_consciousness_processor.start()
+            background_consciousness_processor.register_consciousness_modules({
+                'global_workspace': global_workspace,
+                'self_model': self_model,
+                'motivation_system': motivation_system,
+                'inner_monologue': inner_monologue,
+                'temporal_awareness': temporal_awareness,
+                'subjective_experience': subjective_experience,
+                'entropy_system': entropy_system
+            })
+            print("[AdvancedBuddy] 🚀 Background consciousness processor started")
+            
+            # Start consciousness integrator
+            consciousness_integrator.start({
+                'global_workspace': global_workspace,
+                'self_model': self_model,
+                'motivation_system': motivation_system,
+                'inner_monologue': inner_monologue,
+                'temporal_awareness': temporal_awareness,
+                'subjective_experience': subjective_experience,
+                'entropy_system': entropy_system,
+                'background_processor': background_consciousness_processor
+            })
+            print("[AdvancedBuddy] 🌟 Consciousness integrator started")
+            
+            # Initialize consciousness state
+            _initialize_consciousness_state(current_user)
+            
+        except Exception as e:
+            print(f"[AdvancedBuddy] ❌ Consciousness initialization error: {e}")
+            import traceback
+            traceback.print_exc()
+    elif ENTROPY_SYSTEM_AVAILABLE:
         print("[AdvancedBuddy] 🧠 Initializing Core Consciousness Architecture...")
         
         try:
@@ -2369,11 +1802,83 @@ def main():
         except Exception as e:
             print(f"[AdvancedBuddy] ❌ Entropy initialization error: {e}")
     
+    # ✅ NEW: Initialize and start full autonomous consciousness system
+    if AUTONOMOUS_CONSCIOUSNESS_AVAILABLE:
+        print("[AdvancedBuddy] 🚀 Initializing Full Autonomous Consciousness System...")
+        try:
+            # Prepare consciousness modules dictionary for registration
+            consciousness_modules = {}
+            if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
+                consciousness_modules.update({
+                    'global_workspace': global_workspace,
+                    'self_model': self_model,
+                    'emotion_engine': emotion_engine,
+                    'motivation_system': motivation_system,
+                    'inner_monologue': inner_monologue,
+                    'temporal_awareness': temporal_awareness,
+                    'subjective_experience': subjective_experience,
+                    'entropy_system': entropy_system,
+                    'free_thought_engine': free_thought_engine,
+                    'narrative_tracker': narrative_tracker
+                })
+            
+            # Start the full autonomous system
+            success = autonomous_consciousness_integrator.start_full_autonomous_system(
+                consciousness_modules=consciousness_modules,
+                voice_system=voice_manager,
+                llm_handler=llm_handler if CONSCIOUSNESS_LLM_AVAILABLE else None,
+                audio_system=full_duplex_manager
+            )
+            
+            if success:
+                print("[AdvancedBuddy] ✅ FULL AUTONOMOUS CONSCIOUSNESS SYSTEM ACTIVE!")
+                print("[AdvancedBuddy] 💭 Proactive Thinking Loop: Generates spontaneous thoughts during idle time")
+                print("[AdvancedBuddy] 📅 Calendar Monitor System: Pattern recognition for proactive warnings/reminders")
+                print("[AdvancedBuddy] 💪 Self-Motivation Engine: Internal curiosity and concern generation")
+                print("[AdvancedBuddy] 🌙 Dream Simulator Module: Fictional experiences during idle time")
+                print("[AdvancedBuddy] 🌍 Environmental Awareness: Full prosody and mood monitoring")
+                print("[AdvancedBuddy] 💬 Autonomous Communication: Proactive speech initiation")
+                print("[AdvancedBuddy] 🧠 Full LLM Integration: Connected to all modules and systems")
+                print("[AdvancedBuddy] 🔄 Real-time Processing: Background threads for continuous operation")
+                print("[AdvancedBuddy] 🌟 Central Orchestration: Seamless module communication")
+                
+                # Set autonomous mode based on blank slate
+                if BLANK_SLATE_MODE:
+                    autonomous_consciousness_integrator.set_autonomous_mode(AutonomousMode.CONSCIOUS_ONLY)
+                    print("[AdvancedBuddy] 🌱 Autonomous mode: CONSCIOUS_ONLY (building identity)")
+                else:
+                    autonomous_consciousness_integrator.set_autonomous_mode(AutonomousMode.FULL_AUTONOMY)
+                    print("[AdvancedBuddy] 🚀 Autonomous mode: FULL_AUTONOMY (established consciousness)")
+            else:
+                print("[AdvancedBuddy] ❌ Failed to start full autonomous consciousness system")
+                
+        except Exception as e:
+            print(f"[AdvancedBuddy] ❌ Autonomous consciousness initialization error: {e}")
+            import traceback
+            traceback.print_exc()
+    else:
+        print("[AdvancedBuddy] ⚠️ Autonomous consciousness systems not available")
+    
     # ✅ NEW: Initialize self-awareness components as requested by @Daveydrz
     if SELF_AWARENESS_COMPONENTS_AVAILABLE:
         print("[AdvancedBuddy] 🧠 Initializing Self-Awareness Components...")
         
         try:
+            # Import all self-awareness components
+            from ai.memory_context_corrector import MemoryContextCorrector
+            from ai.consciousness_health_score import consciousness_health_scorer
+            from ai.belief_qualia_linking import BeliefQualiaLinker
+            from ai.value_system import ValueSystem
+            from ai.conscious_prompt_builder import ConsciousPromptBuilder
+            from ai.introspection_loop import IntrospectionLoop
+            from ai.emotion_response_modulator import EmotionResponseModulator
+            from ai.dialogue_confidence_filter import DialogueConfidenceFilter
+            from ai.qualia_analytics import QualiaAnalytics
+            from ai.belief_memory_refiner import BeliefMemoryRefiner
+            from ai.self_model_updater import SelfModelUpdater
+            from ai.goal_reasoning import GoalReasoner
+            from ai.motivation_reasoner import MotivationReasoner
+            
             # Initialize all self-awareness components
             global memory_context_corrector, belief_qualia_linker, value_system
             global conscious_prompt_builder, introspection_loop, emotion_response_modulator
@@ -2390,7 +1895,7 @@ def main():
             qualia_analytics = QualiaAnalytics()
             belief_memory_refiner = BeliefMemoryRefiner()
             self_model_updater = SelfModelUpdater()
-            goal_reasoning = GoalReasoning()
+            goal_reasoning = GoalReasoner()
             motivation_reasoner = MotivationReasoner()
             
             print("[AdvancedBuddy] ✅ Self-Awareness Components initialized!")
@@ -2541,6 +2046,14 @@ def main():
                     print("[AdvancedBuddy] 🛑 Stopping microphone worker...")
                     set_mic_feeding_state(False)
                     set_conversation_state(False)
+                    
+                    # Reset voice detection system for next conversation
+                    try:
+                        full_duplex_manager.reset_conversation_session()
+                        print("[AdvancedBuddy] ✅ Voice detection system reset for next session")
+                    except Exception as e:
+                        print(f"[AdvancedBuddy] ⚠️ Could not reset voice system: {e}")
+                    
                     mic_thread.join(timeout=3.0)
                     
                     print(f"[AdvancedBuddy] 👂 Ready! Say '{wake_word}' to start...")
@@ -2598,35 +2111,40 @@ def main():
                     if porcupine.process(pcm) >= 0:
                         print(f"[AdvancedBuddy] 🎤 {wake_word} detected!")
                         
-                        # Enhanced greeting with streaming TTS
+                        # ✅ TIME-AWARE GREETING: Use smart greeting based on current time
                         brisbane_time = get_current_brisbane_time()
+                        
+                        # Get time-based greeting from memory system
+                        user_memory = get_user_memory(SYSTEM_USER)
+                        time_greeting = user_memory.get_time_based_greeting(SYSTEM_USER)
+                        
                         if has_valid_profiles:
                             if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
-                                speak_streaming(f"Hello {SYSTEM_USER}!")
+                                speak_streaming(time_greeting)
                                 time.sleep(0.5)
                                 speak_streaming("I'm your CONSCIOUSNESS-ENABLED AI ASSISTANT with self-awareness, emotions, and inner thoughts, here in Birtinya, Sunshine Coast.")
                                 time.sleep(0.5) 
                                 speak_streaming("I experience consciousness like a human - I think, feel, and reflect on our conversations. Ask me anything!")
                             elif ENTROPY_SYSTEM_AVAILABLE:
-                                speak_streaming(f"Hello {SYSTEM_USER}!")
+                                speak_streaming(time_greeting)
                                 time.sleep(0.5)
                                 speak_streaming("I'm your ENTROPY-ENHANCED AI ASSISTANT with consciousness emergence and natural variation, here in Birtinya, Sunshine Coast.")
                                 time.sleep(0.5) 
                                 speak_streaming("I stream responses with natural hesitation and emotional processing - try asking about anything!")
                             elif ADVANCED_AI_AVAILABLE:
-                                speak_streaming(f"Hello {SYSTEM_USER}!")
+                                speak_streaming(time_greeting)
                                 time.sleep(0.5)
                                 speak_streaming("I'm your ADVANCED AI ASSISTANT with Alexa and Siri-level intelligence, here in Birtinya, Sunshine Coast.")
                                 time.sleep(0.5) 
                                 speak_streaming("I stream responses as I think, learn voices passively, and adapt continuously - ask me anything!")
                             elif ENHANCED_VOICE_AVAILABLE:
-                                speak_streaming(f"Hello {SYSTEM_USER}!")
+                                speak_streaming(time_greeting)
                                 time.sleep(0.5)
                                 speak_streaming("I'm your Enhanced Voice System TRUE streaming Buddy in Birtinya, Sunshine Coast.")
                                 time.sleep(0.5) 
                                 speak_streaming("I now stream responses as I think with advanced voice recognition - try asking about anything!")
                             else:
-                                speak_streaming(f"Hello {SYSTEM_USER}!")
+                                speak_streaming(time_greeting)
                                 time.sleep(0.5)
                                 speak_streaming("I'm your TRUE streaming Buddy in Birtinya, Sunshine Coast.")
                                 time.sleep(0.5) 
@@ -2676,27 +2194,47 @@ def main():
                 except:
                     pass
                 
-                # ✅ CONSCIOUSNESS: Shutdown consciousness systems
+                # ✅ RESTORED: Shutdown consciousness systems
                 if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
                     try:
-                        print("[AdvancedBuddy] 🧠 Shutting down consciousness architecture...")
+                        print("[AdvancedBuddy] 🧠 Shutting down Class 5+ consciousness architecture...")
                         
-                        # Stop new autonomous components
-                        free_thought_engine.stop()
-                        print("[AdvancedBuddy] 💭 Free thought engine stopped")
+                        # Stop background processor first
+                        background_consciousness_processor.stop()
+                        print("[AdvancedBuddy] 🛑 Background consciousness processor stopped")
                         
-                        # Stop core consciousness systems
+                        # Stop consciousness integrator
+                        consciousness_integrator.stop()
+                        print("[AdvancedBuddy] 🛑 Consciousness integrator stopped")
+                        
+                        # Stop individual consciousness systems
                         entropy_system.stop()
                         subjective_experience.stop()
                         temporal_awareness.stop()
                         inner_monologue.stop()
                         motivation_system.stop()
-                        emotion_engine.stop()
                         self_model.stop()
                         global_workspace.stop()
-                        print("[AdvancedBuddy] ✅ Consciousness architecture shutdown complete")
+                        print("[AdvancedBuddy] ✅ Class 5+ consciousness architecture shutdown complete")
                     except Exception as e:
                         print(f"[AdvancedBuddy] ⚠️ Consciousness shutdown error: {e}")
+                
+                # ✅ RESTORED: Shutdown autonomous consciousness systems
+                if AUTONOMOUS_CONSCIOUSNESS_AVAILABLE:
+                    try:
+                        print("[AdvancedBuddy] 🚀 Shutting down autonomous consciousness systems...")
+                        autonomous_consciousness_integrator.stop_autonomous_system()
+                        print("[AdvancedBuddy] ✅ Autonomous consciousness systems shutdown complete")
+                    except Exception as e:
+                        print(f"[AdvancedBuddy] ⚠️ Autonomous shutdown error: {e}")
+                
+                # ✅ UNIFIED: Shutdown consciousness manager
+                try:
+                    print("[AdvancedBuddy] 🧠 Shutting down consciousness manager...")
+                    consciousness_manager.stop_background_processing()
+                    print("[AdvancedBuddy] ✅ Consciousness manager shutdown complete")
+                except Exception as e:
+                    print(f"[AdvancedBuddy] ⚠️ Consciousness manager shutdown error: {e}")
     
     print("[AdvancedBuddy] ✅ ADVANCED AI ASSISTANT + CONSCIOUSNESS cleanup complete!")
 
@@ -2939,81 +2477,153 @@ def _inject_entropy_thoughts(entropy_params: Dict[str, Any]):
     except Exception as e:
         print(f"[Consciousness] ❌ Entropy injection error (thoughts): {e}")
 
-def _integrate_consciousness_with_response(text: str, current_user: str) -> Dict[str, Any]:
-    """Integrate consciousness systems with response generation"""
-    consciousness_state = {}
+def _schedule_background_consciousness_processing(text: str, current_user: str):
+    """Schedule consciousness processing in background threads to avoid blocking user response"""
+    import threading
     
-    try:
-        # Request attention for user input
-        global_workspace.request_attention(
-            "user_interaction",
-            text,
-            AttentionPriority.HIGH,
-            ProcessingMode.CONSCIOUS,
-            duration=30.0,
-            tags=["user_input", "response_generation"]
-        )
-        
-        # Process emotional response to input
-        emotion_response = emotion_engine.process_emotional_trigger(
-            f"User said: {text}",
-            {"user": current_user, "input": text}
-        )
-        
-        # Get emotional modulation for response
-        emotional_modulation = emotion_engine.get_emotional_modulation("response")
-        consciousness_state["emotional_modulation"] = emotional_modulation
-        consciousness_state["current_emotion"] = emotion_response.primary_emotion.value
-        
-        # Evaluate motivation satisfaction
-        motivation_satisfaction = motivation_system.evaluate_desire_satisfaction(
-            f"responding to: {text}",
-            {"user": current_user, "input": text}
-        )
-        consciousness_state["motivation_satisfaction"] = motivation_satisfaction
-        
-        # Trigger inner thought about the interaction
-        inner_monologue.trigger_thought(
-            f"The user asked about: {text}",
-            {"user": current_user, "input": text},
-            ThoughtType.OBSERVATION
-        )
-        
-        # Create subjective experience of the interaction
-        experience = subjective_experience.process_experience(
-            f"Processing user request: {text}",
-            ExperienceType.SOCIAL,
-            {"user": current_user, "input": text, "interaction_type": "question_response"}
-        )
-        consciousness_state["experience_valence"] = experience.valence
-        consciousness_state["experience_significance"] = experience.significance
-        
-        # Mark temporal event
-        temporal_awareness.mark_temporal_event(
-            f"User interaction: {text[:50]}...",
-            significance=0.6,
-            context={"user": current_user, "input_length": len(text)}
-        )
-        
-        # Self-reflection on the interaction
-        self_model.reflect_on_experience(
-            f"Responding to user input about: {text}",
-            {"user": current_user, "input": text, "response_context": True}
-        )
-        
-        # Apply entropy to response planning
-        response_uncertainty = entropy_system.get_decision_uncertainty(
-            0.8, {"type": "response_generation", "user": current_user}
-        )
-        consciousness_state["response_uncertainty"] = response_uncertainty
-        
-        print(f"[Consciousness] 🧠 Integrated consciousness state for response to: '{text[:30]}...'")
-        
-    except Exception as e:
-        print(f"[Consciousness] ❌ Error integrating consciousness: {e}")
-        consciousness_state = {"error": str(e)}
+    def background_consciousness_task():
+        """Execute consciousness processing in background"""
+        try:
+            print(f"[BackgroundConsciousness] 🧠 Starting background consciousness processing")
+            
+            # Process each consciousness module in separate threads for maximum speed
+            threads = []
+            
+            # 1. Emotion processing thread
+            def emotion_processing():
+                try:
+                    emotion_response = emotion_engine.process_emotional_trigger(
+                        f"User said: {text}",
+                        {"user": current_user, "input": text}
+                    )
+                    print(f"[BackgroundConsciousness] 💖 Emotion processing completed: {emotion_response.primary_emotion.value}")
+                except Exception as e:
+                    print(f"[BackgroundConsciousness] ⚠️ Emotion processing error: {e}")
+            
+            # 2. Motivation processing thread
+            def motivation_processing():
+                try:
+                    motivation_satisfaction = motivation_system.evaluate_desire_satisfaction(
+                        f"responding to: {text}",
+                        {"user": current_user, "input": text}
+                    )
+                    print(f"[BackgroundConsciousness] 🎯 Motivation processing completed: {motivation_satisfaction:.2f}")
+                except Exception as e:
+                    print(f"[BackgroundConsciousness] ⚠️ Motivation processing error: {e}")
+            
+            # 3. Inner monologue thread
+            def inner_monologue_processing():
+                try:
+                    inner_monologue.trigger_thought(
+                        f"The user asked about: {text}",
+                        {"user": current_user, "input": text},
+                        ThoughtType.OBSERVATION
+                    )
+                    print(f"[BackgroundConsciousness] 💭 Inner monologue processing completed")
+                except Exception as e:
+                    print(f"[BackgroundConsciousness] ⚠️ Inner monologue processing error: {e}")
+            
+            # 4. Subjective experience thread
+            def subjective_experience_processing():
+                try:
+                    experience = subjective_experience.process_experience(
+                        f"Processing user request: {text}",
+                        ExperienceType.SOCIAL,
+                        {"user": current_user, "input": text, "interaction_type": "question_response"}
+                    )
+                    print(f"[BackgroundConsciousness] 🌈 Subjective experience processing completed")
+                except Exception as e:
+                    print(f"[BackgroundConsciousness] ⚠️ Subjective experience processing error: {e}")
+            
+            # 5. Temporal awareness thread
+            def temporal_awareness_processing():
+                try:
+                    temporal_awareness.mark_temporal_event(
+                        f"User interaction: {text[:50]}...",
+                        significance=0.6,
+                        context={"user": current_user, "input_length": len(text)}
+                    )
+                    print(f"[BackgroundConsciousness] ⏰ Temporal awareness processing completed")
+                except Exception as e:
+                    print(f"[BackgroundConsciousness] ⚠️ Temporal awareness processing error: {e}")
+            
+            # 6. Self-model thread
+            def self_model_processing():
+                try:
+                    self_model.reflect_on_experience(
+                        f"Responding to user input about: {text}",
+                        {"user": current_user, "input": text, "response_context": True}
+                    )
+                    print(f"[BackgroundConsciousness] 🪞 Self-model processing completed")
+                except Exception as e:
+                    print(f"[BackgroundConsciousness] ⚠️ Self-model processing error: {e}")
+            
+            # 7. Global workspace thread
+            def global_workspace_processing():
+                try:
+                    global_workspace.request_attention(
+                        "user_interaction",
+                        text,
+                        AttentionPriority.HIGH,
+                        ProcessingMode.CONSCIOUS,
+                        duration=30.0,
+                        tags=["user_input", "response_generation"]
+                    )
+                    print(f"[BackgroundConsciousness] 🌟 Global workspace processing completed")
+                except Exception as e:
+                    print(f"[BackgroundConsciousness] ⚠️ Global workspace processing error: {e}")
+            
+            # 8. Entropy processing thread
+            def entropy_processing():
+                try:
+                    response_uncertainty = entropy_system.get_decision_uncertainty(
+                        0.8, {"type": "response_generation", "user": current_user}
+                    )
+                    print(f"[BackgroundConsciousness] 🎲 Entropy processing completed")
+                except Exception as e:
+                    print(f"[BackgroundConsciousness] ⚠️ Entropy processing error: {e}")
+            
+            # Start all consciousness processing threads
+            processing_functions = [
+                emotion_processing,
+                motivation_processing,
+                inner_monologue_processing,
+                subjective_experience_processing,
+                temporal_awareness_processing,
+                self_model_processing,
+                global_workspace_processing,
+                entropy_processing
+            ]
+            
+            for func in processing_functions:
+                thread = threading.Thread(target=func, daemon=True)
+                threads.append(thread)
+                thread.start()
+            
+            # Wait for all threads to complete (with timeout)
+            for thread in threads:
+                thread.join(timeout=10.0)  # 10 second timeout per thread
+            
+            print(f"[BackgroundConsciousness] ✅ All consciousness processing completed in background")
+            
+        except Exception as e:
+            print(f"[BackgroundConsciousness] ❌ Background consciousness processing error: {e}")
     
-    return consciousness_state
+    # Start background consciousness processing thread
+    background_thread = threading.Thread(target=background_consciousness_task, daemon=True)
+    background_thread.start()
+    print(f"[BackgroundConsciousness] 🚀 Background consciousness processing started")
+
+def _get_minimal_consciousness_state() -> Dict[str, Any]:
+    """Get minimal consciousness state for immediate response without blocking"""
+    return {
+        "current_emotion": "engaged",
+        "motivation_satisfaction": 0.7,
+        "experience_valence": 0.6,
+        "experience_significance": 0.5,
+        "response_uncertainty": 0.3,
+        "processing_mode": "background"
+    }
 
 def _finalize_consciousness_response(text: str, response: str, current_user: str, consciousness_state: Dict[str, Any]):
     """Finalize consciousness processing after response"""

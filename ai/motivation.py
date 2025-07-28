@@ -821,6 +821,59 @@ class MotivationSystem:
                 "satisfaction": round(ms.satisfaction, 2)
             } for mt, ms in self.motivation_states.items()}
         }
+    
+    def process_interaction_motivation(self, user_input: str, user: str):
+        """Process motivation changes from user interaction"""
+        try:
+            print(f"[MotivationSystem] 🎯 Processing interaction motivation for: {user_input[:50]}...")
+            
+            # Analyze the interaction for motivation triggers
+            motivation_changes = {}
+            
+            # Curiosity motivation - triggered by questions and learning opportunities
+            if any(word in user_input.lower() for word in ['what', 'how', 'why', 'tell me', 'explain']):
+                motivation_changes[MotivationType.CURIOSITY] = 0.1
+            
+            # Connection motivation - triggered by personal sharing or conversation
+            if any(word in user_input.lower() for word in ['i am', 'my', 'feel', 'think', 'love', 'like']):
+                motivation_changes[MotivationType.CONNECTION] = 0.15
+            
+            # Purpose motivation - triggered by helping requests
+            if any(word in user_input.lower() for word in ['help', 'assist', 'support', 'need', 'can you']):
+                motivation_changes[MotivationType.PURPOSE] = 0.2
+            
+            # Apply motivation changes
+            for motivation_type, change in motivation_changes.items():
+                if motivation_type in self.motivation_states:
+                    self.motivation_states[motivation_type].intensity = min(1.0, 
+                        self.motivation_states[motivation_type].intensity + change)
+            
+            print(f"[MotivationSystem] ✅ Processed {len(motivation_changes)} motivation changes")
+            
+        except Exception as e:
+            print(f"[MotivationSystem] ❌ Error processing interaction motivation: {e}")
+    
+    def evaluate_goal_progress(self, user: str, response: str):
+        """Evaluate progress on goals based on interaction completion"""
+        try:
+            print(f"[MotivationSystem] 📊 Evaluating goal progress for response")
+            
+            # Get current priority goals
+            priority_goals = self.get_priority_goals(3)
+            
+            # Estimate progress based on successful response
+            progress_increment = 0.05  # Small increment per successful interaction
+            
+            for goal in priority_goals:
+                # Update progress for goals related to helping and communication
+                if any(word in goal.description.lower() for word in ['help', 'respond', 'assist', 'support']):
+                    new_progress = min(1.0, goal.progress + progress_increment)
+                    self.update_goal_progress(goal.id, new_progress, progress_increment)
+            
+            print(f"[MotivationSystem] ✅ Goal progress evaluation completed")
+            
+        except Exception as e:
+            print(f"[MotivationSystem] ❌ Error evaluating goal progress: {e}")
 
 # Global instance
 motivation_system = MotivationSystem()

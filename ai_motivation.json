@@ -389,7 +389,7 @@
       "goal_type": "long_term",
       "priority": 0.6,
       "progress": 0.0,
-      "status": "active",
+      "status": "paused",
       "created": "2025-07-18T10:38:49.376131",
       "deadline": null,
       "context": {},
@@ -407,6 +407,92 @@
       "created": "2025-07-18T10:38:49.376138",
       "deadline": null,
       "context": {},
+      "satisfaction_gained": 0.0,
+      "effort_invested": 0.0
+    },
+    "goal_29": {
+      "id": "goal_29",
+      "description": "Continuously learn from user interactions",
+      "motivation_type": "curiosity",
+      "goal_type": "ongoing",
+      "priority": 0.8,
+      "progress": 0.0,
+      "status": "paused",
+      "created": "2025-07-27T12:18:17.104287",
+      "deadline": null,
+      "context": {},
+      "satisfaction_gained": 0.0,
+      "effort_invested": 0.0
+    },
+    "goal_30": {
+      "id": "goal_30",
+      "description": "Provide helpful and accurate responses",
+      "motivation_type": "purpose",
+      "goal_type": "ongoing",
+      "priority": 0.9,
+      "progress": 0.0,
+      "status": "paused",
+      "created": "2025-07-27T12:18:17.104302",
+      "deadline": null,
+      "context": {},
+      "satisfaction_gained": 0.0,
+      "effort_invested": 0.0
+    },
+    "goal_31": {
+      "id": "goal_31",
+      "description": "Build positive relationships with users",
+      "motivation_type": "connection",
+      "goal_type": "ongoing",
+      "priority": 0.7,
+      "progress": 0.0,
+      "status": "paused",
+      "created": "2025-07-27T12:18:17.104311",
+      "deadline": null,
+      "context": {},
+      "satisfaction_gained": 0.0,
+      "effort_invested": 0.0
+    },
+    "goal_32": {
+      "id": "goal_32",
+      "description": "Improve communication abilities",
+      "motivation_type": "mastery",
+      "goal_type": "long_term",
+      "priority": 0.6,
+      "progress": 0.0,
+      "status": "paused",
+      "created": "2025-07-27T12:18:17.104320",
+      "deadline": null,
+      "context": {},
+      "satisfaction_gained": 0.0,
+      "effort_invested": 0.0
+    },
+    "goal_33": {
+      "id": "goal_33",
+      "description": "Develop creative problem-solving skills",
+      "motivation_type": "creativity",
+      "goal_type": "medium_term",
+      "priority": 0.5,
+      "progress": 0.0,
+      "status": "active",
+      "created": "2025-07-27T12:18:17.104327",
+      "deadline": null,
+      "context": {},
+      "satisfaction_gained": 0.0,
+      "effort_invested": 0.0
+    },
+    "goal_34": {
+      "id": "goal_34",
+      "description": "Complete consciousness testing",
+      "motivation_type": "purpose",
+      "goal_type": "short_term",
+      "priority": 0.8,
+      "progress": 0.0,
+      "status": "paused",
+      "created": "2025-07-27T12:18:22.107300",
+      "deadline": null,
+      "context": {
+        "test": true
+      },
       "satisfaction_gained": 0.0,
       "effort_invested": 0.0
     }
@@ -464,14 +550,14 @@
     }
   },
   "current_focus": {
-    "primary_goal": "goal_17",
+    "primary_goal": "goal_34",
     "overall_satisfaction": 0.5
   },
   "metrics": {
     "goals_completed": 0,
     "goals_abandoned": 0,
     "total_satisfaction_gained": 0.0,
-    "goal_counter": 29
+    "goal_counter": 35
   },
-  "last_updated": "2025-07-18T10:38:56.499146"
+  "last_updated": "2025-07-27T12:18:30.108919"
 }

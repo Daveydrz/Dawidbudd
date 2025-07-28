@@ -29,6 +29,9 @@ PROMPT_TEMPLATES = {
 
     # Emotional context template (COMPRESSED)
     "EMOTIONAL_CONTEXT": """{emotional_state}{reminder_text}{follow_up_text}""",
+    
+    # Working memory context template (COMPRESSED) - 🧠 NEW
+    "WORKING_MEMORY_CONTEXT": """{natural_context}""",
 
     # Analysis logic template (MINIMAL)
     "ANALYZER_NAME_V1": """Extract names from speech. Handle anonymous users.""",
@@ -114,6 +117,7 @@ TEMPLATE_VARIABLES = {
     "CONSCIOUSNESS_STATE": ["emotion", "goal"],
     "IDENTITY_RULES_V1": [],
     "EMOTIONAL_CONTEXT": ["emotional_state", "reminder_text", "follow_up_text"],
+    "WORKING_MEMORY_CONTEXT": ["natural_context"],  # 🧠 NEW: Working memory context variables
     "ANALYZER_NAME_V1": [],
     "PROFILE_ANALYSIS_V1": [],
     "THOUGHT_PROCESS_V1": [],
@@ -134,6 +138,7 @@ TOKEN_MAPPING = {
     "[CONSCIOUSNESS:{id}]": "CONSCIOUSNESS_STATE",
     "[IDENTITY:RULES_V1]": "IDENTITY_RULES_V1",
     "[EMOTIONAL:CTX_{id}]": "EMOTIONAL_CONTEXT",
+    "[WORKING_MEMORY:V1]": "WORKING_MEMORY_CONTEXT",  # 🧠 NEW: Working memory context
     "[ANALYZER:NAME_V1]": "ANALYZER_NAME_V1",
     "[PROFILE:ANALYSIS_V1]": "PROFILE_ANALYSIS_V1",
     "[THOUGHT:PROCESS_V1]": "THOUGHT_PROCESS_V1",

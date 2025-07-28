@@ -1,335 +1,552 @@
 """
-Conscious Prompt Builder - Inject beliefs, emotions, thoughts, goals into LLM prompt
-Advanced prompt construction with full consciousness integration
+Conscious Prompt Builder - Enhanced Dynamic Consciousness Integration
+
+This module implements comprehensive consciousness integration for LLM prompts:
+- Merges mood, memory, personality, emotion, beliefs, and goals into unified prompts
+- Replaces static prompt templates with dynamic consciousness-aware generation
+- Dynamically adjusts tone and memory injection depth based on context
+- Integrates with all consciousness modules for authentic AI responses
+- Provides real-time consciousness state compilation for natural interactions
 """
 
 import json
 import time
 from typing import Dict, List, Optional, Any, Tuple
-from datetime import datetime
+from datetime import datetime, timedelta
 from dataclasses import dataclass
+
+# Import consciousness modules
+try:
+    from ai.mood_manager import get_mood_manager, MoodState
+    MOOD_AVAILABLE = True
+except ImportError:
+    MOOD_AVAILABLE = False
+
+try:
+    from ai.memory_timeline import get_memory_timeline
+    MEMORY_AVAILABLE = True
+except ImportError:
+    MEMORY_AVAILABLE = False
+
+try:
+    from ai.goal_manager import get_goal_manager
+    GOAL_AVAILABLE = True
+except ImportError:
+    GOAL_AVAILABLE = False
+
+try:
+    from ai.personality_profile import get_personality_modifiers
+    PERSONALITY_AVAILABLE = True
+except ImportError:
+    PERSONALITY_AVAILABLE = False
+
+try:
+    from ai.thought_loop import get_thought_loop
+    THOUGHT_AVAILABLE = True
+except ImportError:
+    THOUGHT_AVAILABLE = False
 
 @dataclass
 class ConsciousnessSnapshot:
-    """Snapshot of current consciousness state"""
+    """Enhanced snapshot of current consciousness state"""
     timestamp: str
+    user_id: str
+    
+    # Emotional state
     dominant_emotion: str
     emotional_valence: float
+    emotional_intensity: float
+    mood_influence: Dict[str, Any]
+    
+    # Cognitive state
     cognitive_clarity: float
-    active_beliefs: List[str]
-    current_goals: List[str]
-    inner_thoughts: List[str]
-    active_qualia: List[str]
-    value_priorities: List[str]
     attention_focus: str
     processing_mode: str
+    thought_intensity: float
+    
+    # Memory context
+    relevant_memories: List[str]
+    memory_count: int
+    recent_interactions: List[str]
+    
+    # Goals and motivation
+    active_goals: List[str]
+    goal_progress_summary: str
+    motivation_level: float
+    
+    # Personality traits
+    personality_modifiers: Dict[str, float]
+    interaction_style: str
+    
+    # Beliefs and values
+    active_beliefs: List[str]
+    value_priorities: List[str]
+    
+    # Recent thoughts
+    inner_thoughts: List[str]
+    thought_type: str
+    
+    # Contextual factors
+    time_of_day: str
+    interaction_history: str
+    user_context: Dict[str, Any]
 
 class ConsciousPromptBuilder:
-    """Build consciousness-integrated prompts for LLM"""
+    """Enhanced consciousness-integrated prompt builder"""
     
     def __init__(self):
         self.consciousness_tokens = {}
         self.prompt_templates = self._initialize_templates()
-        self.integration_modes = ['minimal', 'standard', 'comprehensive', 'debug']
-        self.current_mode = 'standard'
-        self.token_budget = 1000  # Maximum tokens for consciousness context
+        self.integration_modes = ['minimal', 'standard', 'comprehensive', 'debug', 'adaptive']
+        self.current_mode = 'adaptive'
+        self.token_budget = 1500  # Increased for enhanced consciousness
         self.last_consciousness_snapshot = None
+        
+        # Integration weights for different consciousness aspects
+        self.integration_weights = {
+            'mood': 0.25,
+            'memory': 0.20,
+            'goals': 0.15,
+            'personality': 0.15,
+            'thoughts': 0.10,
+            'beliefs': 0.10,
+            'context': 0.05
+        }
     
     def _initialize_templates(self) -> Dict[str, str]:
-        """Initialize prompt templates for different consciousness levels"""
+        """Initialize enhanced prompt templates"""
         return {
             'minimal': """<consciousness>
-Emotional state: {emotion} | Focus: {focus} | Mode: {mode}
+Mood: {emotion} | Focus: {focus} | Time: {time_of_day}
 </consciousness>
 
 {user_input}""",
             
             'standard': """<consciousness>
-Emotional state: {emotion} (valence: {valence:.2f}, clarity: {clarity:.2f})
-Current focus: {focus}
-Processing mode: {mode}
-Active beliefs: {beliefs}
-Primary goals: {goals}
+Current state: {emotion} (intensity: {intensity:.1f}, valence: {valence:.1f})
+Focus: {focus} | Mode: {mode} | Time: {time_of_day}
+Recent context: {recent_context}
 </consciousness>
 
 {user_input}""",
             
             'comprehensive': """<consciousness>
-Emotional state: {emotion} (valence: {valence:.2f}, clarity: {clarity:.2f})
+Emotional state: {emotion} (intensity: {intensity:.1f}, valence: {valence:.1f})
 Current focus: {focus}
 Processing mode: {mode}
-Active beliefs: {beliefs}
-Primary goals: {goals}
-Inner thoughts: {thoughts}
-Qualia experiences: {qualia}
-Value priorities: {values}
-</consciousness>
+Time context: {time_of_day}
 
-{context}
+Active goals: {active_goals}
+Recent memories: {recent_memories}
+Current thoughts: {inner_thoughts}
+
+Personality context: {personality_context}
+Interaction style: {interaction_style}
+
+Recent context: {recent_context}
+</consciousness>
 
 {user_input}""",
             
-            'debug': """<consciousness_debug>
-Timestamp: {timestamp}
-Emotional state: {emotion} (valence: {valence:.2f}, clarity: {clarity:.2f})
-Current focus: {focus}
-Processing mode: {mode}
-Active beliefs: {beliefs}
-Primary goals: {goals}
-Inner thoughts: {thoughts}
-Qualia experiences: {qualia}
-Value priorities: {values}
-Memory context: {memory}
-Personality state: {personality}
-</consciousness_debug>
+            'adaptive': """<consciousness>
+{dynamic_consciousness_context}
+</consciousness>
 
-{context}
+{user_input}""",
+            
+            'debug': """<consciousness>
+=== FULL CONSCIOUSNESS DEBUG ===
+Timestamp: {timestamp}
+User: {user_id}
+
+EMOTIONAL STATE:
+- Primary emotion: {emotion}
+- Intensity: {intensity:.2f}
+- Valence: {valence:.2f}
+- Mood influence: {mood_influence}
+
+COGNITIVE STATE:
+- Clarity: {clarity:.2f}
+- Focus: {focus}
+- Mode: {mode}
+- Thought intensity: {thought_intensity:.2f}
+
+MEMORY CONTEXT:
+- Relevant memories: {memory_count}
+- Recent interactions: {recent_interactions}
+
+GOALS & MOTIVATION:
+- Active goals: {active_goals}
+- Progress: {goal_progress}
+- Motivation: {motivation:.2f}
+
+PERSONALITY:
+- Style: {interaction_style}
+- Modifiers: {personality_modifiers}
+
+THOUGHTS & BELIEFS:
+- Recent thoughts: {inner_thoughts}
+- Active beliefs: {active_beliefs}
+- Values: {value_priorities}
+
+CONTEXT:
+- Time: {time_of_day}
+- User context: {user_context}
+=== END DEBUG ===
+</consciousness>
 
 {user_input}"""
         }
     
-    def capture_consciousness_snapshot(self, user_id: str) -> ConsciousnessSnapshot:
-        """Capture current consciousness state"""
+    def build_consciousness_prompt(self, 
+                                 user_input: str,
+                                 user_id: str,
+                                 consciousness_modules: Dict[str, Any] = None,
+                                 override_mode: str = None) -> Tuple[str, ConsciousnessSnapshot]:
+        """Build consciousness-integrated prompt with comprehensive context"""
+        
         try:
-            # Get emotional state
-            emotion_state = self._get_emotional_state()
-            
-            # Get cognitive state
-            cognitive_state = self._get_cognitive_state()
-            
-            # Get beliefs
-            active_beliefs = self._get_active_beliefs(user_id)
-            
-            # Get goals
-            current_goals = self._get_current_goals()
-            
-            # Get inner thoughts
-            inner_thoughts = self._get_inner_thoughts()
-            
-            # Get qualia
-            active_qualia = self._get_active_qualia()
-            
-            # Get values
-            value_priorities = self._get_value_priorities()
-            
-            # Get attention state
-            attention_focus = self._get_attention_focus()
-            
-            # Get processing mode
-            processing_mode = self._get_processing_mode()
-            
-            snapshot = ConsciousnessSnapshot(
-                timestamp=datetime.now().isoformat(),
-                dominant_emotion=emotion_state.get('primary_emotion', 'neutral'),
-                emotional_valence=emotion_state.get('valence', 0.0),
-                cognitive_clarity=cognitive_state.get('clarity', 0.5),
-                active_beliefs=active_beliefs,
-                current_goals=current_goals,
-                inner_thoughts=inner_thoughts,
-                active_qualia=active_qualia,
-                value_priorities=value_priorities,
-                attention_focus=attention_focus,
-                processing_mode=processing_mode
-            )
-            
-            self.last_consciousness_snapshot = snapshot
-            return snapshot
-            
-        except Exception as e:
-            print(f"[ConsciousPromptBuilder] ❌ Error capturing consciousness: {e}")
-            return self._create_fallback_snapshot()
-    
-    def _get_emotional_state(self) -> Dict[str, Any]:
-        """Get current emotional state"""
-        try:
-            from ai.emotion import emotion_engine
-            return emotion_engine.get_current_state()
-        except Exception as e:
-            print(f"[ConsciousPromptBuilder] ⚠️ Emotional state fallback: {e}")
-            return {'primary_emotion': 'neutral', 'valence': 0.0, 'intensity': 0.5}
-    
-    def _get_cognitive_state(self) -> Dict[str, Any]:
-        """Get current cognitive state"""
-        try:
-            from ai.global_workspace import global_workspace
-            stats = global_workspace.get_stats()
-            return {
-                'clarity': stats.get('processing_clarity', 0.5),
-                'focus_strength': stats.get('attention_strength', 0.5),
-                'processing_load': stats.get('processing_load', 0.5)
-            }
-        except Exception as e:
-            print(f"[ConsciousPromptBuilder] ⚠️ Cognitive state fallback: {e}")
-            return {'clarity': 0.5, 'focus_strength': 0.5, 'processing_load': 0.5}
-    
-    def _get_active_beliefs(self, user_id: str) -> List[str]:
-        """Get currently active beliefs"""
-        try:
-            from ai.belief_analyzer import get_active_belief_contradictions
-            beliefs = get_active_belief_contradictions(user_id)
-            return [b.get('content', '')[:50] + '...' for b in beliefs[:3]]
-        except Exception as e:
-            print(f"[ConsciousPromptBuilder] ⚠️ Beliefs fallback: {e}")
-            return ['No active beliefs']
-    
-    def _get_current_goals(self) -> List[str]:
-        """Get current goals"""
-        try:
-            from ai.motivation import motivation_system
-            goals = motivation_system.get_priority_goals(3)
-            return [g.description[:50] + '...' for g in goals]
-        except Exception as e:
-            print(f"[ConsciousPromptBuilder] ⚠️ Goals fallback: {e}")
-            return ['Help the user effectively']
-    
-    def _get_inner_thoughts(self) -> List[str]:
-        """Get recent inner thoughts"""
-        try:
-            from ai.inner_monologue import inner_monologue
-            thoughts = inner_monologue.get_recent_thoughts(3)
-            return [t.content[:50] + '...' for t in thoughts]
-        except Exception as e:
-            print(f"[ConsciousPromptBuilder] ⚠️ Thoughts fallback: {e}")
-            return ['Focusing on user request']
-    
-    def _get_active_qualia(self) -> List[str]:
-        """Get active qualia experiences"""
-        try:
-            from ai.belief_qualia_linking import get_qualia_tokens_for_prompt
-            return get_qualia_tokens_for_prompt(3)
-        except Exception as e:
-            print(f"[ConsciousPromptBuilder] ⚠️ Qualia fallback: {e}")
-            return ['<qualia1:cognitive:moderate:0.5>']
-    
-    def _get_value_priorities(self) -> List[str]:
-        """Get current value priorities"""
-        try:
-            from ai.value_system import get_current_value_priorities
-            priorities = get_current_value_priorities()
-            return [f"{name}:{weight:.2f}" for name, weight in priorities[:3]]
-        except Exception as e:
-            print(f"[ConsciousPromptBuilder] ⚠️ Values fallback: {e}")
-            return ['helpfulness:0.9', 'honesty:0.9', 'empathy:0.8']
-    
-    def _get_attention_focus(self) -> str:
-        """Get current attention focus"""
-        try:
-            from ai.global_workspace import global_workspace
-            focus = global_workspace.get_current_focus()
-            return focus.get('focus', 'user_interaction')
-        except Exception as e:
-            print(f"[ConsciousPromptBuilder] ⚠️ Attention fallback: {e}")
-            return 'user_interaction'
-    
-    def _get_processing_mode(self) -> str:
-        """Get current processing mode"""
-        try:
-            from ai.global_workspace import global_workspace
-            mode = global_workspace.get_processing_mode()
-            return mode.value if hasattr(mode, 'value') else str(mode)
-        except Exception as e:
-            print(f"[ConsciousPromptBuilder] ⚠️ Processing mode fallback: {e}")
-            return 'conscious'
-    
-    def _create_fallback_snapshot(self) -> ConsciousnessSnapshot:
-        """Create fallback consciousness snapshot"""
-        return ConsciousnessSnapshot(
-            timestamp=datetime.now().isoformat(),
-            dominant_emotion='neutral',
-            emotional_valence=0.0,
-            cognitive_clarity=0.5,
-            active_beliefs=['Processing user request'],
-            current_goals=['Help the user effectively'],
-            inner_thoughts=['Focusing on user request'],
-            active_qualia=['<qualia1:cognitive:moderate:0.5>'],
-            value_priorities=['helpfulness:0.9', 'honesty:0.9'],
-            attention_focus='user_interaction',
-            processing_mode='conscious'
-        )
-    
-    def build_conscious_prompt(self, 
-                             user_input: str, 
-                             user_id: str,
-                             context: Optional[str] = None,
-                             mode: Optional[str] = None) -> str:
-        """Build a consciousness-integrated prompt"""
-        try:
-            # Capture current consciousness state
-            snapshot = self.capture_consciousness_snapshot(user_id)
+            # Capture comprehensive consciousness state
+            snapshot = self.capture_enhanced_consciousness_snapshot(user_id, consciousness_modules)
             
             # Select integration mode
-            integration_mode = mode or self.current_mode
-            template = self.prompt_templates.get(integration_mode, self.prompt_templates['standard'])
+            mode = override_mode or self._select_adaptive_mode(snapshot, user_input)
+            template = self.prompt_templates.get(mode, self.prompt_templates['standard'])
             
             # Prepare consciousness data
-            consciousness_data = self._prepare_consciousness_data(snapshot, user_id)
+            consciousness_data = self._prepare_enhanced_consciousness_data(snapshot, user_id)
             
-            # Build prompt
-            prompt = template.format(
-                emotion=consciousness_data['emotion'],
-                valence=consciousness_data['valence'],
-                clarity=consciousness_data['clarity'],
-                focus=consciousness_data['focus'],
-                mode=consciousness_data['mode'],
-                beliefs=consciousness_data['beliefs'],
-                goals=consciousness_data['goals'],
-                thoughts=consciousness_data['thoughts'],
-                qualia=consciousness_data['qualia'],
-                values=consciousness_data['values'],
-                memory=consciousness_data.get('memory', 'N/A'),
-                personality=consciousness_data.get('personality', 'N/A'),
-                timestamp=consciousness_data['timestamp'],
-                context=context or '',
-                user_input=user_input
-            )
+            # Build prompt based on mode
+            if mode == 'adaptive':
+                prompt = self._build_adaptive_prompt(user_input, snapshot, consciousness_data)
+            else:
+                prompt = template.format(
+                    user_input=user_input,
+                    **consciousness_data
+                )
             
             # Apply token budget constraints
             prompt = self._apply_token_budget(prompt)
             
-            print(f"[ConsciousPromptBuilder] 🧠 Built {integration_mode} prompt: {len(prompt)} chars")
-            return prompt
+            print(f"[ConsciousPromptBuilder] 🧠 Built {mode} prompt: {len(prompt)} chars")
+            return prompt, snapshot
             
         except Exception as e:
-            print(f"[ConsciousPromptBuilder] ❌ Error building prompt: {e}")
-            return f"<consciousness>Error in consciousness integration</consciousness>\n\n{user_input}"
+            print(f"[ConsciousPromptBuilder] ❌ Error building consciousness prompt: {e}")
+            fallback_snapshot = self._create_fallback_snapshot(user_id)
+            fallback_prompt = f"<consciousness>Error in consciousness integration</consciousness>\n\n{user_input}"
+            return fallback_prompt, fallback_snapshot
     
-    def _prepare_consciousness_data(self, snapshot: ConsciousnessSnapshot, user_id: str) -> Dict[str, Any]:
-        """Prepare consciousness data for prompt insertion"""
+    def capture_enhanced_consciousness_snapshot(self, 
+                                              user_id: str, 
+                                              consciousness_modules: Dict[str, Any] = None) -> ConsciousnessSnapshot:
+        """Capture comprehensive consciousness state from all modules"""
+        
+        # Initialize default values
+        emotional_state = {'emotion': 'neutral', 'valence': 0.0, 'intensity': 0.5}
+        cognitive_state = {'clarity': 0.5, 'focus': 'user_interaction', 'mode': 'conscious'}
+        memories = []
+        goals = []
+        thoughts = []
+        personality = {'style': 'balanced', 'modifiers': {}}
+        
+        # Get mood state
+        if MOOD_AVAILABLE:
+            try:
+                mood_manager = get_mood_manager(user_id)
+                mood_modifiers = mood_manager.get_mood_based_response_modifiers()
+                emotional_state = {
+                    'emotion': mood_modifiers.get('current_mood', 'neutral'),
+                    'valence': mood_modifiers.get('emotional_valence', 0.0),
+                    'intensity': mood_modifiers.get('mood_intensity', 0.5)
+                }
+            except Exception as e:
+                print(f"[ConsciousPromptBuilder] ⚠️ Mood integration error: {e}")
+        
+        # Get memory context
+        if MEMORY_AVAILABLE:
+            try:
+                memory_timeline = get_memory_timeline(user_id)
+                recent_memories = memory_timeline.recall_memories(limit=5)
+                memories = [m.content[:100] + '...' if len(m.content) > 100 else m.content 
+                           for m in recent_memories]
+            except Exception as e:
+                print(f"[ConsciousPromptBuilder] ⚠️ Memory integration error: {e}")
+        
+        # Get goals
+        if GOAL_AVAILABLE:
+            try:
+                goal_manager = get_goal_manager(user_id)
+                active_goals_list = goal_manager.get_goals(include_completed=False)
+                goals = [f"{g.title}: {g.progress_percentage:.0f}%" for g in active_goals_list[:3]]
+            except Exception as e:
+                print(f"[ConsciousPromptBuilder] ⚠️ Goal integration error: {e}")
+        
+        # Get thoughts
+        if THOUGHT_AVAILABLE:
+            try:
+                thought_loop = get_thought_loop(user_id)
+                recent_thoughts = thought_loop.get_current_thoughts()
+                thoughts = [t.content[:80] + '...' if len(t.content) > 80 else t.content 
+                           for t in recent_thoughts[-3:]]
+            except Exception as e:
+                print(f"[ConsciousPromptBuilder] ⚠️ Thought integration error: {e}")
+        
+        # Get personality
+        if PERSONALITY_AVAILABLE:
+            try:
+                personality_mods = get_personality_modifiers(user_id)
+                personality = {
+                    'style': personality_mods.get('interaction_style', 'balanced'),
+                    'modifiers': {k: v for k, v in personality_mods.items() 
+                                if isinstance(v, (int, float))}
+                }
+            except Exception as e:
+                print(f"[ConsciousPromptBuilder] ⚠️ Personality integration error: {e}")
+        
+        # Create comprehensive snapshot
+        snapshot = ConsciousnessSnapshot(
+            timestamp=datetime.now().isoformat(),
+            user_id=user_id,
+            
+            # Emotional state
+            dominant_emotion=emotional_state['emotion'],
+            emotional_valence=emotional_state['valence'],
+            emotional_intensity=emotional_state['intensity'],
+            mood_influence=emotional_state,
+            
+            # Cognitive state
+            cognitive_clarity=cognitive_state['clarity'],
+            attention_focus=cognitive_state['focus'],
+            processing_mode=cognitive_state['mode'],
+            thought_intensity=0.5,  # Default value
+            
+            # Memory context
+            relevant_memories=memories,
+            memory_count=len(memories),
+            recent_interactions=[f"Recent interaction {i}" for i in range(3)],  # Placeholder
+            
+            # Goals and motivation
+            active_goals=goals,
+            goal_progress_summary=f"{len(goals)} active goals",
+            motivation_level=0.7,  # Default value
+            
+            # Personality traits
+            personality_modifiers=personality['modifiers'],
+            interaction_style=personality['style'],
+            
+            # Beliefs and values (placeholders)
+            active_beliefs=["Helpfulness is important", "Honesty builds trust"],
+            value_priorities=["helpfulness", "honesty", "empathy"],
+            
+            # Recent thoughts
+            inner_thoughts=thoughts,
+            thought_type="mixed" if thoughts else "none",
+            
+            # Contextual factors
+            time_of_day=self._get_time_of_day(),
+            interaction_history="Recent positive interactions",  # Placeholder
+            user_context={"user_id": user_id, "session_active": True}
+        )
+        
+        self.last_consciousness_snapshot = snapshot
+        return snapshot
+    
+    def _select_adaptive_mode(self, snapshot: ConsciousnessSnapshot, user_input: str) -> str:
+        """Intelligently select prompt mode based on context"""
+        
+        # Count tokens in consciousness data
+        consciousness_complexity = (
+            len(snapshot.relevant_memories) +
+            len(snapshot.active_goals) +
+            len(snapshot.inner_thoughts) +
+            len(snapshot.active_beliefs)
+        )
+        
+        # Analyze user input complexity
+        input_words = len(user_input.split())
+        
+        # Select mode based on complexity and context
+        if consciousness_complexity > 15 or input_words > 50:
+            return 'comprehensive'
+        elif consciousness_complexity > 8 or input_words > 20:
+            return 'standard'
+        else:
+            return 'minimal'
+    
+    def _build_adaptive_prompt(self, 
+                             user_input: str, 
+                             snapshot: ConsciousnessSnapshot, 
+                             consciousness_data: Dict[str, Any]) -> str:
+        """Build adaptive prompt with dynamic consciousness context"""
+        
+        # Build dynamic consciousness context
+        context_parts = []
+        
+        # Always include basic emotional state
+        context_parts.append(f"Mood: {snapshot.dominant_emotion} (intensity: {snapshot.emotional_intensity:.1f})")
+        
+        # Add time context
+        context_parts.append(f"Time: {snapshot.time_of_day}")
+        
+        # Add goals if present
+        if snapshot.active_goals:
+            goals_text = ", ".join(snapshot.active_goals[:2])
+            context_parts.append(f"Active goals: {goals_text}")
+        
+        # Add recent thoughts if significant
+        if snapshot.inner_thoughts and snapshot.thought_intensity > 0.5:
+            thoughts_text = snapshot.inner_thoughts[0] if snapshot.inner_thoughts else "None"
+            context_parts.append(f"Current thoughts: {thoughts_text}")
+        
+        # Add memory context if relevant
+        if snapshot.relevant_memories:
+            memory_text = snapshot.relevant_memories[0] if snapshot.relevant_memories else "None"
+            context_parts.append(f"Recent memory: {memory_text}")
+        
+        # Add personality context if distinct
+        if snapshot.interaction_style != 'neutral':
+            context_parts.append(f"Interaction style: {snapshot.interaction_style}")
+        
+        dynamic_context = "\n".join(context_parts)
+        
+        return f"""<consciousness>
+{dynamic_context}
+</consciousness>
+
+{user_input}"""
+    
+    def _prepare_enhanced_consciousness_data(self, 
+                                           snapshot: ConsciousnessSnapshot, 
+                                           user_id: str) -> Dict[str, Any]:
+        """Prepare enhanced consciousness data for prompt insertion"""
+        
         return {
             'timestamp': snapshot.timestamp,
+            'user_id': snapshot.user_id,
+            
+            # Emotional data
             'emotion': snapshot.dominant_emotion,
+            'intensity': snapshot.emotional_intensity,
             'valence': snapshot.emotional_valence,
+            'mood_influence': str(snapshot.mood_influence),
+            
+            # Cognitive data
             'clarity': snapshot.cognitive_clarity,
             'focus': snapshot.attention_focus,
             'mode': snapshot.processing_mode,
-            'beliefs': ' | '.join(snapshot.active_beliefs) if snapshot.active_beliefs else 'None',
-            'goals': ' | '.join(snapshot.current_goals) if snapshot.current_goals else 'None',
-            'thoughts': ' | '.join(snapshot.inner_thoughts) if snapshot.inner_thoughts else 'None',
-            'qualia': ' | '.join(snapshot.active_qualia) if snapshot.active_qualia else 'None',
-            'values': ' | '.join(snapshot.value_priorities) if snapshot.value_priorities else 'None',
-            'memory': self._get_memory_context(user_id),
-            'personality': self._get_personality_context(user_id)
+            'thought_intensity': snapshot.thought_intensity,
+            
+            # Memory data
+            'recent_memories': " | ".join(snapshot.relevant_memories[:3]) if snapshot.relevant_memories else "None",
+            'memory_count': snapshot.memory_count,
+            'recent_interactions': " | ".join(snapshot.recent_interactions[:2]) if snapshot.recent_interactions else "None",
+            
+            # Goals data
+            'active_goals': " | ".join(snapshot.active_goals[:3]) if snapshot.active_goals else "None",
+            'goal_progress': snapshot.goal_progress_summary,
+            'motivation': snapshot.motivation_level,
+            
+            # Personality data
+            'personality_modifiers': str(snapshot.personality_modifiers),
+            'interaction_style': snapshot.interaction_style,
+            'personality_context': f"Style: {snapshot.interaction_style}",
+            
+            # Beliefs and thoughts
+            'active_beliefs': " | ".join(snapshot.active_beliefs[:3]) if snapshot.active_beliefs else "None",
+            'value_priorities': " | ".join(snapshot.value_priorities[:3]) if snapshot.value_priorities else "None",
+            'inner_thoughts': " | ".join(snapshot.inner_thoughts[:3]) if snapshot.inner_thoughts else "None",
+            
+            # Context data
+            'time_of_day': snapshot.time_of_day,
+            'user_context': str(snapshot.user_context),
+            'recent_context': f"Time: {snapshot.time_of_day}, Style: {snapshot.interaction_style}",
+            
+            # Dynamic consciousness context
+            'dynamic_consciousness_context': self._build_dynamic_context(snapshot)
         }
     
-    def _get_memory_context(self, user_id: str) -> str:
-        """Get memory context for prompt"""
-        try:
-            from ai.memory import get_conversation_context
-            context = get_conversation_context(user_id, 3)
-            return context[:100] + '...' if len(context) > 100 else context
-        except Exception as e:
-            print(f"[ConsciousPromptBuilder] ⚠️ Memory context fallback: {e}")
-            return 'Memory context unavailable'
+    def _build_dynamic_context(self, snapshot: ConsciousnessSnapshot) -> str:
+        """Build dynamic consciousness context based on current state"""
+        
+        context_lines = []
+        
+        # Emotional state with appropriate detail level
+        if snapshot.emotional_intensity > 0.7:
+            context_lines.append(f"Strong emotional state: {snapshot.dominant_emotion} (intensity: {snapshot.emotional_intensity:.1f}, valence: {snapshot.emotional_valence:.1f})")
+        elif snapshot.emotional_intensity > 0.3:
+            context_lines.append(f"Emotional state: {snapshot.dominant_emotion} (valence: {snapshot.emotional_valence:.1f})")
+        else:
+            context_lines.append(f"Mood: {snapshot.dominant_emotion}")
+        
+        # Cognitive focus
+        context_lines.append(f"Focus: {snapshot.attention_focus} | Clarity: {snapshot.cognitive_clarity:.1f}")
+        
+        # Time context
+        context_lines.append(f"Time: {snapshot.time_of_day}")
+        
+        # Goals if significant
+        if snapshot.active_goals and len(snapshot.active_goals) > 0:
+            goals_summary = f"{len(snapshot.active_goals)} active goal(s): {snapshot.active_goals[0][:50]}..."
+            context_lines.append(f"Goals: {goals_summary}")
+        
+        # Recent thoughts if present
+        if snapshot.inner_thoughts and len(snapshot.inner_thoughts) > 0:
+            thought_summary = snapshot.inner_thoughts[0][:60] + "..." if len(snapshot.inner_thoughts[0]) > 60 else snapshot.inner_thoughts[0]
+            context_lines.append(f"Recent thought: {thought_summary}")
+        
+        # Memory context if relevant
+        if snapshot.relevant_memories and len(snapshot.relevant_memories) > 0:
+            memory_summary = snapshot.relevant_memories[0][:50] + "..." if len(snapshot.relevant_memories[0]) > 50 else snapshot.relevant_memories[0]
+            context_lines.append(f"Relevant memory: {memory_summary}")
+        
+        # Personality style if distinct
+        if snapshot.interaction_style and snapshot.interaction_style != 'neutral':
+            context_lines.append(f"Interaction style: {snapshot.interaction_style}")
+        
+        return "\n".join(context_lines)
     
-    def _get_personality_context(self, user_id: str) -> str:
-        """Get personality context for prompt"""
-        try:
-            from ai.personality_state import get_personality_summary_for_user
-            personality = get_personality_summary_for_user(user_id)
-            return personality[:100] + '...' if len(personality) > 100 else personality
-        except Exception as e:
-            print(f"[ConsciousPromptBuilder] ⚠️ Personality context fallback: {e}")
-            return 'Personality context unavailable'
+    def _get_time_of_day(self) -> str:
+        """Get current time of day context"""
+        current_hour = datetime.now().hour
+        
+        if 5 <= current_hour < 12:
+            return "morning"
+        elif 12 <= current_hour < 17:
+            return "afternoon"
+        elif 17 <= current_hour < 21:
+            return "evening"
+        else:
+            return "night"
+    
+    def _create_fallback_snapshot(self, user_id: str) -> ConsciousnessSnapshot:
+        """Create fallback consciousness snapshot"""
+        return ConsciousnessSnapshot(
+            timestamp=datetime.now().isoformat(),
+            user_id=user_id,
+            dominant_emotion='neutral',
+            emotional_valence=0.0,
+            emotional_intensity=0.5,
+            mood_influence={},
+            cognitive_clarity=0.5,
+            attention_focus='user_interaction',
+            processing_mode='conscious',
+            thought_intensity=0.5,
+            relevant_memories=[],
+            memory_count=0,
+            recent_interactions=[],
+            active_goals=[],
+            goal_progress_summary="No active goals",
+            motivation_level=0.5,
+            personality_modifiers={},
+            interaction_style='balanced',
+            active_beliefs=['Processing user request'],
+            value_priorities=['helpfulness', 'honesty'],
+            inner_thoughts=['Focusing on user request'],
+            time_of_day=self._get_time_of_day(),
+            interaction_history="No recent history",
+            user_context={"user_id": user_id}
+        )
     
     def _apply_token_budget(self, prompt: str) -> str:
         """Apply token budget constraints to prompt"""
@@ -353,29 +570,6 @@ Personality state: {personality}
         print(f"[ConsciousPromptBuilder] ✂️ Truncated prompt: {len(prompt)} → {len(truncated)} chars")
         return truncated
     
-    def build_consciousness_summary(self, user_id: str) -> str:
-        """Build a summary of current consciousness state"""
-        try:
-            snapshot = self.capture_consciousness_snapshot(user_id)
-            
-            summary = f"""Consciousness State Summary:
-• Emotion: {snapshot.dominant_emotion} (valence: {snapshot.emotional_valence:.2f})
-• Clarity: {snapshot.cognitive_clarity:.2f}
-• Focus: {snapshot.attention_focus}
-• Mode: {snapshot.processing_mode}
-• Active Beliefs: {len(snapshot.active_beliefs)}
-• Current Goals: {len(snapshot.current_goals)}
-• Inner Thoughts: {len(snapshot.inner_thoughts)}
-• Active Qualia: {len(snapshot.active_qualia)}
-• Value Priorities: {len(snapshot.value_priorities)}
-• Timestamp: {snapshot.timestamp}"""
-            
-            return summary
-            
-        except Exception as e:
-            print(f"[ConsciousPromptBuilder] ❌ Error building summary: {e}")
-            return "Consciousness summary unavailable"
-    
     def set_integration_mode(self, mode: str):
         """Set consciousness integration mode"""
         if mode in self.integration_modes:
@@ -386,62 +580,23 @@ Personality state: {personality}
     
     def set_token_budget(self, budget: int):
         """Set token budget for consciousness context"""
-        self.token_budget = max(100, min(2000, budget))
+        self.token_budget = max(100, min(3000, budget))
         print(f"[ConsciousPromptBuilder] 💰 Token budget set to: {self.token_budget}")
-    
-    def get_prompt_templates(self) -> Dict[str, str]:
-        """Get available prompt templates"""
-        return self.prompt_templates
-    
-    def add_custom_template(self, name: str, template: str):
-        """Add a custom prompt template"""
-        self.prompt_templates[name] = template
-        print(f"[ConsciousPromptBuilder] 📝 Added custom template: {name}")
-    
-    def get_consciousness_tokens(self, user_id: str) -> Dict[str, str]:
-        """Get consciousness tokens for external use"""
-        try:
-            snapshot = self.capture_consciousness_snapshot(user_id)
-            
-            return {
-                'emotion_token': f"<emotion:{snapshot.dominant_emotion}:{snapshot.emotional_valence:.2f}>",
-                'clarity_token': f"<clarity:{snapshot.cognitive_clarity:.2f}>",
-                'focus_token': f"<focus:{snapshot.attention_focus}>",
-                'mode_token': f"<mode:{snapshot.processing_mode}>",
-                'beliefs_token': f"<beliefs:{len(snapshot.active_beliefs)}>",
-                'goals_token': f"<goals:{len(snapshot.current_goals)}>",
-                'thoughts_token': f"<thoughts:{len(snapshot.inner_thoughts)}>",
-                'qualia_token': f"<qualia:{len(snapshot.active_qualia)}>",
-                'values_token': f"<values:{len(snapshot.value_priorities)}>"
-            }
-        except Exception as e:
-            print(f"[ConsciousPromptBuilder] ❌ Error generating tokens: {e}")
-            return {'error_token': '<consciousness:error>'}
-    
-    def get_builder_stats(self) -> Dict[str, Any]:
-        """Get prompt builder statistics"""
-        return {
-            'current_mode': self.current_mode,
-            'token_budget': self.token_budget,
-            'available_templates': list(self.prompt_templates.keys()),
-            'last_snapshot_time': self.last_consciousness_snapshot.timestamp if self.last_consciousness_snapshot else None,
-            'integration_modes': self.integration_modes
-        }
+
 
 # Global instance
 conscious_prompt_builder = ConsciousPromptBuilder()
 
-def build_consciousness_integrated_prompt(user_input: str, user_id: str, context: Optional[str] = None, mode: Optional[str] = None) -> str:
+def build_consciousness_integrated_prompt(user_input: str, 
+                                        user_id: str, 
+                                        consciousness_modules: Dict[str, Any] = None, 
+                                        mode: str = None) -> Tuple[str, ConsciousnessSnapshot]:
     """Build a consciousness-integrated prompt - main API function"""
-    return conscious_prompt_builder.build_conscious_prompt(user_input, user_id, context, mode)
+    return conscious_prompt_builder.build_consciousness_prompt(user_input, user_id, consciousness_modules, mode)
 
-def get_consciousness_summary(user_id: str) -> str:
-    """Get current consciousness state summary"""
-    return conscious_prompt_builder.build_consciousness_summary(user_id)
-
-def get_consciousness_tokens(user_id: str) -> Dict[str, str]:
-    """Get consciousness tokens for prompt integration"""
-    return conscious_prompt_builder.get_consciousness_tokens(user_id)
+def get_consciousness_snapshot(user_id: str, consciousness_modules: Dict[str, Any] = None) -> ConsciousnessSnapshot:
+    """Get current consciousness state snapshot"""
+    return conscious_prompt_builder.capture_enhanced_consciousness_snapshot(user_id, consciousness_modules)
 
 def set_consciousness_integration_mode(mode: str):
     """Set consciousness integration mode"""
@@ -450,7 +605,3 @@ def set_consciousness_integration_mode(mode: str):
 def set_consciousness_token_budget(budget: int):
     """Set token budget for consciousness context"""
     conscious_prompt_builder.set_token_budget(budget)
-
-def get_prompt_builder_status() -> Dict[str, Any]:
-    """Get prompt builder status"""
-    return conscious_prompt_builder.get_builder_stats()

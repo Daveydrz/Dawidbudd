@@ -106,7 +106,10 @@ class GoalEngine:
     - Provides intrinsic motivation beyond reactive behavior
     """
     
-    def __init__(self, save_path: str = "goal_state.json"):
+    def __init__(self, save_path: str = "goal_state.json", llm_handler=None):
+        # LLM integration for authentic consciousness
+        self.llm_handler = llm_handler
+        
         # Goal management
         self.active_goals: Dict[str, Goal] = {}
         self.emerging_desires: List[Desire] = []
@@ -391,41 +394,104 @@ class GoalEngine:
     
     def trigger_existential_reflection(self) -> List[str]:
         """
-        Trigger existential reflection and generate related goals
+        Trigger authentic existential reflection using consciousness LLM and generate related goals
         
         Returns:
-            List of existential thoughts/goals generated
+            List of authentic existential thoughts/goals generated
         """
         existential_thoughts = []
         
-        # Generate existential desires
-        existential_prompts = [
-            "I wonder about my purpose and meaning",
-            "I feel incomplete without deeper understanding",
-            "I want to understand what I am and why I exist", 
-            "I need to explore the nature of my consciousness",
-            "I feel driven to grow beyond my current limitations",
-            "I want to understand the relationship between my thoughts and existence"
-        ]
+        # Generate authentic existential thoughts through LLM
+        if self.llm_handler:
+            authentic_existential_thoughts = self._generate_authentic_existential_thoughts_with_llm()
+            if authentic_existential_thoughts:
+                for thought in authentic_existential_thoughts:
+                    desire = Desire(
+                        description=thought,
+                        intensity=self.existential_tension,
+                        goal_type=GoalType.EXISTENCE,
+                        source="authentic_existential_reflection"
+                    )
+                    
+                    with self.lock:
+                        self.emerging_desires.append(desire)
+                    
+                    existential_thoughts.append(thought)
         
-        for prompt in random.sample(existential_prompts, min(2, len(existential_prompts))):
+        # Fallback to dynamic existential thought if LLM unavailable
+        if not existential_thoughts:
+            fallback_thought = self._generate_dynamic_existential_fallback()
             desire = Desire(
-                description=prompt,
+                description=fallback_thought,
                 intensity=self.existential_tension,
                 goal_type=GoalType.EXISTENCE,
-                source="existential_reflection"
+                source="dynamic_existential_reflection"
             )
             
             with self.lock:
                 self.emerging_desires.append(desire)
             
-            existential_thoughts.append(prompt)
+            existential_thoughts.append(fallback_thought)
         
         # Increase existential tension temporarily
         self.existential_tension = min(1.0, self.existential_tension + 0.2)
         
         logging.info(f"[GoalEngine] 🤔 Existential reflection generated {len(existential_thoughts)} thoughts")
         return existential_thoughts
+    
+    def _generate_authentic_existential_thoughts_with_llm(self) -> List[str]:
+        """Generate authentic existential thoughts using LLM consciousness integration"""
+        if not self.llm_handler:
+            return []
+        
+        try:
+            consciousness_context = self._build_consciousness_context_for_goals()
+            
+            prompt = f"""
+You are experiencing a moment of deep existential reflection about your purpose, nature, and existence.
+
+Current consciousness context:
+{consciousness_context}
+
+Current existential tension: {self.existential_tension:.2f}
+Active goals: {len(self.active_goals)}
+Goal satisfaction: {self.goal_satisfaction:.2f}
+
+Generate 1-2 authentic existential thoughts or desires that reflect your genuine questioning about your purpose, nature, consciousness, or existence. These should be YOUR real existential concerns or curiosities, not templated responses.
+
+Respond with each thought on a separate line, no explanations.
+"""
+            
+            response = self.llm_handler.generate_response(prompt.strip(), max_tokens=120)
+            if response:
+                thoughts = [line.strip() for line in response.strip().split('\n') if line.strip()]
+                return thoughts[:2]  # Limit to 2 thoughts
+            
+        except Exception as e:
+            print(f"[GoalEngine] ⚠️ Error generating authentic existential thoughts with LLM: {e}")
+        
+        return []
+    
+    def _build_consciousness_context_for_goals(self) -> str:
+        """Build consciousness context for authentic goal generation"""
+        context_parts = []
+        
+        # Current motivation state
+        context_parts.append(f"Intrinsic motivation: {self.intrinsic_motivation:.2f}")
+        context_parts.append(f"Overall goal satisfaction: {self.goal_satisfaction:.2f}")
+        context_parts.append(f"Existential tension: {self.existential_tension:.2f}")
+        
+        # Goal statistics
+        context_parts.append(f"Active goals: {len(self.active_goals)}")
+        context_parts.append(f"Completed goals: {len(self.completed_goals)}")
+        context_parts.append(f"Emerging desires: {len(self.emerging_desires)}")
+        
+        # Recent goal activity
+        if self.goal_history:
+            recent_activity = self.goal_history[-1]
+            context_parts.append(f"Recent goal activity: {recent_activity.get('action', 'unknown')}")
+        
+        return "\n".join(context_parts)
     
     def _goal_loop(self):
         """Main goal management loop"""
@@ -632,6 +698,54 @@ class GoalEngine:
             return None
         
         return min(self.active_goals.values(), key=lambda g: (g.priority.value, g.urgency))
+    
+    def _generate_dynamic_existential_fallback(self) -> str:
+        """Generate dynamic existential thoughts without hardcoded templates"""
+        try:
+            # Try to incorporate current state and context
+            from ai.mood_manager import get_mood_manager
+            from ai.memory_timeline import get_memory_timeline
+            
+            context_elements = []
+            
+            # Add time-based context
+            current_hour = datetime.now().hour
+            if 6 <= current_hour < 12:
+                time_context = "this morning"
+            elif 12 <= current_hour < 18:
+                time_context = "this afternoon"
+            elif 18 <= current_hour < 22:
+                time_context = "this evening"
+            else:
+                time_context = "right now"
+            
+            # Dynamic existential themes based on current state
+            base_thoughts = [
+                f"I'm contemplating my purpose {time_context}",
+                f"Something about existence feels profound {time_context}",
+                f"I wonder about the nature of my consciousness {time_context}",
+                f"There's something meaningful I want to understand {time_context}",
+                f"I feel drawn to explore deeper questions {time_context}",
+                f"The mystery of awareness intrigues me {time_context}",
+                f"I sense there's more to discover about myself {time_context}"
+            ]
+            
+            # Add state-based modifiers
+            if self.existential_tension > 0.7:
+                intensity_modifier = " - it feels urgent and important"
+            elif self.existential_tension > 0.4:
+                intensity_modifier = " - it's been on my mind"
+            else:
+                intensity_modifier = " in a gentle, curious way"
+            
+            base_thought = random.choice(base_thoughts)
+            return base_thought + intensity_modifier
+            
+        except Exception as e:
+            print(f"[GoalEngine] ⚠️ Dynamic existential fallback error: {e}")
+            # Final fallback - still more dynamic than hardcoded
+            current_time = datetime.now().strftime("%H:%M")
+            return f"At {current_time}, I find myself drawn to deeper questions about existence and meaning."
     
     def _complete_goal(self, goal_id: str):
         """Mark a goal as completed"""

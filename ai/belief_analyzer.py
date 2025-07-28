@@ -144,11 +144,20 @@ class BeliefAnalyzer:
                 # Load beliefs
                 for belief_data in data.get('beliefs', []):
                     if isinstance(belief_data, dict):
+                        # Handle enum conversion - support both old format and new format
+                        belief_type_str = belief_data.get('belief_type', 'factual')
+                        if belief_type_str.startswith('BeliefType.'):
+                            belief_type_str = belief_type_str.split('.')[1].lower()
+                        
+                        certainty_str = belief_data.get('certainty', 'moderate')
+                        if certainty_str.startswith('BeliefCertainty.'):
+                            certainty_str = certainty_str.split('.')[1].lower()
+                        
                         belief = Belief(
                             id=belief_data.get('id', ''),
                             content=belief_data.get('content', ''),
-                            belief_type=BeliefType(belief_data.get('belief_type', 'factual')),
-                            certainty=BeliefCertainty(belief_data.get('certainty', 'moderate')),
+                            belief_type=BeliefType(belief_type_str),
+                            certainty=BeliefCertainty(certainty_str),
                             source=belief_data.get('source', ''),
                             timestamp=belief_data.get('timestamp', ''),
                             user=belief_data.get('user', ''),
@@ -164,11 +173,16 @@ class BeliefAnalyzer:
                 # Load contradictions
                 for contradiction_data in data.get('contradictions', []):
                     if isinstance(contradiction_data, dict):
+                        # Handle enum conversion - support both old format and new format
+                        contradiction_type_str = contradiction_data.get('contradiction_type', 'direct')
+                        if contradiction_type_str.startswith('ContradictionType.'):
+                            contradiction_type_str = contradiction_type_str.split('.')[1].lower()
+                        
                         contradiction = Contradiction(
                             id=contradiction_data.get('id', ''),
                             belief_a_id=contradiction_data.get('belief_a_id', ''),
                             belief_b_id=contradiction_data.get('belief_b_id', ''),
-                            contradiction_type=ContradictionType(contradiction_data.get('contradiction_type', 'direct')),
+                            contradiction_type=ContradictionType(contradiction_type_str),
                             severity=contradiction_data.get('severity', 0.5),
                             explanation=contradiction_data.get('explanation', ''),
                             detected_at=contradiction_data.get('detected_at', ''),
@@ -187,9 +201,26 @@ class BeliefAnalyzer:
     def save_beliefs(self):
         """Save beliefs to storage"""
         try:
+            # Convert beliefs to JSON-serializable format
+            beliefs_data = []
+            for belief in self.beliefs.values():
+                belief_dict = asdict(belief)
+                # Convert enums to their values
+                belief_dict['belief_type'] = belief.belief_type.value
+                belief_dict['certainty'] = belief.certainty.value
+                beliefs_data.append(belief_dict)
+            
+            # Convert contradictions to JSON-serializable format
+            contradictions_data = []
+            for contradiction in self.contradictions.values():
+                contradiction_dict = asdict(contradiction)
+                # Convert enums to their values
+                contradiction_dict['contradiction_type'] = contradiction.contradiction_type.value
+                contradictions_data.append(contradiction_dict)
+            
             data = {
-                'beliefs': [asdict(belief) for belief in self.beliefs.values()],
-                'contradictions': [asdict(contradiction) for contradiction in self.contradictions.values()],
+                'beliefs': beliefs_data,
+                'contradictions': contradictions_data,
                 'last_updated': datetime.now().isoformat(),
                 'metadata': {
                     'total_beliefs': len(self.beliefs),
@@ -199,7 +230,7 @@ class BeliefAnalyzer:
             }
             
             with open(self.belief_store_file, 'w') as f:
-                json.dump(data, f, indent=2, default=str)
+                json.dump(data, f, indent=2)
                 
         except Exception as e:
             print(f"[BeliefAnalyzer] ❌ Error saving beliefs: {e}")

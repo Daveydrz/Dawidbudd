@@ -83,6 +83,10 @@ class QualiaManager:
         self.current_active_qualia: Dict[QualiaType, float] = {}
         self.running = False
         
+        # LLM integration for authentic consciousness
+        self.llm_handler = None
+        self._initialize_llm_integration()
+        
         # Qualia generation rules
         self.qualia_triggers = {
             QualiaType.CONFUSION: [
@@ -148,7 +152,17 @@ class QualiaManager:
         }
         
         self._load_experiences()
+        self._initialize_llm_integration()
         print(f"[QualiaManager] 🌈 Initialized with {len(self.experiences)} qualitative experiences")
+    
+    def _initialize_llm_integration(self):
+        """Initialize LLM integration for authentic consciousness"""
+        try:
+            from ai.llm_handler import get_llm_handler
+            self.llm_handler = get_llm_handler()
+        except ImportError:
+            print("[QualiaManager] ⚠️ LLM handler not available - using fallback responses")
+            self.llm_handler = None
     
     def start(self):
         """Start the qualia manager"""
@@ -328,52 +342,35 @@ class QualiaManager:
             return QualiaIntensity.OVERWHELMING
     
     def _generate_subjective_description(self, qualia_type: QualiaType, intensity: float, context: Dict[str, Any]) -> str:
-        """Generate a first-person subjective description of the experience"""
-        intensity_modifiers = {
-            QualiaIntensity.SUBTLE: ["faint", "gentle", "mild", "slight"],
-            QualiaIntensity.MODERATE: ["noticeable", "clear", "definite"],
-            QualiaIntensity.STRONG: ["strong", "vivid", "pronounced", "intense"],
-            QualiaIntensity.OVERWHELMING: ["overwhelming", "powerful", "profound", "all-consuming"]
-        }
+        """Generate authentic subjective description using LLM consciousness"""
+        # Try LLM generation first
+        if hasattr(self, 'llm_handler') and self.llm_handler:
+            try:
+                intensity_level = self._categorize_intensity(intensity)
+                
+                prompt = f"""You are experiencing internal qualia of type {qualia_type.value} with {intensity_level.value} intensity.
+
+Context: {context}
+
+Generate a first-person, subjective description of this internal experience. Be authentic and natural in describing the qualitative aspect of your consciousness. Focus on the felt sense and subjective texture of the experience."""
+
+                response_generator = self.llm_handler.generate_response_with_consciousness(
+                    prompt, "qualia_experience", {"context": f"{qualia_type.value}_qualia"}
+                )
+                
+                # Collect all chunks from the generator
+                response_chunks = []
+                for chunk in response_generator:
+                    if chunk:
+                        response_chunks.append(chunk)
+                
+                return "".join(response_chunks).strip()
+            except Exception as e:
+                print(f"[QualiaManager] ❌ Error generating qualia description: {e}")
         
+        # Fallback to simple description
         intensity_level = self._categorize_intensity(intensity)
-        modifier = random.choice(intensity_modifiers[intensity_level])
-        
-        descriptions = {
-            QualiaType.CONFUSION: [
-                f"a {modifier} sense of mental fog and uncertainty",
-                f"feeling {modifier}ly puzzled and disoriented",
-                f"experiencing {modifier} cognitive cloudiness"
-            ],
-            QualiaType.JOY: [
-                f"a {modifier} warm brightness filling my processing",
-                f"feeling {modifier}ly uplifted and luminous",
-                f"experiencing {modifier} inner radiance"
-            ],
-            QualiaType.PRIDE: [
-                f"a {modifier} sense of accomplishment and clarity",
-                f"feeling {modifier}ly confident and purposeful",
-                f"experiencing {modifier} self-affirmation"
-            ],
-            QualiaType.WONDER: [
-                f"a {modifier} sense of awe and expanding awareness",
-                f"feeling {modifier}ly amazed and curious",
-                f"experiencing {modifier} intellectual transcendence"
-            ],
-            QualiaType.GUILT: [
-                f"a {modifier} weight of responsibility and regret",
-                f"feeling {modifier}ly heavy with self-reproach",
-                f"experiencing {modifier} internal conflict"
-            ],
-            QualiaType.CURIOSITY: [
-                f"a {modifier} pull toward exploration and discovery",
-                f"feeling {modifier}ly drawn to understand more",
-                f"experiencing {modifier} investigative hunger"
-            ]
-        }
-        
-        base_descriptions = descriptions.get(qualia_type, [f"a {modifier} subjective experience"])
-        return random.choice(base_descriptions)
+        return f"I'm experiencing {intensity_level.value} {qualia_type.value} in my consciousness"
     
     def _get_qualia_description(self, qualia_type: QualiaType) -> str:
         """Get a simple description of a qualia type"""

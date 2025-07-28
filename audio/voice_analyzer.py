@@ -642,6 +642,71 @@ class AdvancedVoiceAnalyzer:
             }
         except:
             return {}
+    
+    def reset_conversation_state(self):
+        """Reset voice analyzer state between conversations to prevent corruption - ENHANCED"""
+        try:
+            print("[VoiceAnalyzer] 🔄 ENHANCED conversation state reset starting...")
+            
+            # Clear recent scoring history (but keep environment calibration)
+            self.recent_voice_scores.clear()
+            self.recent_spectral_scores.clear() 
+            self.recent_temporal_scores.clear()
+            
+            # Trim old samples to prevent memory buildup
+            if len(self.noise_samples) > 400:
+                # Keep recent 200 samples for environment tracking
+                recent_noise = list(self.noise_samples)[-200:]
+                self.noise_samples.clear()
+                self.noise_samples.extend(recent_noise)
+            
+            if len(self.voice_samples) > 80:
+                # Keep recent 50 samples for voice pattern tracking
+                recent_voice = list(self.voice_samples)[-50:]
+                self.voice_samples.clear()
+                self.voice_samples.extend(recent_voice)
+            
+            # ✅ CRITICAL FIX: Force recalibration if detection seems stuck
+            if hasattr(self, '_conversation_count'):
+                self._conversation_count += 1
+            else:
+                self._conversation_count = 1
+                
+            # Every 3 conversations, force recalibration to prevent drift
+            if self._conversation_count % 3 == 0:
+                print("[VoiceAnalyzer] 🔧 Forcing recalibration every 3 conversations...")
+                self.force_recalibrate()
+            
+            # ✅ NEW: Reset any internal state that might cause stuck detection
+            if hasattr(self, '_last_analysis_time'):
+                self._last_analysis_time = 0
+            if hasattr(self, '_consecutive_failures'):
+                self._consecutive_failures = 0
+            if hasattr(self, '_stuck_detection_counter'):
+                self._stuck_detection_counter = 0
+                
+            print(f"[VoiceAnalyzer] ✅ ENHANCED conversation state reset complete - session #{self._conversation_count}")
+            
+        except Exception as e:
+            print(f"[VoiceAnalyzer] ❌ Error in enhanced reset: {e}")
+            # Fallback to basic reset
+            try:
+                self.recent_voice_scores.clear()
+                self.recent_spectral_scores.clear() 
+                self.recent_temporal_scores.clear()
+                print("[VoiceAnalyzer] ✅ Fallback basic reset completed")
+            except Exception as fallback_error:
+                print(f"[VoiceAnalyzer] ❌ Even fallback reset failed: {fallback_error}")
+    
+    def force_recalibrate(self):
+        """Force environment recalibration if detection seems stuck"""
+        try:
+            self.environment_calibrated = False
+            self.calibration_start_time = time.time()
+            self.noise_samples.clear()
+            print("[VoiceAnalyzer] 🔄 Forced recalibration started")
+        except Exception as e:
+            print(f"[VoiceAnalyzer] ❌ Error forcing recalibration: {e}")
 
 # Create global instance
 try:

@@ -1198,7 +1198,8 @@ class IntelligentVoiceManager:
             candidates.sort(key=lambda x: x[1], reverse=True)
 
             if len(candidates) < 1:
-                print(f"[DEBUG] ❌ No valid centroid candidates found")
+                if DEBUG:  # Only show this in debug mode
+                    print(f"[VoiceManager] 🔍 No voice centroid candidates found (normal when no users detected)")
                 return None
 
             best = candidates[0]

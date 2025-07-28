@@ -5,6 +5,7 @@ Provides comprehensive analysis of subjective experiences and emotional patterns
 
 import json
 import time
+import logging
 from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime, timedelta
 from dataclasses import dataclass, asdict
@@ -670,6 +671,52 @@ class QualiaAnalytics:
             return f"{days} days, {hours} hours"
         except Exception:
             return "Unknown"
+    
+    def update_qualia_trends(self):
+        """Update qualia trends and analytics (maintenance method)"""
+        try:
+            # Analyze recent trends
+            recent_trends = self.analyze_emotional_trends(AnalyticsTimeframe.DAY)
+            
+            # Update pattern detection
+            new_patterns = self.detect_qualia_patterns()
+            
+            # Cleanup old data if needed
+            if len(self.qualia_snapshots) > self.max_snapshots:
+                # Keep most recent snapshots
+                self.qualia_snapshots = self.qualia_snapshots[-self.max_snapshots:]
+                
+            # Save updated data
+            self.save_analytics_data()
+            
+            logging.debug(f"[QualiaAnalytics] Updated trends: {len(recent_trends)} trends, {len(new_patterns)} patterns")
+            
+        except Exception as e:
+            logging.error(f"[QualiaAnalytics] Error updating trends: {e}")
+    
+    def get_current_qualia_snapshot(self) -> Dict[str, Any]:
+        """Get current qualia state snapshot"""
+        try:
+            if self.qualia_snapshots:
+                # Return most recent snapshot
+                latest = self.qualia_snapshots[-1]
+                return asdict(latest)
+            else:
+                # Return default empty state
+                return {
+                    "timestamp": datetime.now().isoformat(),
+                    "dominant_qualia": "neutral",
+                    "emotional_valence": 0.0,
+                    "cognitive_clarity": 0.5,
+                    "intensity": 0.5,
+                    "active_qualia_count": 0,
+                    "qualia_types": [],
+                    "context": "no_data",
+                    "user_id": "unknown"
+                }
+        except Exception as e:
+            logging.error(f"[QualiaAnalytics] Error getting current snapshot: {e}")
+            return {}
 
 # Global instance
 qualia_analytics = QualiaAnalytics()

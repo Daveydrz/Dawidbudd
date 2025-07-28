@@ -184,25 +184,47 @@ class CognitiveIntegrator:
             return {"error": "cognitive_modules_unavailable"}
         
         try:
-            # 1. Correct input using memory context
+            # ✅ PERFORMANCE: Import async processor for background tasks
+            try:
+                from .async_consciousness_processor import async_consciousness_processor
+                async_available = True
+            except ImportError:
+                async_available = False
+            
+            # 1. Correct input using memory context (IMMEDIATE - needed for response)
             corrected_text = self._correct_input_with_context(text, user_id)
             
-            # 2. Process emotional response
+            # 2. Process emotional response (IMMEDIATE - affects response tone)
             emotional_state = self._process_emotional_input(corrected_text, user_id)
             
-            # 3. Update consciousness and attention
+            # 3. Update consciousness and attention (IMMEDIATE - affects response focus)
             consciousness_state = self._update_consciousness_attention(corrected_text, user_id)
             
-            # 4. Extract and refine beliefs
-            beliefs_state = self._process_beliefs_and_qualia(corrected_text, user_id)
+            # ✅ PERFORMANCE: Queue non-critical tasks for background processing
+            if async_available:
+                # These don't need to block the response
+                async_consciousness_processor.queue_inner_monologue(corrected_text, user_id, 
+                    {"context": "user_interaction"})
+                async_consciousness_processor.queue_reflection(corrected_text, user_id,
+                    {"type": "post_interaction_reflection"})
+                async_consciousness_processor.queue_belief_processing(corrected_text, user_id,
+                    {"analysis_type": "belief_extraction"})
+                async_consciousness_processor.queue_memory_update(corrected_text, user_id,
+                    {"update_type": "conversation_memory"})
+                
+                print(f"[CognitiveIntegrator] ⚡ PERFORMANCE: Queued background consciousness tasks")
+                
+                # Use lightweight versions for immediate response
+                beliefs_state = {"summary": "Background processing", "qualia": {}}
+                personality_state = {"modulation": {}}
+                internal_state = {"thoughts": []}
+            else:
+                # Fallback to synchronous processing if async not available
+                beliefs_state = self._process_beliefs_and_qualia(corrected_text, user_id)
+                personality_state = self._update_personality_motivation(corrected_text, user_id)
+                internal_state = self._generate_internal_state(corrected_text, user_id)
             
-            # 5. Update personality and motivation
-            personality_state = self._update_personality_motivation(corrected_text, user_id)
-            
-            # 6. Generate internal state verbalization
-            internal_state = self._generate_internal_state(corrected_text, user_id)
-            
-            # 7. Create integrated cognitive state
+            # 7. Create integrated cognitive state (IMMEDIATE - needed for response)
             with self.state_lock:
                 self.current_state = CognitiveState(
                     emotional_state=emotional_state,
@@ -216,10 +238,10 @@ class CognitiveIntegrator:
                 )
                 self.total_updates += 1
             
-            # 8. Create prompt injection data
+            # 8. Create prompt injection data (IMMEDIATE - needed for response)
             prompt_data = self._create_prompt_injection_data()
             
-            logging.debug(f"[CognitiveIntegrator] 🧠 Processed input: {len(corrected_text)} chars → {len(prompt_data)} injection keys")
+            logging.debug(f"[CognitiveIntegrator] 🧠 ⚡ PERFORMANCE MODE: {len(corrected_text)} chars → {len(prompt_data)} injection keys")
             
             return prompt_data
             
@@ -306,7 +328,8 @@ class CognitiveIntegrator:
         """Process beliefs and link to qualia"""
         try:
             # Extract beliefs from text
-            beliefs = belief_analyzer.analyze_user_text_for_beliefs(text, user_id)
+            belief_analysis = belief_analyzer.analyze_text_for_beliefs(text, user_id)
+            beliefs = belief_analysis.get("extracted_beliefs", [])
             
             # Create qualia linkings for emotional content
             if self.belief_qualia_linker:
@@ -314,8 +337,9 @@ class CognitiveIntegrator:
                     # Link beliefs to qualia based on emotional content
                     if any(emotion_word in text.lower() for emotion_word in 
                           ["happy", "sad", "excited", "worried", "love", "hate", "feel"]):
+                        belief_id = belief.get("id", "unknown") if isinstance(belief, dict) else "unknown"
                         self.belief_qualia_linker.create_belief_qualia_link(
-                            belief.get("id", "unknown"),
+                            belief_id,
                             "emotional_response",
                             {"trigger_text": text, "user_id": user_id}
                         )
@@ -339,17 +363,37 @@ class CognitiveIntegrator:
         """Update personality and motivation systems"""
         try:
             # Update personality based on interaction
-            personality_triggers = personality_state.analyze_user_text_for_personality_adaptation(text, user_id)
+            personality_triggers = []
+            try:
+                personality_triggers = personality_state.analyze_user_text_for_triggers(text, user_id)
+                if not isinstance(personality_triggers, list):
+                    personality_triggers = []
+            except Exception as e:
+                logging.debug(f"[CognitiveIntegrator] Personality triggers error: {e}")
+                personality_triggers = []
             
             # Process motivation and goals
             goals = []
             if self.goal_reasoner:
-                goals = self.goal_reasoner.generate_goals_from_context(
-                    f"User {user_id} conversation about: {text[:50]}..."
-                )
+                try:
+                    goals = self.goal_reasoner.generate_goals_from_context(
+                        f"User {user_id} conversation about: {text[:50]}..."
+                    )
+                    if not isinstance(goals, list):
+                        goals = []
+                except Exception as e:
+                    logging.debug(f"[CognitiveIntegrator] Goal generation error: {e}")
+                    goals = []
             
             # Get personality modulation
-            modulation = personality_state.get_personality_modifiers_for_llm(user_id)
+            modulation = {}
+            try:
+                modulation = personality_state.get_personality_modifiers_for_llm(user_id)
+                if not isinstance(modulation, dict):
+                    modulation = {}
+            except Exception as e:
+                logging.debug(f"[CognitiveIntegrator] Personality modulation error: {e}")
+                modulation = {}
             
             return {
                 "personality_triggers": len(personality_triggers),
@@ -375,7 +419,11 @@ class CognitiveIntegrator:
             
             # Get internal state verbalization
             if self.state_verbalizer:
-                internal_state = self.state_verbalizer.generate_internal_state_description()
+                internal_state = self.state_verbalizer.verbalize_internal_state(
+                    {"current_state": "processing_user_input", "context": text[:50]},
+                    {"user_id": user_id, "emotional_state": "engaged"},
+                    f"User {user_id} interaction: {text[:30]}..."
+                )
                 if internal_state and internal_state != "None":
                     thoughts.append(internal_state)
             
@@ -410,6 +458,25 @@ class CognitiveIntegrator:
         with self.state_lock:
             state = self.current_state
             
+            # 🎯 Get plan context for current user if available
+            plan_context = ""
+            try:
+                from .memory import get_user_memory
+                # Try to get current user from last interaction
+                # This is a simplified approach - in full implementation would track current user
+                for user_id in ["user_1", "default", "User"]:  # Common user IDs
+                    try:
+                        memory = get_user_memory(user_id)
+                        user_plan = memory.get_user_today_plan()
+                        if user_plan:
+                            should_ask, reason = memory.should_ask_about_plans()
+                            plan_context = f"User plan status: {reason}"
+                            break
+                    except:
+                        continue
+            except Exception as e:
+                logging.debug(f"[CognitiveIntegrator] Plan context retrieval error: {e}")
+            
             return {
                 "cognitive_state": {
                     "emotion": state.emotional_state.get("current_emotion", "neutral"),
@@ -419,7 +486,8 @@ class CognitiveIntegrator:
                     "processing_mode": state.consciousness_state.get("processing_mode", "conscious"),
                     "memory_context": state.memory_context[:200] if state.memory_context else "",
                     "beliefs_summary": state.beliefs_summary,
-                    "internal_thoughts": state.internal_thoughts[:2]  # Limit to 2 most recent thoughts
+                    "internal_thoughts": state.internal_thoughts[:2],  # Limit to 2 most recent thoughts
+                    "plan_context": plan_context  # 🎯 Add plan context
                 },
                 "response_modulation": {
                     **state.emotional_state.get("modulation", {}),
