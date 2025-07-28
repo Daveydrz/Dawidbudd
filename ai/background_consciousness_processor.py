@@ -349,7 +349,7 @@ class BackgroundConsciousnessProcessor:
     def _run_background_entropy_processing(self, task: BackgroundTask):
         """Process entropy in background"""
         try:
-            from ai.entropy_engine import entropy_system
+            from ai.entropy import entropy_system
             uncertainty = entropy_system.get_decision_uncertainty(
                 0.8, {"type": "response_generation", "user": task.user_id}
             )

@@ -28,7 +28,7 @@ except ImportError as e:
 
 # Import LLM components
 try:
-    from ai.chat_enhanced_smart_with_fusion import generate_response_streaming_with_intelligent_fusion
+    from ai.dual_llm_client import generate_response_streaming_with_intelligent_fusion
     FUSION_LLM_AVAILABLE = True
 except ImportError:
     try:

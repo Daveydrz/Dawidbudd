@@ -51,7 +51,7 @@ if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
         from ai.self_model import SelfModel  
         from ai.temporal_awareness import TemporalAwareness
         from ai.subjective_experience import SubjectiveExperienceSystem
-        from ai.entropy_engine import EntropyEngine
+        from ai.entropy import EntropyEngine
         from ai.inner_monologue import InnerMonologue
         from ai.motivation import MotivationSystem
         from ai.narrative_tracker import NarrativeTracker
@@ -1125,12 +1125,6 @@ def extract_name_from_text(text):
             if len(name) >= 2 and name.isalpha():  # Valid name
                 return name
     
-    return None
-                        pass
-                
-                # Fallback validation
-                if hasattr(voice_manager, 'is_valid_name') and voice_manager.is_valid_name(name):
-                    return name
     return None
 
 def generate_guest_username():
