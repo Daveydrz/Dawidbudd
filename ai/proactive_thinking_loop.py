@@ -149,6 +149,9 @@ class ProactiveThinkingLoop:
         except Exception as e:
             print(f"[ProactiveThinking] ❌ Error registering voice system: {e}")
 
+    def register_llm_handler(self, handler):
+        self.llm_handler = handler
+
 # Create global instance
 proactive_thinking_loop = ProactiveThinkingLoop()
 

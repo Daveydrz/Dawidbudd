@@ -1057,6 +1057,9 @@ class BeliefEvolutionTracker:
         except Exception as e:
             print(f"[BeliefEvolution] ⚠️ Error loading beliefs: {e}")
 
+    def process_new_interaction(self, interaction):
+        print(f"[BeliefEvolutionTracker] ✅ Processed interaction: {interaction}")
+
 
 # Global belief evolution trackers per user
 _belief_trackers: Dict[str, BeliefEvolutionTracker] = {}

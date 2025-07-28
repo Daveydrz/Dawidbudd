@@ -353,57 +353,9 @@ class ConsciousnessManager:
         else:
             print("[ConsciousnessManager] ✅ Background processing already stopped")
     
-    def process_emotional_trigger(self, trigger_text: str):
-        """Process emotional trigger and update emotional state"""
-        try:
-            # Simple emotion detection based on trigger text
-            emotion_keywords = {
-                "happy": ["happy", "joy", "excited", "pleased", "glad", "cheerful"],
-                "sad": ["sad", "unhappy", "depressed", "down", "disappointed"],
-                "angry": ["angry", "mad", "furious", "annoyed", "irritated"],
-                "anxious": ["worried", "anxious", "nervous", "stressed", "concerned"],
-                "surprised": ["surprised", "shocked", "amazed", "astonished"],
-                "neutral": ["okay", "fine", "normal", "average"]
-            }
-            
-            detected_emotion = "neutral"
-            intensity = 0.5
-            
-            trigger_lower = trigger_text.lower()
-            
-            for emotion, keywords in emotion_keywords.items():
-                for keyword in keywords:
-                    if keyword in trigger_lower:
-                        detected_emotion = emotion
-                        # Increase intensity based on context
-                        if any(intensifier in trigger_lower for intensifier in ["very", "really", "extremely", "so"]):
-                            intensity = 0.8
-                        elif any(modifier in trigger_lower for modifier in ["a bit", "slightly", "somewhat"]):
-                            intensity = 0.3
-                        else:
-                            intensity = 0.6
-                        break
-                if detected_emotion != "neutral":
-                    break
-            
-            # Update consciousness state
-            self.state.current_emotion = detected_emotion
-            
-            # Save updated state
-            self._save_consciousness_state()
-            
-            print(f"[ConsciousnessManager] 😊 Emotional trigger processed: {detected_emotion} (intensity: {intensity})")
-            
-            return {
-                "emotion": detected_emotion,
-                "intensity": intensity,
-                "trigger": trigger_text,
-                "timestamp": datetime.now().isoformat()
-            }
-            
-        except Exception as e:
-            print(f"[ConsciousnessManager] ❌ Error processing emotional trigger: {e}")
-            return {"emotion": "neutral", "intensity": 0.5}
+    def process_emotional_trigger(self, trigger_text, context=None):
+        # Basic placeholder – later can be improved
+        return {"emotion": "neutral", "intensity": 0.5}
 
     def get_status(self) -> Dict[str, Any]:
         """Get current consciousness manager status"""
