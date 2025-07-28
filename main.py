@@ -13,9 +13,28 @@ import pvporcupine
 import os
 import json
 import re
+import requests
 from datetime import datetime  # ✅ ADD THIS IMPORT
 from typing import List, Any, Dict  # ✅ NEW: Add typing imports for consciousness functions
 from scipy.io.wavfile import write
+
+def call_main_llm(user_input):
+    payload = {"prompt": user_input, "stream": False}
+    try:
+        r = requests.post("http://localhost:5001/api/generate", json=payload)
+        return r.json().get("response", "")
+    except Exception as e:
+        print("[MainLLM] ERROR:", e)
+        return "I'm having trouble thinking right now."
+
+def call_extractor_llm(prompt):
+    payload = {"prompt": prompt, "stream": False}
+    try:
+        r = requests.post("http://localhost:5002/api/generate", json=payload)
+        return r.json().get("response", "")
+    except Exception as e:
+        print("[ExtractorLLM] ERROR:", e)
+        return ""
 
 # ✅ RESTORED: Full consciousness architecture available - MOVED UP
 ENTROPY_SYSTEM_AVAILABLE = True
@@ -41,8 +60,7 @@ from ai.consciousness_manager import consciousness_manager, ConsciousnessMode
 from ai.emotion import reset_session_for_user_smart
 from audio.smart_detection_manager import analyze_speech_detection, get_current_threshold
 
-# ✅ STEP 1: Import correct GPT4All extractors as requested
-from ai.extractor_llm import extract_facts, extract_name
+# ✅ REPLACED: Using direct HTTP calls to port 5002 instead of GPT4All extractors
 
 # ✅ RESTORED: Import all consciousness modules
 if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
@@ -292,7 +310,7 @@ except Exception as e:
 
 # Set fallback instances
 advanced_context_analyzer = None
-# advanced_name_manager = None  # ✅ REMOVED: Using GPT4All extractor instead
+# advanced_name_manager = None  # ✅ REMOVED: Using direct HTTP calls to port 5002 instead
 
 # ✅ VERIFY FINAL STATE
 print(f"[AdvancedBuddy] 🔍 Final voice_manager type: {type(voice_manager)}")
@@ -550,60 +568,55 @@ def handle_streaming_response(text, current_user):
             except Exception as consciousness_err:
                 print(f"[BuddyFlow] ⚠️ Background consciousness scheduling error: {consciousness_err}")
         
-        # ✅ STEP 3: Generate response using unified LLM handler 
-        print("[BuddyFlow] 🎯 Generating response with consciousness integration...")
+        # ✅ STEP 3: Generate response using direct HTTP call to port 5001
+        print("[BuddyFlow] 🎯 Generating response with main LLM...")
         
         try:
-            # Use the unified LLM handler for consciousness-integrated responses
-            response_generator = llm_handler.generate_response_with_consciousness(
-                text=text,
-                user=current_user,
-                context={},
-                stream=True
-            )
+            # Use direct HTTP call to main LLM (port 5001)
+            response_text = call_main_llm(text)
             
-            # Stream the response to TTS
-            full_response = ""
-            chunk_buffer = ""
-            chunks_sent = 0
+            # Send response to TTS
+            try:
+                from audio.output import speak_streaming
+                speak_streaming(response_text.strip())
+            except Exception as tts_err:
+                print(f"[BuddyFlow] ⚠️ TTS streaming error: {tts_err}")
+                # Fallback to print if TTS fails
+                print(f"[BuddyFlow] 💬 Buddy: {response_text.strip()}")
             
-            for chunk in response_generator:
-                if chunk and chunk.strip():
-                    full_response += chunk
-                    chunk_buffer += chunk
-                    
-                    # Send chunks to TTS when we have enough or hit punctuation
-                    if (len(chunk_buffer.split()) >= 8 or 
-                        any(punct in chunk for punct in ['.', '!', '?', ',']) or
-                        chunks_sent == 0):
-                        
-                        try:
-                            from audio.output import speak_streaming
-                            speak_streaming(chunk_buffer.strip())
-                            chunks_sent += 1
-                            chunk_buffer = ""
-                        except Exception as tts_err:
-                            print(f"[BuddyFlow] ⚠️ TTS streaming error: {tts_err}")
-                            # Fallback to print if TTS fails
-                            print(f"[BuddyFlow] 💬 Buddy: {chunk_buffer.strip()}")
-                            chunk_buffer = ""
-            
-            # Send any remaining buffered text
-            if chunk_buffer.strip():
-                try:
-                    from audio.output import speak_streaming
-                    speak_streaming(chunk_buffer.strip())
-                except Exception as tts_err:
-                    print(f"[BuddyFlow] 💬 Buddy: {chunk_buffer.strip()}")
+            full_response = response_text
             
             # ✅ STEP 4: Update memory with the interaction
             try:
                 add_to_conversation_history(current_user, text, full_response)
                 print(f"[BuddyFlow] 💾 Saved interaction to memory")
                 
-                # ✅ STEP 1: Extract facts from user input using GPT4All extractor as requested
+                # ✅ STEP 1: Extract facts from user input using direct HTTP calls as requested
                 try:
-                    facts = extract_facts(text)
+                    # Extract name, emotion, and intent using port 5002
+                    name_prompt = f"Extract ONLY the user's name from: {text}"
+                    user_name = call_extractor_llm(name_prompt)
+                    
+                    emotion_prompt = f"Detect the emotion in: {text}"
+                    user_emotion = call_extractor_llm(emotion_prompt)
+                    
+                    intent_prompt = f"Classify the intent (reminder, question, casual, etc.) in: {text}"
+                    user_intent = call_extractor_llm(intent_prompt)
+                    
+                    # Test logging as requested
+                    print("[MAIN LLM RESPONSE]", full_response)
+                    print("[NAME EXTRACTION]", user_name)
+                    print("[EMOTION EXTRACTION]", user_emotion)
+                    print("[INTENT EXTRACTION]", user_intent)
+                    
+                    # Create facts dictionary for compatibility
+                    facts = {
+                        "name": user_name if user_name and user_name.strip() and "NONE" not in user_name.upper() else "NONE",
+                        "emotion": user_emotion,
+                        "intent": user_intent,
+                        "likes": [],
+                        "dislikes": []
+                    }
                     if facts and (facts.get("name") or facts.get("likes") or facts.get("dislikes")):
                         print(f"[BuddyFlow] 📊 Extracted facts: {facts}")
                         
@@ -1100,11 +1113,13 @@ def load_voice_profiles():
         return False
 
 def extract_name_from_text(text):
-    """✅ STEP 1: Extract name using GPT4All extractor as requested"""
-    # ✅ Use extract_name from ai.extractor_llm as requested
-    user_name = extract_name(text)
-    if user_name != "NONE":
-        return user_name
+    """✅ STEP 1: Extract name using direct HTTP call to port 5002 as requested"""
+    # ✅ Use direct HTTP call to extractor LLM
+    name_prompt = f"Extract ONLY the user's name from: {text}"
+    user_name = call_extractor_llm(name_prompt)
+    
+    if user_name and user_name.strip() and "NONE" not in user_name.upper():
+        return user_name.strip()
     
     # Fallback to enhanced extraction if needed
     patterns = [
