@@ -1567,6 +1567,52 @@ class AdvancedAIAssistantCore:
         except Exception as e:
             print(f"[AdvancedCore] ❌ Maintenance error: {e}")
 
+    def handle_voice_identification(self, audio, text):
+        """
+        Main voice identification handler - identifies speaker from audio and text
+        
+        Args:
+            audio: Raw audio data
+            text: Transcribed text
+            
+        Returns:
+            tuple: (speaker_name, identification_method)
+        """
+        try:
+            print(f"[AdvancedBuddy] 🎯 Processing voice identification for: '{text[:50]}...'")
+            
+            # First, check if we have a current speaker from session context
+            current_speaker = self.get_current_speaker_identity()
+            if current_speaker:
+                print(f"[AdvancedBuddy] ✅ Using session speaker: {current_speaker}")
+                return current_speaker, "SESSION_CONTEXT"
+            
+            # Try to get speaker from session context directly
+            if 'last_recognized_user' in self.session_context and self.session_context['last_recognized_user']:
+                speaker_name = self.session_context['last_recognized_user']
+                print(f"[AdvancedBuddy] ✅ Identified speaker from context: {speaker_name}")
+                return speaker_name, "CONTEXT_RECOGNITION"
+            
+            # Try to get the actual person name if available
+            if 'actual_person_name' in self.session_context and self.session_context['actual_person_name']:
+                speaker_name = self.session_context['actual_person_name']
+                print(f"[AdvancedBuddy] ✅ Using actual person name: {speaker_name}")
+                return speaker_name, "ACTUAL_NAME"
+            
+            # Use computer login as fallback
+            if 'computer_login' in self.session_context and self.session_context['computer_login']:
+                speaker_name = self.session_context['computer_login']
+                print(f"[AdvancedBuddy] ✅ Using computer login: {speaker_name}")
+                return speaker_name, "COMPUTER_LOGIN"
+            
+            # Final fallback
+            print("[AdvancedBuddy] ⚠️ No speaker identification available, using Guest")
+            return "Guest", "FALLBACK"
+                
+        except Exception as e:
+            print(f"[AdvancedBuddy] ❌ Error in voice identification: {e}")
+            return "Guest", "ERROR_FALLBACK"
+
 # ✅ SINGLE INITIALIZATION ONLY
 if ENHANCED_MODULES_AVAILABLE:
     voice_manager = AdvancedAIAssistantCore()

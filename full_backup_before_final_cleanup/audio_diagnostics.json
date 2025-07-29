@@ -1,0 +1,19 @@
+{
+  "system_info": {
+    "python_version": "3.12.3 (main, Jun 18 2025, 17:59:45) [GCC 13.3.0]",
+    "platform": "linux",
+    "working_directory": "/home/runner/work/Dawidbudd/Dawidbudd"
+  },
+  "audio_dependencies": {
+    "numpy": "\u2705 Available",
+    "scipy": "\u2705 Available",
+    "pyaudio": "\u2705 Available",
+    "simpleaudio": "\u2705 Available",
+    "langdetect": "\u2705 Available",
+    "pydub": "\u274c Missing"
+  },
+  "audio_hardware": {},
+  "kokoro_status": {
+    "status": "\u274c Not available"
+  }
+}

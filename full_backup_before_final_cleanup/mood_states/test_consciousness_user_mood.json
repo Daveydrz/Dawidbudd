@@ -1,0 +1,76 @@
+{
+  "current_mood": {
+    "timestamp": "2025-07-26T15:52:39.477655",
+    "primary_mood": "content",
+    "intensity": 0.4,
+    "secondary_moods": [],
+    "trigger": "goal_progress",
+    "trigger_context": "Created new goal: Grow in consciousness and self-awareness",
+    "emotional_valence": 0.3,
+    "energy_level": 0.5,
+    "stability": 0.4
+  },
+  "mood_history": [
+    {
+      "timestamp": "2025-07-19T11:28:35.762066",
+      "primary_mood": "neutral",
+      "intensity": 0.4,
+      "secondary_moods": [],
+      "trigger": null,
+      "trigger_context": "",
+      "emotional_valence": 0.0,
+      "energy_level": 0.5,
+      "stability": 0.5
+    },
+    {
+      "timestamp": "2025-07-19T11:28:35.794210",
+      "primary_mood": "content",
+      "intensity": 0.4,
+      "secondary_moods": [],
+      "trigger": "goal_progress",
+      "trigger_context": "Created new goal: Understand {user} better",
+      "emotional_valence": 0.3,
+      "energy_level": 0.5,
+      "stability": 0.4
+    },
+    {
+      "timestamp": "2025-07-19T11:28:35.798949",
+      "primary_mood": "content",
+      "intensity": 0.4,
+      "secondary_moods": [],
+      "trigger": "goal_progress",
+      "trigger_context": "Created new goal: Understand test_consciousness_user deeply and authentically",
+      "emotional_valence": 0.3,
+      "energy_level": 0.5,
+      "stability": 0.4
+    },
+    {
+      "timestamp": "2025-07-19T11:28:35.800202",
+      "primary_mood": "content",
+      "intensity": 0.4,
+      "secondary_moods": [],
+      "trigger": "goal_progress",
+      "trigger_context": "Created new goal: Grow in consciousness and self-awareness",
+      "emotional_valence": 0.3,
+      "energy_level": 0.5,
+      "stability": 0.4
+    },
+    {
+      "timestamp": "2025-07-26T15:52:39.475898",
+      "primary_mood": "content",
+      "intensity": 0.4,
+      "secondary_moods": [],
+      "trigger": "goal_progress",
+      "trigger_context": "Created new goal: Understand test_consciousness_user deeply and authentically",
+      "emotional_valence": 0.3,
+      "energy_level": 0.5,
+      "stability": 0.4
+    }
+  ],
+  "mood_patterns": {
+    "common_triggers": {
+      "goal_progress": 5
+    }
+  },
+  "last_updated": "2025-07-26T15:52:39.477780"
+}

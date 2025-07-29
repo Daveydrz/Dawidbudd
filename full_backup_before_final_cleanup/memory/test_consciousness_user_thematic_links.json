@@ -1,0 +1,144 @@
+{
+  "goals": {
+    "theme": "goals",
+    "memory_ids": [
+      "mem_test_consciousness_user_76743eb9f855",
+      "mem_test_consciousness_user_52dd879beffc",
+      "mem_test_consciousness_user_d97cef23ff74",
+      "mem_test_consciousness_user_364fd6593144",
+      "mem_test_consciousness_user_ee6cb689dff4"
+    ],
+    "strength": 0.5,
+    "creation_time": "2025-07-19T11:28:35.793326",
+    "last_reinforced": "2025-07-26T15:52:39.476735"
+  },
+  "relationship": {
+    "theme": "relationship",
+    "memory_ids": [
+      "mem_test_consciousness_user_76743eb9f855",
+      "mem_test_consciousness_user_52dd879beffc",
+      "mem_test_consciousness_user_364fd6593144"
+    ],
+    "strength": 0.30000000000000004,
+    "creation_time": "2025-07-19T11:28:35.793330",
+    "last_reinforced": "2025-07-26T15:52:39.474847"
+  },
+  "understanding": {
+    "theme": "understanding",
+    "memory_ids": [
+      "mem_test_consciousness_user_76743eb9f855",
+      "mem_test_consciousness_user_52dd879beffc",
+      "mem_test_consciousness_user_364fd6593144"
+    ],
+    "strength": 0.30000000000000004,
+    "creation_time": "2025-07-19T11:28:35.793333",
+    "last_reinforced": "2025-07-26T15:52:39.474848"
+  },
+  "beliefs": {
+    "theme": "beliefs",
+    "memory_ids": [
+      "mem_test_consciousness_user_a6cf4512893f",
+      "mem_test_consciousness_user_ebe58794bc8f",
+      "mem_test_consciousness_user_31cb2bbf2f4c"
+    ],
+    "strength": 0.30000000000000004,
+    "creation_time": "2025-07-19T11:28:35.795031",
+    "last_reinforced": "2025-07-19T11:28:35.797123"
+  },
+  "worldview": {
+    "theme": "worldview",
+    "memory_ids": [
+      "mem_test_consciousness_user_a6cf4512893f",
+      "mem_test_consciousness_user_ebe58794bc8f",
+      "mem_test_consciousness_user_31cb2bbf2f4c"
+    ],
+    "strength": 0.30000000000000004,
+    "creation_time": "2025-07-19T11:28:35.795033",
+    "last_reinforced": "2025-07-19T11:28:35.797124"
+  },
+  "self": {
+    "theme": "self",
+    "memory_ids": [
+      "mem_test_consciousness_user_a6cf4512893f"
+    ],
+    "strength": 0.1,
+    "creation_time": "2025-07-19T11:28:35.795035",
+    "last_reinforced": "2025-07-19T11:28:35.795035"
+  },
+  "consciousness": {
+    "theme": "consciousness",
+    "memory_ids": [
+      "mem_test_consciousness_user_a6cf4512893f"
+    ],
+    "strength": 0.1,
+    "creation_time": "2025-07-19T11:28:35.795036",
+    "last_reinforced": "2025-07-19T11:28:35.795036"
+  },
+  "existence": {
+    "theme": "existence",
+    "memory_ids": [
+      "mem_test_consciousness_user_a6cf4512893f"
+    ],
+    "strength": 0.1,
+    "creation_time": "2025-07-19T11:28:35.795037",
+    "last_reinforced": "2025-07-19T11:28:35.795037"
+  },
+  "relationships": {
+    "theme": "relationships",
+    "memory_ids": [
+      "mem_test_consciousness_user_ebe58794bc8f",
+      "mem_test_consciousness_user_31cb2bbf2f4c"
+    ],
+    "strength": 0.2,
+    "creation_time": "2025-07-19T11:28:35.796115",
+    "last_reinforced": "2025-07-19T11:28:35.797126"
+  },
+  "learning": {
+    "theme": "learning",
+    "memory_ids": [
+      "mem_test_consciousness_user_ebe58794bc8f"
+    ],
+    "strength": 0.1,
+    "creation_time": "2025-07-19T11:28:35.796117",
+    "last_reinforced": "2025-07-19T11:28:35.796118"
+  },
+  "purpose": {
+    "theme": "purpose",
+    "memory_ids": [
+      "mem_test_consciousness_user_ebe58794bc8f",
+      "mem_test_consciousness_user_31cb2bbf2f4c"
+    ],
+    "strength": 0.2,
+    "creation_time": "2025-07-19T11:28:35.796119",
+    "last_reinforced": "2025-07-19T11:28:35.797126"
+  },
+  "fulfillment": {
+    "theme": "fulfillment",
+    "memory_ids": [
+      "mem_test_consciousness_user_31cb2bbf2f4c"
+    ],
+    "strength": 0.1,
+    "creation_time": "2025-07-19T11:28:35.797127",
+    "last_reinforced": "2025-07-19T11:28:35.797127"
+  },
+  "personal_growth": {
+    "theme": "personal_growth",
+    "memory_ids": [
+      "mem_test_consciousness_user_d97cef23ff74",
+      "mem_test_consciousness_user_ee6cb689dff4"
+    ],
+    "strength": 0.2,
+    "creation_time": "2025-07-19T11:28:35.799470",
+    "last_reinforced": "2025-07-26T15:52:39.476737"
+  },
+  "growth": {
+    "theme": "growth",
+    "memory_ids": [
+      "mem_test_consciousness_user_d97cef23ff74",
+      "mem_test_consciousness_user_ee6cb689dff4"
+    ],
+    "strength": 0.2,
+    "creation_time": "2025-07-19T11:28:35.799472",
+    "last_reinforced": "2025-07-26T15:52:39.476738"
+  }
+}

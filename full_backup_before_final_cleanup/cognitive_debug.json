@@ -1,0 +1,78 @@
+{
+  "last_updated": "2025-07-18T12:12:14.400003",
+  "total_interactions": 2,
+  "interactions": [
+    {
+      "id": "interaction_1752835244",
+      "timestamp": "2025-07-18T10:40:44.445829",
+      "user_input": "Test input",
+      "user_id": "test_user",
+      "input_length": 10,
+      "processing_stages": [],
+      "cognitive_modules_used": {
+        "test_module": {
+          "timestamp": "2025-07-18T10:40:44.445852",
+          "module": "test_module",
+          "input_summary": {
+            "input": "test"
+          },
+          "output_summary": {
+            "output": "processed"
+          },
+          "processing_time": 0.001,
+          "success": true,
+          "error": null
+        }
+      },
+      "prompt_modifications": {},
+      "response_modulations": {},
+      "consciousness_events": [],
+      "performance_metrics": {},
+      "errors": [],
+      "response_text": "Test response",
+      "response_length": 13,
+      "total_response_time": 0.1,
+      "completed_timestamp": "2025-07-18T10:40:44.445880",
+      "modules_count": 1,
+      "stages_count": 0,
+      "consciousness_events_count": 0,
+      "errors_count": 0
+    },
+    {
+      "id": "interaction_1752840734",
+      "timestamp": "2025-07-18T12:12:14.399930",
+      "user_input": "Test input",
+      "user_id": "test_user",
+      "input_length": 10,
+      "processing_stages": [],
+      "cognitive_modules_used": {
+        "test_module": {
+          "timestamp": "2025-07-18T12:12:14.399954",
+          "module": "test_module",
+          "input_summary": {
+            "input": "test"
+          },
+          "output_summary": {
+            "output": "processed"
+          },
+          "processing_time": 0.001,
+          "success": true,
+          "error": null
+        }
+      },
+      "prompt_modifications": {},
+      "response_modulations": {},
+      "consciousness_events": [],
+      "performance_metrics": {},
+      "errors": [],
+      "response_text": "Test response",
+      "response_length": 13,
+      "total_response_time": 0.1,
+      "completed_timestamp": "2025-07-18T12:12:14.399982",
+      "modules_count": 1,
+      "stages_count": 0,
+      "consciousness_events_count": 0,
+      "errors_count": 0
+    }
+  ]
+}

@@ -11,7 +11,7 @@ from enum import Enum
 
 # ✅ ENTROPY SYSTEM: Import consciousness emergence components for probabilistic memory
 try:
-    from ai.entropy_engine import get_entropy_engine, probabilistic_select, inject_consciousness_entropy, EntropyLevel
+    from ai.entropy import get_entropy_engine, probabilistic_select, inject_consciousness_entropy, EntropyLevel
     print("[Memory] 🌀 Entropy system integrated for probabilistic memory retrieval")
     ENTROPY_AVAILABLE = True
 except ImportError as e:

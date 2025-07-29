@@ -1,0 +1,49 @@
+{
+  "working_memory": {
+    "active_contexts": {
+      "ctx_1752900064_0": {
+        "context_id": "ctx_1752900064_0",
+        "event_type": "social_event",
+        "description": "my niece's birthday",
+        "place": null,
+        "time_reference": null,
+        "status": "completed",
+        "priority": 1,
+        "timestamp": "2025-07-19 04:41:04",
+        "related_contexts": [],
+        "completion_status": 1.0
+      },
+      "ctx_1752900064_1": {
+        "context_id": "ctx_1752900064_1",
+        "event_type": "medical_appointment",
+        "description": "gp for my annual check",
+        "place": "doctor's office",
+        "time_reference": "after my niece's birthday",
+        "status": "completed",
+        "priority": 2,
+        "timestamp": "2025-07-19 04:41:04",
+        "related_contexts": [],
+        "completion_status": 1.0
+      }
+    },
+    "last_action": "my niece's birthday",
+    "last_place": null,
+    "last_topic": "birthday",
+    "last_goal": null,
+    "last_timestamp": "2025-07-19 04:41:04",
+    "action_status": "planned",
+    "context_sequence": [
+      "ctx_1752900064_0",
+      "ctx_1752900064_1"
+    ]
+  },
+  "intent_slots": {},
+  "reference_history": [
+    {
+      "vague_phrase": "both went well",
+      "likely_referent": "finished my niece's birthday and gp for my annual check",
+      "confidence": 0.9,
+      "context_source": "multi_context"
+    }
+  ]
+}

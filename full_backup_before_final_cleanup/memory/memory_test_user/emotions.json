@@ -1,0 +1,38 @@
+[
+  {
+    "emotion": "happy",
+    "intensity": 7,
+    "context": "User seemed excited about new project",
+    "date": "2025-07-18 06:21:23",
+    "follow_up_needed": true,
+    "related_memories": [],
+    "trigger_entities": []
+  },
+  {
+    "emotion": "happy",
+    "intensity": 7,
+    "context": "User seemed excited about new project",
+    "date": "2025-07-18 06:22:24",
+    "follow_up_needed": true,
+    "related_memories": [],
+    "trigger_entities": []
+  },
+  {
+    "emotion": "happy",
+    "intensity": 7,
+    "context": "User seemed excited about new project",
+    "date": "2025-07-18 06:54:52",
+    "follow_up_needed": true,
+    "related_memories": [],
+    "trigger_entities": []
+  },
+  {
+    "emotion": "happy",
+    "intensity": 7,
+    "context": "User seemed excited about new project",
+    "date": "2025-07-18 07:05:26",
+    "follow_up_needed": true,
+    "related_memories": [],
+    "trigger_entities": []
+  }
+]

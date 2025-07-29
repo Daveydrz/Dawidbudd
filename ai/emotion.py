@@ -22,7 +22,7 @@ from pathlib import Path
 
 # Try to import entropy engine, provide fallback if not available
 try:
-    from ai.entropy_engine import get_entropy_engine, EntropyLevel, inject_consciousness_entropy
+    from ai.entropy import get_entropy_engine, EntropyLevel, inject_consciousness_entropy
     ENTROPY_AVAILABLE = True
 except ImportError:
     print("[Emotion] ⚠️ Entropy engine not available, using simplified system")

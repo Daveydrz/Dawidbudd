@@ -151,6 +151,18 @@ class ProactiveThinkingLoop:
 
     def register_llm_handler(self, handler):
         self.llm_handler = handler
+    
+    def get_recent_thoughts(self, limit=10):
+        """Get recent thoughts from the thinking loop"""
+        recent_thoughts = getattr(self, "recent_thoughts", [])
+        return recent_thoughts[-limit:] if recent_thoughts else []
+    
+    def get_stats(self):
+        """Get statistics about the thinking loop"""
+        return {
+            "loop_count": getattr(self, "loop_count", 0),
+            "active": getattr(self, "_active", False)
+        }
 
 # Create global instance
 proactive_thinking_loop = ProactiveThinkingLoop()

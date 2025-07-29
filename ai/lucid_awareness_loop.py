@@ -4,3 +4,6 @@ class LucidAwarenessLoop:
 
     def start(self):
         print("[LucidAwarenessLoop] ✅ Started basic placeholder.")
+
+# Global instance
+lucid_awareness_loop = LucidAwarenessLoop()
