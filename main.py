@@ -56,7 +56,7 @@ else:
 from voice.database import load_known_users, known_users, save_known_users, anonymous_clusters
 from ai.memory import validate_ai_response_appropriateness, add_to_conversation_history, get_user_memory
 from ai.llm_handler import llm_handler
-from ai.consciousness_manager import consciousness_manager, ConsciousnessMode
+from ai.consciousness_core import consciousness_manager, ConsciousnessMode
 from ai.emotion import reset_session_for_user_smart
 from audio.smart_detection_manager import analyze_speech_detection, get_current_threshold
 
@@ -73,9 +73,7 @@ if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
         from ai.inner_monologue import InnerMonologue
         from ai.motivation import MotivationSystem
         from ai.narrative_tracker import NarrativeTracker
-        from ai.background_consciousness_processor import BackgroundConsciousnessProcessor
-        from ai.consciousness_integrator import ConsciousnessIntegrator
-        from ai.autonomous_consciousness_integrator import AutonomousConsciousnessIntegrator
+        from ai.consciousness_core import ConsciousnessIntegrator, AutonomousConsciousnessIntegrator
         from ai.free_thought_engine import free_thought_engine, FreeThoughtType
         
         print("[Main] ✅ All consciousness modules imported successfully")
@@ -90,9 +88,9 @@ if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
         subjective_experience = SubjectiveExperienceSystem()
         entropy_system = EntropyEngine()
         narrative_tracker = NarrativeTracker()
-        background_consciousness_processor = BackgroundConsciousnessProcessor()
-        consciousness_integrator = ConsciousnessIntegrator()
-        autonomous_consciousness_integrator = AutonomousConsciousnessIntegrator()
+        # Initialize consciousness modules - using consolidated consciousness_core
+        consciousness_integrator = consciousness_manager  # Using consolidated core
+        autonomous_consciousness_integrator = consciousness_manager  # Using consolidated core
         
         print("[Main] 🧠 Consciousness modules initialized")
         
