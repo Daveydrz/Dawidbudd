@@ -101,11 +101,8 @@ if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
         CONSCIOUSNESS_ARCHITECTURE_AVAILABLE = False
         CONSCIOUSNESS_MODULES_AVAILABLE = False
 
-from voice.manager import voice_manager
-from voice.manager_names import UltraIntelligentNameManager
-
-voice_manager.ultra_name_manager = UltraIntelligentNameManager(voice_manager)
-print("[Main] ✅ UltraIntelligentNameManager assigned to voice_manager")
+from voice.manager_core import voice_manager
+# Voice manager properly loaded from manager_core
 
 from config import *
 
@@ -131,35 +128,28 @@ try:
     from voice.database import load_known_users, known_users, anonymous_clusters, save_known_users
     print("[AdvancedBuddy] ✅ Voice database loaded")
     
-    # ✅ FORCE CORRECT VOICE MANAGER IMPORT - Always use IntelligentVoiceManager
-    try:
-        from voice.manager import voice_manager as intelligent_voice_manager
-        voice_manager = intelligent_voice_manager
-        
-        print("[AdvancedBuddy] ✅ Using IntelligentVoiceManager from manager.py")
-        print(f"[AdvancedBuddy] 🔍 voice_manager type: {type(voice_manager)}")
-        
-        # Verify it has the correct method
-        if hasattr(voice_manager, 'handle_voice_identification'):
-            print("[AdvancedBuddy] ✅ handle_voice_identification method confirmed")
-            ADVANCED_AI_AVAILABLE = True  # Your IntelligentVoiceManager IS advanced
-        else:
-            print("[AdvancedBuddy] ❌ handle_voice_identification method missing!")
+    # ✅ Voice manager already imported from manager_core - no need to re-import
+    print("[AdvancedBuddy] ✅ Using voice_manager from manager_core.py")
+    print(f"[AdvancedBuddy] 🔍 voice_manager type: {type(voice_manager)}")
+    
+    # Verify it has the correct method
+    if hasattr(voice_manager, 'handle_voice_identification'):
+        print("[AdvancedBuddy] ✅ handle_voice_identification method confirmed")
+        ADVANCED_AI_AVAILABLE = True  # Voice manager is advanced
+    else:
+        print("[AdvancedBuddy] ❌ handle_voice_identification method missing!")
         
         # Load voice training components
         from voice.training import voice_training_mode, check_voice_training_command
         print("[AdvancedBuddy] ✅ Voice training components loaded")
         
-    except ImportError as manager_err:
-        print(f"[AdvancedBuddy] ❌ IntelligentVoiceManager import failed: {manager_err}")
-        
-        # ✅ CRITICAL: Ensure we still have database functions
-        try:
-            from voice.database import load_known_users, known_users, save_known_users
-            from voice.recognition import identify_speaker_with_confidence
-            print("[AdvancedBuddy] ✅ Database functions available")
-        except Exception as db_err:
-            print(f"[AdvancedBuddy] 🚨 CRITICAL: Database functions missing: {db_err}")
+    # ✅ CRITICAL: Ensure we still have database functions
+    try:
+        from voice.database import load_known_users, known_users, save_known_users
+        from voice.recognition import identify_speaker_with_confidence
+        print("[AdvancedBuddy] ✅ Database functions available")
+    except Exception as db_err:
+        print(f"[AdvancedBuddy] 🚨 CRITICAL: Database functions missing: {db_err}")
         
         # Create working fallback voice manager
         class WorkingVoiceManager:
