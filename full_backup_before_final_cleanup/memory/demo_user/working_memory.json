@@ -1,0 +1,74 @@
+{
+  "working_memory": {
+    "last_action": "going to my niece's birthday party today",
+    "last_place": "my niece's birthday party today",
+    "last_topic": "today",
+    "last_goal": null,
+    "last_timestamp": "2025-07-19 03:01:01",
+    "action_status": "action"
+  },
+  "intent_slots": {
+    "intent_1752894061": {
+      "intent": "going to shop",
+      "status": "ready",
+      "prep_steps": [
+        "check what i need"
+      ],
+      "timestamp": "2025-07-19 03:01:01",
+      "related_actions": [
+        "Let me first check what I need",
+        "Alright, I'm ready"
+      ]
+    }
+  },
+  "reference_history": [
+    {
+      "vague_phrase": "i just came back",
+      "likely_referent": "came back from shop",
+      "confidence": 0.9,
+      "context_source": "working_memory"
+    },
+    {
+      "vague_phrase": "it went well",
+      "likely_referent": "making dinner went well",
+      "confidence": 0.7,
+      "context_source": "working_memory"
+    },
+    {
+      "vague_phrase": "it went well",
+      "likely_referent": "making dinner went well",
+      "confidence": 0.7,
+      "context_source": "working_memory"
+    },
+    {
+      "vague_phrase": "i'm ready",
+      "likely_referent": "ready to going to shop",
+      "confidence": 0.8,
+      "context_source": "working_memory"
+    },
+    {
+      "vague_phrase": "i finished",
+      "likely_referent": "finished going to shop",
+      "confidence": 0.9,
+      "context_source": "working_memory"
+    },
+    {
+      "vague_phrase": "it went well",
+      "likely_referent": "going to shop went well",
+      "confidence": 0.7,
+      "context_source": "working_memory"
+    },
+    {
+      "vague_phrase": "i'm back",
+      "likely_referent": "came back from shop",
+      "confidence": 0.9,
+      "context_source": "working_memory"
+    },
+    {
+      "vague_phrase": "i'm ready",
+      "likely_referent": "ready to going to shop",
+      "confidence": 0.8,
+      "context_source": "working_memory"
+    }
+  ]
+}

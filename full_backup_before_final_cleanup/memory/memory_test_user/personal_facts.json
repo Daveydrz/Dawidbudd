@@ -1,0 +1,26 @@
+{
+  "preferences_favorite_color": {
+    "category": "preferences",
+    "key": "favorite_color",
+    "value": "blue",
+    "confidence": 0.8,
+    "date_learned": "2025-07-18 07:05:26",
+    "last_mentioned": "2025-07-18 07:05:26",
+    "source_context": "User mentioned they love blue",
+    "emotional_weight": 0.3,
+    "current_status": "current",
+    "related_entities": []
+  },
+  "background_job": {
+    "category": "background",
+    "key": "job",
+    "value": "software developer",
+    "confidence": 0.9,
+    "date_learned": "2025-07-18 07:05:26",
+    "last_mentioned": "2025-07-18 07:05:26",
+    "source_context": "User said they work in tech",
+    "emotional_weight": 0.3,
+    "current_status": "current",
+    "related_entities": []
+  }
+}

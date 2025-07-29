@@ -1,0 +1,18 @@
+{
+  "fluffy": {
+    "name": "Fluffy",
+    "entity_type": "pet",
+    "status": "current",
+    "emotional_significance": 0.9,
+    "date_learned": "2025-07-18 06:24:40",
+    "last_updated": "2025-07-18 06:24:40",
+    "context_description": "User loves their cat Fluffy",
+    "related_memories": [
+      "pet_adoption_1752819880"
+    ],
+    "emotional_context": [
+      "beloved"
+    ],
+    "temporal_context": null
+  }
+}

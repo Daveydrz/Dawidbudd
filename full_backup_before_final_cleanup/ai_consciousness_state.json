@@ -1,0 +1,26 @@
+{
+  "current_emotion": "happy",
+  "motivation_level": 0.8,
+  "active_goals": [
+    "help user",
+    "remember information",
+    "maintain conversation"
+  ],
+  "current_focus": "ambient_awareness",
+  "personality_traits": [
+    "helpful",
+    "empathetic",
+    "curious"
+  ],
+  "beliefs": [],
+  "last_thought": null,
+  "thought_type": null,
+  "internal_monologue": [],
+  "memory": {
+    "name": null,
+    "likes": [],
+    "dislikes": [],
+    "facts": [],
+    "preferences": []
+  }
+}

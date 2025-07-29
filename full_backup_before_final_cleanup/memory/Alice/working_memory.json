@@ -1,0 +1,42 @@
+{
+  "working_memory": {
+    "active_contexts": {
+      "ctx_1752900064_0": {
+        "context_id": "ctx_1752900064_0",
+        "event_type": "general_event",
+        "description": "the gym",
+        "place": null,
+        "time_reference": null,
+        "status": "planned",
+        "priority": 1,
+        "timestamp": "2025-07-19 04:41:04",
+        "related_contexts": [],
+        "completion_status": 0.0
+      },
+      "ctx_1752900064_1": {
+        "context_id": "ctx_1752900064_1",
+        "event_type": "shopping_task",
+        "description": "grocery shopping",
+        "place": "shop",
+        "time_reference": "after the gym",
+        "status": "planned",
+        "priority": 2,
+        "timestamp": "2025-07-19 04:41:04",
+        "related_contexts": [],
+        "completion_status": 0.0
+      }
+    },
+    "last_action": "the gym",
+    "last_place": null,
+    "last_topic": "gym",
+    "last_goal": null,
+    "last_timestamp": "2025-07-19 04:41:04",
+    "action_status": "planned",
+    "context_sequence": [
+      "ctx_1752900064_0",
+      "ctx_1752900064_1"
+    ]
+  },
+  "intent_slots": {},
+  "reference_history": []
+}

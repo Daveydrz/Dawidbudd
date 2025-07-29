@@ -1,0 +1,1310 @@
+{
+  "timestamp": "2025-07-26T15:59:54.515191",
+  "summary": {
+    "conversation_tests": {
+      "total": 60,
+      "passed": 50,
+      "failed": 10,
+      "errors": 0
+    },
+    "consciousness_tests": {
+      "total": 50,
+      "passed": 50,
+      "failed": 0,
+      "errors": 0
+    },
+    "overall": {
+      "total": 110,
+      "passed": 100,
+      "percentage": 90.9090909090909
+    }
+  },
+  "conversation_results": {
+    "Name Memory": [
+      {
+        "test_number": 1,
+        "input": "I'm David",
+        "question": "What's my name?",
+        "expected": "David",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 2,
+        "input": "My name is Sarah",
+        "question": "Who am I?",
+        "expected": "Sarah",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 3,
+        "input": "Call me Mike",
+        "question": "What do you call me?",
+        "expected": "Mike",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 4,
+        "input": "I'm Jessica by the way",
+        "question": "What's my name?",
+        "expected": "Jessica",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 5,
+        "input": "My name is Francesco",
+        "question": "What's my name?",
+        "expected": "Francesco",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      }
+    ],
+    "Context Memory": [
+      {
+        "test_number": 6,
+        "input": "I'm going to the shop",
+        "question": "Where am I going?",
+        "expected": "shop",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 7,
+        "input": "I went to the gym",
+        "question": "Where did I go?",
+        "expected": "gym",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 8,
+        "input": "I'm at work",
+        "question": "Where am I?",
+        "expected": "work",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 9,
+        "input": "I just came back from vacation",
+        "question": "Where did I just come back from?",
+        "expected": "vacation",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 10,
+        "input": "I'm heading to the doctor",
+        "question": "Where are you heading?",
+        "expected": "doctor",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      }
+    ],
+    "Relationship Memory": [
+      {
+        "test_number": 11,
+        "input": "My nephew's name is Zac",
+        "question": "What's my nephew's name?",
+        "expected": "Zac",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 12,
+        "input": "My wife is called Emma",
+        "question": "What's your wife's name?",
+        "expected": "Emma",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 13,
+        "input": "My brother is John",
+        "question": "Who is your brother?",
+        "expected": "John",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 14,
+        "input": "My daughter Sarah is 10",
+        "question": "How old is your daughter?",
+        "expected": "10",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 15,
+        "input": "My friend Lisa lives nearby",
+        "question": "Where does your friend Lisa live?",
+        "expected": "nearby",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      }
+    ],
+    "Preference Memory": [
+      {
+        "test_number": 16,
+        "input": "I love pizza",
+        "question": "What food do you love?",
+        "expected": "pizza",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 17,
+        "input": "I hate spiders",
+        "question": "What do you hate?",
+        "expected": "spiders",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 18,
+        "input": "My favorite color is blue",
+        "question": "What's your favorite color?",
+        "expected": "blue",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 19,
+        "input": "I prefer tea over coffee",
+        "question": "What do you prefer, tea or coffee?",
+        "expected": "tea",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 20,
+        "input": "I enjoy reading books",
+        "question": "What do you enjoy?",
+        "expected": "reading",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      }
+    ],
+    "Timeline Memory": [
+      {
+        "test_number": 21,
+        "input": "Yesterday I went shopping",
+        "question": "What did you do yesterday?",
+        "expected": "shopping",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 22,
+        "input": "Last week I had a meeting",
+        "question": "What happened last week?",
+        "expected": "meeting",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 23,
+        "input": "Tomorrow I have a dentist appointment",
+        "question": "What do you have tomorrow?",
+        "expected": "dentist",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 24,
+        "input": "This morning I exercised",
+        "question": "What did you do this morning?",
+        "expected": "exercised",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 25,
+        "input": "Next month I'm traveling",
+        "question": "What's happening next month?",
+        "expected": "traveling",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      }
+    ],
+    "Fact Memory": [
+      {
+        "test_number": 26,
+        "input": "I work as a teacher",
+        "question": "What's your job?",
+        "expected": "teacher",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 27,
+        "input": "I live in Brisbane",
+        "question": "Where do you live?",
+        "expected": "Brisbane",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 28,
+        "input": "I'm 30 years old",
+        "question": "How old are you?",
+        "expected": "30",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 29,
+        "input": "I drive a Toyota",
+        "question": "What car do you drive?",
+        "expected": "Toyota",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 30,
+        "input": "I have two cats",
+        "question": "How many cats do you have?",
+        "expected": "two",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      }
+    ],
+    "Emotional Context": [
+      {
+        "test_number": 31,
+        "input": "I'm feeling happy today",
+        "question": "How are you feeling?",
+        "expected": "happy",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 32,
+        "input": "I'm stressed about work",
+        "question": "What are you stressed about?",
+        "expected": "work",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 33,
+        "input": "I'm excited for the weekend",
+        "question": "What are you excited about?",
+        "expected": "weekend",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 34,
+        "input": "I'm worried about my health",
+        "question": "What are you worried about?",
+        "expected": "health",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 35,
+        "input": "I'm proud of my achievement",
+        "question": "What are you proud of?",
+        "expected": "achievement",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      }
+    ],
+    "Activity Memory": [
+      {
+        "test_number": 36,
+        "input": "I'm cooking dinner",
+        "question": "What are you doing?",
+        "expected": "cooking",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 37,
+        "input": "I was reading a book",
+        "question": "What were you reading?",
+        "expected": "book",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 38,
+        "input": "I'm planning a trip",
+        "question": "What are you planning?",
+        "expected": "trip",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 39,
+        "input": "I was watching Netflix",
+        "question": "What were you watching?",
+        "expected": "Netflix",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 40,
+        "input": "I'm learning Spanish",
+        "question": "What are you learning?",
+        "expected": "Spanish",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      }
+    ],
+    "Complex Context": [
+      {
+        "test_number": 41,
+        "input": "I went to the shop with my nephew Zac to buy ingredients for pizza",
+        "question": "Who did you go shopping with?",
+        "expected": "Zac",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 42,
+        "input": "My wife Emma and I are planning a trip to Italy next month",
+        "question": "Where are you planning to go?",
+        "expected": "Italy",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 43,
+        "input": "Yesterday I had coffee with my friend Lisa at the new cafe",
+        "question": "Who did you have coffee with?",
+        "expected": "Lisa",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 44,
+        "input": "I'm stressed about the meeting with my boss tomorrow",
+        "question": "When is your meeting with your boss?",
+        "expected": "tomorrow",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 45,
+        "input": "My daughter Sarah got an A on her math test last week",
+        "question": "What grade did your daughter get?",
+        "expected": "A",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      }
+    ],
+    "Multi-turn Context": [
+      {
+        "test_number": 46,
+        "input": [
+          "I'm going to the shop",
+          "I'm buying milk and bread",
+          "I'm back from the shop"
+        ],
+        "question": "What did you buy at the shop?",
+        "expected": "milk and bread",
+        "multi_turn": false,
+        "status": "FAIL",
+        "memory_stored": false,
+        "memory_retrieved": false,
+        "response_accurate": false,
+        "errors": []
+      },
+      {
+        "test_number": 47,
+        "input": [
+          "My name is David",
+          "I work as a doctor",
+          "I live in Brisbane"
+        ],
+        "question": "What's your job, David?",
+        "expected": "doctor",
+        "multi_turn": false,
+        "status": "FAIL",
+        "memory_stored": false,
+        "memory_retrieved": false,
+        "response_accurate": false,
+        "errors": []
+      },
+      {
+        "test_number": 48,
+        "input": [
+          "I have a meeting at 3pm",
+          "The meeting is with my client",
+          "It's about the new project"
+        ],
+        "question": "What's your 3pm meeting about?",
+        "expected": "new project",
+        "multi_turn": false,
+        "status": "FAIL",
+        "memory_stored": false,
+        "memory_retrieved": false,
+        "response_accurate": false,
+        "errors": []
+      },
+      {
+        "test_number": 49,
+        "input": [
+          "I'm feeling tired",
+          "I didn't sleep well",
+          "I have insomnia"
+        ],
+        "question": "Why are you tired?",
+        "expected": "insomnia",
+        "multi_turn": false,
+        "status": "FAIL",
+        "memory_stored": false,
+        "memory_retrieved": false,
+        "response_accurate": false,
+        "errors": []
+      },
+      {
+        "test_number": 50,
+        "input": [
+          "I love Italian food",
+          "Especially pasta",
+          "My favorite is carbonara"
+        ],
+        "question": "What's your favorite pasta?",
+        "expected": "carbonara",
+        "multi_turn": false,
+        "status": "FAIL",
+        "memory_stored": false,
+        "memory_retrieved": false,
+        "response_accurate": false,
+        "errors": []
+      }
+    ],
+    "Correction Memory": [
+      {
+        "test_number": 51,
+        "input": "My name is David",
+        "question": "Actually, my name is Dave",
+        "expected": "Dave",
+        "multi_turn": false,
+        "status": "FAIL",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": false,
+        "errors": []
+      },
+      {
+        "test_number": 52,
+        "input": "I live in Sydney",
+        "question": "Sorry, I meant Brisbane",
+        "expected": "Brisbane",
+        "multi_turn": false,
+        "status": "FAIL",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": false,
+        "errors": []
+      },
+      {
+        "test_number": 53,
+        "input": "I have one cat",
+        "question": "Actually, I have two cats",
+        "expected": "two",
+        "multi_turn": false,
+        "status": "FAIL",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": false,
+        "errors": []
+      },
+      {
+        "test_number": 54,
+        "input": "I work as a nurse",
+        "question": "I meant I work as a doctor",
+        "expected": "doctor",
+        "multi_turn": false,
+        "status": "FAIL",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": false,
+        "errors": []
+      },
+      {
+        "test_number": 55,
+        "input": "I'm 25 years old",
+        "question": "Actually, I'm 30",
+        "expected": "30",
+        "multi_turn": false,
+        "status": "FAIL",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": false,
+        "errors": []
+      }
+    ],
+    "Time-sensitive Memory": [
+      {
+        "test_number": 56,
+        "input": "I have a dentist appointment at 2pm today",
+        "question": "When is your dentist appointment?",
+        "expected": "2pm today",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 57,
+        "input": "My birthday is next Tuesday",
+        "question": "When is your birthday?",
+        "expected": "next Tuesday",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 58,
+        "input": "I start my new job on Monday",
+        "question": "When do you start your new job?",
+        "expected": "Monday",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 59,
+        "input": "The meeting is scheduled for 3:30pm",
+        "question": "What time is your meeting?",
+        "expected": "3:30pm",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      },
+      {
+        "test_number": 60,
+        "input": "I'm leaving for vacation in 3 days",
+        "question": "When are you leaving for vacation?",
+        "expected": "3 days",
+        "multi_turn": false,
+        "status": "PASS",
+        "memory_stored": true,
+        "memory_retrieved": true,
+        "response_accurate": true,
+        "errors": []
+      }
+    ]
+  },
+  "consciousness_results": {
+    "Memory Integration": [
+      {
+        "test_number": 1,
+        "category": "Memory Integration",
+        "test_name": "Test immediate name storage",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 2,
+        "category": "Memory Integration",
+        "test_name": "Test memory persistence across sessions",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 3,
+        "category": "Memory Integration",
+        "test_name": "Test memory retrieval accuracy",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 4,
+        "category": "Memory Integration",
+        "test_name": "Test memory conflict resolution",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 5,
+        "category": "Memory Integration",
+        "test_name": "Test memory categorization",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      }
+    ],
+    "Emotional Processing": [
+      {
+        "test_number": 6,
+        "category": "Emotional Processing",
+        "test_name": "Test emotion detection from text",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 7,
+        "category": "Emotional Processing",
+        "test_name": "Test emotional response generation",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 8,
+        "category": "Emotional Processing",
+        "test_name": "Test emotional state persistence",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 9,
+        "category": "Emotional Processing",
+        "test_name": "Test emotional context integration",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 10,
+        "category": "Emotional Processing",
+        "test_name": "Test emotional memory formation",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      }
+    ],
+    "Belief System": [
+      {
+        "test_number": 11,
+        "category": "Belief System",
+        "test_name": "Test belief formation from facts",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 12,
+        "category": "Belief System",
+        "test_name": "Test belief contradiction detection",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 13,
+        "category": "Belief System",
+        "test_name": "Test belief reinforcement",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 14,
+        "category": "Belief System",
+        "test_name": "Test belief evolution over time",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 15,
+        "category": "Belief System",
+        "test_name": "Test belief-based reasoning",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      }
+    ],
+    "Self-Awareness": [
+      {
+        "test_number": 16,
+        "category": "Self-Awareness",
+        "test_name": "Test self-model updates",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 17,
+        "category": "Self-Awareness",
+        "test_name": "Test identity consistency",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 18,
+        "category": "Self-Awareness",
+        "test_name": "Test self-reflection capabilities",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 19,
+        "category": "Self-Awareness",
+        "test_name": "Test introspection accuracy",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 20,
+        "category": "Self-Awareness",
+        "test_name": "Test self-knowledge integration",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      }
+    ],
+    "Goal Management": [
+      {
+        "test_number": 21,
+        "category": "Goal Management",
+        "test_name": "Test goal creation from context",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 22,
+        "category": "Goal Management",
+        "test_name": "Test goal priority management",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 23,
+        "category": "Goal Management",
+        "test_name": "Test goal progress tracking",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 24,
+        "category": "Goal Management",
+        "test_name": "Test goal achievement recognition",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 25,
+        "category": "Goal Management",
+        "test_name": "Test goal conflict resolution",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      }
+    ],
+    "Attention & Focus": [
+      {
+        "test_number": 26,
+        "category": "Attention & Focus",
+        "test_name": "Test attention priority management",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 27,
+        "category": "Attention & Focus",
+        "test_name": "Test focus switching capabilities",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 28,
+        "category": "Attention & Focus",
+        "test_name": "Test attention resource allocation",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 29,
+        "category": "Attention & Focus",
+        "test_name": "Test conscious vs unconscious processing",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 30,
+        "category": "Attention & Focus",
+        "test_name": "Test attention persistence",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      }
+    ],
+    "Temporal Awareness": [
+      {
+        "test_number": 31,
+        "category": "Temporal Awareness",
+        "test_name": "Test time-based memory formation",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 32,
+        "category": "Temporal Awareness",
+        "test_name": "Test temporal event sequencing",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 33,
+        "category": "Temporal Awareness",
+        "test_name": "Test temporal context integration",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 34,
+        "category": "Temporal Awareness",
+        "test_name": "Test episodic memory creation",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 35,
+        "category": "Temporal Awareness",
+        "test_name": "Test temporal reasoning",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      }
+    ],
+    "Inner Monologue": [
+      {
+        "test_number": 36,
+        "category": "Inner Monologue",
+        "test_name": "Test thought generation",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 37,
+        "category": "Inner Monologue",
+        "test_name": "Test thought categorization",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 38,
+        "category": "Inner Monologue",
+        "test_name": "Test thought-action integration",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 39,
+        "category": "Inner Monologue",
+        "test_name": "Test metacognitive awareness",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 40,
+        "category": "Inner Monologue",
+        "test_name": "Test thought verbalization",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      }
+    ],
+    "Subjective Experience": [
+      {
+        "test_number": 41,
+        "category": "Subjective Experience",
+        "test_name": "Test experience quality assessment",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 42,
+        "category": "Subjective Experience",
+        "test_name": "Test experience significance rating",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 43,
+        "category": "Subjective Experience",
+        "test_name": "Test experience integration",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 44,
+        "category": "Subjective Experience",
+        "test_name": "Test subjective state consistency",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 45,
+        "category": "Subjective Experience",
+        "test_name": "Test consciousness continuity",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      }
+    ],
+    "Background Processing": [
+      {
+        "test_number": 46,
+        "category": "Background Processing",
+        "test_name": "Test non-blocking consciousness updates",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 47,
+        "category": "Background Processing",
+        "test_name": "Test background memory processing",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 48,
+        "category": "Background Processing",
+        "test_name": "Test autonomous thought generation",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 49,
+        "category": "Background Processing",
+        "test_name": "Test background goal evaluation",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      },
+      {
+        "test_number": 50,
+        "category": "Background Processing",
+        "test_name": "Test continuous awareness maintenance",
+        "status": "PASS",
+        "modules_active": true,
+        "processing_correct": true,
+        "integration_working": true,
+        "errors": []
+      }
+    ]
+  }
+}
