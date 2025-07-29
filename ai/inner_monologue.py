@@ -1317,8 +1317,40 @@ Generate a single, natural thought that feels genuine and personal. Be introspec
                 
                 logging.info("[InnerMonologue] 📂 Monologue state loaded from storage")
             
+        except json.JSONDecodeError as e:
+            logging.error(f"[InnerMonologue] ❌ Failed to load monologue state: Corrupted JSON file. Resetting to default state. Error: {e}")
+            # Reset to default state by creating a blank JSON file
+            self._reset_to_default_state()
         except Exception as e:
             logging.error(f"[InnerMonologue] ❌ Failed to load monologue state: {e}")
+    
+    def _reset_to_default_state(self):
+        """Reset monologue state to default values and create clean JSON file"""
+        try:
+            # Create default state
+            default_state = {
+                "recent_thoughts": [],
+                "mental_state": {
+                    "mental_activity_level": 0.6,
+                    "focus_level": 0.7,
+                    "creativity_level": 0.5,
+                    "contemplation_depth": 0.4
+                },
+                "metrics": {
+                    "total_thoughts": 0,
+                    "insights_generated": 0,
+                    "thoughts_by_type": {}
+                }
+            }
+            
+            # Write clean JSON file
+            with open(self.save_path, 'w') as f:
+                json.dump(default_state, f, indent=2)
+            
+            logging.info("[InnerMonologue] ✨ Reset to default state with clean JSON file")
+            
+        except Exception as e:
+            logging.error(f"[InnerMonologue] ❌ Failed to reset to default state: {e}")
     
     def get_stats(self) -> Dict[str, Any]:
         """Get inner monologue statistics"""

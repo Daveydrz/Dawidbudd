@@ -17,6 +17,29 @@ from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, asdict
 from enum import Enum
 
+# Import required enums from their respective modules
+try:
+    from ai.global_workspace import AttentionPriority
+except ImportError:
+    # Fallback definition if import fails
+    class AttentionPriority(Enum):
+        CRITICAL = 10
+        HIGH = 8
+        MEDIUM = 5
+        LOW = 3
+        MINIMAL = 1
+
+try:
+    from ai.autonomous_consciousness_integrator import AutonomousMode
+except ImportError:
+    # Fallback definition if import fails
+    class AutonomousMode(Enum):
+        FULL_AUTONOMY = "full_autonomy"
+        CONSCIOUS_ONLY = "conscious_only"
+        BACKGROUND_ONLY = "background_only"
+        REACTIVE_MODE = "reactive_mode"
+        SLEEP_MODE = "sleep_mode"
+
 # Self-contained consciousness components - no external dependencies
 CONSCIOUSNESS_COMPONENTS_AVAILABLE = False  # Using internal implementations
 
