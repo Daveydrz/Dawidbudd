@@ -22,7 +22,7 @@ def test_imports():
     try:
         # Core pipeline imports
         from voice.recognition import generate_voice_embedding, identify_speaker_with_confidence
-        from voice.manager import IntelligentVoiceManager
+        from voice.manager_core import voice_manager as IntelligentVoiceManager
         from ai.llm_handler import llm_handler
         from ai.memory import add_to_conversation_history, get_user_memory
         from ai.consciousness_manager import consciousness_manager
@@ -42,7 +42,7 @@ def test_voice_manager():
     print("\n🎤 Testing Voice Manager...")
     
     try:
-        from voice.manager import IntelligentVoiceManager
+        from voice.manager_core import voice_manager as IntelligentVoiceManager
         from voice.database import load_known_users, save_known_users
         
         voice_manager = IntelligentVoiceManager()
@@ -169,7 +169,7 @@ def test_full_pipeline_structure():
     try:
         # Test that all pipeline components exist
         from voice.recognition import generate_voice_embedding, identify_speaker_with_confidence
-        from voice.manager import IntelligentVoiceManager  
+        from voice.manager_core import voice_manager as IntelligentVoiceManager  
         from ai.llm_handler import llm_handler
         from ai.memory import add_to_conversation_history
         from ai.consciousness_manager import consciousness_manager

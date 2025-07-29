@@ -23,24 +23,35 @@ except ImportError as e:
     DUAL_LLM_AVAILABLE = False
     print(f"[LLMHandler] ❌ Dual-LLM system not available: {e}")
     
-    # Fallback to archived chat functions if needed
-    try:
-        import sys
-        import os
-        sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'archive', 'ai'))
-        from chat_enhanced_smart_with_fusion import generate_response_streaming_with_intelligent_fusion
-        print("[LLMHandler] ⚠️ Using archived chat functions as fallback")
-    except ImportError:
-        print("[LLMHandler] ❌ No LLM modules available")
+    # Use direct HTTP calls as main.py does
+    def call_main_llm_local(user_input):
+        payload = {"prompt": user_input, "stream": False}
+        try:
+            r = requests.post("http://localhost:5001/api/generate", json=payload)
+            return r.json().get("response", "")
+        except Exception as e:
+            print("[LLMHandler-MainLLM] ERROR:", e)
+            return "I'm having trouble thinking right now."
+
+    def call_extractor_llm_local(prompt):
+        payload = {"prompt": prompt, "stream": False}
+        try:
+            r = requests.post("http://localhost:5002/api/generate", json=payload)
+            return r.json().get("response", "")
+        except Exception as e:
+            print("[LLMHandler-ExtractorLLM] ERROR:", e)
+            return ""
+    
+    print("[LLMHandler] ✅ Using direct HTTP calls to ports 5001/5002")
 
 try:
-    from global_workspace import global_workspace
-    from emotion import emotion_engine, get_current_emotional_state
-    from motivation import motivation_system
-    from inner_monologue import inner_monologue
-    from temporal_awareness import temporal_awareness
-    from self_model import self_model
-    from subjective_experience import subjective_experience
+    from ai.global_workspace import global_workspace
+    from ai.emotion import emotion_engine, get_current_emotional_state
+    from ai.motivation import motivation_system
+    from ai.inner_monologue import inner_monologue
+    from ai.temporal_awareness import temporal_awareness
+    from ai.self_model import self_model
+    from ai.subjective_experience import subjective_experience
     CONSCIOUSNESS_AVAILABLE = True
 except ImportError:
     try:

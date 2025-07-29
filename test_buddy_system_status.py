@@ -100,7 +100,7 @@ def test_voice_system() -> Dict[str, Any]:
     """Test voice management system"""
     results = {}
     try:
-        from voice.manager import voice_manager
+        from voice.manager_core import voice_manager
         
         # Test voice manager
         results['voice_manager_init'] = "✅ WORKING"
