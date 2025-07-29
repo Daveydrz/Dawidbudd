@@ -746,13 +746,38 @@ class SymbolicGroundingSystem:
                 # Load concept groundings
                 for concept, grounding_data in data.get("concept_groundings", {}).items():
                     grounding_data["last_updated"] = datetime.fromisoformat(grounding_data["last_updated"])
-                    grounding_data["primary_modality"] = SensoryModality(grounding_data["primary_modality"])
+                    
+                    # Handle enum string representations
+                    primary_modality = grounding_data["primary_modality"]
+                    if isinstance(primary_modality, str):
+                        if "SensoryModality." in primary_modality:
+                            # Extract the actual enum value
+                            enum_value = primary_modality.split(".")[-1].lower()
+                            grounding_data["primary_modality"] = SensoryModality(enum_value)
+                        else:
+                            grounding_data["primary_modality"] = SensoryModality(primary_modality)
                     
                     # Load sensory associations
                     associations = []
                     for assoc_data in grounding_data["sensory_associations"]:
-                        assoc_data["modality"] = SensoryModality(assoc_data["modality"])
-                        assoc_data["grounding_strength"] = GroundingStrength(assoc_data["grounding_strength"])
+                        # Handle modality enum
+                        modality = assoc_data["modality"]
+                        if isinstance(modality, str):
+                            if "SensoryModality." in modality:
+                                enum_value = modality.split(".")[-1].lower()
+                                assoc_data["modality"] = SensoryModality(enum_value)
+                            else:
+                                assoc_data["modality"] = SensoryModality(modality)
+                        
+                        # Handle grounding strength enum
+                        strength = assoc_data["grounding_strength"]
+                        if isinstance(strength, str):
+                            if "GroundingStrength." in strength:
+                                enum_value = strength.split(".")[-1].lower()
+                                assoc_data["grounding_strength"] = GroundingStrength(enum_value)
+                            else:
+                                assoc_data["grounding_strength"] = GroundingStrength(strength)
+                        
                         associations.append(SensoryAssociation(**assoc_data))
                     grounding_data["sensory_associations"] = associations
                     

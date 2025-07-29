@@ -141,6 +141,10 @@ class ConsciousnessHealthScorer:
                 'trend': 'Unknown'
             }
     
+    def assess_health(self) -> Dict[str, Any]:
+        """Alias for compute_consciousness_health_score for backward compatibility"""
+        return self.compute_consciousness_health_score()
+    
     def _assess_memory_integrity(self) -> float:
         """Assess memory system integrity"""
         try:

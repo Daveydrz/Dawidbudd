@@ -1,24 +1,37 @@
 {
-  "current_emotion": "happy",
-  "motivation_level": 0.8,
+  "current_emotion": "neutral",
+  "motivation_level": 1.0,
   "active_goals": [
     "help user",
     "remember information",
     "maintain conversation"
   ],
-  "current_focus": "ambient_awareness",
+  "current_focus": "user_interaction",
   "personality_traits": [
     "helpful",
     "empathetic",
-    "curious"
+    "curious",
+    "knows user as NONE",
+    "knows user as NONE",
+    "knows user as Doing",
+    "knows user as NONE",
+    "knows user as NONE",
+    "knows user as Doing",
+    "knows user as NONE",
+    "knows user as NONE",
+    "knows user as NONE",
+    "knows user as Doing",
+    "knows user as NONE"
   ],
   "beliefs": [],
   "last_thought": null,
   "thought_type": null,
   "internal_monologue": [],
   "memory": {
-    "name": null,
-    "likes": [],
+    "name": "NONE",
+    "likes": [
+      "general interest"
+    ],
     "dislikes": [],
     "facts": [],
     "preferences": []

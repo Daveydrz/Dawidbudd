@@ -115,12 +115,75 @@
       "tags": [
         "factual"
       ]
+    },
+    {
+      "id": "belief_1753789317779_0",
+      "content": "how you doing?",
+      "belief_type": "factual",
+      "certainty": "moderate",
+      "source": "text_extraction",
+      "timestamp": "2025-07-29T11:41:57.779716",
+      "user": "Daveydrz",
+      "context": {
+        "background_processing": true
+      },
+      "supporting_evidence": [
+        "How are you doing?"
+      ],
+      "contradictions": [],
+      "confidence_score": 0.6,
+      "last_confirmed": "2025-07-29T11:41:57.779727",
+      "tags": [
+        "factual"
+      ]
+    },
+    {
+      "id": "belief_1753789591213_0",
+      "content": "how you doing?",
+      "belief_type": "factual",
+      "certainty": "moderate",
+      "source": "text_extraction",
+      "timestamp": "2025-07-29T11:46:31.213504",
+      "user": "Daveydrz",
+      "context": {
+        "background_processing": true
+      },
+      "supporting_evidence": [
+        "How are you doing?"
+      ],
+      "contradictions": [],
+      "confidence_score": 0.6,
+      "last_confirmed": "2025-07-29T11:46:31.213513",
+      "tags": [
+        "factual"
+      ]
+    },
+    {
+      "id": "belief_1753789741676_0",
+      "content": "how you doing?",
+      "belief_type": "factual",
+      "certainty": "moderate",
+      "source": "text_extraction",
+      "timestamp": "2025-07-29T11:49:01.676997",
+      "user": "Daveydrz",
+      "context": {
+        "background_processing": true
+      },
+      "supporting_evidence": [
+        "How are you doing?"
+      ],
+      "contradictions": [],
+      "confidence_score": 0.6,
+      "last_confirmed": "2025-07-29T11:49:01.677009",
+      "tags": [
+        "factual"
+      ]
     }
   ],
   "contradictions": [],
-  "last_updated": "2025-07-27T12:18:22.629544",
+  "last_updated": "2025-07-29T11:49:01.678170",
   "metadata": {
-    "total_beliefs": 6,
+    "total_beliefs": 9,
     "total_contradictions": 0,
     "unresolved_contradictions": 0
   }
