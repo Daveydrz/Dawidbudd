@@ -6,7 +6,7 @@ Test core imports without audio dependencies
 print("Testing core imports...")
 
 try:
-    from ai.emotion import reset_session_for_user_smart
+    from ai.emotion_mood import reset_session_for_user_smart
     print("✅ reset_session_for_user_smart imported successfully")
 except Exception as e:
     print(f"❌ reset_session_for_user_smart import failed: {e}")

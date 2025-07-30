@@ -182,7 +182,7 @@ def test_session_reset():
     print("\n🔄 Testing Session Reset...")
     
     try:
-        from ai.emotion import reset_session_for_user_smart
+        from ai.emotion_mood import reset_session_for_user_smart
         
         # Test session reset
         reset_session_for_user_smart("Daveydrz")
