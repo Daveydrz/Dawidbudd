@@ -1,190 +1,30 @@
 {
-  "beliefs": [
-    {
-      "id": "belief_1752840734363_0",
-      "content": "change the world",
-      "belief_type": "personal",
-      "certainty": "moderate",
-      "source": "text_extraction",
-      "timestamp": "2025-07-18T12:12:14.363604",
+  "beliefs": {
+    "belief_4e299039_1753843039": {
+      "id": "belief_4e299039_1753843039",
+      "content": "i believe ai is helpful",
+      "belief_type": "BeliefType.OPINION",
+      "certainty": "BeliefCertainty.MODERATE",
+      "strength": 0.6,
+      "status": "BeliefStatus.ACTIVE",
+      "source": "conversation",
+      "timestamp": "2025-07-30T02:37:19.672358",
       "user": "test_user",
-      "context": {},
-      "supporting_evidence": [
-        "I believe AI will change the world"
-      ],
-      "contradictions": [],
-      "confidence_score": 0.6,
-      "last_confirmed": "2025-07-18T12:12:14.363614",
-      "tags": [
-        "personal"
-      ]
-    },
-    {
-      "id": "belief_1752840734364_1",
-      "content": "ai will change the world",
-      "belief_type": "opinion",
-      "certainty": "moderate",
-      "source": "text_extraction",
-      "timestamp": "2025-07-18T12:12:14.364034",
-      "user": "test_user",
-      "context": {},
-      "supporting_evidence": [
-        "I believe AI will change the world"
-      ],
-      "contradictions": [],
-      "confidence_score": 0.7,
-      "last_confirmed": "2025-07-18T12:12:14.364041",
-      "tags": [
-        "opinion"
-      ]
-    },
-    {
-      "id": "belief_1752879858142_0",
-      "content": "happy",
-      "belief_type": "personal",
-      "certainty": "moderate",
-      "source": "text_extraction",
-      "timestamp": "2025-07-18T23:04:18.142148",
-      "user": "test_user",
-      "context": {},
-      "supporting_evidence": [
-        "I am happy"
-      ],
-      "contradictions": [],
-      "confidence_score": 0.6,
-      "last_confirmed": "2025-07-18T23:04:18.142156",
-      "tags": [
-        "personal"
-      ]
-    },
-    {
-      "id": "belief_1752879921737_0",
-      "content": "hello buddy, how you?",
-      "belief_type": "factual",
-      "certainty": "moderate",
-      "source": "text_extraction",
-      "timestamp": "2025-07-18T23:05:21.737605",
-      "user": "test_user",
-      "context": {},
-      "supporting_evidence": [
-        "Hello Buddy, how are you?"
-      ],
-      "contradictions": [],
-      "confidence_score": 0.7,
-      "last_confirmed": "2025-07-18T23:05:21.737611",
-      "tags": [
-        "factual"
-      ]
-    },
-    {
-      "id": "belief_1753093798870_0",
-      "content": "how you today?",
-      "belief_type": "factual",
-      "certainty": "moderate",
-      "source": "text_extraction",
-      "timestamp": "2025-07-21T10:29:58.870098",
-      "user": "test_user",
-      "context": {},
-      "supporting_evidence": [
-        "How are you today?"
-      ],
-      "contradictions": [],
-      "confidence_score": 0.6,
-      "last_confirmed": "2025-07-21T10:29:58.870109",
-      "tags": [
-        "factual"
-      ]
-    },
-    {
-      "id": "belief_1753618702628_0",
-      "content": "how you doing?",
-      "belief_type": "factual",
-      "certainty": "moderate",
-      "source": "text_extraction",
-      "timestamp": "2025-07-27T12:18:22.628405",
-      "user": "Daveydrz",
       "context": {
-        "background_processing": true
+        "extraction_source": "I believe AI is helpful"
       },
-      "supporting_evidence": [
-        "How are you doing?"
-      ],
+      "supporting_evidence": [],
+      "contradicting_evidence": [],
       "contradictions": [],
-      "confidence_score": 0.6,
-      "last_confirmed": "2025-07-27T12:18:22.628414",
-      "tags": [
-        "factual"
-      ]
-    },
-    {
-      "id": "belief_1753789317779_0",
-      "content": "how you doing?",
-      "belief_type": "factual",
-      "certainty": "moderate",
-      "source": "text_extraction",
-      "timestamp": "2025-07-29T11:41:57.779716",
-      "user": "Daveydrz",
-      "context": {
-        "background_processing": true
-      },
-      "supporting_evidence": [
-        "How are you doing?"
-      ],
-      "contradictions": [],
-      "confidence_score": 0.6,
-      "last_confirmed": "2025-07-29T11:41:57.779727",
-      "tags": [
-        "factual"
-      ]
-    },
-    {
-      "id": "belief_1753789591213_0",
-      "content": "how you doing?",
-      "belief_type": "factual",
-      "certainty": "moderate",
-      "source": "text_extraction",
-      "timestamp": "2025-07-29T11:46:31.213504",
-      "user": "Daveydrz",
-      "context": {
-        "background_processing": true
-      },
-      "supporting_evidence": [
-        "How are you doing?"
-      ],
-      "contradictions": [],
-      "confidence_score": 0.6,
-      "last_confirmed": "2025-07-29T11:46:31.213513",
-      "tags": [
-        "factual"
-      ]
-    },
-    {
-      "id": "belief_1753789741676_0",
-      "content": "how you doing?",
-      "belief_type": "factual",
-      "certainty": "moderate",
-      "source": "text_extraction",
-      "timestamp": "2025-07-29T11:49:01.676997",
-      "user": "Daveydrz",
-      "context": {
-        "background_processing": true
-      },
-      "supporting_evidence": [
-        "How are you doing?"
-      ],
-      "contradictions": [],
-      "confidence_score": 0.6,
-      "last_confirmed": "2025-07-29T11:49:01.677009",
-      "tags": [
-        "factual"
-      ]
+      "confidence_score": 0.5,
+      "last_confirmed": "2025-07-30T02:37:19.672358",
+      "last_updated": "2025-07-30T02:37:19.672358",
+      "tags": [],
+      "evolution_history": [],
+      "qualia_links": []
     }
-  ],
-  "contradictions": [],
-  "last_updated": "2025-07-29T11:49:01.678170",
-  "metadata": {
-    "total_beliefs": 9,
-    "total_contradictions": 0,
-    "unresolved_contradictions": 0
-  }
+  },
+  "contradictions": {},
+  "evidence": {},
+  "last_updated": "2025-07-30T02:37:19.672552"
 }
