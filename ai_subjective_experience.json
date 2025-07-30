@@ -1,12 +1,5 @@
 {
-  "experiences": [],
-  "patterns": [],
-  "current_active_qualia": {},
-  "last_updated": "2025-07-29T11:49:14.186169",
-  "metadata": {
-    "total_experiences": 0,
-    "total_patterns": 0,
-    "dominant_qualia": null,
-    "qualitative_mood": "neutral"
-  }
+  "experience_count": 1,
+  "pattern_count": 0,
+  "last_updated": "2025-07-30T01:23:12.144220"
 }
