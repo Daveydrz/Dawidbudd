@@ -2,6 +2,7 @@
 import time
 import json
 import datetime
+from datetime import datetime, timedelta
 import re
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
@@ -1213,4 +1214,274 @@ print(f"[MegaMemory] 🧠 MEGA-INTELLIGENT Memory System Loaded!")
 print(f"[MegaMemory] ✅ Entity Status Tracking: Active")
 print(f"[MegaMemory] ✅ Life Event Detection: Active") 
 print(f"[MegaMemory] ✅ Response Validation: Active")
+
+# ================================================================================
+# 🧠 ROBUST RECALL PLANNER - Deterministic Memory Queries
+# ================================================================================
+
+def query_memories_by_timeframe(username: str, event_type: str, days_back: int, filter_func=None) -> List[Dict]:
+    """🔍 Pure function: Query memories by timeframe with optional filtering
+    
+    Args:
+        username: User to query memories for
+        event_type: Type of event ('health_state', 'mood_state', 'appointment', etc.)
+        days_back: How many days back to search
+        filter_func: Optional function to filter events (event) -> bool
+    
+    Returns:
+        List of matching events sorted by date (most recent first)
+    """
+    try:
+        from ai.human_memory_smart import SmartHumanLikeMemory
+        memory = SmartHumanLikeMemory(username)
+        
+        # Get appropriate event list
+        event_lists = {
+            'health_state': memory.health_states,
+            'mood_state': memory.mood_states,
+            'visit': memory.visits,
+            'appointment': memory.appointments,
+            'life_event': memory.life_events,
+            'highlight': memory.conversation_highlights
+        }
+        
+        if event_type not in event_lists:
+            return []
+        
+        events = event_lists[event_type]
+        cutoff_date = datetime.now() - timedelta(days=days_back)
+        
+        matching_events = []
+        for event in events:
+            try:
+                created = datetime.fromisoformat(event.get('created', '2000-01-01T00:00:00'))
+                if created >= cutoff_date:
+                    # Apply optional filter
+                    if filter_func is None or filter_func(event):
+                        matching_events.append(event)
+            except Exception:
+                continue
+        
+        # Sort by creation date (most recent first)
+        matching_events.sort(key=lambda e: e.get('created', '2000-01-01T00:00:00'), reverse=True)
+        return matching_events
+        
+    except Exception as e:
+        print(f"[RecallPlanner] ⚠️ Query error: {e}")
+        return []
+
+def query_health_states_this_week(username: str) -> List[Dict]:
+    """🏥 Find all health states from the past week"""
+    return query_memories_by_timeframe(username, 'health_state', 7)
+
+def query_recent_unwell_periods(username: str, days_back: int = 14) -> List[Dict]:
+    """🏥 Find recent periods when user was unwell"""
+    def is_unwell(event):
+        return event.get('state', '').lower() == 'unwell'
+    
+    return query_memories_by_timeframe(username, 'health_state', days_back, is_unwell)
+
+def query_mood_patterns(username: str, days_back: int = 7) -> Dict[str, List[Dict]]:
+    """😊 Analyze mood patterns over time period"""
+    moods = query_memories_by_timeframe(username, 'mood_state', days_back)
+    
+    # Group by mood type
+    mood_groups = {}
+    for mood_event in moods:
+        mood = mood_event.get('mood', 'unknown')
+        if mood not in mood_groups:
+            mood_groups[mood] = []
+        mood_groups[mood].append(mood_event)
+    
+    return mood_groups
+
+def query_visits_and_activities(username: str, days_back: int = 30) -> List[Dict]:
+    """🏪 Find recent visits and activities"""
+    return query_memories_by_timeframe(username, 'visit', days_back)
+
+def query_upcoming_appointments(username: str, days_ahead: int = 7) -> List[Dict]:
+    """📅 Find upcoming appointments"""
+    try:
+        from ai.human_memory_smart import SmartHumanLikeMemory
+        memory = SmartHumanLikeMemory(username)
+        
+        now = datetime.now()
+        future_cutoff = now + timedelta(days=days_ahead)
+        
+        upcoming = []
+        for appointment in memory.appointments:
+            try:
+                event_date = datetime.strptime(appointment.get('date', '2000-01-01'), '%Y-%m-%d')
+                if now <= event_date <= future_cutoff and appointment.get('status') == 'pending':
+                    upcoming.append(appointment)
+            except Exception:
+                continue
+        
+        # Sort by date (soonest first)
+        upcoming.sort(key=lambda e: e.get('date', '2000-01-01'))
+        return upcoming
+        
+    except Exception as e:
+        print(f"[RecallPlanner] ⚠️ Appointment query error: {e}")
+        return []
+
+def query_memories_by_confidence(username: str, min_confidence: float = 0.8) -> Dict[str, List[Dict]]:
+    """🎯 Find high-confidence memories across all types"""
+    try:
+        from ai.human_memory_smart import SmartHumanLikeMemory
+        memory = SmartHumanLikeMemory(username)
+        
+        high_confidence = {}
+        
+        event_lists = {
+            'health_state': memory.health_states,
+            'mood_state': memory.mood_states,
+            'visit': memory.visits,
+            'appointment': memory.appointments,
+            'life_event': memory.life_events,
+            'highlight': memory.conversation_highlights
+        }
+        
+        for event_type, events in event_lists.items():
+            high_conf_events = []
+            for event in events:
+                field_conf = event.get('field_confidence', {})
+                if field_conf:
+                    avg_conf = sum(field_conf.values()) / len(field_conf)
+                    if avg_conf >= min_confidence:
+                        high_conf_events.append(event)
+            
+            if high_conf_events:
+                high_confidence[event_type] = high_conf_events
+        
+        return high_confidence
+        
+    except Exception as e:
+        print(f"[RecallPlanner] ⚠️ Confidence query error: {e}")
+        return {}
+
+def query_salient_memories(username: str, min_salience: float = 0.7, days_back: int = 30) -> List[Dict]:
+    """⭐ Find highly salient (important) memories"""
+    try:
+        from ai.human_memory_smart import SmartHumanLikeMemory
+        memory = SmartHumanLikeMemory(username)
+        
+        cutoff_date = datetime.now() - timedelta(days=days_back)
+        salient_memories = []
+        
+        event_lists = [
+            memory.health_states, memory.mood_states, memory.visits,
+            memory.appointments, memory.life_events, memory.conversation_highlights
+        ]
+        
+        for event_list in event_lists:
+            for event in event_list:
+                try:
+                    created = datetime.fromisoformat(event.get('created', '2000-01-01T00:00:00'))
+                    salience = event.get('salience', 0.0)
+                    
+                    if created >= cutoff_date and salience >= min_salience:
+                        salient_memories.append(event)
+                except Exception:
+                    continue
+        
+        # Sort by salience score (highest first)
+        salient_memories.sort(key=lambda e: e.get('salience', 0.0), reverse=True)
+        return salient_memories
+        
+    except Exception as e:
+        print(f"[RecallPlanner] ⚠️ Salience query error: {e}")
+        return []
+
+def get_memory_summary_for_period(username: str, days_back: int = 7) -> Dict[str, Any]:
+    """📊 Get comprehensive memory summary for a time period"""
+    try:
+        summary = {
+            'period_days': days_back,
+            'health_states': query_memories_by_timeframe(username, 'health_state', days_back),
+            'mood_states': query_memories_by_timeframe(username, 'mood_state', days_back),
+            'visits': query_memories_by_timeframe(username, 'visit', days_back),
+            'appointments': query_memories_by_timeframe(username, 'appointment', days_back),
+            'life_events': query_memories_by_timeframe(username, 'life_event', days_back),
+            'highlights': query_memories_by_timeframe(username, 'highlight', days_back)
+        }
+        
+        # Add statistics
+        summary['stats'] = {
+            'total_events': sum(len(events) for events in summary.values() if isinstance(events, list)),
+            'health_events': len(summary['health_states']),
+            'mood_events': len(summary['mood_states']),
+            'social_events': len(summary['visits']) + len(summary['life_events']),
+            'upcoming_appointments': len(query_upcoming_appointments(username, 7))
+        }
+        
+        return summary
+        
+    except Exception as e:
+        print(f"[RecallPlanner] ⚠️ Summary error: {e}")
+        return {'error': str(e)}
+
+# Convenience functions for natural language queries
+def answer_when_was_i_unwell(username: str) -> str:
+    """🏥 Answer: 'When was I unwell this week?'"""
+    unwell_events = query_recent_unwell_periods(username, 7)
+    
+    if not unwell_events:
+        return "I don't have records of you being unwell in the past week."
+    
+    responses = []
+    for event in unwell_events[:3]:  # Top 3 most recent
+        date = event.get('date', 'unknown date')
+        symptoms = event.get('symptoms', [])
+        severity = event.get('severity', '')
+        
+        response = f"On {date}"
+        if symptoms:
+            response += f" you had {', '.join(symptoms)}"
+        if severity:
+            response += f" ({severity})"
+        
+        responses.append(response)
+    
+    return "; ".join(responses) + "."
+
+def answer_whats_my_mood_been_like(username: str, days_back: int = 7) -> str:
+    """😊 Answer: 'What's my mood been like lately?'"""
+    mood_patterns = query_mood_patterns(username, days_back)
+    
+    if not mood_patterns:
+        return f"I don't have mood records from the past {days_back} days."
+    
+    # Summarize mood trends
+    mood_summary = []
+    for mood, events in mood_patterns.items():
+        count = len(events)
+        if count == 1:
+            mood_summary.append(f"you felt {mood} once")
+        else:
+            mood_summary.append(f"you felt {mood} {count} times")
+    
+    return f"Over the past {days_back} days, " + ", ".join(mood_summary) + "."
+
+def answer_where_have_i_been(username: str, days_back: int = 14) -> str:
+    """🏪 Answer: 'Where have I been recently?'"""
+    visits = query_visits_and_activities(username, days_back)
+    
+    if not visits:
+        return f"I don't have records of visits in the past {days_back} days."
+    
+    locations = []
+    for visit in visits:
+        location = visit.get('location', 'somewhere')
+        date = visit.get('date', '')
+        if location != 'somewhere':
+            locations.append(f"{location}" + (f" on {date}" if date else ""))
+    
+    if not locations:
+        return f"No specific locations recorded in the past {days_back} days."
+    
+    unique_locations = list(dict.fromkeys(locations))  # Remove duplicates while preserving order
+    return f"You've been to: " + ", ".join(unique_locations[:5]) + "."  # Top 5
+
+print(f"[MegaMemory] 🔍 Recall Planner: Active")
 print(f"[MegaMemory] ✅ Memory Inference Engine: Active")

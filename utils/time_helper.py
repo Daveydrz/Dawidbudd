@@ -96,3 +96,58 @@ def get_time_info_for_buddy() -> dict:
                 'timezone': 'Australia/Brisbane',
                 'location': 'Brisbane, Queensland, Australia'
             }
+
+# ================================================================================
+# 🕒 INTERNAL HELPERS for Memory System (Private - No Public API Changes)  
+# ================================================================================
+
+def _parse_relative_date(date_str: str, reference_date: datetime = None) -> datetime:
+    """INTERNAL: Parse relative date strings like 'yesterday', 'last week'"""
+    if reference_date is None:
+        reference_date = datetime.now()
+    
+    date_str = date_str.lower().strip()
+    
+    if date_str in ['today', 'now']:
+        return reference_date
+    elif date_str == 'yesterday':
+        return reference_date - timedelta(days=1)
+    elif date_str == 'tomorrow':
+        return reference_date + timedelta(days=1)
+    elif date_str in ['last week', 'a week ago']:
+        return reference_date - timedelta(weeks=1)
+    elif date_str in ['this week']:
+        # Start of this week (Monday)
+        days_since_monday = reference_date.weekday()
+        return reference_date - timedelta(days=days_since_monday)
+    elif 'days ago' in date_str:
+        import re
+        match = re.search(r'(\d+)\s+days?\s+ago', date_str)
+        if match:
+            days = int(match.group(1))
+            return reference_date - timedelta(days=days)
+    
+    # Fallback - return reference date
+    return reference_date
+
+def _calculate_days_between(start_date: str, end_date: str = None) -> int:
+    """INTERNAL: Calculate days between two date strings (YYYY-MM-DD format)"""
+    try:
+        start = datetime.strptime(start_date, '%Y-%m-%d')
+        if end_date:
+            end = datetime.strptime(end_date, '%Y-%m-%d')
+        else:
+            end = datetime.now()
+        
+        return abs((end - start).days)
+    except Exception:
+        return 0
+
+def _is_date_in_range(date_str: str, days_back: int) -> bool:
+    """INTERNAL: Check if date is within specified range"""
+    try:
+        event_date = datetime.strptime(date_str, '%Y-%m-%d')
+        cutoff = datetime.now() - timedelta(days=days_back)
+        return event_date >= cutoff
+    except Exception:
+        return False

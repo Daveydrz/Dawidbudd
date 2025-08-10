@@ -1,13 +1,40 @@
-# ai/human_memory_smart.py - Smart LLM-based life event detection
+# ai/human_memory_smart.py - Robust Human-Like Memory System with Provenance & Episode Stitching
 import json
 import os
 import random
 import threading
 import time
+import hashlib
+import difflib
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple, Set
 import re
 from ai.memory import get_user_memory, add_to_conversation_history
+
+# TTL policies (in seconds) for different event types
+TTL_POLICIES = {
+    'health_state': 7 * 24 * 3600,      # 7 days
+    'mood_state': 3 * 24 * 3600,        # 3 days  
+    'visit': 30 * 24 * 3600,            # 30 days
+    'appointment': 365 * 24 * 3600,     # 1 year
+    'life_event': -1,                   # Permanent (no expiry)
+    'highlight': 14 * 24 * 3600,        # 14 days
+    'default': 30 * 24 * 3600           # 30 days default
+}
+
+# Episode stitching window (in seconds)
+EPISODE_WINDOW = 2 * 3600  # 2 hours
+
+# Confidence decay rate per day
+CONFIDENCE_DECAY_RATE = 0.02  # 2% per day
+
+# Salience scoring weights
+SALIENCE_WEIGHTS = {
+    'emotion_intensity': 0.3,
+    'goal_relevance': 0.25, 
+    'novelty': 0.25,
+    'social_significance': 0.2
+}
 
 class SmartHumanLikeMemory:
     """🧠 Smart human-like memory using LLM for event detection"""
@@ -22,7 +49,7 @@ class SmartHumanLikeMemory:
         # Get the existing MEGA-INTELLIGENT memory system
         self.mega_memory = get_user_memory(username)
         
-        # Smart memory storage
+        # Smart memory storage with enhanced structure
         self.appointments = self.load_memory('smart_appointments.json')
         self.life_events = self.load_memory('smart_life_events.json') 
         self.conversation_highlights = self.load_memory('smart_highlights.json')
@@ -30,13 +57,239 @@ class SmartHumanLikeMemory:
         self.mood_states = self.load_memory('smart_mood_states.json')
         self.visits = self.load_memory('smart_visits.json')
         
+        # Episode tracking for cross-conversation linking
+        self.episodes = self.load_memory('episodes.json')
+        self.episode_index = self.load_memory('episode_index.json')  # Fast lookup
+        
+        # Audit log for provenance (append-only)
+        self.audit_log_file = os.path.join(self.memory_dir, 'audit_log.jsonl')
+        
         # Session tracking
         self.context_used_this_session = set()
+        self.current_episode_id = self._generate_episode_id()
         
         # Throttle marker (epoch seconds)
         self._last_tier3 = 0.0
         
-        print(f"[SmartMemory] 🧠 Smart LLM-based memory initialized for {username}")
+        print(f"[SmartMemory] 🧠 Robust human-like memory initialized for {username}")
+        print(f"[SmartMemory] 📊 Episodes: {len(self.episodes)}, Current episode: {self.current_episode_id}")
+        
+        # Clean up expired memories on startup
+        self._cleanup_expired_memories()
+    
+    def _generate_episode_id(self) -> str:
+        """Generate stable episode ID based on current time window"""
+        now = datetime.now()
+        # Create 2-hour time windows for episode grouping
+        window_start = now.replace(minute=0, second=0, microsecond=0)
+        if now.hour % 2 == 1:
+            window_start = window_start.replace(hour=now.hour - 1)
+        
+        timestamp = int(window_start.timestamp())
+        return f"ep_{self.username}_{timestamp}"
+    
+    def _generate_fingerprint(self, text: str, event_type: str = "") -> str:
+        """Generate fingerprint for deduplication and similarity detection"""
+        # Normalize text for consistent fingerprinting
+        normalized = re.sub(r'[^\w\s]', '', text.lower().strip())
+        normalized = re.sub(r'\s+', ' ', normalized)
+        
+        # Include event type in fingerprint for better differentiation
+        content = f"{event_type}:{normalized}"
+        return hashlib.md5(content.encode()).hexdigest()[:12]
+    
+    def _calculate_confidence(self, text: str, detection_method: str, field_data: Dict) -> Dict[str, float]:
+        """Calculate per-field confidence scores"""
+        base_confidence = {
+            'llm': 0.85,
+            'regex': 0.75, 
+            'fallback': 0.60,
+            'manual': 0.95
+        }.get(detection_method, 0.50)
+        
+        # Adjust confidence based on text quality and completeness
+        text_length_factor = min(1.0, len(text.split()) / 10.0)  # Favor longer texts
+        completeness_factor = len([v for v in field_data.values() if v]) / max(1, len(field_data))
+        
+        adjusted_confidence = base_confidence * text_length_factor * completeness_factor
+        
+        # Per-field confidence (all fields get same base confidence for now)
+        field_confidence = {}
+        for field in ['type', 'topic', 'date', 'time', 'emotion', 'priority', 'location', 'people']:
+            if field in field_data and field_data[field]:
+                field_confidence[field] = min(0.95, adjusted_confidence + 0.05)  # Slight boost for present fields
+            else:
+                field_confidence[field] = max(0.1, adjusted_confidence - 0.2)   # Penalty for missing fields
+        
+        return field_confidence
+    
+    def _calculate_salience(self, event: Dict, text: str) -> float:
+        """Calculate salience (importance) score based on novelty, emotion, and goals"""
+        score = 0.0
+        
+        # Emotion intensity contribution
+        emotion = event.get('emotion', 'neutral').lower()
+        emotion_scores = {
+            'excited': 0.9, 'happy': 0.8, 'stressed': 0.7, 'worried': 0.7,
+            'angry': 0.8, 'sad': 0.7, 'frustrated': 0.6, 'neutral': 0.3
+        }
+        score += emotion_scores.get(emotion, 0.3) * SALIENCE_WEIGHTS['emotion_intensity']
+        
+        # Novelty - check against recent similar events
+        novelty_score = self._calculate_novelty(event, text)
+        score += novelty_score * SALIENCE_WEIGHTS['novelty']
+        
+        # Goal relevance - health, appointments, social events score higher
+        goal_score = self._calculate_goal_relevance(event)
+        score += goal_score * SALIENCE_WEIGHTS['goal_relevance']
+        
+        # Social significance - events involving people score higher
+        social_score = 0.8 if event.get('people') and len(event['people']) > 0 else 0.2
+        score += social_score * SALIENCE_WEIGHTS['social_significance']
+        
+        return min(1.0, score)
+    
+    def _calculate_novelty(self, event: Dict, text: str) -> float:
+        """Calculate novelty score by comparing with recent similar events"""
+        event_type = event.get('type', 'highlight')
+        fingerprint = self._generate_fingerprint(text, event_type)
+        
+        # Check similarity to recent events of same type
+        recent_cutoff = datetime.now() - timedelta(days=7)
+        similar_events = []
+        
+        event_lists = {
+            'appointment': self.appointments,
+            'life_event': self.life_events, 
+            'highlight': self.conversation_highlights,
+            'health_state': self.health_states,
+            'mood_state': self.mood_states,
+            'visit': self.visits
+        }
+        
+        if event_type in event_lists:
+            for existing_event in event_lists[event_type]:
+                created = datetime.fromisoformat(existing_event.get('created', '2000-01-01T00:00:00'))
+                if created >= recent_cutoff:
+                    existing_fp = existing_event.get('fingerprint', '')
+                    if existing_fp:
+                        similarity = difflib.SequenceMatcher(None, fingerprint, existing_fp).ratio()
+                        if similarity > 0.7:  # High similarity threshold
+                            similar_events.append((similarity, existing_event))
+        
+        # Higher novelty score for fewer similar events
+        if not similar_events:
+            return 1.0
+        elif len(similar_events) == 1:
+            return 0.6
+        else:
+            return 0.3
+    
+    def _calculate_goal_relevance(self, event: Dict) -> float:
+        """Calculate how relevant event is to user goals/needs"""
+        event_type = event.get('type', 'highlight')
+        priority = event.get('priority', 'medium')
+        
+        # Type-based relevance
+        type_scores = {
+            'appointment': 0.9,     # High relevance - future commitments
+            'health_state': 0.8,    # High relevance - wellbeing tracking  
+            'life_event': 0.7,      # Medium-high - social/emotional events
+            'mood_state': 0.6,      # Medium - emotional tracking
+            'visit': 0.5,           # Medium - activity tracking
+            'highlight': 0.4        # Lower - general thoughts
+        }
+        
+        base_score = type_scores.get(event_type, 0.4)
+        
+        # Priority adjustment
+        priority_multipliers = {'high': 1.2, 'medium': 1.0, 'low': 0.8}
+        multiplier = priority_multipliers.get(priority, 1.0)
+        
+        return min(1.0, base_score * multiplier)
+    
+    def _append_audit_log(self, action: str, event_data: Dict, metadata: Dict = None):
+        """Append entry to audit log for provenance tracking"""
+        audit_entry = {
+            'timestamp': datetime.now().isoformat(),
+            'episode_id': self.current_episode_id,
+            'action': action,  # 'create', 'update', 'merge', 'expire', 'pin'
+            'event_id': event_data.get('id'),
+            'event_type': event_data.get('type'),
+            'user': self.username,
+            'metadata': metadata or {}
+        }
+        
+        # Include fingerprint and key fields for provenance
+        audit_entry['provenance'] = {
+            'fingerprint': event_data.get('fingerprint'),
+            'source': event_data.get('source'),
+            'original_text': event_data.get('original_text', '')[:100],  # Truncate for log
+            'confidence_avg': sum(event_data.get('field_confidence', {}).values()) / max(1, len(event_data.get('field_confidence', {})))
+        }
+        
+        try:
+            with open(self.audit_log_file, 'a', encoding='utf-8') as f:
+                f.write(json.dumps(audit_entry, ensure_ascii=False) + '\n')
+        except Exception as e:
+            print(f"[SmartMemory] ⚠️ Audit log error: {e}")
+    
+    def _cleanup_expired_memories(self):
+        """Clean up expired memories based on TTL policies"""
+        now = datetime.now()
+        expired_count = 0
+        
+        for event_type, event_list in [
+            ('health_state', self.health_states),
+            ('mood_state', self.mood_states), 
+            ('visit', self.visits),
+            ('appointment', self.appointments),
+            ('highlight', self.conversation_highlights)
+        ]:
+            ttl_seconds = TTL_POLICIES.get(event_type, TTL_POLICIES['default'])
+            if ttl_seconds == -1:  # Permanent events
+                continue
+            
+            expired_events = []
+            for event in event_list[:]:  # Copy to avoid modification during iteration
+                created = datetime.fromisoformat(event.get('created', '2000-01-01T00:00:00'))
+                
+                # Check if event is pinned (never expires)
+                if event.get('pinned', False):
+                    continue
+                
+                # Check if expired
+                age_seconds = (now - created).total_seconds()
+                if age_seconds > ttl_seconds:
+                    expired_events.append(event)
+                    event_list.remove(event)
+                    expired_count += 1
+                    
+                    # Log expiration
+                    self._append_audit_log('expire', event, {'age_days': age_seconds / (24 * 3600)})
+        
+        if expired_count > 0:
+            print(f"[SmartMemory] 🗑️ Cleaned up {expired_count} expired memories")
+            self._atomic_save_memories()
+    
+    def _apply_confidence_decay(self, event: Dict, created_time: datetime) -> Dict:
+        """Apply confidence decay over time"""
+        if 'field_confidence' not in event:
+            return event
+        
+        days_old = (datetime.now() - created_time).days
+        if days_old <= 0:
+            return event
+        
+        # Apply exponential decay
+        decay_factor = (1 - CONFIDENCE_DECAY_RATE) ** days_old
+        
+        decayed_confidence = {}
+        for field, confidence in event['field_confidence'].items():
+            decayed_confidence[field] = max(0.1, confidence * decay_factor)  # Minimum 10% confidence
+        
+        event['field_confidence'] = decayed_confidence
+        return event
     
     def extract_and_store_human_memories(self, text: str):
         """🎯 Smart LLM-based memory extraction with BULLETPROOF filtering"""
@@ -61,30 +314,39 @@ class SmartHumanLikeMemory:
             # Use LLM to intelligently detect events (only if passes all filters)
             detected_events = self._smart_detect_events(normalized_text)
             
-            # Store detected events with JSON encoding safeguards
+            # Store detected events with episode stitching and provenance
             for event in detected_events:
                 try:
                     # Ensure proper JSON encoding
                     event = self._ensure_json_encodable(event)
                     
-                    if event['type'] == 'appointment':
-                        self.appointments.append(event)
-                        print(f"[SmartMemory] 📅 Smart appointment: {event['topic']} on {event['date']}")
-                    elif event['type'] == 'life_event':
-                        self.life_events.append(event)
-                        print(f"[SmartMemory] 📝 Smart life event: {event['topic']} on {event['date']} ({event['emotion']})")
-                    elif event['type'] == 'highlight':
-                        self.conversation_highlights.append(event)
-                        print(f"[SmartMemory] 💬 Smart highlight: {event['topic']}")
-                    elif event['type'] == 'health_state':
-                        self.health_states.append(event)
-                        print(f"[SmartMemory] 🏥 Health state: {event['topic']} - {event.get('state', 'unknown')} ({event.get('severity', 'N/A')})")
-                    elif event['type'] == 'mood_state':
-                        self.mood_states.append(event)
-                        print(f"[SmartMemory] 😊 Mood state: {event['topic']} - {event.get('mood', 'unknown')} ({event.get('intensity', 'N/A')})")
-                    elif event['type'] == 'visit':
-                        self.visits.append(event)
-                        print(f"[SmartMemory] 🏪 Visit: {event['topic']} at {event.get('location', 'unknown location')}")
+                    # Find episode candidates for stitching
+                    candidates = self._find_episode_candidates(event, text)
+                    
+                    # Perform episode stitching (merge or link)
+                    stitched_event = self._stitch_episode(event, candidates)
+                    
+                    # Log creation/update to audit trail
+                    if stitched_event.get('merge_count', 0) > 1:
+                        action = 'update'
+                    else:
+                        action = 'create'
+                        self._append_audit_log(action, stitched_event, {'original_text': text})
+                    
+                    # Store in appropriate list
+                    event_type = stitched_event['type']
+                    if event_type == 'appointment':
+                        self._store_event_with_dedup(self.appointments, stitched_event, 'appointment')
+                    elif event_type == 'life_event':
+                        self._store_event_with_dedup(self.life_events, stitched_event, 'life_event')
+                    elif event_type == 'highlight':
+                        self._store_event_with_dedup(self.conversation_highlights, stitched_event, 'highlight')
+                    elif event_type == 'health_state':
+                        self._store_event_with_dedup(self.health_states, stitched_event, 'health_state')
+                    elif event_type == 'mood_state':
+                        self._store_event_with_dedup(self.mood_states, stitched_event, 'mood_state')
+                    elif event_type == 'visit':
+                        self._store_event_with_dedup(self.visits, stitched_event, 'visit')
                 except Exception as e:
                     print(f"[SmartMemory] ❌ Event encoding error: {e}")
                     continue
@@ -467,11 +729,11 @@ Return only valid JSON array:"""
             if json_text:
                 events = json.loads(json_text)
                 
-                # Validate and enhance events
+                # Validate and enhance events with LLM detection method
                 validated_events = []
                 for event in events:
                     if self._validate_event(event):
-                        enhanced_event = self._enhance_event(event, text=text)
+                        enhanced_event = self._enhance_event(event, text=text, detection_method="llm")
                         validated_events.append(enhanced_event)
                 
                 print(f"[SmartMemory] 🧠 LLM detected {len(validated_events)} events from: '{text}'")
@@ -510,50 +772,318 @@ Return only valid JSON array:"""
         required_fields = ['type', 'topic', 'date', 'emotion']
         return all(field in event for field in required_fields)
     
-    def _enhance_event(self, event: Dict, *, text: str = "") -> Dict:
-        """🔧 Enhanced normalization ensuring unified field structure for ALL events"""
-        now_iso = datetime.now().isoformat()
+    def _enhance_event(self, event: Dict, *, text: str = "", detection_method: str = "llm") -> Dict:
+        """🔧 COMPREHENSIVE NORMALIZATION - Single normalizer for ALL events with confidence, source, salience, provenance"""
+        now = datetime.now()
+        now_iso = now.isoformat()
         etype = event.get('type', 'highlight')
         
-        # Base unified structure - EVERY event gets ALL these fields
+        # Generate unique ID and fingerprint
+        event_id = event.get('id') or f"{etype}_{int(time.time()*1000)}_{random.randint(100,999)}"
+        fingerprint = self._generate_fingerprint(text or event.get('original_text', ''), etype)
+        
+        # UNIFIED FIELD STRUCTURE - Every event gets ALL these fields
         enhanced = {
-            # Core identification
-            'id': event.get('id') or f"{etype}_{int(time.time()*1000)}",
+            # === CORE IDENTIFICATION ===
+            'id': event_id,
             'type': etype,
             'topic': event.get('topic', 'unknown'),
             'category': event.get('category') or self._determine_category(etype),
+            'fingerprint': fingerprint,
             
-            # Temporal fields
-            'date': event.get('date', datetime.now().strftime('%Y-%m-%d')),
+            # === TEMPORAL FIELDS ===
+            'date': event.get('date', now.strftime('%Y-%m-%d')),
             'time': event.get('time'),
             'created': now_iso,
             'last_updated': now_iso,
             
-            # Contextual fields
+            # === CONTEXTUAL FIELDS ===
             'location': event.get('location'),
-            'people': event.get('people') or [],
+            'people': self._normalize_people_list(event.get('people', [])),
             'details': event.get('details'),
             'original_text': event.get('original_text', text),
             
-            # Emotional/priority fields
+            # === EMOTIONAL/PRIORITY FIELDS ===
             'emotion': event.get('emotion', 'neutral'),
-            'priority': event.get('priority', 'medium'),
+            'priority': event.get('priority', 'medium'), 
             'status': event.get('status', 'pending'),
             
-            # Micro-event specific fields
-            'state': event.get('state'),  # for health_state/mood_state
-            'severity': event.get('severity'),  # for health_state
-            'symptoms': event.get('symptoms') or [],  # for health_state
-            'mood': event.get('mood'),  # for mood_state
-            'intensity': event.get('intensity'),  # for mood_state
-            'items': event.get('items') or [],  # for visits/purchases
+            # === MICRO-EVENT SPECIFIC FIELDS ===
+            'state': event.get('state'),          # health_state/mood_state
+            'severity': event.get('severity'),    # health_state
+            'symptoms': event.get('symptoms', []), # health_state
+            'mood': event.get('mood'),            # mood_state
+            'intensity': event.get('intensity'),  # mood_state
+            'items': event.get('items', []),      # visits/purchases
             
-            # Meta fields
-            'detected_by': event.get('detected_by', 'llm'),
+            # === CONFIDENCE & SALIENCE ===
+            'field_confidence': self._calculate_confidence(text, detection_method, event),
+            'salience': self._calculate_salience(event, text),
+            
+            # === SOURCE & PROVENANCE ===
+            'source': detection_method,  # llm, regex, fallback, manual
+            'detected_by': event.get('detected_by', detection_method),
+            'episode_id': self.current_episode_id,
+            
+            # === META FIELDS ===
             'user': self.username,
+            'pinned': event.get('pinned', False),  # For durable facts that don't expire
+            'ttl_override': event.get('ttl_override'),  # Custom TTL in seconds
+            'version': 1  # For future schema evolution
         }
         
+        # Apply confidence decay for existing events
+        if 'created' in event and event['created'] != now_iso:
+            created_time = datetime.fromisoformat(event['created'])
+            enhanced = self._apply_confidence_decay(enhanced, created_time)
+        
         return enhanced
+    
+    def _normalize_people_list(self, people: List[Any]) -> List[str]:
+        """Normalize people list to consistent string format"""
+        if not people:
+            return []
+        
+        normalized = []
+        for person in people:
+            if isinstance(person, str) and person.strip():
+                # Clean and title-case names
+                clean_name = person.strip().title()
+                if clean_name not in normalized:
+                    normalized.append(clean_name)
+        
+        return normalized
+    
+    def _find_episode_candidates(self, event: Dict, text: str) -> List[Dict]:
+        """Find candidate events for episode stitching based on similarity and time proximity"""
+        candidates = []
+        event_fingerprint = event.get('fingerprint', '')
+        event_type = event.get('type', 'highlight')
+        created_time = datetime.fromisoformat(event.get('created', datetime.now().isoformat()))
+        
+        # Define time window for episode stitching
+        window_start = created_time - timedelta(seconds=EPISODE_WINDOW)
+        window_end = created_time + timedelta(seconds=EPISODE_WINDOW)
+        
+        # Get relevant event list
+        event_lists = {
+            'appointment': self.appointments,
+            'life_event': self.life_events,
+            'highlight': self.conversation_highlights, 
+            'health_state': self.health_states,
+            'mood_state': self.mood_states,
+            'visit': self.visits
+        }
+        
+        all_events = []
+        for event_list in event_lists.values():
+            all_events.extend(event_list)
+        
+        # Check all events for candidates
+        for existing_event in all_events:
+            try:
+                existing_created = datetime.fromisoformat(existing_event.get('created', '2000-01-01T00:00:00'))
+                
+                # Skip if outside time window
+                if not (window_start <= existing_created <= window_end):
+                    continue
+                
+                # Check fingerprint similarity
+                existing_fingerprint = existing_event.get('fingerprint', '')
+                if existing_fingerprint and event_fingerprint:
+                    similarity = difflib.SequenceMatcher(None, event_fingerprint, existing_fingerprint).ratio()
+                    
+                    # High similarity suggests potential merge
+                    if similarity > 0.8:
+                        candidates.append({
+                            'event': existing_event,
+                            'similarity': similarity,
+                            'time_diff': abs((created_time - existing_created).total_seconds()),
+                            'merge_type': 'duplicate'
+                        })
+                    # Medium similarity suggests episode linking
+                    elif similarity > 0.5:
+                        candidates.append({
+                            'event': existing_event,
+                            'similarity': similarity,
+                            'time_diff': abs((created_time - existing_created).total_seconds()),
+                            'merge_type': 'episode_link'
+                        })
+                
+                # Check for thematic/contextual similarity
+                if self._events_are_thematically_related(event, existing_event):
+                    candidates.append({
+                        'event': existing_event,
+                        'similarity': 0.6,  # Medium similarity for thematic
+                        'time_diff': abs((created_time - existing_created).total_seconds()),
+                        'merge_type': 'thematic_link'
+                    })
+                        
+            except Exception as e:
+                continue  # Skip problematic events
+        
+        # Sort by similarity and time proximity
+        candidates.sort(key=lambda x: (x['similarity'], -x['time_diff']), reverse=True)
+        return candidates[:3]  # Top 3 candidates
+    
+    def _events_are_thematically_related(self, event1: Dict, event2: Dict) -> bool:
+        """Check if two events are thematically related"""
+        # Same type events are related
+        if event1.get('type') == event2.get('type'):
+            return True
+        
+        # Health and mood states are related
+        health_mood_types = {'health_state', 'mood_state'}
+        if event1.get('type') in health_mood_types and event2.get('type') in health_mood_types:
+            return True
+        
+        # Events with overlapping people are related
+        people1 = set(event1.get('people', []))
+        people2 = set(event2.get('people', []))
+        if people1 and people2 and people1.intersection(people2):
+            return True
+        
+        # Events at same location are related
+        loc1 = event1.get('location', '').lower()
+        loc2 = event2.get('location', '').lower()
+        if loc1 and loc2 and loc1 == loc2:
+            return True
+        
+        return False
+    
+    def _stitch_episode(self, new_event: Dict, candidates: List[Dict]) -> Dict:
+        """Perform episode stitching - merge duplicates or create cross-references"""
+        if not candidates:
+            return new_event
+        
+        best_candidate = candidates[0]
+        merge_type = best_candidate['merge_type']
+        existing_event = best_candidate['event']
+        
+        if merge_type == 'duplicate' and best_candidate['similarity'] > 0.9:
+            # High confidence duplicate - merge events
+            merged_event = self._merge_duplicate_events(new_event, existing_event)
+            self._append_audit_log('merge', merged_event, {
+                'merged_with': existing_event.get('id'),
+                'similarity': best_candidate['similarity'],
+                'merge_type': 'duplicate'
+            })
+            return merged_event
+        
+        else:
+            # Create cross-reference links for episode continuity
+            episode_links = new_event.get('episode_links', [])
+            
+            for candidate in candidates[:2]:  # Link to top 2 candidates
+                link_event = candidate['event']
+                link_id = link_event.get('id')
+                
+                if link_id and link_id not in episode_links:
+                    episode_links.append({
+                        'event_id': link_id,
+                        'link_type': candidate['merge_type'],
+                        'similarity': candidate['similarity'],
+                        'created': datetime.now().isoformat()
+                    })
+            
+            new_event['episode_links'] = episode_links
+            self._append_audit_log('link', new_event, {
+                'linked_events': [link['event_id'] for link in episode_links[-len(candidates[:2]):]],
+                'link_types': [candidate['merge_type'] for candidate in candidates[:2]]
+            })
+            
+            return new_event
+    
+    def _merge_duplicate_events(self, new_event: Dict, existing_event: Dict) -> Dict:
+        """Merge two duplicate events, combining information and updating confidence"""
+        # Start with existing event as base
+        merged = existing_event.copy()
+        
+        # Update timestamps
+        merged['last_updated'] = datetime.now().isoformat()
+        
+        # Merge field confidence (take maximum confidence per field)
+        existing_conf = existing_event.get('field_confidence', {})
+        new_conf = new_event.get('field_confidence', {})
+        
+        merged_conf = {}
+        all_fields = set(existing_conf.keys()) | set(new_conf.keys())
+        for field in all_fields:
+            existing_val = existing_conf.get(field, 0.0)
+            new_val = new_conf.get(field, 0.0)
+            merged_conf[field] = max(existing_val, new_val)
+        
+        merged['field_confidence'] = merged_conf
+        
+        # Combine people lists
+        existing_people = set(existing_event.get('people', []))
+        new_people = set(new_event.get('people', []))
+        merged['people'] = list(existing_people | new_people)
+        
+        # Combine items lists  
+        existing_items = set(existing_event.get('items', []))
+        new_items = set(new_event.get('items', []))
+        merged['items'] = list(existing_items | new_items)
+        
+        # Update with better details if new event has more information
+        if len(new_event.get('details', '')) > len(existing_event.get('details', '')):
+            merged['details'] = new_event.get('details')
+        
+        # Take higher salience score
+        merged['salience'] = max(
+            existing_event.get('salience', 0.0),
+            new_event.get('salience', 0.0)
+        )
+        
+        # Increment merge counter
+        merged['merge_count'] = merged.get('merge_count', 1) + 1
+        merged['merged_sources'] = merged.get('merged_sources', [existing_event.get('source', 'unknown')])
+        merged['merged_sources'].append(new_event.get('source', 'unknown'))
+        
+        return merged
+    
+    def _store_event_with_dedup(self, event_list: List[Dict], event: Dict, event_type: str):
+        """Store event in list with deduplication based on merge results"""
+        event_id = event.get('id')
+        
+        # Check if this is a merged event (already exists in list)
+        if event.get('merge_count', 0) > 1:
+            # Find and update existing event
+            for i, existing in enumerate(event_list):
+                if existing.get('id') == event_id:
+                    event_list[i] = event
+                    print(f"[SmartMemory] 🔄 Updated {event_type}: {event['topic']} (merged)")
+                    return
+        
+        # New event - append to list
+        event_list.append(event)
+        
+        # Print appropriate message
+        event_info = self._format_event_info(event)
+        print(f"[SmartMemory] ✅ New {event_type}: {event_info}")
+    
+    def _format_event_info(self, event: Dict) -> str:
+        """Format event information for logging"""
+        topic = event.get('topic', 'unknown')
+        date = event.get('date', '')
+        emotion = event.get('emotion', '')
+        location = event.get('location', '')
+        salience = event.get('salience', 0.0)
+        
+        info_parts = [topic]
+        
+        if date:
+            info_parts.append(f"on {date}")
+        if location:
+            info_parts.append(f"at {location}")
+        if emotion:
+            info_parts.append(f"({emotion})")
+        
+        # Add confidence/salience indicator
+        avg_conf = sum(event.get('field_confidence', {}).values()) / max(1, len(event.get('field_confidence', {})))
+        info_parts.append(f"[conf:{avg_conf:.2f} sal:{salience:.2f}]")
+        
+        return " ".join(info_parts)
     
     def _determine_category(self, event_type: str) -> str:
         """🏷️ Determine appropriate category based on event type"""
@@ -584,7 +1114,7 @@ Return only valid JSON array:"""
                 'original_text': text,
                 'detected_by': 'fallback'
             }
-            events.append(self._enhance_event(base_event, text=text))
+            events.append(self._enhance_event(base_event, text=text, detection_method="fallback"))
         
         # Only birthday with specific person
         birthday_match = re.search(r'(\w+)(?:\'s)?\s+birthday.+(?:tomorrow|today)', text_lower)
@@ -598,7 +1128,7 @@ Return only valid JSON array:"""
                 'original_text': text,
                 'detected_by': 'fallback'
             }
-            events.append(self._enhance_event(base_event, text=text))
+            events.append(self._enhance_event(base_event, text=text, detection_method="fallback"))
         
         # Simple health state detection
         if re.search(r'\b(?:i\s?am|i\'m|feeling)\s+(?:really\s+|very\s+)?(?:sick|unwell|ill|not well)', text_lower):
@@ -611,7 +1141,7 @@ Return only valid JSON array:"""
                 'original_text': text,
                 'detected_by': 'fallback'
             }
-            events.append(self._enhance_event(base_event, text=text))
+            events.append(self._enhance_event(base_event, text=text, detection_method="fallback"))
         
         # Simple mood state detection
         mood_match = re.search(r'\b(?:i\s?am|i\'m|feeling)\s+(?:really\s+|very\s+|quite\s+|so\s+)?(happy|sad|stressed|tired|excited|angry|frustrated|worried)', text_lower)
@@ -626,7 +1156,7 @@ Return only valid JSON array:"""
                 'original_text': text,
                 'detected_by': 'fallback'
             }
-            events.append(self._enhance_event(base_event, text=text))
+            events.append(self._enhance_event(base_event, text=text, detection_method="fallback"))
         
         return events
     
