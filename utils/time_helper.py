@@ -151,3 +151,52 @@ def _is_date_in_range(date_str: str, days_back: int) -> bool:
         return event_date >= cutoff
     except Exception:
         return False
+
+def _get_week_boundaries(date_str: str = None) -> Tuple[str, str]:
+    """INTERNAL: Get start and end dates of the week containing the given date"""
+    try:
+        if date_str:
+            target_date = datetime.strptime(date_str, '%Y-%m-%d')
+        else:
+            target_date = datetime.now()
+        
+        # Find Monday of the week
+        monday = target_date - timedelta(days=target_date.weekday())
+        sunday = monday + timedelta(days=6)
+        
+        return monday.strftime('%Y-%m-%d'), sunday.strftime('%Y-%m-%d')
+    except Exception:
+        # Fallback to current week
+        now = datetime.now()
+        monday = now - timedelta(days=now.weekday())
+        sunday = monday + timedelta(days=6)
+        return monday.strftime('%Y-%m-%d'), sunday.strftime('%Y-%m-%d')
+
+def _format_time_ago(timestamp_str: str) -> str:
+    """INTERNAL: Format how long ago something happened"""
+    try:
+        event_time = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+        now = datetime.now()
+        
+        # Handle timezone-aware vs naive datetime
+        if event_time.tzinfo is not None and now.tzinfo is None:
+            import pytz
+            now = pytz.UTC.localize(now)
+        elif event_time.tzinfo is None and now.tzinfo is not None:
+            now = now.replace(tzinfo=None)
+        
+        diff = now - event_time
+        
+        if diff.days > 0:
+            return f"{diff.days} day{'s' if diff.days != 1 else ''} ago"
+        elif diff.seconds > 3600:
+            hours = diff.seconds // 3600
+            return f"{hours} hour{'s' if hours != 1 else ''} ago"
+        elif diff.seconds > 60:
+            minutes = diff.seconds // 60
+            return f"{minutes} minute{'s' if minutes != 1 else ''} ago"
+        else:
+            return "just now"
+            
+    except Exception:
+        return "unknown time"

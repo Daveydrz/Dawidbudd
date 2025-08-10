@@ -76,6 +76,18 @@ class SmartHumanLikeMemory:
         self.episodes = self.load_memory('episodes.json')
         self.episode_index = self.load_memory('episode_index.json')  # Fast lookup
         
+        # Hypothesis memories for uncertain events
+        self.hypothesis_memories = self.load_memory('hypothesis_memories.json')
+        
+        # Personal knowledge graph
+        self.knowledge_graph = self.load_memory('knowledge_graph.json')
+        if not self.knowledge_graph:
+            self.knowledge_graph = {
+                'entities': {},      # person/place/thing -> properties  
+                'relationships': [], # entity1 -> relation -> entity2
+                'concepts': {}       # abstract concepts and associations
+            }
+        
         # Audit log for provenance (append-only)
         self.audit_log_file = os.path.join(self.memory_dir, 'audit_log.jsonl')
         
@@ -112,6 +124,385 @@ class SmartHumanLikeMemory:
         # Include event type in fingerprint for better differentiation
         content = f"{event_type}:{normalized}"
         return hashlib.md5(content.encode()).hexdigest()[:12]
+    
+    def _pattern_based_detection(self, text: str) -> List[Dict]:
+        """Pass 1: Pattern-based extraction using regex and heuristics"""
+        candidates = []
+        text_lower = text.lower()
+        
+        # Health state patterns
+        health_patterns = [
+            (r'\b(?:i\s*am|i\'m|feeling|feel)\s+(sick|unwell|ill|better|fine|good|bad)', 'health_state'),
+            (r'\b(?:have|got)\s+(headache|fever|cold|flu|cough|pain)', 'health_state'),
+            (r'\b(?:doctor|medicine|medication|hospital|clinic)', 'appointment')
+        ]
+        
+        for pattern, event_type in health_patterns:
+            matches = re.finditer(pattern, text_lower)
+            for match in matches:
+                candidate = {
+                    'type': event_type,
+                    'topic': match.group(0),
+                    'date': datetime.now().strftime('%Y-%m-%d'),
+                    'source': 'pattern',
+                    'field_confidence': {'type': 0.8, 'topic': 0.7, 'date': 0.9}
+                }
+                
+                if event_type == 'health_state':
+                    state = 'unwell' if match.group(1) in ['sick', 'unwell', 'ill', 'bad'] else 'well'
+                    candidate['state'] = state
+                    candidate['field_confidence']['state'] = 0.8
+                
+                candidates.append(candidate)
+        
+        # Mood state patterns
+        mood_patterns = [
+            (r'\b(?:i\s*am|i\'m|feeling|feel)\s+(happy|sad|angry|excited|tired|stressed|worried|calm)', 'mood_state'),
+        ]
+        
+        for pattern, event_type in mood_patterns:
+            matches = re.finditer(pattern, text_lower)
+            for match in matches:
+                candidate = {
+                    'type': event_type,
+                    'topic': f"Feeling {match.group(1)}",
+                    'date': datetime.now().strftime('%Y-%m-%d'),
+                    'mood': match.group(1),
+                    'source': 'pattern',
+                    'field_confidence': {'type': 0.8, 'topic': 0.7, 'date': 0.9, 'mood': 0.8}
+                }
+                candidates.append(candidate)
+        
+        # Visit patterns
+        visit_patterns = [
+            (r'\b(?:went to|going to|visited|at)\s+(?:the\s+)?([a-zA-Z\s]+)', 'visit'),
+        ]
+        
+        for pattern, event_type in visit_patterns:
+            matches = re.finditer(pattern, text_lower)
+            for match in matches:
+                location = match.group(1).strip()
+                if len(location) > 2:  # Filter out very short matches
+                    candidate = {
+                        'type': event_type,
+                        'topic': f"Visit to {location}",
+                        'date': datetime.now().strftime('%Y-%m-%d'),
+                        'location': location.title(),
+                        'source': 'pattern',
+                        'field_confidence': {'type': 0.7, 'topic': 0.6, 'date': 0.9, 'location': 0.7}
+                    }
+                    candidates.append(candidate)
+        
+        return candidates
+    
+    def _heuristic_detection(self, text: str) -> List[Dict]:
+        """Pass 2: Heuristic-based extraction using keywords and rules"""
+        candidates = []
+        text_lower = text.lower()
+        
+        # Health keywords
+        if self._contains_health_state(text):
+            candidate = {
+                'type': 'health_state',
+                'topic': 'Health state mentioned',
+                'date': datetime.now().strftime('%Y-%m-%d'),
+                'source': 'heuristic',
+                'field_confidence': {'type': 0.6, 'topic': 0.5, 'date': 0.9}
+            }
+            
+            # Determine state
+            negative_health = ['sick', 'unwell', 'ill', 'pain', 'hurt', 'bad', 'worse']
+            positive_health = ['better', 'fine', 'good', 'recovered', 'healthy']
+            
+            if any(word in text_lower for word in negative_health):
+                candidate['state'] = 'unwell'
+                candidate['field_confidence']['state'] = 0.6
+            elif any(word in text_lower for word in positive_health):
+                candidate['state'] = 'well'
+                candidate['field_confidence']['state'] = 0.6
+            
+            candidates.append(candidate)
+        
+        # Mood keywords
+        if self._contains_mood_state(text):
+            candidate = {
+                'type': 'mood_state',
+                'topic': 'Mood state mentioned',
+                'date': datetime.now().strftime('%Y-%m-%d'),
+                'source': 'heuristic',
+                'field_confidence': {'type': 0.6, 'topic': 0.5, 'date': 0.9}
+            }
+            candidates.append(candidate)
+        
+        # Visit keywords  
+        if self._contains_visit_or_activity(text):
+            candidate = {
+                'type': 'visit',
+                'topic': 'Activity or visit mentioned',
+                'date': datetime.now().strftime('%Y-%m-%d'),
+                'source': 'heuristic',
+                'field_confidence': {'type': 0.6, 'topic': 0.5, 'date': 0.9}
+            }
+            candidates.append(candidate)
+        
+        return candidates
+    
+    def _fuse_candidates(self, candidates: List[Dict], text: str) -> List[Dict]:
+        """Fuse multiple candidates per field with highest confidence wins"""
+        if not candidates:
+            return []
+        
+        # Group candidates by type and similarity
+        grouped_candidates = {}
+        
+        for candidate in candidates:
+            event_type = candidate.get('type', 'highlight')
+            topic_key = candidate.get('topic', 'unknown')
+            
+            # Create grouping key based on type and topic similarity
+            group_key = f"{event_type}:{self._norm(topic_key)[:20]}"
+            
+            if group_key not in grouped_candidates:
+                grouped_candidates[group_key] = []
+            grouped_candidates[group_key].append(candidate)
+        
+        # Fuse each group
+        fused_events = []
+        
+        for group_key, group_candidates in grouped_candidates.items():
+            if len(group_candidates) == 1:
+                # Single candidate - just add consensus metadata
+                event = group_candidates[0].copy()
+                event['confidence'] = self._calculate_overall_confidence(event.get('field_confidence', {}))
+                event['source'] = event.get('source', 'single')
+                event['evidence'] = [{'method': event.get('source'), 'confidence': event['confidence']}]
+                fused_events.append(event)
+            else:
+                # Multiple candidates - perform field-level fusion
+                fused_event = self._fuse_field_level(group_candidates, text)
+                fused_events.append(fused_event)
+        
+        return fused_events
+    
+    def _fuse_field_level(self, candidates: List[Dict], text: str) -> Dict:
+        """Fuse candidates at field level, choosing highest confidence for each field"""
+        # Get all possible fields
+        all_fields = set()
+        for candidate in candidates:
+            all_fields.update(candidate.keys())
+            if 'field_confidence' in candidate:
+                all_fields.update(candidate['field_confidence'].keys())
+        
+        # Remove meta fields
+        all_fields.discard('field_confidence')
+        all_fields.discard('source')
+        all_fields.discard('evidence')
+        
+        fused_event = {}
+        field_confidences = {}
+        evidence = []
+        critical_conflicts = []
+        
+        # For each field, pick the value with highest confidence
+        for field in all_fields:
+            best_value = None
+            best_confidence = 0.0
+            field_sources = []
+            
+            for candidate in candidates:
+                if field in candidate and candidate[field] is not None:
+                    candidate_confidence = candidate.get('field_confidence', {}).get(field, 0.5)
+                    if candidate_confidence > best_confidence:
+                        best_confidence = candidate_confidence
+                        best_value = candidate[field]
+                    
+                    field_sources.append({
+                        'method': candidate.get('source', 'unknown'),
+                        'value': candidate[field],
+                        'confidence': candidate_confidence
+                    })
+            
+            if best_value is not None:
+                fused_event[field] = best_value
+                field_confidences[field] = best_confidence
+                
+                # Check for critical conflicts
+                if field in ['date', 'location', 'state'] and len(field_sources) > 1:
+                    values = [s['value'] for s in field_sources]
+                    if len(set(values)) > 1 and best_confidence < 0.6:
+                        critical_conflicts.append(field)
+        
+        # Calculate overall confidence
+        overall_confidence = self._calculate_overall_confidence(field_confidences)
+        
+        # Mark for confirmation if critical conflicts and low confidence
+        if critical_conflicts and overall_confidence < 0.6:
+            fused_event['_needs_confirmation'] = True
+            fused_event['_conflict_fields'] = critical_conflicts
+        
+        # Add metadata
+        fused_event['confidence'] = overall_confidence
+        fused_event['source'] = 'consensus'
+        fused_event['field_confidence'] = field_confidences
+        
+        # Build evidence trail
+        for candidate in candidates:
+            evidence.append({
+                'method': candidate.get('source', 'unknown'),
+                'confidence': self._calculate_overall_confidence(candidate.get('field_confidence', {})),
+                'fields_contributed': [f for f in candidate.keys() if f not in ['field_confidence', 'source']]
+            })
+        
+        fused_event['evidence'] = evidence
+        
+        return fused_event
+    
+    def _calculate_overall_confidence(self, field_confidences: Dict[str, float]) -> float:
+        """Calculate overall confidence from field confidences"""
+        if not field_confidences:
+            return 0.5
+        
+        # Weight important fields more heavily
+        field_weights = {
+            'type': 0.2,
+            'topic': 0.15,
+            'date': 0.15,
+            'location': 0.1,
+            'state': 0.1,
+            'mood': 0.1,
+            'people': 0.1,
+            'time': 0.1
+        }
+        
+        weighted_sum = 0.0
+        total_weight = 0.0
+        
+        for field, confidence in field_confidences.items():
+            weight = field_weights.get(field, 0.05)  # Default weight for other fields
+            weighted_sum += confidence * weight
+            total_weight += weight
+        
+        if total_weight == 0:
+            return 0.5
+        
+        return min(1.0, weighted_sum / total_weight)
+    
+    def _store_hypothesis_memory(self, event: Dict, text: str):
+        """Store uncertain event as hypothesis for later confirmation"""
+        hypothesis = {
+            'id': f"hyp_{int(time.time()*1000)}",
+            'event': event,
+            'original_text': text,
+            'created': datetime.now().isoformat(),
+            'status': 'pending',  # pending, confirmed, rejected
+            'confidence': event.get('confidence', 0.5),
+            'conflict_fields': event.get('_conflict_fields', []),
+            'confirmation_attempts': 0,
+            'evidence_for': [],
+            'evidence_against': []
+        }
+        
+        self.hypothesis_memories.append(hypothesis)
+        
+        # Log hypothesis creation
+        self._add_to_audit_log('hypothesis_create', hypothesis)
+        
+        print(f"[SmartMemory] 🤔 Hypothesis stored: {event.get('topic', 'unknown')}")
+    
+    def _update_knowledge_graph(self, event: Dict):
+        """Update personal knowledge graph with event information"""
+        try:
+            # Extract entities from event
+            entities = []
+            
+            # People
+            if event.get('people'):
+                for person in event['people']:
+                    entities.append({'name': person, 'type': 'person'})
+            
+            # Locations
+            if event.get('location'):
+                entities.append({'name': event['location'], 'type': 'place'})
+            
+            # Activities/concepts
+            if event.get('type') in ['visit', 'appointment', 'life_event']:
+                entities.append({'name': event.get('topic', ''), 'type': 'activity'})
+            
+            # Update entities in knowledge graph
+            for entity in entities:
+                name = entity['name'].strip()
+                if not name:
+                    continue
+                    
+                entity_id = f"{entity['type']}:{name.lower()}"
+                
+                if entity_id not in self.knowledge_graph['entities']:
+                    self.knowledge_graph['entities'][entity_id] = {
+                        'name': name,
+                        'type': entity['type'],
+                        'first_seen': datetime.now().isoformat(),
+                        'mention_count': 0,
+                        'associated_events': [],
+                        'properties': {}
+                    }
+                
+                # Update mention count and events
+                kg_entity = self.knowledge_graph['entities'][entity_id]
+                kg_entity['mention_count'] += 1
+                kg_entity['last_seen'] = datetime.now().isoformat()
+                
+                if event.get('id'):
+                    if event['id'] not in kg_entity['associated_events']:
+                        kg_entity['associated_events'].append(event['id'])
+            
+            # Create relationships between entities in the same event
+            if len(entities) > 1:
+                for i, entity1 in enumerate(entities):
+                    for entity2 in entities[i+1:]:
+                        relationship = {
+                            'from': f"{entity1['type']}:{entity1['name'].lower()}",
+                            'to': f"{entity2['type']}:{entity2['name'].lower()}",
+                            'relation': 'co_occurs_with',
+                            'strength': 1,
+                            'event_id': event.get('id'),
+                            'created': datetime.now().isoformat()
+                        }
+                        
+                        # Check if relationship already exists
+                        existing = None
+                        for rel in self.knowledge_graph['relationships']:
+                            if (rel['from'] == relationship['from'] and 
+                                rel['to'] == relationship['to'] and 
+                                rel['relation'] == relationship['relation']):
+                                existing = rel
+                                break
+                        
+                        if existing:
+                            existing['strength'] += 1
+                        else:
+                            self.knowledge_graph['relationships'].append(relationship)
+            
+        except Exception as e:
+            print(f"[SmartMemory] ⚠️ Knowledge graph update error: {e}")
+    
+    def _add_to_audit_log(self, action: str, event: Dict, metadata: Dict = None):
+        """Add entry to append-only audit log"""
+        try:
+            log_entry = {
+                'timestamp': datetime.now().isoformat(),
+                'action': action,
+                'event_id': event.get('id'),
+                'event_type': event.get('type'),
+                'username': self.username,
+                'metadata': metadata or {}
+            }
+            
+            # Append to audit log file
+            with open(self.audit_log_file, 'a', encoding='utf-8') as f:
+                f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
+                
+        except Exception as e:
+            print(f"[SmartMemory] ⚠️ Audit log error: {e}")
     
     def _calculate_confidence(self, text: str, detection_method: str, field_data: Dict) -> Dict[str, float]:
         """Calculate per-field confidence scores"""
@@ -307,62 +698,99 @@ class SmartHumanLikeMemory:
         return event
     
     def extract_and_store_human_memories(self, text: str):
-        """🎯 Smart LLM-based memory extraction with BULLETPROOF filtering"""
+        """Extract and store events/memories with consensus extraction and provenance"""
+        if not text or not text.strip():
+            return
+            
+        print(f"[SmartMemory] 🧠 Processing: '{text}'")
         
         # Also use the existing MEGA-INTELLIGENT extraction
         self.mega_memory.extract_memories_from_text(text)
         
-        # First, resolve cross-conversation references (no time limit)
-        cross_references = self._resolve_cross_conversation_references(text)
-        if cross_references:
-            # Update existing events with cross-reference links
-            reference_links = self._create_cross_reference_links(cross_references)
-            self._update_events_with_references(reference_links)
+        try:
+            # Check for cross-conversation references first
+            resolved_events = self._resolve_cross_conversation_references(text)
+            if resolved_events:
+                print(f"[SmartMemory] 🔗 Resolved {len(resolved_events)} cross-conversation references")
             
-            # Log reference linking for provenance
-            for event_id, links in reference_links.items():
-                self._append_audit_log('cross_reference', {'id': event_id}, {
-                    'reference_count': len(links),
-                    'reference_texts': [link['reference_text'] for link in links]
-                })
-        
-        # Tier-3 throttle + lock around heavy LLM path
-        now = time.time()
-        
-        # Tier-3 throttle: skip heavy path if we ran it very recently
-        if (now - self._last_tier3) < 8.0:  # 8s guard, adjust if needed
-            print("[SmartMemory] ⏳ Throttled Tier-3 extraction")
-            return
+            # Tier-3 throttle + lock around heavy processing
+            now = time.time()
             
-        with self._lock:
-            self._last_tier3 = now
-            
-            # Normalize text for consistent processing
-            normalized_text = self._normalize_text_for_memory(text)
-            
-            # Use LLM to intelligently detect events (only if passes all filters)
-            detected_events = self._smart_detect_events(normalized_text)
-            
-            # Store detected events with episode stitching and provenance
-            for event in detected_events:
-                try:
+            # Tier-3 throttle: skip heavy path if we ran it very recently
+            if (now - self._last_tier3) < 8.0:  # 8s guard, adjust if needed
+                print("[SmartMemory] ⏳ Throttled Tier-3 extraction")
+                return
+                
+            with self._lock:
+                self._last_tier3 = now
+                
+                # Normalize text for consistent processing
+                normalized_text = self._normalize_text_for_memory(text)
+                
+                # CONSENSUS EXTRACTION: Multiple passes with field-level confidence fusion
+                candidates = []
+                
+                # Pass 1: Pattern-based detection (regex/heuristics)
+                pattern_candidates = self._pattern_based_detection(normalized_text)
+                candidates.extend(pattern_candidates)
+                
+                # Pass 2: Heuristic detection (keywords + rules)
+                heuristic_candidates = self._heuristic_detection(normalized_text)
+                candidates.extend(heuristic_candidates)
+                
+                # Pass 3: LLM-based smart detection
+                llm_candidates = self._smart_detect_events(normalized_text)
+                # Add source and field confidence to LLM candidates
+                for candidate in llm_candidates:
+                    if 'source' not in candidate:
+                        candidate['source'] = 'llm'
+                    if 'field_confidence' not in candidate:
+                        # Estimate field confidences for LLM results
+                        candidate['field_confidence'] = self._calculate_confidence(
+                            text, 'llm', candidate)
+                
+                candidates.extend(llm_candidates)
+                
+                if not candidates:
+                    print(f"[SmartMemory] 💬 No significant events detected in: '{text}'")
+                    return
+                
+                # CONSENSUS FUSION: Combine candidates with field-level confidence
+                fused_events = self._fuse_candidates(candidates, text)
+                
+                print(f"[SmartMemory] 📝 Consensus fusion: {len(candidates)} candidates → {len(fused_events)} events")
+                
+                # Process and store each fused event
+                for raw_event in fused_events:
+                    if not isinstance(raw_event, dict) or not raw_event.get('topic'):
+                        print(f"[SmartMemory] ⚠️ Skipping invalid event: {raw_event}")
+                        continue
+                    
+                    # Store as hypothesis if confidence too low
+                    if raw_event.get('_needs_confirmation'):
+                        self._store_hypothesis_memory(raw_event, text)
+                        continue
+                    
                     # Ensure proper JSON encoding
-                    event = self._ensure_json_encodable(event)
+                    raw_event = self._ensure_json_encodable(raw_event)
+                    
+                    # Enhance with normalization, confidence, provenance
+                    enhanced_event = self._enhance_event(raw_event, text=text, detection_method=raw_event.get('source', 'consensus'))
                     
                     # Find episode candidates for stitching
-                    candidates = self._find_episode_candidates(event, text)
+                    episode_candidates = self._find_episode_candidates(enhanced_event, text)
                     
                     # Perform episode stitching (merge or link)
-                    stitched_event = self._stitch_episode(event, candidates)
+                    stitched_event = self._stitch_episode(enhanced_event, episode_candidates)
                     
                     # Log creation/update to audit trail
                     if stitched_event.get('merge_count', 0) > 1:
                         action = 'update'
                     else:
                         action = 'create'
-                        self._append_audit_log(action, stitched_event, {'original_text': text})
+                    self._add_to_audit_log(action, stitched_event, {'original_text': text})
                     
-                    # Store in appropriate list
+                    # Store in appropriate collection based on type
                     event_type = stitched_event['type']
                     if event_type == 'appointment':
                         self._store_event_with_dedup(self.appointments, stitched_event, 'appointment')
@@ -376,13 +804,20 @@ class SmartHumanLikeMemory:
                         self._store_event_with_dedup(self.mood_states, stitched_event, 'mood_state')
                     elif event_type == 'visit':
                         self._store_event_with_dedup(self.visits, stitched_event, 'visit')
-                except Exception as e:
-                    print(f"[SmartMemory] ❌ Event encoding error: {e}")
-                    continue
-            
-            # Save memories with atomic write
-            if detected_events or cross_references:  # Save if we found events OR references
-                self._atomic_save_memories()
+                    
+                    # Update knowledge graph
+                    self._update_knowledge_graph(stitched_event)
+                    
+                    print(f"[SmartMemory] ✅ Stored {stitched_event['type']}: {stitched_event['topic']}")
+                
+                # Save memories with atomic write
+                if fused_events or resolved_events:  # Save if we found events OR references
+                    self._atomic_save_memories()
+                
+        except Exception as e:
+            print(f"[SmartMemory] ❌ Error processing memories: {e}")
+            import traceback
+            traceback.print_exc()
     
     def _normalize_text_for_memory(self, text: str) -> str:
         """🔄 Normalize text for consistent memory processing"""
@@ -435,6 +870,10 @@ class SmartHumanLikeMemory:
             self.save_memory(self.health_states, 'smart_health_states.json')
             self.save_memory(self.mood_states, 'smart_mood_states.json')
             self.save_memory(self.visits, 'smart_visits.json')
+            self.save_memory(self.episodes, 'episodes.json')
+            self.save_memory(self.episode_index, 'episode_index.json')
+            self.save_memory(self.hypothesis_memories, 'hypothesis_memories.json')
+            self.save_memory(self.knowledge_graph, 'knowledge_graph.json')
         except Exception as e:
             print(f"[SmartMemory] ❌ Atomic save error: {e}")
             # Could add backup recovery here if needed
@@ -1658,3 +2097,6 @@ Return only valid JSON array:"""
             return random.choice(responses)
         
         return None
+    def _norm(self, s: str) -> str:
+        """Normalize string for consistent comparison"""
+        return re.sub(r"\s+", " ", (s or "").strip().lower())

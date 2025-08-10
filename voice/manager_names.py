@@ -10,8 +10,36 @@ import difflib
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple, Set
 from collections import defaultdict, Counter
-import numpy as np
 import requests
+
+# ✅ LAZY NUMPY IMPORT - Only load when needed for embeddings
+try:
+    import numpy as np
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
+    # Create simple fallback for numpy operations
+    class NumpyFallback:
+        @staticmethod
+        def array(x):
+            return x
+        @staticmethod 
+        def mean(x):
+            return sum(x) / len(x) if x else 0
+        @staticmethod
+        def dot(a, b):
+            return sum(ai * bi for ai, bi in zip(a, b))
+        @property
+        def ndarray(self):
+            return list  # Fallback to list for type checking
+        @staticmethod
+        def linalg():
+            class LinalgFallback:
+                @staticmethod
+                def norm(x):
+                    return sum(xi * xi for xi in x) ** 0.5
+            return LinalgFallback()
+    np = NumpyFallback()
 
 try:
     from voice.smart_voice_recognition import smart_voice_recognition
