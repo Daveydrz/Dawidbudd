@@ -1771,5 +1771,226 @@ def get_memory_insights(username: str, days_back: int = 30) -> Dict[str, Any]:
         print(f"[RecallPlanner] ⚠️ Insights error: {e}")
         return {'error': str(e)}
 
+
+# ========================================
+# DETERMINISTIC RECALL PLANNER
+# ========================================
+
+def list_events(username: str, *, types=None, category=None, start_date=None, end_date=None, state=None) -> List[Dict]:
+    """List events with optional filtering - pure function with no side effects"""
+    try:
+        from ai.human_memory_smart import SmartHumanLikeMemory
+        
+        # Initialize memory system to read data
+        memory = SmartHumanLikeMemory(username)
+        
+        # Gather all events from all lists
+        all_events = []
+        event_sources = [
+            (memory.appointments, 'appointment'),
+            (memory.life_events, 'life_event'),
+            (memory.conversation_highlights, 'highlight'),
+            (memory.health_states, 'health_state'),
+            (memory.mood_states, 'mood_state'),
+            (memory.visits, 'visit')
+        ]
+        
+        for event_list, event_type in event_sources:
+            for event in event_list:
+                event_copy = event.copy()
+                event_copy['_source_type'] = event_type
+                all_events.append(event_copy)
+        
+        # Apply filters
+        filtered_events = []
+        for event in all_events:
+            # Filter by types
+            if types and event.get('type') not in types:
+                continue
+                
+            # Filter by category  
+            if category and event.get('category') != category:
+                continue
+                
+            # Filter by date range
+            event_date = event.get('date', '')
+            if start_date and event_date < start_date:
+                continue
+            if end_date and event_date > end_date:
+                continue
+                
+            # Filter by state
+            if state and event.get('state') != state:
+                continue
+                
+            filtered_events.append(event)
+        
+        # Sort by date and time
+        filtered_events.sort(key=lambda x: (x.get('date', ''), x.get('time', '')), reverse=True)
+        return filtered_events
+        
+    except Exception as e:
+        print(f"[RecallPlanner] ❌ list_events error: {e}")
+        return []
+
+
+def parse_time_range(question: str) -> Tuple[Optional[str], Optional[str]]:
+    """Parse natural language time expressions into start_date, end_date - pure function"""
+    today = datetime.now().strftime('%Y-%m-%d')
+    question_lower = question.lower().strip()
+    
+    # Today
+    if 'today' in question_lower:
+        return today, today
+    
+    # Yesterday  
+    if 'yesterday' in question_lower:
+        yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+        return yesterday, yesterday
+    
+    # This week
+    if 'this week' in question_lower:
+        now = datetime.now()
+        start_of_week = now - timedelta(days=now.weekday())
+        end_of_week = start_of_week + timedelta(days=6)
+        return start_of_week.strftime('%Y-%m-%d'), end_of_week.strftime('%Y-%m-%d')
+    
+    # Last week
+    if 'last week' in question_lower:
+        now = datetime.now()
+        start_of_last_week = now - timedelta(days=now.weekday() + 7)
+        end_of_last_week = start_of_last_week + timedelta(days=6)
+        return start_of_last_week.strftime('%Y-%m-%d'), end_of_last_week.strftime('%Y-%m-%d')
+    
+    # This month
+    if 'this month' in question_lower:
+        now = datetime.now()
+        start_of_month = now.replace(day=1).strftime('%Y-%m-%d')
+        # Find last day of month
+        next_month = now.replace(day=28) + timedelta(days=4)
+        end_of_month = (next_month - timedelta(days=next_month.day)).strftime('%Y-%m-%d')
+        return start_of_month, end_of_month
+    
+    # Last month
+    if 'last month' in question_lower:
+        now = datetime.now()
+        first_day_this_month = now.replace(day=1)
+        last_day_last_month = first_day_this_month - timedelta(days=1)
+        start_of_last_month = last_day_last_month.replace(day=1).strftime('%Y-%m-%d')
+        return start_of_last_month, last_day_last_month.strftime('%Y-%m-%d')
+    
+    # Last N days
+    import re
+    days_match = re.search(r'(?:last|past)\s+(\d+)\s+days?', question_lower)
+    if days_match:
+        n_days = int(days_match.group(1))
+        start_date = (datetime.now() - timedelta(days=n_days)).strftime('%Y-%m-%d')
+        return start_date, today
+    
+    # Default: no time filter
+    return None, None
+
+
+def answer_simple_memory_question(username: str, question: str) -> Dict:
+    """Answer simple memory questions with deterministic results - pure function"""
+    try:
+        question_lower = question.lower().strip()
+        
+        # Parse time range from question
+        start_date, end_date = parse_time_range(question)
+        
+        # "when unwell this week?" - health state queries
+        if 'unwell' in question_lower or 'sick' in question_lower or 'ill' in question_lower:
+            events = list_events(username, types=['health_state'], start_date=start_date, end_date=end_date, state='unwell')
+            if events:
+                latest_event = events[0]  # Most recent
+                return {
+                    'answer': f"You were unwell on {latest_event.get('date')} - {latest_event.get('details', 'feeling unwell')}",
+                    'events': events,
+                    'confidence': 0.9
+                }
+            else:
+                time_desc = 'this week' if 'week' in question_lower else 'recently'
+                return {
+                    'answer': f"No records of being unwell {time_desc}",
+                    'events': [],
+                    'confidence': 0.8
+                }
+        
+        # "what did I have on [date]?" - general event queries
+        if 'what did i have' in question_lower or 'what happened' in question_lower:
+            events = list_events(username, start_date=start_date, end_date=end_date)
+            if events:
+                event_summaries = []
+                for event in events[:5]:  # Top 5 events
+                    summary = f"{event.get('type', 'event')}: {event.get('topic', 'unknown')}"
+                    if event.get('location'):
+                        summary += f" at {event.get('location')}"
+                    event_summaries.append(summary)
+                
+                return {
+                    'answer': f"Events found: {'; '.join(event_summaries)}",
+                    'events': events,
+                    'confidence': 0.9
+                }
+            else:
+                return {
+                    'answer': "No events found for that time period",
+                    'events': [],
+                    'confidence': 0.8
+                }
+        
+        # Mood queries
+        if 'mood' in question_lower or 'feeling' in question_lower:
+            events = list_events(username, types=['mood_state'], start_date=start_date, end_date=end_date)
+            if events:
+                latest_event = events[0]
+                mood = latest_event.get('mood', 'neutral')
+                intensity = latest_event.get('intensity', 'medium')
+                return {
+                    'answer': f"Your mood was {intensity} {mood} on {latest_event.get('date')}",
+                    'events': events,
+                    'confidence': 0.9
+                }
+            else:
+                return {
+                    'answer': "No mood records found for that time period",
+                    'events': [],
+                    'confidence': 0.8
+                }
+        
+        # Visit/location queries
+        if 'visited' in question_lower or 'went to' in question_lower:
+            events = list_events(username, types=['visit'], start_date=start_date, end_date=end_date)
+            if events:
+                locations = list(set(event.get('location', 'unknown') for event in events))
+                return {
+                    'answer': f"You visited: {', '.join(locations)}",
+                    'events': events,
+                    'confidence': 0.9
+                }
+            else:
+                return {
+                    'answer': "No visit records found for that time period",
+                    'events': [],
+                    'confidence': 0.8
+                }
+        
+        # Default: general search
+        events = list_events(username, start_date=start_date, end_date=end_date)
+        return {
+            'answer': f"Found {len(events)} events in the specified time period",
+            'events': events[:10],  # Limit to 10 most recent
+            'confidence': 0.7
+        }
+        
+    except Exception as e:
+        print(f"[RecallPlanner] ❌ answer_simple_memory_question error: {e}")
+        return {
+            'answer': f"Error processing question: {str(e)}",
+            'events': [],
+            'confidence': 0.1
+        }
+
 print(f"[MegaMemory] 🔍 Recall Planner: Active")
 print(f"[MegaMemory] ✅ Memory Inference Engine: Active")

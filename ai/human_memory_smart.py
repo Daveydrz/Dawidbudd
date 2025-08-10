@@ -710,8 +710,12 @@ class SmartHumanLikeMemory:
         try:
             # Check for cross-conversation references first
             resolved_events = self._resolve_cross_conversation_references(text)
+            
+            # Process high-confidence cross-conversation merges
+            cross_conv_merged = False
             if resolved_events:
                 print(f"[SmartMemory] 🔗 Resolved {len(resolved_events)} cross-conversation references")
+                cross_conv_merged = self._process_cross_conversation_merges(resolved_events, text)
             
             # Tier-3 throttle + lock around heavy processing
             now = time.time()
@@ -719,6 +723,11 @@ class SmartHumanLikeMemory:
             # Tier-3 throttle: skip heavy path if we ran it very recently
             if (now - self._last_tier3) < 8.0:  # 8s guard, adjust if needed
                 print("[SmartMemory] ⏳ Throttled Tier-3 extraction")
+                return
+                
+            # Skip creating new events if cross-conversation merge already occurred
+            if cross_conv_merged:
+                print("[SmartMemory] ✅ Cross-conversation merge completed - skipping new event creation")
                 return
                 
             with self._lock:
@@ -1305,6 +1314,9 @@ Return only valid JSON array:"""
             created_time = datetime.fromisoformat(event['created'])
             enhanced = self._apply_confidence_decay(enhanced, created_time)
         
+        # Add stable fingerprint for long-range similarity detection
+        enhanced['stable_fingerprint'] = self._stable_fingerprint(enhanced)
+        
         return enhanced
     
     def _normalize_people_list(self, people: List[Any]) -> List[str]:
@@ -1326,12 +1338,14 @@ Return only valid JSON array:"""
         """Find candidate events for episode stitching based on similarity and time proximity"""
         candidates = []
         event_fingerprint = event.get('fingerprint', '')
+        event_stable_fingerprint = event.get('stable_fingerprint', '')
         event_type = event.get('type', 'highlight')
         created_time = datetime.fromisoformat(event.get('created', datetime.now().isoformat()))
         
-        # Define time window for episode stitching
-        window_start = created_time - timedelta(seconds=EPISODE_WINDOW)
-        window_end = created_time + timedelta(seconds=EPISODE_WINDOW)
+        # Define time window for episode stitching (reduced to 30 minutes as requested)
+        episode_window = 30 * 60  # 30 minutes in seconds  
+        window_start = created_time - timedelta(seconds=episode_window)
+        window_end = created_time + timedelta(seconds=episode_window)
         
         # Get relevant event list
         event_lists = {
@@ -1352,30 +1366,44 @@ Return only valid JSON array:"""
             try:
                 existing_created = datetime.fromisoformat(existing_event.get('created', '2000-01-01T00:00:00'))
                 
-                # Skip if outside time window
-                if not (window_start <= existing_created <= window_end):
-                    continue
+                # Check short-window similarity (original fingerprint)
+                within_window = window_start <= existing_created <= window_end
                 
-                # Check fingerprint similarity
-                existing_fingerprint = existing_event.get('fingerprint', '')
-                if existing_fingerprint and event_fingerprint:
-                    similarity = difflib.SequenceMatcher(None, event_fingerprint, existing_fingerprint).ratio()
+                if within_window:
+                    # Check fingerprint similarity for short window
+                    existing_fingerprint = existing_event.get('fingerprint', '')
+                    if existing_fingerprint and event_fingerprint:
+                        similarity = difflib.SequenceMatcher(None, event_fingerprint, existing_fingerprint).ratio()
+                        
+                        # High similarity suggests potential merge
+                        if similarity > 0.8:
+                            candidates.append({
+                                'event': existing_event,
+                                'similarity': similarity,
+                                'time_diff': abs((created_time - existing_created).total_seconds()),
+                                'merge_type': 'duplicate'
+                            })
+                        # Medium similarity suggests episode linking
+                        elif similarity > 0.5:
+                            candidates.append({
+                                'event': existing_event,
+                                'similarity': similarity,
+                                'time_diff': abs((created_time - existing_created).total_seconds()),
+                                'merge_type': 'episode_link'
+                            })
+                
+                # Check stable fingerprint for cross-day similarity
+                existing_stable_fingerprint = existing_event.get('stable_fingerprint', '')
+                if existing_stable_fingerprint and event_stable_fingerprint:
+                    stable_similarity = difflib.SequenceMatcher(None, event_stable_fingerprint, existing_stable_fingerprint).ratio()
                     
-                    # High similarity suggests potential merge
-                    if similarity > 0.8:
+                    # Cross-day thematic similarity
+                    if stable_similarity > 0.7:
                         candidates.append({
                             'event': existing_event,
-                            'similarity': similarity,
+                            'similarity': stable_similarity * 0.9,  # Slightly lower weight for cross-day
                             'time_diff': abs((created_time - existing_created).total_seconds()),
-                            'merge_type': 'duplicate'
-                        })
-                    # Medium similarity suggests episode linking
-                    elif similarity > 0.5:
-                        candidates.append({
-                            'event': existing_event,
-                            'similarity': similarity,
-                            'time_diff': abs((created_time - existing_created).total_seconds()),
-                            'merge_type': 'episode_link'
+                            'merge_type': 'cross_day_link'
                         })
                 
                 # Check for thematic/contextual similarity
@@ -1610,7 +1638,97 @@ Return only valid JSON array:"""
             print(f"[SmartMemory] 🔗 Updated {updated_count} events with cross-references")
         
         return updated_count
-        """Perform episode stitching - merge duplicates or create cross-references"""
+    
+    def _process_cross_conversation_merges(self, resolved_events: List[Dict], text: str) -> bool:
+        """Process cross-conversation references and merge with existing events if confidence ≥ 0.65"""
+        merged_any = False
+        
+        for reference in resolved_events:
+            confidence = reference.get('confidence', 0.0)
+            if confidence < 0.65:
+                continue  # Skip low confidence references
+            
+            matched_event = reference['matched_event']
+            event_id = matched_event.get('id')
+            if not event_id:
+                continue
+            
+            # Determine which category file this event belongs to
+            event_lists_and_files = [
+                (self.appointments, 'smart_appointments.json', 'appointment'),
+                (self.life_events, 'smart_life_events.json', 'life_event'),
+                (self.conversation_highlights, 'smart_highlights.json', 'highlight'),
+                (self.health_states, 'smart_health_states.json', 'health_state'),
+                (self.mood_states, 'smart_mood_states.json', 'mood_state'),
+                (self.visits, 'smart_visits.json', 'visit')
+            ]
+            
+            # Find the event in the appropriate list
+            target_list = None
+            target_file = None
+            target_index = None
+            
+            for event_list, filename, category in event_lists_and_files:
+                for i, event in enumerate(event_list):
+                    if event.get('id') == event_id:
+                        target_list = event_list
+                        target_file = filename
+                        target_index = i
+                        break
+                if target_list:
+                    break
+            
+            if target_list is None or target_index is None:
+                continue  # Event not found
+            
+            # Create a new event from the reference to merge
+            new_event = {
+                'type': matched_event.get('type', 'highlight'),
+                'topic': f"Referenced: {reference['reference_text']}",
+                'date': datetime.now().strftime('%Y-%m-%d'),
+                'time': datetime.now().strftime('%H:%M'),
+                'original_text': text,
+                'detected_by': 'cross_reference'
+            }
+            
+            # Merge the new event with the matched event
+            merged_event = self._merge_duplicate_events(new_event, matched_event)
+            
+            # Preserve episode_id and update metadata
+            merged_event['episode_id'] = matched_event.get('episode_id', self.current_episode_id)
+            merged_event['last_updated'] = datetime.now().isoformat()
+            
+            # Extend evidence with cross-reference information
+            if 'evidence' not in merged_event:
+                merged_event['evidence'] = []
+            merged_event['evidence'].append({
+                'type': 'cross_reference',
+                'reference_text': reference['reference_text'],
+                'confidence': confidence,
+                'linked_at': datetime.now().isoformat(),
+                'context': text[:200]  # Truncate for storage
+            })
+            
+            # Replace the event in the list
+            target_list[target_index] = merged_event
+            
+            # Write back atomically
+            self.save_memory(target_list, target_file)
+            
+            # Audit log
+            self._append_audit_log('merge', merged_event, {
+                'link': 'reference',
+                'reference_text': reference['reference_text'],
+                'confidence': confidence,
+                'merged_with': event_id
+            })
+            
+            merged_any = True
+            print(f"[SmartMemory] 🔗 Cross-conversation merge: {reference['reference_text']} → {event_id}")
+        
+        return merged_any
+    
+    def _perform_episode_stitching(self, new_event: Dict, candidates: List[Dict]) -> Dict:
         if not candidates:
             return new_event
         
@@ -1818,6 +1936,22 @@ Return only valid JSON array:"""
         
         return events
     
+    def _week_start(self, ymd: str) -> str:
+        """Get Monday of the week for a given date"""
+        d = datetime.strptime(ymd, '%Y-%m-%d')
+        monday = d - timedelta(days=d.weekday())
+        return monday.strftime('%Y-%m-%d')
+    
+    def _norm(self, s: str) -> str:
+        """Normalize string for consistent comparison"""
+        return re.sub(r'\s+', ' ', (s or '').strip().lower())
+    
+    def _stable_fingerprint(self, ev: dict) -> str:
+        """Create stable fingerprint using category|key|week_bucket"""
+        bucket = self._week_start(ev.get('date') or datetime.now().strftime('%Y-%m-%d'))
+        key = self._norm(ev.get('location') or ev.get('topic'))
+        return f"{ev.get('category','highlight')}|{key}|{bucket}"
+    
     def load_memory(self, filename: str) -> List[Dict]:
         """Load memory file"""
         file_path = os.path.join(self.memory_dir, filename)
@@ -1830,12 +1964,31 @@ Return only valid JSON array:"""
             print(f"[SmartMemory] ⚠️ Error loading {filename}: {e}")
             return []
     
+    def _atomic_write_json(self, path: str, data):
+        """Atomic JSON write using tempfile + os.replace"""
+        import tempfile
+        import os
+        
+        d = os.path.dirname(path)
+        os.makedirs(d, exist_ok=True)
+        
+        fd, tmp = tempfile.mkstemp(prefix='.tmp_', dir=d)
+        try:
+            with os.fdopen(fd, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            os.replace(tmp, path)
+        finally:
+            try:
+                if os.path.exists(tmp):
+                    os.remove(tmp)
+            except:
+                pass
+    
     def save_memory(self, data: List[Dict], filename: str):
-        """Save memory file"""
+        """Save memory file using atomic writes"""
         file_path = os.path.join(self.memory_dir, filename)
         try:
-            with open(file_path, 'w') as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
+            self._atomic_write_json(file_path, data)
         except Exception as e:
             print(f"[SmartMemory] ❌ Error saving {filename}: {e}")
     
