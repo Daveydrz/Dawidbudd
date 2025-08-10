@@ -2,8 +2,9 @@
 """
 Time and location helper functions for consistent time handling
 """
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
+import re
 from config import USER_TIMEZONE, USER_LOCATION, USER_STATE, USER_COUNTRY
 
 def get_buddy_current_time() -> str:
@@ -152,7 +153,7 @@ def _is_date_in_range(date_str: str, days_back: int) -> bool:
     except Exception:
         return False
 
-def _get_week_boundaries(date_str: str = None) -> Tuple[str, str]:
+def _get_week_boundaries(date_str: str = None) -> tuple:
     """INTERNAL: Get start and end dates of the week containing the given date"""
     try:
         if date_str:
@@ -200,3 +201,73 @@ def _format_time_ago(timestamp_str: str) -> str:
             
     except Exception:
         return "unknown time"
+
+# Additional internal helpers for robust time parsing (edge-case hardening)
+def _parse_time_range_robust(query: str) -> tuple:
+    """Internal helper: Parse time range from query with robust handling"""
+    try:
+        tz = pytz.timezone(USER_TIMEZONE)
+        base_date = datetime.now(tz).replace(tzinfo=None)
+    except:
+        base_date = datetime.now()
+    
+    query_lower = query.lower().strip()
+    
+    # Today
+    if re.search(r'\btoday\b', query_lower):
+        today = base_date.strftime('%Y-%m-%d')
+        return (today, today)
+    
+    # Yesterday  
+    if re.search(r'\byesterday\b', query_lower):
+        yesterday = (base_date - timedelta(days=1)).strftime('%Y-%m-%d')
+        return (yesterday, yesterday)
+    
+    # This week
+    if re.search(r'\bthis week\b', query_lower):
+        monday = base_date - timedelta(days=base_date.weekday())
+        sunday = monday + timedelta(days=6)
+        return (monday.strftime('%Y-%m-%d'), sunday.strftime('%Y-%m-%d'))
+    
+    # Last week
+    if re.search(r'\blast week\b', query_lower):
+        last_monday = base_date - timedelta(days=base_date.weekday() + 7)
+        last_sunday = last_monday + timedelta(days=6)
+        return (last_monday.strftime('%Y-%m-%d'), last_sunday.strftime('%Y-%m-%d'))
+    
+    # Last N days
+    days_match = re.search(r'\blast\s+(\d+)\s+days?\b', query_lower)
+    if days_match:
+        days = int(days_match.group(1))
+        start_date = base_date - timedelta(days=days-1)
+        return (start_date.strftime('%Y-%m-%d'), base_date.strftime('%Y-%m-%d'))
+    
+    # Default to today if no range found
+    today = base_date.strftime('%Y-%m-%d')
+    return (today, today)
+
+def _split_multi_events(text: str) -> list:
+    """Internal helper: Split text that contains multiple events"""
+    # Split on conjunctions that indicate separate events
+    separators = [
+        r'\band\s+then\b',
+        r'\bafter\s+that\b', 
+        r'\bthen\s+i\b',
+        r'\balso\s+i\b',
+        r'\.\s*i\s+also\b',
+        r'\.\s*then\s+i\b',
+        r'\band\s+i\s+also\b'
+    ]
+    
+    parts = [text]
+    for separator in separators:
+        new_parts = []
+        for part in parts:
+            split_parts = re.split(separator, part, flags=re.IGNORECASE)
+            new_parts.extend([p.strip() for p in split_parts if p.strip()])
+        parts = new_parts
+    
+    # Filter out parts that are too short to be meaningful events
+    meaningful_parts = [p for p in parts if len(p.split()) >= 3]
+    
+    return meaningful_parts if len(meaningful_parts) > 1 else [text]

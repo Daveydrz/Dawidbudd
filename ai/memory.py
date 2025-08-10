@@ -1992,5 +1992,209 @@ def answer_simple_memory_question(username: str, question: str) -> Dict:
             'confidence': 0.1
         }
 
+# Edge-case hardened recall planner functions
+def answer_memory_question_hardened(username: str, question: str) -> dict:
+    """Hardened version with deterministic mapping and safe fallbacks"""
+    try:
+        from utils.time_helper import _parse_time_range_robust
+        
+        # Deterministic question type mapping
+        question_lower = question.lower().strip()
+        
+        # Safe pattern matching with fallbacks
+        question_patterns = {
+            'when_last': [r'\bwhen.*last\b', r'\blast.*when\b', r'\bmost recent\b'],
+            'how_often': [r'\bhow.*often\b', r'\bhow.*many.*times\b', r'\bfrequency\b'],
+            'what_about': [r'\bwhat.*about\b', r'\btell.*about\b', r'\binfo.*about\b'],
+            'where_did': [r'\bwhere.*did\b', r'\bwhere.*was\b', r'\blocation\b'],
+            'health_status': [r'\bhow.*feeling\b', r'\bhealth\b', r'\bsick\b', r'\bunwell\b'],
+            'mood_status': [r'\bmood\b', r'\bhappy\b', r'\bsad\b', r'\bstressed\b']
+        }
+        
+        detected_type = 'general'  # Safe fallback
+        for q_type, patterns in question_patterns.items():
+            if any(re.search(pattern, question_lower) for pattern in patterns):
+                detected_type = q_type
+                break
+        
+        # Parse time range with robust handling
+        start_date, end_date = _parse_time_range_robust(question)
+        
+        # Route to appropriate handler with safe fallbacks
+        if detected_type == 'when_last':
+            return _handle_when_last_question_safe(username, question, start_date, end_date)
+        elif detected_type == 'health_status':
+            return _handle_health_question_safe(username, question, start_date, end_date)
+        elif detected_type == 'mood_status':
+            return _handle_mood_question_safe(username, question, start_date, end_date)
+        else:
+            # General fallback with safe search
+            return _handle_general_question_safe(username, question, start_date, end_date)
+            
+    except Exception as e:
+        print(f"[RecallPlanner] ❌ Hardened recall error: {e}")
+        return {
+            'answer': "I'm having trouble processing that question. Could you rephrase it?",
+            'events': [],
+            'confidence': 0.1,
+            'error': str(e)
+        }
+
+def _handle_when_last_question_safe(username: str, question: str, start_date: str, end_date: str) -> dict:
+    """Safe handler for 'when last' questions"""
+    try:
+        # Extract what they're asking about
+        question_lower = question.lower()
+        
+        # Look for key terms with safe defaults
+        if any(term in question_lower for term in ['unwell', 'sick', 'ill']):
+            events = query_health_states_this_week(username)
+            events = [e for e in events if e.get('state') == 'unwell']
+        elif any(term in question_lower for term in ['doctor', 'appointment']):
+            events = list_events(username, types=['appointment'])
+        elif any(term in question_lower for term in ['visit', 'went to', 'at']):
+            events = list_events(username, types=['visit'])
+        else:
+            # Safe fallback - recent highlights
+            events = list_events(username, start_date=start_date, end_date=end_date)
+        
+        if events:
+            # Sort by date, most recent first
+            events.sort(key=lambda x: x.get('date', ''), reverse=True)
+            latest = events[0]
+            
+            return {
+                'answer': f"The last time was on {latest.get('date', 'unknown date')}: {latest.get('topic', 'an event')}",
+                'events': [latest],
+                'confidence': 0.8
+            }
+        else:
+            return {
+                'answer': "I don't have any records of that in the timeframe you mentioned.",
+                'events': [],
+                'confidence': 0.6
+            }
+            
+    except Exception as e:
+        return {
+            'answer': "I couldn't find that information right now.",
+            'events': [],
+            'confidence': 0.1,
+            'error': str(e)
+        }
+
+def _handle_health_question_safe(username: str, question: str, start_date: str, end_date: str) -> dict:
+    """Safe handler for health-related questions"""
+    try:
+        events = query_health_states_this_week(username)
+        
+        if events:
+            # Group by state
+            states = {}
+            for event in events:
+                state = event.get('state', 'unknown')
+                if state not in states:
+                    states[state] = []
+                states[state].append(event)
+            
+            # Build safe response
+            if 'unwell' in states:
+                recent_unwell = states['unwell'][-1]  # Most recent
+                return {
+                    'answer': f"You were feeling unwell on {recent_unwell.get('date', 'recently')}",
+                    'events': states['unwell'],
+                    'confidence': 0.8
+                }
+            elif any(state in states for state in ['better', 'fine', 'good']):
+                return {
+                    'answer': "You've been feeling well recently",
+                    'events': [e for state in ['better', 'fine', 'good'] for e in states.get(state, [])],
+                    'confidence': 0.7
+                }
+        
+        return {
+            'answer': "I don't have recent health information to share",
+            'events': [],
+            'confidence': 0.5
+        }
+        
+    except Exception as e:
+        return {
+            'answer': "I couldn't check your health status right now",
+            'events': [],
+            'confidence': 0.1,
+            'error': str(e)
+        }
+
+def _handle_mood_question_safe(username: str, question: str, start_date: str, end_date: str) -> dict:
+    """Safe handler for mood-related questions"""
+    try:
+        events = list_events(username, types=['mood_state'], start_date=start_date, end_date=end_date)
+        
+        if events:
+            # Get most recent mood
+            events.sort(key=lambda x: x.get('date', ''), reverse=True)
+            latest_mood = events[0]
+            
+            mood = latest_mood.get('mood', 'unknown')
+            date = latest_mood.get('date', 'recently')
+            
+            return {
+                'answer': f"You were feeling {mood} on {date}",
+                'events': [latest_mood],
+                'confidence': 0.8
+            }
+        
+        return {
+            'answer': "I don't have recent mood information",
+            'events': [],
+            'confidence': 0.5
+        }
+        
+    except Exception as e:
+        return {
+            'answer': "I couldn't check your mood information right now",
+            'events': [],
+            'confidence': 0.1,
+            'error': str(e)
+        }
+
+def _handle_general_question_safe(username: str, question: str, start_date: str, end_date: str) -> dict:
+    """Safe fallback handler for general questions"""
+    try:
+        # Search across all event types with safe limits
+        all_events = []
+        
+        for event_type in ['health_state', 'mood_state', 'visit', 'appointment', 'life_event']:
+            try:
+                events = list_events(username, types=[event_type], start_date=start_date, end_date=end_date)
+                all_events.extend(events[:5])  # Limit to prevent overflow
+            except:
+                continue  # Skip failed event types
+        
+        if all_events:
+            # Sort by confidence/salience if available
+            all_events.sort(key=lambda x: x.get('confidence', 0.5), reverse=True)
+            
+            return {
+                'answer': f"I found {len(all_events)} relevant events in that timeframe",
+                'events': all_events[:3],  # Return top 3
+                'confidence': 0.6
+            }
+        
+        return {
+            'answer': "I couldn't find specific information about that",
+            'events': [],
+            'confidence': 0.4
+        }
+        
+    except Exception as e:
+        return {
+            'answer': "I'm having trouble searching for that information",
+            'events': [],
+            'confidence': 0.1,
+            'error': str(e)
+        }
+
 print(f"[MegaMemory] 🔍 Recall Planner: Active")
 print(f"[MegaMemory] ✅ Memory Inference Engine: Active")

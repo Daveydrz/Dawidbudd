@@ -103,6 +103,14 @@ class SmartHumanLikeMemory:
         
         # Clean up expired memories on startup
         self._cleanup_expired_memories()
+        
+        # Edge-case hardening: low-confidence clarifications and corrections
+        self.pending_clarifications = self.load_memory('pending_clarifications.json')
+        self.correction_history = self.load_memory('correction_history.json')
+        self.alias_mappings = self.load_memory('alias_mappings.json')
+        if not self.alias_mappings:
+            self.alias_mappings = {'people': {}, 'places': {}, 'activities': {}}
+    
     
     def _generate_episode_id(self) -> str:
         """Generate stable episode ID based on current time window"""
@@ -704,6 +712,25 @@ class SmartHumanLikeMemory:
             
         print(f"[SmartMemory] 🧠 Processing: '{text}'")
         
+        # Edge-case hardening: Multi-event splitting
+        try:
+            from utils.time_helper import _split_multi_events
+            text_parts = _split_multi_events(text)
+            if len(text_parts) > 1:
+                print(f"[SmartMemory] ✂️ Split into {len(text_parts)} events")
+                for i, part in enumerate(text_parts):
+                    print(f"[SmartMemory] 📝 Processing part {i+1}: '{part}'")
+                    # Process each part separately
+                    self._extract_single_text_memory(part)
+                return
+        except ImportError:
+            pass  # Fallback if time_helper not available
+        
+        # Process as single event
+        self._extract_single_text_memory(text)
+    
+    def _extract_single_text_memory(self, text: str):
+        """Extract memory from a single text fragment"""
         # Also use the existing MEGA-INTELLIGENT extraction
         self.mega_memory.extract_memories_from_text(text)
         
@@ -2250,6 +2277,169 @@ Return only valid JSON array:"""
             return random.choice(responses)
         
         return None
-    def _norm(self, s: str) -> str:
-        """Normalize string for consistent comparison"""
-        return re.sub(r"\s+", " ", (s or "").strip().lower())
+    
+    # Edge-case hardening methods
+    def ask_for_clarification(self, event: Dict, uncertainty_reason: str) -> str:
+        """Generate clarification question for low-confidence events"""
+        questions = []
+        
+        if 'date' in event.get('_conflict_fields', []):
+            questions.extend([
+                f"When exactly did {event.get('topic', 'this')} happen?",
+                f"Was {event.get('topic', 'this')} today or another day?"
+            ])
+        
+        if 'location' in event.get('_conflict_fields', []):
+            questions.extend([
+                f"Where did {event.get('topic', 'this')} take place?",
+                f"Which location was {event.get('topic', 'this')} at?"
+            ])
+        
+        if 'state' in event.get('_conflict_fields', []) and event.get('type') == 'health_state':
+            questions.extend([
+                f"How are you feeling exactly?",
+                f"Are you feeling better or worse than before?"
+            ])
+        
+        # Store pending clarification
+        clarification = {
+            'id': f"clarif_{int(time.time()*1000)}",
+            'event': event,
+            'question': questions[0] if questions else f"Can you tell me more about {event.get('topic', 'this')}?",
+            'created': datetime.now().isoformat(),
+            'status': 'pending',
+            'reason': uncertainty_reason
+        }
+        
+        self.pending_clarifications.append(clarification)
+        self.save_memory(self.pending_clarifications, 'pending_clarifications.json')
+        
+        return questions[0] if questions else f"Can you tell me more about {event.get('topic', 'this')}?"
+    
+    def process_correction(self, original_text: str, correction_text: str) -> bool:
+        """Process user correction to previous memory"""
+        try:
+            # Find events from recent memory that might match the correction context
+            recent_events = []
+            for category in [self.appointments, self.life_events, self.conversation_highlights, 
+                           self.health_states, self.mood_states, self.visits]:
+                # Look at events from last 24 hours
+                yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+                today = datetime.now().strftime('%Y-%m-%d')
+                
+                for event in category:
+                    if event.get('date') in [yesterday, today]:
+                        recent_events.append(event)
+            
+            # Try to match correction to a specific event
+            for event in recent_events:
+                if self._events_similar(original_text, event.get('original_text', '')):
+                    # Apply correction
+                    old_event = event.copy()
+                    
+                    # Re-extract with correction text
+                    corrected_events = self._extract_single_text_memory(correction_text)
+                    
+                    if corrected_events:
+                        # Update the original event with corrected information
+                        corrected_event = corrected_events[0]
+                        for key, value in corrected_event.items():
+                            if key not in ['id', 'created', 'episode_id']:
+                                event[key] = value
+                        
+                        event['corrected'] = True
+                        event['correction_history'] = event.get('correction_history', [])
+                        event['correction_history'].append({
+                            'original': old_event,
+                            'corrected_at': datetime.now().isoformat(),
+                            'correction_text': correction_text
+                        })
+                        
+                        # Log correction
+                        self._add_to_audit_log('correction', {
+                            'event_id': event.get('id'),
+                            'original_text': original_text,
+                            'correction_text': correction_text,
+                            'changes': corrected_event
+                        })
+                        
+                        # Save updated memory
+                        self._save_all_categories()
+                        
+                        print(f"[SmartMemory] ✏️ Corrected event: {event.get('topic')}")
+                        return True
+            
+            return False
+            
+        except Exception as e:
+            print(f"[SmartMemory] ❌ Error processing correction: {e}")
+            return False
+    
+    def learn_alias(self, entity: str, alias: str, entity_type: str = 'auto') -> bool:
+        """Learn that an alias refers to the same entity"""
+        try:
+            if entity_type == 'auto':
+                # Try to detect entity type
+                if entity.title() == entity and len(entity.split()) <= 2:
+                    entity_type = 'people'
+                elif any(word in entity.lower() for word in ['restaurant', 'cafe', 'shop', 'park', 'hospital']):
+                    entity_type = 'places'
+                else:
+                    entity_type = 'activities'
+            
+            if entity_type not in self.alias_mappings:
+                self.alias_mappings[entity_type] = {}
+            
+            # Normalize for consistency
+            entity_norm = entity.lower().strip()
+            alias_norm = alias.lower().strip()
+            
+            # Add bidirectional mapping
+            if entity_norm not in self.alias_mappings[entity_type]:
+                self.alias_mappings[entity_type][entity_norm] = []
+            
+            if alias_norm not in self.alias_mappings[entity_type][entity_norm]:
+                self.alias_mappings[entity_type][entity_norm].append(alias_norm)
+            
+            # Reverse mapping
+            if alias_norm not in self.alias_mappings[entity_type]:
+                self.alias_mappings[entity_type][alias_norm] = []
+            
+            if entity_norm not in self.alias_mappings[entity_type][alias_norm]:
+                self.alias_mappings[entity_type][alias_norm].append(entity_norm)
+            
+            # Save alias mappings
+            self.save_memory(self.alias_mappings, 'alias_mappings.json')
+            
+            print(f"[SmartMemory] 🔗 Learned alias: '{alias}' → '{entity}' ({entity_type})")
+            return True
+            
+        except Exception as e:
+            print(f"[SmartMemory] ❌ Error learning alias: {e}")
+            return False
+    
+    def _events_similar(self, text1: str, text2: str, threshold: float = 0.6) -> bool:
+        """Check if two text fragments describe similar events"""
+        try:
+            # Normalize both texts
+            norm1 = re.sub(r'[^\w\s]', '', text1.lower()).strip()
+            norm2 = re.sub(r'[^\w\s]', '', text2.lower()).strip()
+            
+            # Use difflib for similarity
+            similarity = difflib.SequenceMatcher(None, norm1, norm2).ratio()
+            return similarity >= threshold
+            
+        except:
+            return False
+    
+    def _save_all_categories(self):
+        """Save all memory categories"""
+        self.save_memory(self.appointments, 'smart_appointments.json')
+        self.save_memory(self.life_events, 'smart_life_events.json')
+        self.save_memory(self.conversation_highlights, 'smart_highlights.json')
+        self.save_memory(self.health_states, 'smart_health_states.json')
+        self.save_memory(self.mood_states, 'smart_mood_states.json')
+        self.save_memory(self.visits, 'smart_visits.json')
+        self.save_memory(self.episodes, 'episodes.json')
+        self.save_memory(self.hypothesis_memories, 'hypothesis_memories.json')
+        self.save_memory(self.knowledge_graph, 'knowledge_graph.json')
