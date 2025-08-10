@@ -2,7 +2,6 @@
 # Delegates to ai.chat.core while preserving public API for backward compatibility
 
 import requests
-from ai.memory import get_conversation_context, get_user_memory, add_to_conversation_history
 from ai.chat_core.core import (
     get_current_brisbane_time,
     ask_kobold_streaming as core_ask_kobold_streaming,
@@ -95,6 +94,7 @@ def generate_response_streaming(question, username, lang=DEFAULT_LANG):
         
         # Add to conversation history
         if full_response.strip():
+            from ai.memory import add_to_conversation_history  # Lazy import to break cycle
             add_to_conversation_history(username, question, full_response.strip())
             print(f"[ChatStream] ✅ Streaming complete for '{username}' - {len(full_response.split())} words")
         else:
@@ -126,6 +126,7 @@ def get_response_with_context_stats(question, username, lang=DEFAULT_LANG):
     """Get response with context statistics - facade function"""
     try:
         # Get context info
+        from ai.memory import get_conversation_context  # Lazy import to break cycle
         context = get_conversation_context(username)
         context_length = len(context) if context else 0
         
