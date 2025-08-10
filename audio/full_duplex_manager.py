@@ -7,7 +7,9 @@ import time
 import queue
 import numpy as np
 from collections import deque
-from config import *
+from config import (DEBUG, USER_SPEECH_THRESHOLD, BUDDY_INTERRUPT_THRESHOLD, SAMPLE_RATE,
+                   ENABLE_AEC, AEC_REAL_TIME, FULL_DUPLEX_BUFFER_SIZE, FULL_DUPLEX_OVERLAP,
+                   ADVANCED_FILTERING)
 
 from audio.smart_aec import smart_aec
 

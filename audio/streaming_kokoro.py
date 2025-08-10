@@ -10,7 +10,9 @@ from typing import Optional, Generator, List
 from concurrent.futures import ThreadPoolExecutor, Future
 from dataclasses import dataclass
 from audio.kyutai_coordinator import StreamingChunk, get_kyutai_coordinator
-from config import *
+from config import (KOKORO_FASTAPI_URL, KOKORO_DEFAULT_VOICE, KOKORO_TIMEOUT, DEBUG,
+                   ENHANCED_SMART_STREAMING, SMART_STREAMING_MIN_WORDS, 
+                   SMART_STREAMING_TARGET_COMPLETE, SMART_STREAMING_RESPONSE_DELAY)
 
 @dataclass
 class AudioChunk:

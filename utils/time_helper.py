@@ -103,32 +103,79 @@ def get_time_info_for_buddy() -> dict:
 # ================================================================================
 
 def _parse_relative_date(date_str: str, reference_date: datetime = None) -> datetime:
-    """INTERNAL: Parse relative date strings like 'yesterday', 'last week'"""
+    """INTERNAL: Parse relative date strings with robust fallbacks"""
     if reference_date is None:
         reference_date = datetime.now()
     
     date_str = date_str.lower().strip()
     
-    if date_str in ['today', 'now']:
+    # Handle common patterns
+    if date_str in ['today', 'now', 'right now', 'just now']:
         return reference_date
-    elif date_str == 'yesterday':
+    elif date_str in ['yesterday', 'last night']:
         return reference_date - timedelta(days=1)
-    elif date_str == 'tomorrow':
+    elif date_str in ['tomorrow', 'later today', 'tonight']:
         return reference_date + timedelta(days=1)
-    elif date_str in ['last week', 'a week ago']:
+    elif date_str in ['last week', 'a week ago', 'week ago']:
         return reference_date - timedelta(weeks=1)
-    elif date_str in ['this week']:
+    elif date_str in ['this week', 'earlier this week']:
         # Start of this week (Monday)
         days_since_monday = reference_date.weekday()
         return reference_date - timedelta(days=days_since_monday)
-    elif 'days ago' in date_str:
-        import re
+    elif date_str in ['next week', 'a week from now']:
+        return reference_date + timedelta(weeks=1)
+    elif date_str in ['last month', 'a month ago']:
+        return reference_date - timedelta(days=30)
+    elif date_str in ['this month', 'earlier this month']:
+        return reference_date.replace(day=1)
+    elif date_str in ['next month', 'a month from now']:
+        return reference_date + timedelta(days=30)
+    
+    # Enhanced pattern matching with safe fallbacks
+    try:
+        # Days ago pattern
         match = re.search(r'(\d+)\s+days?\s+ago', date_str)
         if match:
-            days = int(match.group(1))
+            days = min(int(match.group(1)), 365)  # Cap at 365 days
             return reference_date - timedelta(days=days)
+        
+        # Weeks ago pattern
+        match = re.search(r'(\d+)\s+weeks?\s+ago', date_str)
+        if match:
+            weeks = min(int(match.group(1)), 52)  # Cap at 52 weeks
+            return reference_date - timedelta(weeks=weeks)
+        
+        # Hours ago pattern
+        match = re.search(r'(\d+)\s+hours?\s+ago', date_str)
+        if match:
+            hours = min(int(match.group(1)), 168)  # Cap at 1 week
+            return reference_date - timedelta(hours=hours)
+        
+        # Days from now pattern
+        match = re.search(r'(\d+)\s+days?\s+from\s+now', date_str)
+        if match:
+            days = min(int(match.group(1)), 365)
+            return reference_date + timedelta(days=days)
+            
+        # Day names (Monday, Tuesday, etc.)
+        days_of_week = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+        for i, day in enumerate(days_of_week):
+            if day in date_str:
+                current_weekday = reference_date.weekday()
+                days_until = (i - current_weekday) % 7
+                if days_until == 0 and 'next' in date_str:
+                    days_until = 7
+                elif days_until == 0 and 'last' in date_str:
+                    days_until = -7
+                elif days_until > 0 and 'last' in date_str:
+                    days_until -= 7
+                return reference_date + timedelta(days=days_until)
+                
+    except (ValueError, AttributeError) as e:
+        print(f"[TimeHelper] ⚠️ Error parsing date '{date_str}': {e}")
     
-    # Fallback - return reference date
+    # Safe fallback - return reference date
+    print(f"[TimeHelper] 🔄 Using fallback date for: '{date_str}'")
     return reference_date
 
 def _calculate_days_between(start_date: str, end_date: str = None) -> int:
