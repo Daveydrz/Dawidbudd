@@ -1,4 +1,4 @@
-"""AI Chat Package - Shared chat functionality"""
+"""AI Chat Core Package - Shared chat functionality"""
 from .core import *
 
 __all__ = [
