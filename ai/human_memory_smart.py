@@ -499,7 +499,7 @@ Return only valid JSON array:"""
         file_path = os.path.join(self.memory_dir, filename)
         try:
             with open(file_path, 'w') as f:
-                json.dump(data, f, indent=2)
+                json.dump(data, f, indent=2, ensure_ascii=False)
         except Exception as e:
             print(f"[SmartMemory] ❌ Error saving {filename}: {e}")
     
