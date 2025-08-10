@@ -8,7 +8,9 @@ import time
 from scipy.io.wavfile import write
 from audio.processing import downsample_audio
 from audio.output import buddy_talking, is_buddy_talking
-from config import *
+from config import (
+    FULL_DUPLEX_MODE, MIC_SAMPLE_RATE, MIC_DEVICE_INDEX, SAMPLE_RATE
+)
 
 # Use only the Smart AEC system, as per config
 from audio.smart_aec import smart_aec

@@ -10,7 +10,7 @@ import pickle
 import gzip
 
 from voice.database import known_users, anonymous_clusters, save_known_users
-from config import *
+from config import SAMPLE_RATE
 
 logger = logging.getLogger(__name__)
 

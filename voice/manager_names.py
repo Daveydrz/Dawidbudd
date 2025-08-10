@@ -79,7 +79,7 @@ except ImportError:
     def handle_same_name_collision(name): return name
 
 try:
-    from config import *
+    # No specific config imports needed for this module
     CONFIG_AVAILABLE = True
     print("[UltraIntelligentNameManager] ✅ Config available")
 except ImportError:

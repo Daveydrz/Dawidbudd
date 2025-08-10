@@ -12,7 +12,10 @@ import io
 import tempfile
 import os
 from langdetect import detect
-from config import *
+from config import (
+    KOKORO_API_BASE_URL, KOKORO_API_TIMEOUT, KOKORO_DEFAULT_VOICE, 
+    KOKORO_API_VOICES, SAMPLE_RATE, FULL_DUPLEX_MODE
+)
 
 # Global audio state
 audio_queue = queue.Queue()

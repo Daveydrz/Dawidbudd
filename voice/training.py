@@ -6,7 +6,7 @@ from audio.input import aec_training_listen
 from audio.output import speak_streaming, play_chime, buddy_talking
 from ai.speech import transcribe_audio
 from voice.recognition import generate_voice_embedding
-from config import *
+from config import SAMPLE_RATE
 
 # ✅ ADVANCED: Comprehensive training phrases for robust clustering
 ADVANCED_TRAINING_PHRASES = [

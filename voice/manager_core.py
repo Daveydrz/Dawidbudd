@@ -74,7 +74,7 @@ try:
     from voice.database import find_similar_clusters, handle_same_name_collision
     from voice.training import voice_training_mode
     from audio.output import speak_streaming
-    from config import *
+    from config import SAMPLE_RATE, TRAINING_MODE_NONE_STR
 except ImportError as e:
     print(f"[ManagerCore] ⚠️ Some imports failed: {e}")
     # Set fallback values
