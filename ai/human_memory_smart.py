@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 import re
 from ai.memory import get_user_memory, add_to_conversation_history
-from ai.chat import ask_kobold  # Use your existing LLM connection
 
 class SmartHumanLikeMemory:
     """🧠 Smart human-like memory using LLM for event detection"""
@@ -360,6 +359,9 @@ Examples:
 Return only valid JSON array:"""
 
         try:
+            # Local import to avoid future cycles
+            from ai.chat import ask_kobold
+            
             # Get LLM response
             messages = [
                 {"role": "system", "content": "You are a precise JSON extraction assistant. Return only valid JSON arrays. Extract ONLY real events, appointments, or emotional states worth remembering."},
@@ -418,20 +420,28 @@ Return only valid JSON array:"""
         return all(field in event for field in required_fields)
     
     def _enhance_event(self, event: Dict) -> Dict:
-        """Enhance event with additional fields"""
+        """Enhance event with full normalization - ensure all required fields"""
         current_time = datetime.now().isoformat()
         
         enhanced = {
-            'topic': event['topic'],
-            'date': event['date'],
+            'type': event.get('type', 'highlight'),
+            'topic': event.get('topic', 'unknown'),
+            'date': event.get('date', datetime.now().strftime('%Y-%m-%d')),
             'time': event.get('time'),
-            'emotion': event['emotion'],
-            'status': 'pending',
-            'type': event['type'],
+            'emotion': event.get('emotion', 'neutral'),
             'priority': event.get('priority', 'medium'),
+            'status': event.get('status', 'pending'),
             'created': current_time,
+            'last_updated': current_time,
             'original_text': event.get('original_text', ''),
-            'detected_by': 'llm'
+            'detected_by': event.get('detected_by', 'llm'),
+            'confidence': event.get('confidence', 0.8),
+            'user': self.username,
+            'session_id': f"session_{int(time.time())}",
+            'tags': event.get('tags', []),
+            'notes': event.get('notes', ''),
+            'recurring': event.get('recurring', False),
+            'reminder_set': event.get('reminder_set', False)
         }
         
         return enhanced
@@ -445,31 +455,29 @@ Return only valid JSON array:"""
         
         # Only critical patterns with time
         if re.search(r'(?:dentist|doctor|appointment|meeting).+(?:tomorrow|today).+(?:\d{1,2}(?::\d{2})?(?:\s?(?:am|pm|AM|PM))?|\d{1,2}\s?(?:am|pm|AM|PM))', text_lower):
-            events.append({
+            base_event = {
                 'type': 'appointment',
                 'topic': 'appointment',
                 'date': tomorrow_date if 'tomorrow' in text_lower else current_date,
                 'emotion': 'casual',
-                'status': 'pending',
-                'created': datetime.now().isoformat(),
                 'original_text': text,
                 'detected_by': 'fallback'
-            })
+            }
+            events.append(self._enhance_event(base_event))
         
         # Only birthday with specific person
         birthday_match = re.search(r'(\w+)(?:\'s)?\s+birthday.+(?:tomorrow|today)', text_lower)
         if birthday_match:
             person = birthday_match.group(1)
-            events.append({
+            base_event = {
                 'type': 'life_event',
                 'topic': f'{person}_birthday',
                 'date': tomorrow_date if 'tomorrow' in text_lower else current_date,
                 'emotion': 'happy',
-                'status': 'pending',
-                'created': datetime.now().isoformat(),
                 'original_text': text,
                 'detected_by': 'fallback'
-            })
+            }
+            events.append(self._enhance_event(base_event))
         
         return events
     
