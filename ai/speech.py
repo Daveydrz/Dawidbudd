@@ -140,7 +140,7 @@ def set_primary_identity(system_username: str, spoken_name: str):
     }
     
     with open(identity_file, 'w') as f:
-        json.dump(identity_data, f, indent=2)
+        json.dump(identity_data, f, indent=2, ensure_ascii=False)
     
     print(f"[Identity] Set primary identity: {system_username} → {spoken_name}")
 

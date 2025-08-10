@@ -38,7 +38,7 @@ TTL_POLICIES = {
 }
 
 # Episode stitching window (in seconds)
-EPISODE_WINDOW = 2 * 3600  # 2 hours
+EPISODE_WINDOW = 30 * 60  # 30 minutes
 
 # Confidence decay rate per day
 CONFIDENCE_DECAY_RATE = 0.02  # 2% per day

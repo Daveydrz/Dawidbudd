@@ -27,7 +27,7 @@ class IntelligentMemoryAnalyzer:
         """Save user clusters"""
         os.makedirs(self.memory_base_dir, exist_ok=True)
         with open(self.cluster_file, 'w') as f:
-            json.dump(self.clusters, f, indent=2)
+            json.dump(self.clusters, f, indent=2, ensure_ascii=False)
     
     def analyze_user_similarity_intelligent(self, user1: str, user2: str) -> Tuple[float, str]:
         """🧠 Use Hermes 3 Pro Mistral to analyze user similarity"""

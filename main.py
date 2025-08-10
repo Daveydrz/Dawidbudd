@@ -180,7 +180,7 @@ try:
                             logs = logs[-20:]
                         
                         with open('voice_debug.json', 'w') as f:
-                            json.dump(logs, f, indent=2)
+                            json.dump(logs, f, indent=2, ensure_ascii=False)
                         
                         print(f"[WorkingVoiceManager] 💾 Saved debug info for: '{text}'")
                         

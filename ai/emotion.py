@@ -96,7 +96,7 @@ class EmotionEngine:
                 'timestamp': time.time()
             }
             with open(self.save_path, 'w') as f:
-                json.dump(data, f, indent=2)
+                json.dump(data, f, indent=2, ensure_ascii=False)
         except Exception as e:
             print(f"[EmotionEngine] Error saving state: {e}")
 

@@ -799,14 +799,14 @@ class UserMemorySystem:
                 entity_dict = asdict(entity)
                 entity_dict['status'] = entity.status.value if entity.status else "unknown"  # Convert enum to string
                 entities_data[name] = entity_dict
-            json.dump(entities_data, f, indent=2)
+            json.dump(entities_data, f, indent=2, ensure_ascii=False)
     
     def _save_life_events(self):
         """Save life events"""
         events_file = self.memory_dir / "life_events.json"
         with open(events_file, 'w') as f:
             events_data = {k: asdict(v) for k, v in self.life_events.items()}
-            json.dump(events_data, f, indent=2)
+            json.dump(events_data, f, indent=2, ensure_ascii=False)
     
     def load_memory(self):
         """Load enhanced memory with entity awareness"""
@@ -858,25 +858,25 @@ class UserMemorySystem:
                 if hasattr(v, 'current_status'):
                     fact_dict['current_status'] = v.current_status.value if v.current_status else "unknown"
                 facts_data[k] = fact_dict
-            json.dump(facts_data, f, indent=2)
+            json.dump(facts_data, f, indent=2, ensure_ascii=False)
     
     def _save_emotional_history(self):
         emotions_file = self.memory_dir / "emotions.json"
         with open(emotions_file, 'w') as f:
             emotions_data = [asdict(e) for e in self.emotional_history]
-            json.dump(emotions_data, f, indent=2)
+            json.dump(emotions_data, f, indent=2, ensure_ascii=False)
     
     def _save_scheduled_events(self):
         events_file = self.memory_dir / "events.json"
         with open(events_file, 'w') as f:
             events_data = [asdict(e) for e in self.scheduled_events]
-            json.dump(events_data, f, indent=2)
+            json.dump(events_data, f, indent=2, ensure_ascii=False)
     
     def _save_conversation_topics(self):
         topics_file = self.memory_dir / "conversation_topics.json"
         with open(topics_file, 'w') as f:
             topics_data = [asdict(t) for t in self.conversation_topics]
-            json.dump(topics_data, f, indent=2)
+            json.dump(topics_data, f, indent=2, ensure_ascii=False)
     
     def _load_personal_facts(self):
         facts_file = self.memory_dir / "personal_facts.json"

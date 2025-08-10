@@ -549,7 +549,7 @@ class SmartVoiceRecognition:
             
             save_path = self.data_dir / "smart_voice_clusters.json"
             with open(save_path, 'w') as f:
-                json.dump(clusters_data, f, indent=2)
+                json.dump(clusters_data, f, indent=2, ensure_ascii=False)
             
             print(f"[SmartVoice] 💾 Saved {len(self.smart_clusters)} smart clusters")
             

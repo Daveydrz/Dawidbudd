@@ -230,7 +230,7 @@ class GPSLocationManager:
         """Save manual location override"""
         try:
             with open(self.manual_location_file, 'w') as f:
-                json.dump(location_data, f, indent=2)
+                json.dump(location_data, f, indent=2, ensure_ascii=False)
             print("[GPSLocation] ✅ Manual location saved")
         except Exception as e:
             print(f"[GPSLocation] Manual save error: {e}")

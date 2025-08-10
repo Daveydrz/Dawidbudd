@@ -2036,7 +2036,7 @@ class IntelligentVoiceManager:
                 logs = logs[-50:]
             
             with open(debug_file, 'w') as f:
-                json.dump(logs, f, indent=2)
+                json.dump(logs, f, indent=2, ensure_ascii=False)
             
             print(f"[IntelligentVoiceManager] 📝 Logged interaction #{self.interactions}")
             
