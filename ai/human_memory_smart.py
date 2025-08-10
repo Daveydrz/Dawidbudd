@@ -11,6 +11,21 @@ from typing import Dict, List, Optional, Any, Tuple, Set
 import re
 from ai.memory import get_user_memory, add_to_conversation_history
 
+# Cross-conversation reference patterns (stdlib only)
+EXPLICIT_REF_PATTERNS = [
+    r"\bwhen i went to (?P<location>[^.,!?\n]+)",
+    r"\bthat (?P<event>appointment|meeting|visit|party|dinner|lunch|trip) (?:i|we) (?:had|went to|did)",
+    r"\bthe (?P<person>[A-Z][a-zA-Z]+)'s (?P<event>birthday|wedding|party|funeral)",
+    r"\bremember when (?:i|we) (?P<activity>[^.,!?\n]+)",
+    r"\blast (?P<timeframe>week|month|year) when (?:i|we) (?P<activity>[^.,!?\n]+)",
+    r"\bthat time (?:i|we) (?P<activity>went to|visited|saw|met|had) (?P<target>[^.,!?\n]+)",
+    r"\bafter (?:my|our|the) (?P<event>appointment|meeting|visit|trip) (?:to|at|with) (?P<target>[^.,!?\n]+)",
+    r"\bbefore (?:my|our|the) (?P<event>appointment|meeting|visit|trip) (?:to|at|with) (?P<target>[^.,!?\n]+)",
+    r"\bsince (?:i|we) (?P<activity>went to|visited|saw|met) (?P<target>[^.,!?\n]+)",
+    r"\bwhen (?:i|we) were (?:at|in) (?P<location>[^.,!?\n]+)",
+    r"\bthat (?P<place>restaurant|cafe|shop|store|mall|gym|park|hospital|clinic) (?:i|we) (?:went to|visited)"
+]
+
 # TTL policies (in seconds) for different event types
 TTL_POLICIES = {
     'health_state': 7 * 24 * 3600,      # 7 days
@@ -297,6 +312,20 @@ class SmartHumanLikeMemory:
         # Also use the existing MEGA-INTELLIGENT extraction
         self.mega_memory.extract_memories_from_text(text)
         
+        # First, resolve cross-conversation references (no time limit)
+        cross_references = self._resolve_cross_conversation_references(text)
+        if cross_references:
+            # Update existing events with cross-reference links
+            reference_links = self._create_cross_reference_links(cross_references)
+            self._update_events_with_references(reference_links)
+            
+            # Log reference linking for provenance
+            for event_id, links in reference_links.items():
+                self._append_audit_log('cross_reference', {'id': event_id}, {
+                    'reference_count': len(links),
+                    'reference_texts': [link['reference_text'] for link in links]
+                })
+        
         # Tier-3 throttle + lock around heavy LLM path
         now = time.time()
         
@@ -352,7 +381,7 @@ class SmartHumanLikeMemory:
                     continue
             
             # Save memories with atomic write
-            if detected_events:  # Only save if we actually found events
+            if detected_events or cross_references:  # Save if we found events OR references
                 self._atomic_save_memories()
     
     def _normalize_text_for_memory(self, text: str) -> str:
@@ -951,7 +980,197 @@ Return only valid JSON array:"""
         
         return False
     
-    def _stitch_episode(self, new_event: Dict, candidates: List[Dict]) -> Dict:
+    def _resolve_cross_conversation_references(self, text: str) -> List[Dict]:
+        """🔗 Resolve cross-conversation references using explicit patterns (stdlib only)"""
+        references = []
+        text_lower = text.lower().strip()
+        
+        # Search for explicit reference patterns
+        for pattern in EXPLICIT_REF_PATTERNS:
+            matches = re.finditer(pattern, text_lower)
+            for match in matches:
+                ref_data = match.groupdict()
+                ref_text = match.group(0)
+                
+                # Find candidate events that match this reference
+                candidates = self._find_reference_candidates(ref_data, ref_text, text)
+                
+                for candidate in candidates:
+                    references.append({
+                        'reference_text': ref_text,
+                        'reference_data': ref_data,
+                        'matched_event': candidate['event'],
+                        'confidence': candidate['confidence'],
+                        'match_type': candidate['match_type'],
+                        'original_text': text
+                    })
+        
+        return references
+    
+    def _find_reference_candidates(self, ref_data: Dict, ref_text: str, full_text: str) -> List[Dict]:
+        """Find events that match the reference data"""
+        candidates = []
+        
+        # Get all events from all lists
+        all_events = []
+        event_lists = [
+            ('appointment', self.appointments),
+            ('life_event', self.life_events),
+            ('highlight', self.conversation_highlights),
+            ('health_state', self.health_states),
+            ('mood_state', self.mood_states),
+            ('visit', self.visits)
+        ]
+        
+        for event_type, event_list in event_lists:
+            for event in event_list:
+                all_events.append((event_type, event))
+        
+        # Match against different reference types
+        for event_type, event in all_events:
+            confidence = 0.0
+            match_type = 'none'
+            
+            # Location-based matching
+            if 'location' in ref_data:
+                ref_location = ref_data['location'].strip().lower()
+                event_location = event.get('location', '').lower()
+                event_topic = event.get('topic', '').lower()
+                
+                if event_location and ref_location in event_location:
+                    confidence = 0.9
+                    match_type = 'location_exact'
+                elif event_location and difflib.SequenceMatcher(None, ref_location, event_location).ratio() > 0.7:
+                    confidence = 0.7
+                    match_type = 'location_similar'
+                elif ref_location in event_topic:
+                    confidence = 0.6
+                    match_type = 'location_in_topic'
+            
+            # Person-based matching
+            elif 'person' in ref_data:
+                ref_person = ref_data['person'].strip().lower()
+                event_people = [p.lower() for p in event.get('people', [])]
+                event_topic = event.get('topic', '').lower()
+                
+                if any(ref_person in person for person in event_people):
+                    confidence = 0.9
+                    match_type = 'person_exact'
+                elif ref_person in event_topic:
+                    confidence = 0.7
+                    match_type = 'person_in_topic'
+            
+            # Event-based matching
+            elif 'event' in ref_data:
+                ref_event = ref_data['event'].strip().lower()
+                event_topic = event.get('topic', '').lower()
+                event_category = event.get('category', '').lower()
+                
+                if ref_event in event_topic or ref_event in event_category:
+                    confidence = 0.8
+                    match_type = 'event_type_match'
+                elif event_type == 'appointment' and ref_event in ['appointment', 'meeting']:
+                    confidence = 0.7
+                    match_type = 'event_category_match'
+                elif event_type == 'visit' and ref_event in ['visit', 'trip']:
+                    confidence = 0.7
+                    match_type = 'event_category_match'
+            
+            # Activity-based matching
+            elif 'activity' in ref_data:
+                ref_activity = ref_data['activity'].strip().lower()
+                event_topic = event.get('topic', '').lower()
+                event_details = event.get('details', '').lower()
+                
+                # Use difflib for fuzzy matching of activities
+                topic_similarity = difflib.SequenceMatcher(None, ref_activity, event_topic).ratio()
+                details_similarity = difflib.SequenceMatcher(None, ref_activity, event_details).ratio() if event_details else 0
+                
+                max_similarity = max(topic_similarity, details_similarity)
+                if max_similarity > 0.6:
+                    confidence = max_similarity
+                    match_type = 'activity_similar'
+            
+            # Place-based matching (restaurant, cafe, etc.)
+            elif 'place' in ref_data:
+                ref_place = ref_data['place'].strip().lower()
+                event_location = event.get('location', '').lower()
+                event_topic = event.get('topic', '').lower()
+                
+                if ref_place in event_location or ref_place in event_topic:
+                    confidence = 0.8
+                    match_type = 'place_match'
+            
+            # Add candidate if confidence is high enough
+            if confidence > 0.5:
+                candidates.append({
+                    'event': event,
+                    'confidence': confidence,
+                    'match_type': match_type,
+                    'event_type': event_type
+                })
+        
+        # Sort by confidence and return top candidates
+        candidates.sort(key=lambda x: x['confidence'], reverse=True)
+        return candidates[:5]  # Top 5 candidates
+    
+    def _create_cross_reference_links(self, references: List[Dict]) -> Dict[str, List[Dict]]:
+        """Create cross-reference links between current conversation and past events"""
+        links_by_event = {}
+        
+        for ref in references:
+            matched_event = ref['matched_event']
+            event_id = matched_event.get('id')
+            
+            if event_id:
+                if event_id not in links_by_event:
+                    links_by_event[event_id] = []
+                
+                link_info = {
+                    'reference_text': ref['reference_text'],
+                    'reference_context': ref['original_text'][:200],  # Truncate for storage
+                    'confidence': ref['confidence'],
+                    'match_type': ref['match_type'],
+                    'linked_at': datetime.now().isoformat(),
+                    'episode_id': self.current_episode_id
+                }
+                
+                links_by_event[event_id].append(link_info)
+        
+    def _update_events_with_references(self, reference_links: Dict[str, List[Dict]]):
+        """Update existing events with cross-reference links"""
+        all_event_lists = [
+            self.appointments,
+            self.life_events,
+            self.conversation_highlights,
+            self.health_states,
+            self.mood_states,
+            self.visits
+        ]
+        
+        updated_count = 0
+        for event_list in all_event_lists:
+            for event in event_list:
+                event_id = event.get('id')
+                if event_id in reference_links:
+                    # Add cross-reference links to existing event
+                    if 'cross_references' not in event:
+                        event['cross_references'] = []
+                    
+                    # Add new references
+                    new_refs = reference_links[event_id]
+                    event['cross_references'].extend(new_refs)
+                    
+                    # Update metadata
+                    event['last_updated'] = datetime.now().isoformat()
+                    event['reference_count'] = len(event['cross_references'])
+                    
+                    updated_count += 1
+        
+        if updated_count > 0:
+            print(f"[SmartMemory] 🔗 Updated {updated_count} events with cross-references")
+        
+        return updated_count
         """Perform episode stitching - merge duplicates or create cross-references"""
         if not candidates:
             return new_event
