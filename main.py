@@ -78,6 +78,20 @@ print("[Main] ✅ UltraIntelligentNameManager assigned to voice_manager")
 
 from config import *
 
+# Import consciousness integration module  
+try:
+    from consciousness_integration import (
+        setup_consciousness_system,
+        shutdown_consciousness_system, 
+        initialize_consciousness_state,
+        integrate_consciousness_with_response,
+        finalize_consciousness_response
+    )
+    CONSCIOUSNESS_INTEGRATION_AVAILABLE = True
+except ImportError as e:
+    print(f"[Main] ⚠️ Consciousness integration not available: {e}")
+    CONSCIOUSNESS_INTEGRATION_AVAILABLE = False
+
 # Import with better error handling
 try:
     from audio.full_duplex_manager import full_duplex_manager
