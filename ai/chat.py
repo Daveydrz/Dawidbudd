@@ -1,13 +1,22 @@
 # ai/chat.py - Enhanced LLM chat integration with Memory + Smart Location & Time + ULTRA-RESPONSIVE STREAMING
+# Facade that delegates to ai.chat.core while preserving public API
+
 import re
-import requests
 import json
 from datetime import datetime
-import pytz
-from ai.memory import get_conversation_context, get_user_memory
-from config import *
+from ai.memory import get_conversation_context, get_user_memory, add_to_conversation_history
+from ai.chat.core import (
+    get_current_brisbane_time,
+    ask_kobold_streaming as core_ask_kobold_streaming,
+    build_messages,
+    add_memory_context_to_messages,
+    validate_and_enhance_response,
+    apply_safety_filters,
+    get_response_context_info
+)
+from config import KOBOLD_URL, MAX_TOKENS, TEMPERATURE, DEFAULT_LANG, USER_LOCATION
 
-# Import time and location helpers
+# Import time and location helpers - kept for backward compatibility
 try:
     from utils.time_helper import get_time_info_for_buddy, get_buddy_current_time, get_buddy_location
     LOCATION_HELPERS_AVAILABLE = True
@@ -15,218 +24,9 @@ except ImportError:
     LOCATION_HELPERS_AVAILABLE = False
     print("[Chat] ⚠️ Location helpers not available, using fallback")
 
-def get_current_brisbane_time():
-    """Get current Brisbane time - UPDATED to 6:59 PM Brisbane"""
-    try:
-        brisbane_tz = pytz.timezone('Australia/Brisbane')
-        # Current UTC time: 08:59:59 = 6:59 PM Brisbane
-        current_time = datetime.now(brisbane_tz)
-        return {
-            'datetime': current_time.strftime("%Y-%m-%d %H:%M:%S"),
-            'time_12h': current_time.strftime("%I:%M %p"),
-            'time_24h': current_time.strftime("%H:%M"),
-            'date': current_time.strftime("%A, %B %d, %Y"),
-            'day': current_time.strftime("%A"),
-            'timezone': 'Australia/Brisbane (+10:00)'
-        }
-    except:
-        # Fallback with current time
-        return {
-            'datetime': "2025-07-06 18:59:59",
-            'time_12h': "6:59 PM",
-            'time_24h': "18:59",
-            'date': "Sunday, July 6, 2025",
-            'day': "Sunday",
-            'timezone': 'Australia/Brisbane (+10:00)'
-        }
-
 def ask_kobold_streaming(messages, max_tokens=MAX_TOKENS):
-    """✅ SMART RESPONSIVE: Wait for 40-50% completion or first complete phrase"""
-    payload = {
-        "model": "llama3",
-        "messages": messages,
-        "max_tokens": max_tokens,
-        "temperature": TEMPERATURE,
-        "stream": True
-    }
-    
-    try:
-        print(f"[SmartResponsive] 🎭 Starting smart responsive streaming to: {KOBOLD_URL}")
-        
-        response = requests.post(
-            KOBOLD_URL, 
-            json=payload, 
-            timeout=60,
-            stream=True
-        )
-        
-        if response.status_code == 200:
-            buffer = ""
-            word_count = 0
-            chunk_count = 0
-            first_chunk_sent = False
-            estimated_total_words = max_tokens // 1.3  # Rough estimate of final word count
-            
-            # ✅ SMART THRESHOLDS: Wait for natural completion
-            MIN_WORDS_FOR_FIRST_CHUNK = 8              # Minimum words before considering first chunk
-            TARGET_COMPLETION_PERCENTAGE = 0.45        # Target 45% completion
-            TARGET_WORDS = int(estimated_total_words * TARGET_COMPLETION_PERCENTAGE)
-            
-            print(f"[SmartResponsive] 🎯 Targeting 40-50% completion (~{TARGET_WORDS} words) or first complete phrase")
-            
-            for line in response.iter_lines():
-                if line:
-                    line_text = line.decode('utf-8')
-                    
-                    if not line_text.strip() or line_text.startswith(':'):
-                        continue
-                    
-                    if line_text.startswith('data: '):
-                        data_content = line_text[6:]
-                        
-                        if data_content.strip() == '[DONE]':
-                            break
-                        
-                        try:
-                            chunk_data = json.loads(data_content)
-                            
-                            if 'choices' in chunk_data and len(chunk_data['choices']) > 0:
-                                choice = chunk_data['choices'][0]
-                                
-                                content = ""
-                                if 'delta' in choice and 'content' in choice['delta']:
-                                    content = choice['delta']['content']
-                                elif 'message' in choice and 'content' in choice['message']:
-                                    content = choice['message']['content']
-                                
-                                if content:
-                                    buffer += content
-                                    word_count = len(buffer.split())
-                                    
-                                    # ✅ SMART FIRST CHUNK: Wait for natural break OR target completion
-                                    if not first_chunk_sent and word_count >= MIN_WORDS_FOR_FIRST_CHUNK:
-                                        
-                                        # Priority 1: Look for complete sentences (best option)
-                                        sentence_match = re.search(r'^(.*?[.!?])\s+', buffer)
-                                        if sentence_match:
-                                            first_chunk = sentence_match.group(1).strip()
-                                            if len(first_chunk.split()) >= 4:  # Ensure meaningful length
-                                                chunk_count += 1
-                                                first_chunk_sent = True
-                                                print(f"[SmartResponsive] 📝 SMART first chunk (complete sentence): '{first_chunk}'")
-                                                yield first_chunk
-                                                buffer = buffer[sentence_match.end():].strip()
-                                                continue
-                                        
-                                        # Priority 2: Look for natural phrase breaks (comma, etc.)
-                                        phrase_patterns = [
-                                            r'^(.*?,)\s+',           # After comma
-                                            r'^(.*?;\s+)',           # After semicolon
-                                            r'^(.*?:\s+)',           # After colon
-                                            r'^(.*?\s+and\s+)',      # Before "and"
-                                            r'^(.*?\s+but\s+)',      # Before "but"
-                                            r'^(.*?\s+so\s+)',       # Before "so"
-                                            r'^(.*?\s+because\s+)',  # Before "because"
-                                            r'^(.*?\s+however\s+)',  # Before "however"
-                                        ]
-                                        
-                                        for pattern in phrase_patterns:
-                                            phrase_match = re.search(pattern, buffer)
-                                            if phrase_match:
-                                                first_chunk = phrase_match.group(1).strip()
-                                                if len(first_chunk.split()) >= 5:  # Ensure meaningful phrase
-                                                    chunk_count += 1
-                                                    first_chunk_sent = True
-                                                    print(f"[SmartResponsive] 🎭 SMART first chunk (natural phrase): '{first_chunk}'")
-                                                    yield first_chunk
-                                                    buffer = buffer[phrase_match.end():].strip()
-                                                    break
-                                        
-                                        # Priority 3: Wait for target completion percentage
-                                        if not first_chunk_sent and word_count >= TARGET_WORDS:
-                                            # Take a reasonable chunk that doesn't cut words
-                                            words = buffer.split()
-                                            # Find a good breaking point (not in the middle of a word)
-                                            chunk_size = min(12, len(words))  # Up to 12 words
-                                            first_chunk = ' '.join(words[:chunk_size])
-                                            
-                                            # Ensure we don't cut off mid-sentence awkwardly
-                                            if not first_chunk.endswith(('.', '!', '?', ',', ';', ':')):
-                                                # Look for a better breaking point
-                                                for i in range(chunk_size-1, 4, -1):  # Work backwards
-                                                    test_chunk = ' '.join(words[:i])
-                                                    if test_chunk.endswith((',', ';', ':')):
-                                                        first_chunk = test_chunk
-                                                        chunk_size = i
-                                                        break
-                                            
-                                            chunk_count += 1
-                                            first_chunk_sent = True
-                                            completion_pct = (word_count / estimated_total_words) * 100
-                                            print(f"[SmartResponsive] 📊 SMART first chunk (target completion {completion_pct:.1f}%): '{first_chunk}'")
-                                            yield first_chunk
-                                            buffer = ' '.join(words[chunk_size:])
-                                    
-                                    # ✅ SUBSEQUENT CHUNKS: Continue with natural breaks
-                                    elif first_chunk_sent:
-                                        # Complete sentences (highest priority)
-                                        sentence_endings = re.finditer(r'([.!?]+)\s+', buffer)
-                                        last_end = 0
-                                        
-                                        for match in sentence_endings:
-                                            sentence = buffer[last_end:match.end()].strip()
-                                            if sentence and len(sentence.split()) >= 3:
-                                                chunk_count += 1
-                                                print(f"[SmartResponsive] 📝 Sentence chunk {chunk_count}: '{sentence}'")
-                                                yield sentence
-                                                last_end = match.end()
-                                        
-                                        buffer = buffer[last_end:]
-                                        
-                                        # Natural phrase breaks (second priority)
-                                        current_words = len(buffer.split())
-                                        if current_words >= 8:  # Wait for reasonable chunk size
-                                            pause_patterns = [
-                                                r'([^.!?]*?,)\s+',        # Up to comma
-                                                r'([^.!?]*?;\s+)',        # Up to semicolon
-                                                r'([^.!?]*?:\s+)',        # Up to colon
-                                                r'([^.!?]*?\s+and\s+)',   # Up to "and"
-                                                r'([^.!?]*?\s+but\s+)',   # Up to "but"
-                                                r'([^.!?]*?\s+so\s+)',    # Up to "so"
-                                            ]
-                                            
-                                            for pattern in pause_patterns:
-                                                matches = list(re.finditer(pattern, buffer))
-                                                if matches:
-                                                    last_match = matches[-1]
-                                                    chunk_text = last_match.group(1).strip()
-                                                    if len(chunk_text.split()) >= 4:
-                                                        chunk_count += 1
-                                                        print(f"[SmartResponsive] 🎭 Natural pause chunk {chunk_count}: '{chunk_text}'")
-                                                        yield chunk_text
-                                                        buffer = buffer[last_match.end():]
-                                                        break
-                        
-                        except json.JSONDecodeError:
-                            continue
-            
-            # ✅ Send any remaining content as final chunk
-            if buffer.strip():
-                final_chunk = buffer.strip()
-                if len(final_chunk.split()) >= 2:
-                    chunk_count += 1
-                    print(f"[SmartResponsive] 🏁 Final chunk {chunk_count}: '{final_chunk}'")
-                    yield final_chunk
-            
-            print(f"[SmartResponsive] ✅ Smart responsive streaming complete - {chunk_count} natural chunks")
-                    
-        else:
-            print(f"[SmartResponsive] ❌ HTTP Error {response.status_code}: {response.text}")
-            yield f"Sorry, I got an error {response.status_code} from my brain."
-            
-    except Exception as e:
-        print(f"[SmartResponsive] ❌ Error: {e}")
-        yield f"Sorry, I encountered an error: {e}"
+    """✅ SMART RESPONSIVE: Wait for 40-50% completion or first complete phrase - delegates to core"""
+    return core_ask_kobold_streaming(messages, max_tokens, TEMPERATURE, KOBOLD_URL)
 
 def ask_kobold(messages, max_tokens=MAX_TOKENS):
     """Original non-streaming KoboldCpp request (kept for compatibility)"""
