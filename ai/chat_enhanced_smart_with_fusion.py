@@ -1,6 +1,12 @@
-# ai/chat_enhanced_smart_with_fusion.py - Enhanced chat with intelligent memory fusion
+# ai/chat_enhanced_smart_with_fusion.py - Enhanced chat with intelligent memory fusion - delegates to core
 from ai.human_memory_smart import SmartHumanLikeMemory
-from ai.chat import generate_response_streaming
+from ai.chat_core.core import (
+    ask_kobold_streaming,
+    build_messages,
+    add_memory_context_to_messages,
+    validate_and_enhance_response,
+    apply_safety_filters
+)
 from ai.memory_fusion_intelligent import get_intelligent_unified_username
 import random
 
@@ -22,6 +28,18 @@ def get_smart_memory(username: str) -> SmartHumanLikeMemory:
     if username not in smart_memories:
         smart_memories[username] = SmartHumanLikeMemory(username)
     return smart_memories[username]
+
+def _generate_core_streaming_response(question, username, lang="en"):
+    """Helper function to generate streaming response using core"""
+    messages = build_messages(question, username)
+    messages = add_memory_context_to_messages(messages, username, question)
+    
+    for chunk in ask_kobold_streaming(messages):
+        if chunk and chunk.strip():
+            safe_chunk = apply_safety_filters(chunk.strip())
+            validated_chunk = validate_and_enhance_response(safe_chunk, username)
+            if validated_chunk:
+                yield validated_chunk
 
 def generate_response_streaming_with_intelligent_fusion(question: str, username: str, lang="en"):
     """🧠 Generate response with intelligent memory fusion, smart memory + CONSCIOUSNESS ENTROPY"""
@@ -136,14 +154,14 @@ def generate_response_streaming_with_intelligent_fusion(question: str, username:
             print(f"[ChatFusion] 🌀 Generating multiple consciousness pathways...")
             
             # Primary pathway (main response)
-            response_pathways.append(("primary", generate_response_streaming(question, username, lang)))
+            response_pathways.append(("primary", _generate_core_streaming_response(question, username, lang)))
             
             # Check for alternative pathways based on uncertainty
             uncertainty_state = get_entropy_engine().get_uncertainty_state()
             if uncertainty_state.value in ["uncertain", "confused"]:
                 # Generate uncertainty-flavored response
                 uncertain_question = f"I'm not entirely sure, but regarding '{question}'"
-                response_pathways.append(("uncertain", generate_response_streaming(uncertain_question, username, lang)))
+                response_pathways.append(("uncertain", _generate_core_streaming_response(uncertain_question, username, lang)))
             
             # Probabilistic pathway selection
             if len(response_pathways) > 1:
@@ -156,9 +174,9 @@ def generate_response_streaming_with_intelligent_fusion(question: str, username:
                 
         except Exception as pathway_error:
             print(f"[ChatFusion] ⚠️ Pathway generation error: {pathway_error}")
-            chosen_generator = generate_response_streaming(question, username, lang)
+            chosen_generator = _generate_core_streaming_response(question, username, lang)
     else:
-        chosen_generator = generate_response_streaming(question, username, lang)
+        chosen_generator = _generate_core_streaming_response(question, username, lang)
     
     # Step 5: Generate main response with unified memory context + CONSCIOUSNESS ENTROPY
     print(f"[ChatFusion] 💭 Generating CONSCIOUSNESS response with unified memory for {username}")
