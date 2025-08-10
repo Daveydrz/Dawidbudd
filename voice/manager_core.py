@@ -7,6 +7,7 @@ import os
 import numpy as np
 import traceback
 import re
+from typing import Optional
 
 from voice.database import known_users, anonymous_clusters, save_known_users, create_anonymous_cluster, link_anonymous_to_named
 
@@ -73,7 +74,7 @@ except ImportError as e:
 try:
     from voice.database import find_similar_clusters, handle_same_name_collision
     from voice.training import voice_training_mode
-    from audio.output import speak_streaming
+    from ai.core.types import SpeechProvider
     from config import *
 except ImportError as e:
     print(f"[ManagerCore] ⚠️ Some imports failed: {e}")
@@ -90,6 +91,9 @@ class AdvancedAIAssistantCore:
         self.recent_audio_buffer = []
         self.recent_text_buffer = []
         self.buffer_contexts = []
+        
+        # Speech provider for dependency injection
+        self.speech_provider: Optional[SpeechProvider] = None
         
         # ✅ ADVANCED STATE MANAGEMENT
         self.session_context = {
@@ -294,16 +298,18 @@ class AdvancedAIAssistantCore:
     def _speak_confirmation_question(self, question):
         """🗣️ Speak confirmation question"""
         try:
-            # Integration with your audio output system
-            try:
-                from audio.output import speak_streaming
-                speak_streaming(question)
-            except ImportError:
-                print(f"[AdvancedCore] 🗣️ SPEAK: {question}")
+            if self.speech_provider:
+                self.speech_provider.speak_streaming(question)
+            else:
+                print(f"[AdvancedCore] Would speak: {question}")
         
             print(f"[AdvancedCore] 🗣️ Asked confirmation: {question}")
         except Exception as e:
             print(f"[AdvancedCore] ❌ Speech error: {e}")
+
+    def set_speech_provider(self, provider: SpeechProvider):
+        """Set speech provider for dependency injection"""
+        self.speech_provider = provider
 
 
     def _analyze_with_clustering(self, audio, identified_user, confidence, context_analysis):

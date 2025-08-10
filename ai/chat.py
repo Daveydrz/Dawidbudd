@@ -5,6 +5,7 @@ import json
 from datetime import datetime
 import pytz
 from ai.memory import get_conversation_context, get_user_memory
+from ai.core.types import UserContext
 from config import *
 
 # Import time and location helpers
@@ -14,6 +15,20 @@ try:
 except ImportError:
     LOCATION_HELPERS_AVAILABLE = False
     print("[Chat] ⚠️ Location helpers not available, using fallback")
+
+# User context provider for dependency injection
+_user_context_provider = None
+
+def set_user_context_provider(provider):
+    """Set the user context provider for dependency injection"""
+    global _user_context_provider
+    _user_context_provider = provider
+
+def _get_user_display_name(username: str) -> str:
+    """Get user display name using dependency injection"""
+    if _user_context_provider:
+        return _user_context_provider.get_display_name(username)
+    return username  # fallback
 
 def get_current_brisbane_time():
     """Get current Brisbane time - UPDATED to 6:59 PM Brisbane"""
@@ -296,33 +311,8 @@ def generate_response_streaming(question, username, lang=DEFAULT_LANG):
             print(f"[ChatStream] ⚠️ Memory fusion not available, using original username: {username}")
         
         # 🎯 NEW: Smart name handling - avoid Anonymous_001
-        display_name = None
-        use_name = False
-        
-        try:
-            from voice.database import anonymous_clusters, known_users
-            
-            # Check if this is a named cluster
-            if username.startswith('Anonymous_'):
-                cluster_data = anonymous_clusters.get(username, {})
-                assigned_name = cluster_data.get('test_name', '')
-                if assigned_name and assigned_name != 'Unknown':
-                    display_name = assigned_name
-                    use_name = True
-                    print(f"[ChatStream] 👤 Using assigned name: {display_name}")
-                else:
-                    print(f"[ChatStream] 🚫 Avoiding anonymous cluster name: {username}")
-                    use_name = False
-            elif username in known_users:
-                display_name = username
-                use_name = True
-                print(f"[ChatStream] 👤 Using known user name: {display_name}")
-            else:
-                print(f"[ChatStream] 👤 No specific name handling for: {username}")
-                display_name = username
-                use_name = True
-        
-        except Exception as e:
+        display_name = _get_user_display_name(username)
+        use_name = display_name != username and not display_name.startswith('Anonymous_')
             print(f"[ChatStream] ⚠️ Name resolution error: {e}")
             display_name = username if not username.startswith('Anonymous_') else None
             use_name = display_name is not None
@@ -439,36 +429,8 @@ def generate_response(question, username, lang=DEFAULT_LANG):
         print(f"[Chat] 🧠 Generating response for '{question}' from user '{username}'")
         
         # 🎯 NEW: Smart name handling - avoid Anonymous_001
-        display_name = None
-        use_name = False
-        
-        try:
-            from voice.database import anonymous_clusters, known_users
-            
-            # Check if this is a named cluster
-            if username.startswith('Anonymous_'):
-                cluster_data = anonymous_clusters.get(username, {})
-                assigned_name = cluster_data.get('test_name', '')
-                if assigned_name and assigned_name != 'Unknown':
-                    display_name = assigned_name
-                    use_name = True
-                    print(f"[Chat] 👤 Using assigned name: {display_name}")
-                else:
-                    print(f"[Chat] 🚫 Avoiding anonymous cluster name: {username}")
-                    use_name = False
-            elif username in known_users:
-                display_name = username
-                use_name = True
-                print(f"[Chat] 👤 Using known user name: {display_name}")
-            else:
-                print(f"[Chat] 👤 No specific name handling for: {username}")
-                display_name = username
-                use_name = True
-        
-        except Exception as e:
-            print(f"[Chat] ⚠️ Name resolution error: {e}")
-            display_name = username if not username.startswith('Anonymous_') else None
-            use_name = display_name is not None
+        display_name = _get_user_display_name(username)
+        use_name = display_name != username and not display_name.startswith('Anonymous_')
         
         # Check for simple questions first
         question_lower = question.lower()

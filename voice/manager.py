@@ -5,10 +5,12 @@ from datetime import datetime, timedelta
 from voice.database import known_users, save_known_users, load_known_users, anonymous_clusters, link_anonymous_to_named
 from voice.recognition import identify_speaker_with_confidence, generate_voice_embedding
 from config import DEBUG
-from audio.output import speak_streaming
 from typing import Optional, Dict, List, Any, Tuple, Union
 
 from config import VOICE_DEBUG_MODE
+
+# Use core types for dependency injection instead of direct imports
+from ai.core.types import SpeechProvider
 
 # ✅ ENTROPY SYSTEM: Import consciousness emergence components for attention chaos
 try:
@@ -19,6 +21,21 @@ try:
 except ImportError as e:
     print(f"[VoiceManager] ⚠️ Entropy system not available: {e}")
     ENTROPY_AVAILABLE = False
+
+# Speech provider for dependency injection (will be set by main)
+_speech_provider: Optional[SpeechProvider] = None
+
+def set_speech_provider(provider: SpeechProvider):
+    """Set the speech provider for dependency injection"""
+    global _speech_provider
+    _speech_provider = provider
+
+def __speak_streaming(text: str):
+    """Internal speech function using dependency injection"""
+    if _speech_provider:
+        _speech_provider._speak_streaming(text)
+    else:
+        print(f"[VoiceManager] Would speak: {text}")
 
 def vdebug(msg):
     """Voice debug - only prints if VOICE_DEBUG_MODE is True"""
@@ -760,7 +777,7 @@ class IntelligentVoiceManager:
         elif similarity >= 0.80:  # High similarity - ask for confirmation
             print(f"[IntelligentVoiceManager] 🤔 HIGH similarity but conflicting name - asking confirmation")
             
-            speak_streaming(f"Your voice sounds like {existing_name}, but you said {new_name}. Which is correct?")
+            _speak_streaming(f"Your voice sounds like {existing_name}, but you said {new_name}. Which is correct?")
             
             # Store conflict data for confirmation
             self.pending_name_voice_conflict = {
@@ -833,7 +850,7 @@ class IntelligentVoiceManager:
         else:
             # Ask again
             print(f"[IntelligentVoiceManager] 🤔 Unclear response, asking again")
-            speak_streaming(f"Please say either {conflict_data['existing_name']} or {conflict_data['new_name']}")
+            _speak_streaming(f"Please say either {conflict_data['existing_name']} or {conflict_data['new_name']}")
             return conflict_data['voice_match_id'], "ASKING_NAME_VOICE_CONFLICT_RESOLUTION"
 
     def _process_name_for_new_cluster(self, text: str, cluster_id: str):
@@ -1410,7 +1427,7 @@ class IntelligentVoiceManager:
                 self.waiting_for_voice_confirmation = True
                 self.waiting_for_name = False
                 
-                speak_streaming(f"Is this {assigned_name}?")
+                _speak_streaming(f"Is this {assigned_name}?")
                 print(f"[IntelligentVoiceManager] ❓ NAMED CONFIRMATION: Is this {assigned_name}?")
                 
                 return match_id, "ASKING_VOICE_CONFIRMATION"
@@ -1420,7 +1437,7 @@ class IntelligentVoiceManager:
                 self.waiting_for_voice_confirmation = False
                 self.waiting_for_name = True
                 
-                speak_streaming("Sorry, I'm struggling to recognize your voice. What's your name?")
+                _speak_streaming("Sorry, I'm struggling to recognize your voice. What's your name?")
                 print(f"[IntelligentVoiceManager] ❓ ASKING FOR NAME: Unknown cluster {match_id}")
                 
                 return match_id, "ASKING_FOR_NAME"
@@ -1472,7 +1489,7 @@ class IntelligentVoiceManager:
             else:
                 # 🤔 UNCLEAR RESPONSE - Ask again
                 display_name = self._get_display_name(self.pending_confirmation_cluster)
-                speak_streaming(f"Please say yes or no. Is this {display_name}?")
+                _speak_streaming(f"Please say yes or no. Is this {display_name}?")
                 return self.pending_confirmation_cluster, "ASKING_VOICE_CONFIRMATION"
                 
         except Exception as e:
@@ -2115,7 +2132,7 @@ class IntelligentVoiceManager:
                                 print(f"[IntelligentVoiceManager] 💾 Database save result: {save_result}")
 
                                 # Provide confirmation
-                                speak_streaming(f"Nice to meet you, {extracted_name}! I'll remember your voice.")
+                                _speak_streaming(f"Nice to meet you, {extracted_name}! I'll remember your voice.")
                                 print(f"[IntelligentVoiceManager] ✅ SUCCESSFULLY CONVERTED {old_cluster} → {extracted_name}")
 
                                 # Reset name waiting state
@@ -2138,11 +2155,11 @@ class IntelligentVoiceManager:
                         self.waiting_for_name = False
                         self.pending_name_confirmation = True
                         self.suggested_name = name
-                        speak_streaming(f"Did you say your name is {name}?")
+                        _speak_streaming(f"Did you say your name is {name}?")
                         return "Guest", "CONFIRMING_NAME"
                     else:
                         print(f"[IntelligentVoiceManager] ❓ No valid name found via any method")
-                        speak_streaming("I didn't catch your name clearly. Could you say it again?")
+                        _speak_streaming("I didn't catch your name clearly. Could you say it again?")
                         return "Guest", "WAITING_FOR_NAME"
 
             # Fallback: Use original logic if ultra-intelligent manager not available
@@ -2154,11 +2171,11 @@ class IntelligentVoiceManager:
                     self.waiting_for_name = False
                     self.pending_name_confirmation = True
                     self.suggested_name = name
-                    speak_streaming(f"Did you say your name is {name}?")
+                    _speak_streaming(f"Did you say your name is {name}?")
                     return "Guest", "CONFIRMING_NAME"
                 else:
                     print(f"[IntelligentVoiceManager] ❓ No valid name found in: '{text}'")
-                    speak_streaming("I didn't catch your name clearly. Could you say it again?")
+                    _speak_streaming("I didn't catch your name clearly. Could you say it again?")
                     return "Guest", "WAITING_FOR_NAME"
 
         except Exception as e:
@@ -2172,10 +2189,10 @@ class IntelligentVoiceManager:
                 self.waiting_for_name = False
                 self.pending_name_confirmation = True
                 self.suggested_name = name
-                speak_streaming(f"Did you say your name is {name}?")
+                _speak_streaming(f"Did you say your name is {name}?")
                 return "Guest", "CONFIRMING_NAME"
             else:
-                speak_streaming("I didn't catch your name clearly. Could you say it again?")
+                _speak_streaming("I didn't catch your name clearly. Could you say it again?")
                 return "Guest", "WAITING_FOR_NAME"
 
     def allow_system_username_override(self, name):
@@ -2260,7 +2277,7 @@ class IntelligentVoiceManager:
 
                 if voice_similarity:
                     # High confidence same person
-                    speak_streaming(f"Oh, I recognize you now, {name}! Adding this to your voice profile.")
+                    _speak_streaming(f"Oh, I recognize you now, {name}! Adding this to your voice profile.")
 
                     print(f"[IntelligentVoiceManager] ✅ ULTRA-INTELLIGENT SAME PERSON: Merging with existing {conflict_cluster}")
 
@@ -2282,7 +2299,7 @@ class IntelligentVoiceManager:
 
                     # HIGH SIMILARITY = SAME PERSON
                     if similarity >= 0.65:
-                        speak_streaming(f"Oh, I recognize you now, {name}! Adding this to your voice profile.")
+                        _speak_streaming(f"Oh, I recognize you now, {name}! Adding this to your voice profile.")
 
                         self._add_embedding_to_profile(conflict_cluster, self.pending_confirmation_embedding)
                         self._reset_confirmation_state()
@@ -2292,7 +2309,7 @@ class IntelligentVoiceManager:
 
                     # MEDIUM SIMILARITY = ASK FOR CLARIFICATION  
                     elif similarity >= 0.45:
-                        speak_streaming(f"I think I know you, {name}, but you sound a bit different. Is this really you?")
+                        _speak_streaming(f"I think I know you, {name}, but you sound a bit different. Is this really you?")
 
                         self.waiting_for_name = False
                         self.waiting_for_voice_confirmation = True
@@ -2304,7 +2321,7 @@ class IntelligentVoiceManager:
                     else:
                         unique_name = self._create_unique_name(name)
 
-                        speak_streaming(f"I already know a different {name}. I'll call you {unique_name} to keep you separate.")
+                        _speak_streaming(f"I already know a different {name}. I'll call you {unique_name} to keep you separate.")
 
                         success = self._assign_name_to_cluster(self.pending_confirmation_cluster, unique_name)
 
@@ -2317,7 +2334,7 @@ class IntelligentVoiceManager:
 
             # Default fallback
             unique_name = self._create_unique_name(name)
-            speak_streaming(f"I'll call you {unique_name} to keep you separate from the other {name}.")
+            _speak_streaming(f"I'll call you {unique_name} to keep you separate from the other {name}.")
 
             success = self._assign_name_to_cluster(self.pending_confirmation_cluster, unique_name)
             if success:
