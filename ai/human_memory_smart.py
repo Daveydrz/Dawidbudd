@@ -380,7 +380,7 @@ Return only valid JSON array:"""
                 validated_events = []
                 for event in events:
                     if self._validate_event(event):
-                        enhanced_event = self._enhance_event(event)
+                        enhanced_event = self._enhance_event(event, text=text)
                         validated_events.append(enhanced_event)
                 
                 print(f"[SmartMemory] 🧠 LLM detected {len(validated_events)} events from: '{text}'")
@@ -419,31 +419,32 @@ Return only valid JSON array:"""
         required_fields = ['type', 'topic', 'date', 'emotion']
         return all(field in event for field in required_fields)
     
-    def _enhance_event(self, event: Dict) -> Dict:
-        """Enhance event with full normalization - ensure all required fields"""
-        current_time = datetime.now().isoformat()
-        
+    def _enhance_event(self, event: Dict, *, text: str = "") -> Dict:
+        now_iso = datetime.now().isoformat()
+        etype = event.get('type', 'highlight')
         enhanced = {
-            'type': event.get('type', 'highlight'),
+            'type': etype,
             'topic': event.get('topic', 'unknown'),
             'date': event.get('date', datetime.now().strftime('%Y-%m-%d')),
             'time': event.get('time'),
+            'location': event.get('location'),
+            'people': event.get('people') or [],
+            'details': event.get('details'),
             'emotion': event.get('emotion', 'neutral'),
             'priority': event.get('priority', 'medium'),
             'status': event.get('status', 'pending'),
-            'created': current_time,
-            'last_updated': current_time,
-            'original_text': event.get('original_text', ''),
+            'category': event.get('category') or (
+                'appointment' if etype == 'appointment' else
+                'life_event' if etype == 'life_event' else
+                'highlight'
+            ),
+            'original_text': event.get('original_text', text),
+            'id': event.get('id') or f"{etype}_{int(time.time()*1000)}",
             'detected_by': event.get('detected_by', 'llm'),
-            'confidence': event.get('confidence', 0.8),
+            'created': now_iso,
+            'last_updated': now_iso,
             'user': self.username,
-            'session_id': f"session_{int(time.time())}",
-            'tags': event.get('tags', []),
-            'notes': event.get('notes', ''),
-            'recurring': event.get('recurring', False),
-            'reminder_set': event.get('reminder_set', False)
         }
-        
         return enhanced
     
     def _fallback_detection(self, text: str) -> List[Dict]:
@@ -463,7 +464,7 @@ Return only valid JSON array:"""
                 'original_text': text,
                 'detected_by': 'fallback'
             }
-            events.append(self._enhance_event(base_event))
+            events.append(self._enhance_event(base_event, text=text))
         
         # Only birthday with specific person
         birthday_match = re.search(r'(\w+)(?:\'s)?\s+birthday.+(?:tomorrow|today)', text_lower)
@@ -477,7 +478,7 @@ Return only valid JSON array:"""
                 'original_text': text,
                 'detected_by': 'fallback'
             }
-            events.append(self._enhance_event(base_event))
+            events.append(self._enhance_event(base_event, text=text))
         
         return events
     
