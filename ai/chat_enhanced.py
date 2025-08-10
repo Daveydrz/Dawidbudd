@@ -1,108 +1,75 @@
-# ai/chat_enhanced.py - Enhanced chat that integrates with your existing chat.py
+# ai/chat_enhanced.py - FACADE: Enhanced chat with human-like memory (delegates to ai.chat.core)
+"""
+This is a facade that maintains the original API while delegating to ai.chat.core.
+All existing imports and function signatures are preserved for backward compatibility.
+The human-like memory functionality is now integrated into the core.
+"""
+
 import random
+from typing import Iterator
+
+# Import from new core 
+from ai.chat.core import get_chat_core
+
+# Maintain existing imports for compatibility
 from ai.chat import generate_response_streaming, ask_kobold_streaming, get_current_brisbane_time
-from ai.human_memory import HumanLikeMemory
 from ai.memory import add_to_conversation_history
 
-# Global human memory instances
+# Try to import original memory class for compatibility
+try:
+    from ai.human_memory import HumanLikeMemory
+    HUMAN_MEMORY_AVAILABLE = True
+except ImportError:
+    HUMAN_MEMORY_AVAILABLE = False
+    # Create a stub class for compatibility
+    class HumanLikeMemory:
+        def __init__(self, username):
+            self.username = username
+        def reset_session_context(self):
+            pass
+
+# Global chat core instance
+_chat_core = get_chat_core()
+
+# Global human memory instances (maintained for compatibility)
 human_memories = {}
 
 def get_human_memory(username: str) -> HumanLikeMemory:
-    """Get or create human memory for user"""
-    if username not in human_memories:
-        human_memories[username] = HumanLikeMemory(username)
-    return human_memories[username]
+    """Get or create human memory for user - delegates to core where possible"""
+    if HUMAN_MEMORY_AVAILABLE:
+        if username not in human_memories:
+            human_memories[username] = HumanLikeMemory(username)
+        return human_memories[username]
+    else:
+        # Return stub memory
+        if username not in human_memories:
+            human_memories[username] = HumanLikeMemory(username)
+        return human_memories[username]
 
 def reset_session_for_user(username: str):
-    """Reset session when conversation starts"""
-    memory = get_human_memory(username)
-    memory.reset_session_context()
+    """Reset session when conversation starts - delegates to core"""
+    # Reset core memory
+    _chat_core.reset_session_for_user(username)
+    
+    # Also reset local memory for compatibility
+    if username in human_memories:
+        human_memories[username].reset_session_context()
 
-def generate_response_with_human_memory(question, username, lang="en"):
-    """Generate response with human-like memory integration"""
-    try:
-        print(f"[ChatEnhanced] 🧠 Starting human-like response for '{question}' from {username}")
-        
-        # Get human memory
-        human_memory = get_human_memory(username)
-        
-        # Extract and store memories from user input
-        human_memory.extract_and_store_human_memories(question)
-        
-        # Check for natural context response (only once per session)
-        context_response = human_memory.check_for_natural_context_response()
-        
-        # Generate response chunks
-        response_parts = []
-        
-        # If we have natural context, yield it first
-        if context_response:
-            print(f"[ChatEnhanced] 💭 Natural memory response: {context_response}")
-            response_parts.append(context_response)
-            
-            # Add natural connector
-            connectors = [" ", "Also, ", "And ", "By the way, ", "Oh, and "]
-            response_parts.append(random.choice(connectors))
-        
-        # Use your existing streaming generation
-        full_ai_response = ""
-        for chunk in generate_response_streaming(question, username, lang):
-            if chunk and chunk.strip():
-                response_parts.append(chunk.strip())
-                full_ai_response += chunk.strip() + " "
-        
-        # Combine all parts
-        complete_response = "".join(response_parts)
-        
-        # Add to conversation history
-        if complete_response.strip():
-            add_to_conversation_history(username, question, complete_response.strip())
-        
-        return complete_response
-        
-    except Exception as e:
-        print(f"[ChatEnhanced] ❌ Error: {e}")
-        return "Sorry, I'm having trouble thinking right now."
+def generate_response_with_human_memory(question: str, username: str, lang: str = "en") -> str:
+    """Generate response with human-like memory integration - delegates to core"""
+    # The core now handles memory integration automatically
+    return _chat_core.generate_response_simple(question, username, lang)
 
-def generate_response_streaming_with_human_memory(question, username, lang="en"):
-    """Streaming version with human-like memory"""
-    try:
-        print(f"[ChatEnhanced] 🧠 Starting human-like streaming for '{question}' from {username}")
-        
-        # Get human memory
-        human_memory = get_human_memory(username)
-        
-        # Extract and store memories from user input
-        human_memory.extract_and_store_human_memories(question)
-        
-        # Check for natural context response
-        context_response = human_memory.check_for_natural_context_response()
-        
-        # If we have natural context, yield it first
-        if context_response:
-            print(f"[ChatEnhanced] 💭 Natural memory response: {context_response}")
-            yield context_response
-            
-            # Small pause for natural flow
-            import time
-            time.sleep(0.3)
-            
-            # Add natural connector
-            connectors = [" ", "Also, ", "And ", "By the way, ", "Oh, and "]
-            yield random.choice(connectors)
-        
-        # Use your existing streaming generation
-        full_response = ""
-        for chunk in generate_response_streaming(question, username, lang):
-            if chunk and chunk.strip():
-                full_response += chunk.strip() + " "
-                yield chunk.strip()
-        
-        # Add to conversation history
-        if full_response.strip():
-            complete_response = context_response + " " + full_response if context_response else full_response
-            add_to_conversation_history(username, question, complete_response.strip())
-        
-    except Exception as e:
-        print(f"[ChatEnhanced] ❌ Error: {e}")
-        yield "Sorry, I'm having trouble thinking right now."
+def generate_response_streaming_with_human_memory(question: str, username: str, lang: str = "en") -> Iterator[str]:
+    """Generate streaming response with human-like memory integration - delegates to core"""
+    print(f"[ChatEnhanced] 🧠 Starting human-like streaming for '{question}' from {username}")
+    
+    # The core now handles memory integration automatically, including context responses
+    for chunk in _chat_core.generate_response_streaming(question, username, lang):
+        yield chunk
+
+# ============================================================================
+# Legacy compatibility - these functions now delegate to core seamlessly
+# ============================================================================
+
+print("[ChatEnhanced] ✅ Chat enhanced facade initialized - memory integration handled by ai.chat.core")

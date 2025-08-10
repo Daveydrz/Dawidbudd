@@ -78,6 +78,20 @@ print("[Main] ✅ UltraIntelligentNameManager assigned to voice_manager")
 
 from config import *
 
+# Import consciousness integration module  
+try:
+    from consciousness_integration import (
+        setup_consciousness_system,
+        shutdown_consciousness_system, 
+        initialize_consciousness_state,
+        integrate_consciousness_with_response,
+        finalize_consciousness_response
+    )
+    CONSCIOUSNESS_INTEGRATION_AVAILABLE = True
+except ImportError as e:
+    print(f"[Main] ⚠️ Consciousness integration not available: {e}")
+    CONSCIOUSNESS_INTEGRATION_AVAILABLE = False
+
 # Import with better error handling
 try:
     from audio.full_duplex_manager import full_duplex_manager
@@ -845,57 +859,9 @@ def get_voice_based_identity(audio_data=None):
         return "Anonymous_Speaker"
 
 
-def get_voice_based_display_name(identified_user):
-    """Get display name based on voice identity, not system login"""
-    try:
-        # Check if this is the system user (Daveydrz)
-        if identified_user == "Daveydrz" or identified_user == SYSTEM_USER:
-            return "Daveydrz"
-        
-        # Check known voice profiles
-        if identified_user in known_users:
-            profile = known_users[identified_user]
-            if isinstance(profile, dict) and 'display_name' in profile:
-                return profile['display_name']
-            elif isinstance(profile, dict) and 'real_name' in profile:
-                return profile['real_name']
-            else:
-                return identified_user
-        
-        # Handle anonymous or unknown users
-        if identified_user in ["Anonymous_Speaker", "Unknown", "Guest"]:
-            return "friend"  # Friendly generic term
-        
-        # Default to the identified name
-        return identified_user
-        
-    except Exception as e:
-        print(f"[VoiceIdentity] ⚠️ Display name error: {e}")
-        return identified_user or "friend"
-
-
-def get_voice_based_name_response(identified_user, display_name):
-    """Handle 'what's my name' using voice matching, not system login"""
-    try:
-        # Handle system user
-        if identified_user == "Daveydrz" or identified_user == SYSTEM_USER:
-            return f"Based on your voice, you are Daveydrz."
-        
-        # Handle known voice profiles
-        elif identified_user in known_users and identified_user not in ["Anonymous_Speaker", "Unknown", "Guest"]:
-            return f"Your name is {display_name}."
-        
-        # Handle anonymous or unrecognized voices
-        elif identified_user in ["Anonymous_Speaker", "Unknown", "Guest"]:
-            return "I don't recognize your voice yet. Could you tell me your name so I can learn it?"
-        
-        # Handle any other identified users
-        else:
-            return f"Based on your voice, I believe you are {display_name}."
-            
-    except Exception as e:
-        print(f"[VoiceIdentity] ❌ Name response error: {e}")
-        return "I'm having trouble with voice recognition right now. Could you tell me your name?"
+# ============================================================================
+# Time and Date Helper Functions (consolidated)
+# ============================================================================
 
 def is_direct_time_question(text):
     """🧠 SMART: Only detect DIRECT time questions, not contextual usage"""
@@ -987,30 +953,43 @@ def is_direct_date_question(text):
     return False
 
 def get_current_brisbane_time():
-    """Get current Brisbane time with multiple formats"""
+    """Get current Brisbane time with multiple formats - delegates to utils.time_helper"""
     try:
-        # Get current UTC time and convert to Brisbane
-        utc_now = time.gmtime()
-        utc_timestamp = time.mktime(utc_now)
-        brisbane_timestamp = utc_timestamp + (10 * 3600)  # Add 10 hours
-        brisbane_time = time.localtime(brisbane_timestamp)
-        
+        # Try to use the canonical time helper
+        from utils.time_helper import get_time_info_for_buddy
+        time_info = get_time_info_for_buddy()
         return {
-            'time_12h': time.strftime("%I:%M %p", brisbane_time),
-            'time_24h': time.strftime("%H:%M", brisbane_time),
-            'date': time.strftime("%A, %B %d, %Y", brisbane_time),
-            'day': time.strftime("%A", brisbane_time),
-            'full_datetime': time.strftime("%Y-%m-%d %H:%M:%S", brisbane_time)
+            'time_12h': time_info.get('current_time_12h', '12:55 PM'),
+            'time_24h': time_info.get('current_time_24h', '12:55'),
+            'date': time_info.get('current_date', 'Thursday, July 17, 2025'),
+            'day': time_info.get('day_name', 'Thursday'),
+            'full_datetime': time_info.get('current_time_24h', '12:55') + ':00'  # Approximate
         }
-    except Exception as e:
-        print(f"[TimeHelper] Error: {e}")
-        return {
-            'time_12h': "12:55 PM",
-            'time_24h': "12:55",
-            'date': "Thursday, July 17, 2025",
-            'day': "Thursday",
-            'full_datetime': "2025-07-17 12:55:40"
-        }
+    except ImportError:
+        # Fallback implementation if time helper not available
+        import time
+        try:
+            utc_now = time.gmtime()
+            utc_timestamp = time.mktime(utc_now)
+            brisbane_timestamp = utc_timestamp + (10 * 3600)  # Add 10 hours
+            brisbane_time = time.localtime(brisbane_timestamp)
+            
+            return {
+                'time_12h': time.strftime("%I:%M %p", brisbane_time),
+                'time_24h': time.strftime("%H:%M", brisbane_time),
+                'date': time.strftime("%A, %B %d, %Y", brisbane_time),
+                'day': time.strftime("%A", brisbane_time),
+                'full_datetime': time.strftime("%Y-%m-%d %H:%M:%S", brisbane_time)
+            }
+        except Exception as e:
+            print(f"[TimeHelper] Error: {e}")
+            return {
+                'time_12h': "12:55 PM",
+                'time_24h': "12:55",
+                'date': "Thursday, July 17, 2025",
+                'day': "Thursday",
+                'full_datetime': "2025-07-17 12:55:40"
+            }
 
 # ✅ ADVANCED: Enhanced voice profile loading with clustering support
 def load_voice_profiles():
