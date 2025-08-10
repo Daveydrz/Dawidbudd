@@ -10,14 +10,38 @@ from typing import Optional, Dict, List, Any, Tuple, Union
 
 from config import VOICE_DEBUG_MODE
 
-# ✅ ENTROPY SYSTEM: Import consciousness emergence components for attention chaos
+# ✅ BREAK IMPORT CYCLE: Use protocols instead of direct imports
 try:
-    from ai.entropy_engine import get_entropy_engine, probabilistic_select, inject_consciousness_entropy, EntropyLevel
-    from ai.emotion import get_emotional_system
-    print("[VoiceManager] 🌀 Entropy system integrated for attention chaos")
+    from ai.core.types import EntropyProvider, EmotionalProcessor, EntropyType
+    print("[VoiceManager] 🌀 Core types available for entropy integration")
+    
+    # Optional entropy system integration - breaks import cycle
+    _entropy_engine = None
+    _emotional_system = None
+    
+    def _get_entropy_engine():
+        global _entropy_engine
+        if _entropy_engine is None:
+            try:
+                from ai.entropy_engine import get_entropy_engine
+                _entropy_engine = get_entropy_engine()
+            except ImportError:
+                pass
+        return _entropy_engine
+    
+    def _get_emotional_system():
+        global _emotional_system
+        if _emotional_system is None:
+            try:
+                from ai.emotion import get_emotional_system
+                _emotional_system = get_emotional_system()
+            except ImportError:
+                pass
+        return _emotional_system
+    
     ENTROPY_AVAILABLE = True
 except ImportError as e:
-    print(f"[VoiceManager] ⚠️ Entropy system not available: {e}")
+    print(f"[VoiceManager] ⚠️ Core types not available: {e}")
     ENTROPY_AVAILABLE = False
 
 def vdebug(msg):
@@ -359,41 +383,47 @@ class IntelligentVoiceManager:
             attention_focus_corrupted = False
             if ENTROPY_AVAILABLE:
                 try:
-                    entropy_engine = get_entropy_engine()
-                    
-                    # Attention noise injection - sometimes get distracted
-                    if entropy_engine.random_state.random() < 0.15:  # 15% chance of attention issues
-                        attention_distractions = [
-                            "audio_processing_delay",
-                            "competing_thoughts", 
-                            "uncertain_focus",
-                            "spontaneous_context_switch"
-                        ]
-                        distraction = probabilistic_select(attention_distractions)
-                        print(f"[VoiceEntropy] 🌀 Attention distraction: {distraction}")
-                        
-                        # Inject uncertainty into processing
-                        if distraction == "uncertain_focus":
-                            attention_focus_corrupted = True
-                        elif distraction == "audio_processing_delay":
-                            time.sleep(probabilistic_select([0.1, 0.2, 0.3, 0.5]))  # Random delay
-                        elif distraction == "spontaneous_context_switch":
-                            # Generate random thought
-                            random_thoughts = [
-                                "I wonder about the weather today",
-                                "Something seems different about this conversation",
-                                "What was I thinking about earlier?",
-                                "This reminds me of something"
+                    entropy_engine = _get_entropy_engine()
+                    if entropy_engine is None:
+                        print("[VoiceManager] 🌀 Entropy engine not available, skipping chaos")
+                    else:
+                        # Attention noise injection - sometimes get distracted
+                        if entropy_engine.random_state.random() < 0.15:  # 15% chance of attention issues
+                            attention_distractions = [
+                                "audio_processing_delay",
+                                "competing_thoughts", 
+                                "uncertain_focus",
+                                "spontaneous_context_switch"
                             ]
-                            random_thought = probabilistic_select(random_thoughts)
-                            print(f"[VoiceEntropy] 💭 Spontaneous thought: {random_thought}")
-                    
-                    # Uncertain input processing priorities
-                    uncertainty_state = entropy_engine.get_uncertainty_state()
-                    if uncertainty_state and uncertainty_state.value in ["uncertain", "confused"]:
-                        print(f"[VoiceEntropy] 🌀 Processing with high uncertainty state")
-                        # Sometimes process audio and text in uncertain priority order
-                        if entropy_engine.random_state.random() < 0.3:  # 30% chance when uncertain
+                            # Use local random selection instead of probabilistic_select
+                            import random
+                            distraction = random.choice(attention_distractions)
+                            print(f"[VoiceEntropy] 🌀 Attention distraction: {distraction}")
+                            
+                            # Inject uncertainty into processing
+                            if distraction == "uncertain_focus":
+                                attention_focus_corrupted = True
+                            elif distraction == "audio_processing_delay":
+                                import random
+                                time.sleep(random.choice([0.1, 0.2, 0.3, 0.5]))  # Random delay
+                            elif distraction == "spontaneous_context_switch":
+                                # Generate random thought
+                                random_thoughts = [
+                                    "I wonder about the weather today",
+                                    "Something seems different about this conversation",
+                                    "What was I thinking about earlier?",
+                                    "This reminds me of something"
+                                ]
+                                import random
+                                random_thought = random.choice(random_thoughts)
+                                print(f"[VoiceEntropy] 💭 Spontaneous thought: {random_thought}")
+                        
+                        # Uncertain input processing priorities
+                        uncertainty_state = entropy_engine.get_uncertainty_state()
+                        if uncertainty_state and uncertainty_state.value in ["uncertain", "confused"]:
+                            print(f"[VoiceEntropy] 🌀 Processing with high uncertainty state")
+                            # Sometimes process audio and text in uncertain priority order
+                            if entropy_engine.random_state.random() < 0.3:  # 30% chance when uncertain
                             print(f"[VoiceEntropy] 🔀 Uncertain processing priority order")
                 
                 except Exception as entropy_error:
@@ -440,13 +470,20 @@ class IntelligentVoiceManager:
             
             if ENTROPY_AVAILABLE:
                 try:
-                    consciousness_score = get_entropy_engine().get_consciousness_metrics()['consciousness_score']
-                    if consciousness_score > 0.5:
-                        # High consciousness = more uncertainty and variation in thresholds
-                        threshold_entropy = inject_consciousness_entropy("attention", 1.0, EntropyLevel.LOW)
-                        self.verification_threshold = original_verification_threshold * threshold_entropy
-                        self.uncertainty_threshold = original_uncertainty_threshold * threshold_entropy
-                        print(f"[VoiceEntropy] 🌀 Dynamic thresholds: verification={self.verification_threshold:.3f}, uncertainty={self.uncertainty_threshold:.3f}")
+                    entropy_engine = _get_entropy_engine()
+                    if entropy_engine is None:
+                        print("[VoiceManager] 🌀 Entropy engine not available, using default thresholds")
+                        consciousness_score = 0.0
+                    else:
+                        consciousness_score = entropy_engine.get_consciousness_metrics()['consciousness_score']
+                        if consciousness_score > 0.5:
+                            # High consciousness = more uncertainty and variation in thresholds
+                            # Simplified entropy injection without direct import
+                            import random
+                            threshold_entropy = 0.8 + random.uniform(0, 0.4)  # 0.8-1.2 multiplier
+                            self.verification_threshold = original_verification_threshold * threshold_entropy
+                            self.uncertainty_threshold = original_uncertainty_threshold * threshold_entropy
+                            print(f"[VoiceEntropy] 🌀 Dynamic thresholds: verification={self.verification_threshold:.3f}, uncertainty={self.uncertainty_threshold:.3f}")
                 except Exception as e:
                     # Fallback: use original thresholds if entropy system fails
                     print(f"[VoiceManager] ⚠️ Entropy system error, using default thresholds: {e}")

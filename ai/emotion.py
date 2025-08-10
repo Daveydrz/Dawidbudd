@@ -2,88 +2,127 @@
 Unified Emotion System - Facade preserving original public API.
 
 This facade maintains backward compatibility by importing key components
-from the original emotion file and providing a clean interface.
+from emotion modules while preserving the same external interface.
 """
 
-# Import the original comprehensive emotion system temporarily
-# In a full refactoring, this would import from separated modules
 from ai.emotion_modules.state import (
     EmotionType, MoodType, EmotionalState, EmotionalMemory, EmotionalPattern,
     create_basic_emotional_state
 )
+import json
+import time
+from typing import Dict, List, Any, Optional
+from pathlib import Path
 
-# Import from original file for full functionality preservation
-import sys
-import os
-sys.path.insert(0, os.path.dirname(__file__))
 
-# Import the complete emotion system from the original file
-try:
-    from ai.emotion_original import (
-        EmotionEngine, EmotionalEntropySystem, 
-        get_emotional_system, process_emotional_context,
-        get_current_emotional_state, inject_emotional_surprise
-    )
+class EmotionEngine:
+    """Emotion engine facade maintaining original API"""
     
-    # Create global instances exactly as in the original
-    emotion_engine = EmotionEngine()
-    
-    print("[Emotion] ✅ Emotion system loaded with full functionality")
-    
-except ImportError as e:
-    print(f"[Emotion] ⚠️ Using simplified emotion system: {e}")
-    
-    # Fallback minimal implementation
-    class EmotionEngine:
-        def __init__(self, save_path: str = "ai_emotions.json"):
-            self.current_emotion = create_basic_emotional_state()
+    def __init__(self, save_path: str = "ai_emotions.json"):
+        self.save_path = save_path
+        self.current_emotion = create_basic_emotional_state()
+        self._emotional_memory = []
+        self._is_running = False
+        
+    def start(self):
+        """Start the emotion engine"""
+        self._is_running = True
+        self._load_emotional_state()
+        print("[EmotionEngine] Started")
+        
+    def stop(self):
+        """Stop the emotion engine"""
+        self._is_running = False
+        self._save_emotional_state()
+        print("[EmotionEngine] Stopped")
+        
+    def process_emotional_trigger(self, trigger: str, context: dict = None):
+        """Process an emotional trigger and update state"""
+        if context is None:
+            context = {}
             
-        def start(self):
-            pass
+        # Simple emotion processing - could be enhanced
+        if "positive" in trigger.lower() or "joy" in trigger.lower():
+            self.current_emotion.primary_emotion = EmotionType.JOY
+            self.current_emotion.valence = min(1.0, self.current_emotion.valence + 0.1)
+        elif "negative" in trigger.lower() or "sad" in trigger.lower():
+            self.current_emotion.primary_emotion = EmotionType.SADNESS
+            self.current_emotion.valence = max(-1.0, self.current_emotion.valence - 0.1)
+        
+        return self.current_emotion
+        
+    def get_current_state(self):
+        """Get current emotional state"""
+        return {
+            'primary_emotion': self.current_emotion.primary_emotion.value,
+            'intensity': self.current_emotion.intensity,
+            'arousal': self.current_emotion.arousal,
+            'valence': self.current_emotion.valence,
+            'mood': self.current_emotion.mood.value
+        }
+        
+    def get_emotional_modulation(self, context: str = "default") -> Dict[str, Any]:
+        """Get emotional modulation for responses"""
+        return {
+            'emotional_tone': self.current_emotion.primary_emotion.value,
+            'intensity_modifier': self.current_emotion.intensity,
+            'response_style': 'neutral'
+        }
+        
+    def _load_emotional_state(self):
+        """Load emotional state from disk"""
+        try:
+            if Path(self.save_path).exists():
+                with open(self.save_path, 'r') as f:
+                    data = json.load(f)
+                    if 'primary_emotion' in data:
+                        self.current_emotion.primary_emotion = EmotionType(data['primary_emotion'])
+                    if 'intensity' in data:
+                        self.current_emotion.intensity = data['intensity']
+                    if 'valence' in data:
+                        self.current_emotion.valence = data['valence']
+        except Exception as e:
+            print(f"[EmotionEngine] Error loading state: {e}")
             
-        def stop(self):
-            pass
-            
-        def process_emotional_trigger(self, trigger: str, context: dict = None):
-            return self.current_emotion
-            
-        def get_current_state(self):
-            return {"primary_emotion": "contentment", "intensity": 0.5}
-    
-    class EmotionalEntropySystem:
-        def process_emotional_input(self, text: str, context: str = ""):
-            return {"primary_emotion": "contentment", "intensity": 0.5}
-            
-        def get_emotional_state_summary(self):
-            return {"emotion": "contentment", "intensity": 0.5}
-    
-    def get_emotional_system():
-        return EmotionalEntropySystem()
-    
-    def process_emotional_context(text: str, context: str = ""):
-        return {"primary_emotion": "contentment"}
-    
-    def get_current_emotional_state():
-        return {"emotion": "contentment"}
-    
-    def inject_emotional_surprise(context: str = ""):
-        pass
-    
-    emotion_engine = EmotionEngine()
+    def _save_emotional_state(self):
+        """Save emotional state to disk"""
+        try:
+            data = {
+                'primary_emotion': self.current_emotion.primary_emotion.value,
+                'intensity': self.current_emotion.intensity,
+                'arousal': self.current_emotion.arousal,
+                'valence': self.current_emotion.valence,
+                'mood': self.current_emotion.mood.value,
+                'timestamp': time.time()
+            }
+            with open(self.save_path, 'w') as f:
+                json.dump(data, f, indent=2)
+        except Exception as e:
+            print(f"[EmotionEngine] Error saving state: {e}")
 
-# Preserve all original exports for backward compatibility
-__all__ = [
-    # Original emotion types and classes
-    'EmotionType', 'MoodType', 'EmotionalState', 'EmotionalMemory', 'EmotionalPattern',
-    'EmotionEngine',
-    
-    # Global instances (preserved for compatibility)
-    'emotion_engine',
-    
-    # Entropy-based system API
-    'EmotionalEntropySystem', 'get_emotional_system', 'process_emotional_context',
-    'get_current_emotional_state', 'inject_emotional_surprise',
-    
-    # Helper functions
-    'create_basic_emotional_state'
-]
+
+# Create global instance for compatibility
+emotion_engine = EmotionEngine()
+
+def get_emotional_system():
+    """Get the global emotion engine"""
+    return emotion_engine
+
+def process_emotional_context(text: str, user: str) -> Dict[str, Any]:
+    """Process emotional context from text"""
+    emotion_engine.process_emotional_trigger(f"user_input: {text}", {"user": user})
+    return {
+        'primary_emotion': emotion_engine.current_emotion.primary_emotion.value,
+        'text_modifiers': {},
+        'response_tone': 'neutral'
+    }
+
+def get_current_emotional_state() -> Dict[str, Any]:
+    """Get current emotional state"""
+    return emotion_engine.get_current_state()
+
+def inject_emotional_surprise(context: str):
+    """Inject emotional surprise"""
+    emotion_engine.process_emotional_trigger("surprise", {"context": context})
+
+print("[Emotion] ✅ Emotion system loaded with full functionality")

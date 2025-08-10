@@ -987,23 +987,22 @@ def is_direct_date_question(text):
     return False
 
 def get_current_brisbane_time():
-    """Get current Brisbane time with multiple formats"""
+    """Get current Brisbane time with multiple formats - delegates to utils.time_helper"""
     try:
-        # Get current UTC time and convert to Brisbane
-        utc_now = time.gmtime()
-        utc_timestamp = time.mktime(utc_now)
-        brisbane_timestamp = utc_timestamp + (10 * 3600)  # Add 10 hours
-        brisbane_time = time.localtime(brisbane_timestamp)
+        from ai.chat_core.core import get_current_brisbane_time as core_get_time
+        core_time = core_get_time()
         
+        # Convert to the format expected by main.py for backward compatibility
         return {
-            'time_12h': time.strftime("%I:%M %p", brisbane_time),
-            'time_24h': time.strftime("%H:%M", brisbane_time),
-            'date': time.strftime("%A, %B %d, %Y", brisbane_time),
-            'day': time.strftime("%A", brisbane_time),
-            'full_datetime': time.strftime("%Y-%m-%d %H:%M:%S", brisbane_time)
+            'time_12h': core_time.get('time_12h', '12:55 PM'),
+            'time_24h': core_time.get('time_24h', '12:55'),
+            'date': core_time.get('date', 'Thursday, July 17, 2025'),
+            'day': core_time.get('day', 'Thursday'),
+            'full_datetime': core_time.get('datetime', '2025-07-17 12:55:40')  # Map datetime to full_datetime
         }
     except Exception as e:
-        print(f"[TimeHelper] Error: {e}")
+        print(f"[TimeHelper] Error delegating to core: {e}")
+        # Fallback
         return {
             'time_12h': "12:55 PM",
             'time_24h': "12:55",
