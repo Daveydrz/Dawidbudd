@@ -2,6 +2,8 @@
 import json
 import os
 import random
+import threading
+import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 import re
@@ -10,6 +12,8 @@ from ai.chat import ask_kobold  # Use your existing LLM connection
 
 class SmartHumanLikeMemory:
     """🧠 Smart human-like memory using LLM for event detection"""
+    
+    _lock = threading.Lock()  # class-level lock
     
     def __init__(self, username: str):
         self.username = username
@@ -27,6 +31,9 @@ class SmartHumanLikeMemory:
         # Session tracking
         self.context_used_this_session = set()
         
+        # Throttle marker (epoch seconds)
+        self._last_tier3 = 0.0
+        
         print(f"[SmartMemory] 🧠 Smart LLM-based memory initialized for {username}")
     
     def extract_and_store_human_memories(self, text: str):
@@ -35,26 +42,97 @@ class SmartHumanLikeMemory:
         # Also use the existing MEGA-INTELLIGENT extraction
         self.mega_memory.extract_memories_from_text(text)
         
-        # Use LLM to intelligently detect events (only if passes all filters)
-        detected_events = self._smart_detect_events(text)
+        # Tier-3 throttle + lock around heavy LLM path
+        now = time.time()
         
-        # Store detected events
-        for event in detected_events:
-            if event['type'] == 'appointment':
-                self.appointments.append(event)
-                print(f"[SmartMemory] 📅 Smart appointment: {event['topic']} on {event['date']}")
-            elif event['type'] == 'life_event':
-                self.life_events.append(event)
-                print(f"[SmartMemory] 📝 Smart life event: {event['topic']} on {event['date']} ({event['emotion']})")
-            elif event['type'] == 'highlight':
-                self.conversation_highlights.append(event)
-                print(f"[SmartMemory] 💬 Smart highlight: {event['topic']}")
+        # Tier-3 throttle: skip heavy path if we ran it very recently
+        if (now - self._last_tier3) < 8.0:  # 8s guard, adjust if needed
+            print("[SmartMemory] ⏳ Throttled Tier-3 extraction")
+            return
+            
+        with self._lock:
+            self._last_tier3 = now
+            
+            # Normalize text for consistent processing
+            normalized_text = self._normalize_text_for_memory(text)
+            
+            # Use LLM to intelligently detect events (only if passes all filters)
+            detected_events = self._smart_detect_events(normalized_text)
+            
+            # Store detected events with JSON encoding safeguards
+            for event in detected_events:
+                try:
+                    # Ensure proper JSON encoding
+                    event = self._ensure_json_encodable(event)
+                    
+                    if event['type'] == 'appointment':
+                        self.appointments.append(event)
+                        print(f"[SmartMemory] 📅 Smart appointment: {event['topic']} on {event['date']}")
+                    elif event['type'] == 'life_event':
+                        self.life_events.append(event)
+                        print(f"[SmartMemory] 📝 Smart life event: {event['topic']} on {event['date']} ({event['emotion']})")
+                    elif event['type'] == 'highlight':
+                        self.conversation_highlights.append(event)
+                        print(f"[SmartMemory] 💬 Smart highlight: {event['topic']}")
+                except Exception as e:
+                    print(f"[SmartMemory] ❌ Event encoding error: {e}")
+                    continue
+            
+            # Save memories with atomic write
+            if detected_events:  # Only save if we actually found events
+                self._atomic_save_memories()
+    
+    def _normalize_text_for_memory(self, text: str) -> str:
+        """🔄 Normalize text for consistent memory processing"""
+        if not text or not isinstance(text, str):
+            return ""
+            
+        # Strip excessive whitespace
+        normalized = ' '.join(text.strip().split())
         
-        # Save memories
-        if detected_events:  # Only save if we actually found events
+        # Normalize common contractions for consistent processing
+        contractions = {
+            "i'm": "i am",
+            "don't": "do not",
+            "won't": "will not",
+            "can't": "cannot",
+            "it's": "it is",
+            "that's": "that is",
+            "we're": "we are",
+            "they're": "they are"
+        }
+        
+        normalized_lower = normalized.lower()
+        for contraction, expansion in contractions.items():
+            normalized_lower = normalized_lower.replace(contraction, expansion)
+            
+        return normalized_lower
+    
+    def _ensure_json_encodable(self, event: Dict) -> Dict:
+        """🔒 Ensure event is JSON encodable"""
+        encodable_event = {}
+        
+        for key, value in event.items():
+            if isinstance(value, (str, int, float, bool, type(None))):
+                encodable_event[key] = value
+            elif isinstance(value, (list, tuple)):
+                encodable_event[key] = [str(item) for item in value]
+            elif isinstance(value, dict):
+                encodable_event[key] = {str(k): str(v) for k, v in value.items()}
+            else:
+                encodable_event[key] = str(value)
+                
+        return encodable_event
+    
+    def _atomic_save_memories(self):
+        """💾 Atomic save with backup recovery"""
+        try:
             self.save_memory(self.appointments, 'smart_appointments.json')
-            self.save_memory(self.life_events, 'smart_life_events.json')
+            self.save_memory(self.life_events, 'smart_life_events.json') 
             self.save_memory(self.conversation_highlights, 'smart_highlights.json')
+        except Exception as e:
+            print(f"[SmartMemory] ❌ Atomic save error: {e}")
+            # Could add backup recovery here if needed
     
     def _is_casual_conversation(self, text: str) -> bool:
         """🛡️ BULLETPROOF filter to block casual conversation from LLM"""

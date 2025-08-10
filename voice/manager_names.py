@@ -2599,6 +2599,18 @@ class UltraIntelligentNameManager:
             ]
         }
 
+    def _estimate_linguistic_confidence(self, text_lower: str) -> float:
+        """📊 Estimate linguistic confidence using existing booleans"""
+        score = 0.0
+        if self._has_explicit_introduction_phrase(text_lower): score += 0.20
+        if self._has_name_database_match(text_lower): score += 0.10
+        if self._has_cultural_variant(text_lower): score += 0.10
+        if self._has_good_sentence_structure(text_lower): score += 0.10
+        if self._has_greeting_context(text_lower): score += 0.05
+        if self._is_whisper_error_pattern(text_lower): score -= 0.20
+        if self._is_casual_conversation_pattern(text_lower): score -= 0.20
+        return max(0.0, min(1.0, score))
+
     def is_ultra_intelligent_spontaneous_introduction(self, text: str) -> bool:
         """🧠 ULTRA-INTELLIGENT spontaneous introduction detection"""
         
@@ -2633,11 +2645,13 @@ class UltraIntelligentNameManager:
         
         # ✅ PHASE 4: MULTI-FACTOR INTRODUCTION VALIDATION
         introduction_score = self._calculate_ultra_intelligent_introduction_score(text_lower)
+        ling_conf = self._estimate_linguistic_confidence(text_lower)
         
         print(f"[UltraIntelligentNameManager] 🧠 ULTRA-AI INTRODUCTION SCORE: {introduction_score:.3f}")
+        print(f"[UltraIntelligentNameManager] 🧠 LINGUISTIC CONFIDENCE: {ling_conf:.3f}")
         
-        # 🔧 FIX: Lowered threshold from 0.85 to 0.65
-        return introduction_score > 0.50
+        # 🆕 NEW: Gate decision with both introduction score and linguistic confidence
+        return (introduction_score > 0.50) and (ling_conf >= 0.30)
     
     def _is_ultra_intelligent_command_detection(self, text_lower: str) -> bool:
         """🧠 ULTRA-INTELLIGENT command detection beyond GPT-4 level"""
