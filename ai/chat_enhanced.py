@@ -2,7 +2,6 @@
 import random
 from ai.chat_core.core import (
     ask_kobold_streaming,
-    get_current_brisbane_time,
     build_messages,
     add_memory_context_to_messages,
     validate_and_enhance_response,

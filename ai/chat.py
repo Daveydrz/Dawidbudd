@@ -16,7 +16,7 @@ from config import KOBOLD_URL, MAX_TOKENS, TEMPERATURE, DEFAULT_LANG
 
 # Import time and location helpers - kept for backward compatibility
 try:
-    from utils.time_helper import get_time_info_for_buddy, get_buddy_current_time, get_buddy_location
+    from utils.time_helper import get_time_info_for_buddy
     LOCATION_HELPERS_AVAILABLE = True
 except ImportError:
     LOCATION_HELPERS_AVAILABLE = False
