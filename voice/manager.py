@@ -424,7 +424,7 @@ class IntelligentVoiceManager:
                             print(f"[VoiceEntropy] 🌀 Processing with high uncertainty state")
                             # Sometimes process audio and text in uncertain priority order
                             if entropy_engine.random_state.random() < 0.3:  # 30% chance when uncertain
-                            print(f"[VoiceEntropy] 🔀 Uncertain processing priority order")
+                                print(f"[VoiceEntropy] 🔀 Uncertain processing priority order")
                 
                 except Exception as entropy_error:
                     print(f"[VoiceEntropy] ⚠️ Entropy processing error: {entropy_error}")

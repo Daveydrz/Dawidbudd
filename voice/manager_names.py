@@ -21,16 +21,40 @@ except ImportError:
     SMART_VOICE_AVAILABLE = False
     print("[UltraIntelligentNameManager] ⚠️ Smart voice recognition not available")
 
-# 🔧 FIXED: Handle import errors gracefully
-try:
-    from audio.output import speak_streaming
-    AUDIO_AVAILABLE = True
-    print("[UltraIntelligentNameManager] ✅ Audio output available")
-except ImportError:
-    AUDIO_AVAILABLE = False
-    print("[UltraIntelligentNameManager] ⚠️ Audio output not available - using fallback")
-    def speak_streaming(text):
-        print(f"[SPEAK] {text}")
+# ✅ BREAK IMPORT CYCLE: Use lazy loading instead of top-level import
+AUDIO_AVAILABLE = False
+
+def _speak(text: str):
+    """Lazy-loaded speak function to break import cycles"""
+    global AUDIO_AVAILABLE
+    
+    # Try lazy import first time
+    if not AUDIO_AVAILABLE:
+        try:
+            from audio.output import speak_streaming
+            AUDIO_AVAILABLE = True
+            print("[UltraIntelligentNameManager] ✅ Audio output available (lazy loaded)")
+            speak_streaming(text)
+            return
+        except ImportError:
+            print("[UltraIntelligentNameManager] ⚠️ Audio output not available - using fallback")
+    
+    # If available, use it
+    if AUDIO_AVAILABLE:
+        try:
+            from audio.output import speak_streaming
+            speak_streaming(text)
+            return
+        except ImportError:
+            pass
+    
+    # Fallback when audio is not available
+    print(f"[VoiceFallback] 🗣️ {text}")
+
+# Keep the old speak_streaming function for backward compatibility but delegate to _speak
+def speak_streaming(text: str):
+    """Backward compatible speak_streaming function"""
+    _speak(text)
 
 try:
     from voice.database import known_users, anonymous_clusters, save_known_users, link_anonymous_to_named, handle_same_name_collision
