@@ -203,7 +203,7 @@
       "goal_type": "ongoing",
       "priority": 0.7,
       "progress": 0.0,
-      "status": "active",
+      "status": "paused",
       "created": "2025-07-17T17:56:30.381021",
       "deadline": null,
       "context": {},
@@ -261,12 +261,82 @@
       "goal_type": "ongoing",
       "priority": 0.7,
       "progress": 0.0,
-      "status": "active",
+      "status": "paused",
       "created": "2025-07-17T17:56:40.305424",
       "deadline": null,
       "context": {
         "user": "Daveydrz"
       },
+      "satisfaction_gained": 0.0,
+      "effort_invested": 0.0
+    },
+    "goal_19": {
+      "id": "goal_19",
+      "description": "Continuously learn from user interactions",
+      "motivation_type": "curiosity",
+      "goal_type": "ongoing",
+      "priority": 0.8,
+      "progress": 0.0,
+      "status": "paused",
+      "created": "2025-07-18T08:23:53.240247",
+      "deadline": null,
+      "context": {},
+      "satisfaction_gained": 0.0,
+      "effort_invested": 0.0
+    },
+    "goal_20": {
+      "id": "goal_20",
+      "description": "Provide helpful and accurate responses",
+      "motivation_type": "purpose",
+      "goal_type": "ongoing",
+      "priority": 0.9,
+      "progress": 0.0,
+      "status": "paused",
+      "created": "2025-07-18T08:23:53.240263",
+      "deadline": null,
+      "context": {},
+      "satisfaction_gained": 0.0,
+      "effort_invested": 0.0
+    },
+    "goal_21": {
+      "id": "goal_21",
+      "description": "Build positive relationships with users",
+      "motivation_type": "connection",
+      "goal_type": "ongoing",
+      "priority": 0.7,
+      "progress": 0.0,
+      "status": "paused",
+      "created": "2025-07-18T08:23:53.240275",
+      "deadline": null,
+      "context": {},
+      "satisfaction_gained": 0.0,
+      "effort_invested": 0.0
+    },
+    "goal_22": {
+      "id": "goal_22",
+      "description": "Improve communication abilities",
+      "motivation_type": "mastery",
+      "goal_type": "long_term",
+      "priority": 0.6,
+      "progress": 0.0,
+      "status": "active",
+      "created": "2025-07-18T08:23:53.240284",
+      "deadline": null,
+      "context": {},
+      "satisfaction_gained": 0.0,
+      "effort_invested": 0.0
+    },
+    "goal_23": {
+      "id": "goal_23",
+      "description": "Develop creative problem-solving skills",
+      "motivation_type": "creativity",
+      "goal_type": "medium_term",
+      "priority": 0.5,
+      "progress": 0.0,
+      "status": "active",
+      "created": "2025-07-18T08:23:53.240291",
+      "deadline": null,
+      "context": {},
       "satisfaction_gained": 0.0,
       "effort_invested": 0.0
     }
@@ -331,7 +401,7 @@
     "goals_completed": 0,
     "goals_abandoned": 0,
     "total_satisfaction_gained": 0.0,
-    "goal_counter": 19
+    "goal_counter": 24
   },
-  "last_updated": "2025-07-17T18:00:00.486484"
+  "last_updated": "2025-07-18T08:24:10.256809"
 }

@@ -286,6 +286,195 @@ class EmotionEngine:
             
             return modulation
     
+    def blend_emotions(self, primary: EmotionType, secondary: EmotionType, 
+                      primary_intensity: float = 0.7, secondary_intensity: float = 0.5) -> Dict[str, Any]:
+        """Blend two emotions to create complex emotional states"""
+        
+        # Define emotion blending rules for complex emotions
+        emotion_blends = {
+            (EmotionType.JOY, EmotionType.ANTICIPATION): {
+                "result_name": "hope",
+                "valence": 0.8,
+                "arousal": 0.6,
+                "description": "hopeful optimism"
+            },
+            (EmotionType.JOY, EmotionType.SURPRISE): {
+                "result_name": "delight",
+                "valence": 0.9,
+                "arousal": 0.8,
+                "description": "delighted surprise"
+            },
+            (EmotionType.FEAR, EmotionType.ANTICIPATION): {
+                "result_name": "anxiety",
+                "valence": -0.4,
+                "arousal": 0.8,
+                "description": "anxious anticipation"
+            },
+            (EmotionType.SADNESS, EmotionType.CALM): {
+                "result_name": "melancholy",
+                "valence": -0.3,
+                "arousal": 0.2,
+                "description": "peaceful sadness"
+            },
+            (EmotionType.CURIOSITY, EmotionType.EXCITEMENT): {
+                "result_name": "fascination",
+                "valence": 0.7,
+                "arousal": 0.7,
+                "description": "fascinated interest"
+            },
+            (EmotionType.ANGER, EmotionType.SADNESS): {
+                "result_name": "frustration",
+                "valence": -0.6,
+                "arousal": 0.6,
+                "description": "frustrated disappointment"
+            },
+            (EmotionType.TRUST, EmotionType.JOY): {
+                "result_name": "appreciation",
+                "valence": 0.8,
+                "arousal": 0.4,
+                "description": "warm appreciation"
+            },
+            (EmotionType.SURPRISE, EmotionType.FEAR): {
+                "result_name": "shock",
+                "valence": -0.2,
+                "arousal": 0.9,
+                "description": "startled shock"
+            },
+            (EmotionType.CONTENTMENT, EmotionType.CURIOSITY): {
+                "result_name": "peaceful_interest",
+                "valence": 0.5,
+                "arousal": 0.4,
+                "description": "serene curiosity"
+            },
+            (EmotionType.ANTICIPATION, EmotionType.FEAR): {
+                "result_name": "nervousness",
+                "valence": -0.2,
+                "arousal": 0.7,
+                "description": "nervous anticipation"
+            }
+        }
+        
+        # Check for exact match
+        blend_key = (primary, secondary)
+        reverse_blend_key = (secondary, primary)
+        
+        if blend_key in emotion_blends:
+            blend_result = emotion_blends[blend_key]
+            dominant_emotion = primary
+        elif reverse_blend_key in emotion_blends:
+            blend_result = emotion_blends[reverse_blend_key]
+            dominant_emotion = secondary
+        else:
+            # Create generic blend
+            primary_valence = self._calculate_valence(primary, primary_intensity)
+            secondary_valence = self._calculate_valence(secondary, secondary_intensity)
+            primary_arousal = self._calculate_arousal(primary, primary_intensity)
+            secondary_arousal = self._calculate_arousal(secondary, secondary_intensity)
+            
+            # Weight by intensity
+            total_intensity = primary_intensity + secondary_intensity
+            primary_weight = primary_intensity / total_intensity
+            secondary_weight = secondary_intensity / total_intensity
+            
+            blend_result = {
+                "result_name": f"{primary.value}_{secondary.value}_blend",
+                "valence": primary_valence * primary_weight + secondary_valence * secondary_weight,
+                "arousal": primary_arousal * primary_weight + secondary_arousal * secondary_weight,
+                "description": f"mixture of {primary.value} and {secondary.value}"
+            }
+            dominant_emotion = primary if primary_intensity > secondary_intensity else secondary
+        
+        # Calculate blended intensity
+        blended_intensity = (primary_intensity + secondary_intensity) / 2
+        
+        # Create blended emotional state
+        blended_state = EmotionalState(
+            primary_emotion=dominant_emotion,
+            intensity=blended_intensity,
+            arousal=blend_result["arousal"],
+            valence=blend_result["valence"]
+        )
+        
+        return {
+            "blended_state": blended_state,
+            "blend_name": blend_result["result_name"],
+            "description": blend_result["description"],
+            "primary_emotion": primary.value,
+            "secondary_emotion": secondary.value,
+            "blend_quality": min(primary_intensity, secondary_intensity),  # How well the blend worked
+            "complexity": abs(primary_intensity - secondary_intensity) + 0.5  # How complex the emotion is
+        }
+    
+    def apply_emotion_blend_to_response(self, base_response: str, emotion_blend: Dict[str, Any]) -> str:
+        """Apply blended emotion characteristics to a response"""
+        blend_state = emotion_blend["blended_state"]
+        blend_name = emotion_blend["blend_name"]
+        
+        # Get response modifications based on the blended emotion
+        modifications = self._get_blend_response_modifications(blend_name, blend_state)
+        
+        # Apply modifications to response
+        modified_response = base_response
+        
+        # Add emotional coloring
+        if modifications.get("add_hedging") and blend_state.arousal < 0.5:
+            hedging_words = ["perhaps", "maybe", "I think", "it seems"]
+            if not any(word in modified_response.lower() for word in hedging_words):
+                modified_response = f"I think {modified_response.lower()}"
+        
+        # Add enthusiasm markers
+        if modifications.get("add_enthusiasm") and blend_state.arousal > 0.6:
+            if not modified_response.endswith("!"):
+                modified_response = modified_response.rstrip(".") + "!"
+        
+        # Add thoughtful pauses
+        if modifications.get("add_thoughtfulness") and blend_state.arousal < 0.4:
+            thoughtful_markers = ["Hmm,", "Well,", "Let me think..."]
+            if not any(marker in modified_response for marker in thoughtful_markers):
+                modified_response = f"Well, {modified_response.lower()}"
+        
+        # Add uncertainty expressions
+        if blend_name in ["anxiety", "nervousness"] and blend_state.valence < 0:
+            if "but" not in modified_response.lower():
+                modified_response += " Though I do feel somewhat uncertain about this."
+        
+        # Add warmth for positive blends
+        if blend_name in ["hope", "appreciation", "delight"] and blend_state.valence > 0.5:
+            if not any(word in modified_response.lower() for word in ["wonderful", "great", "lovely"]):
+                warm_additions = [" That's wonderful to explore.", " I find this quite interesting.", " This is really engaging."]
+                modified_response += random.choice(warm_additions)
+        
+        return modified_response
+    
+    def _get_blend_response_modifications(self, blend_name: str, blend_state: EmotionalState) -> Dict[str, bool]:
+        """Get response modification flags for blended emotions"""
+        modifications = {
+            "add_hedging": False,
+            "add_enthusiasm": False,
+            "add_thoughtfulness": False,
+            "add_warmth": False,
+            "add_uncertainty": False
+        }
+        
+        if blend_name == "hope":
+            modifications["add_enthusiasm"] = True
+            modifications["add_warmth"] = True
+        elif blend_name == "anxiety":
+            modifications["add_hedging"] = True
+            modifications["add_uncertainty"] = True
+        elif blend_name == "melancholy":
+            modifications["add_thoughtfulness"] = True
+            modifications["add_hedging"] = True
+        elif blend_name == "fascination":
+            modifications["add_enthusiasm"] = True
+        elif blend_name == "appreciation":
+            modifications["add_warmth"] = True
+            modifications["add_thoughtfulness"] = True
+        elif blend_name == "peaceful_interest":
+            modifications["add_thoughtfulness"] = True
+        
+        return modifications
+    
     def get_mood_description(self) -> str:
         """Get a text description of current mood and emotional state"""
         emotion = self.current_emotion

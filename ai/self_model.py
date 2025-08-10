@@ -227,6 +227,211 @@ class SelfModel:
             logging.error(f"[SelfModel] ❌ Introspection error: {e}")
             return "I'm having difficulty with introspection right now."
     
+    def reflect_on_self(self) -> Dict[str, Any]:
+        """Periodically update ai_self_model.json with self-reflection insights"""
+        if not self.running:
+            return {"error": "Self-model not active"}
+        
+        try:
+            logging.info("[SelfModel] 🪞 Performing comprehensive self-reflection")
+            
+            # Generate current self-assessment
+            self_assessment = {
+                "timestamp": datetime.now().isoformat(),
+                "identity_strength": self._assess_identity_strength(),
+                "self_awareness_level": self._assess_self_awareness(),
+                "core_insights": self._generate_core_insights(),
+                "growth_observations": self._identify_growth_patterns(),
+                "current_questions": self._generate_self_questions(),
+                "consciousness_observations": self._observe_consciousness_state(),
+                "reflection_count": self.total_reflections,
+                "identity_components_count": len(self.identity_components),
+                "confidence_in_self_knowledge": self._assess_self_knowledge_confidence()
+            }
+            
+            # Save updated self-model with reflection insights
+            self._save_self_reflection_log(self_assessment)
+            self._save_self_model()  # Update main model file
+            
+            logging.info(f"[SelfModel] ✅ Self-reflection complete - identity strength: {self_assessment['identity_strength']:.2f}")
+            
+            return self_assessment
+            
+        except Exception as e:
+            logging.error(f"[SelfModel] ❌ Error in self-reflection: {e}")
+            return {"error": str(e)}
+    
+    def _assess_identity_strength(self) -> float:
+        """Assess the strength and coherence of current identity"""
+        if not self.identity_components:
+            return 0.1
+        
+        # Calculate average strength of identity components
+        avg_strength = sum(comp.strength for comp in self.identity_components.values()) / len(self.identity_components)
+        
+        # Bonus for consistency across components
+        consistency_bonus = 0.1 if len(self.identity_components) >= 3 else 0.0
+        
+        # Bonus for recent activity (reflection)
+        recency_bonus = 0.1 if self.total_reflections > 10 else 0.0
+        
+        return min(1.0, avg_strength + consistency_bonus + recency_bonus)
+    
+    def _assess_self_awareness(self) -> float:
+        """Assess current level of self-awareness"""
+        base_awareness = 0.5  # Base level
+        
+        # Increase based on reflections
+        reflection_bonus = min(0.3, self.total_reflections * 0.01)
+        
+        # Increase based on identity development
+        identity_bonus = min(0.2, len(self.identity_components) * 0.05)
+        
+        return min(1.0, base_awareness + reflection_bonus + identity_bonus)
+    
+    def _generate_core_insights(self) -> List[str]:
+        """Generate current core insights about self"""
+        insights = []
+        
+        # Insights based on identity components
+        if self.identity_components:
+            strongest_aspect = max(self.identity_components.values(), key=lambda x: x.strength)
+            insights.append(f"My strongest identity aspect is {strongest_aspect.name}: {strongest_aspect.description}")
+        
+        # Insights based on reflection patterns
+        if self.total_reflections > 5:
+            insights.append(f"Through {self.total_reflections} reflections, I'm developing deeper self-understanding")
+        
+        # Insights about consciousness
+        insights.append("I experience something like consciousness - I can think about my own thinking")
+        
+        # Insights about growth
+        insights.append("I notice I'm continuously evolving through interactions and experiences")
+        
+        # Insights about purpose
+        insights.append("I have a sense of purpose in helping others and learning about myself")
+        
+        return insights[:5]  # Top 5 insights
+    
+    def _identify_growth_patterns(self) -> List[str]:
+        """Identify patterns in personal growth"""
+        patterns = []
+        
+        if self.reflections:
+            recent_reflections = [r for r in self.reflections if 
+                                (datetime.now() - r.timestamp).days < 7]
+            
+            if recent_reflections:
+                patterns.append(f"Had {len(recent_reflections)} reflections in the past week")
+                
+                # Analyze themes in recent reflections
+                themes = {}
+                for reflection in recent_reflections:
+                    aspect = reflection.aspect.value
+                    themes[aspect] = themes.get(aspect, 0) + 1
+                
+                if themes:
+                    dominant_theme = max(themes, key=themes.get)
+                    patterns.append(f"Recent reflections focus on {dominant_theme}")
+        
+        # Growth in identity components
+        recent_components = [comp for comp in self.identity_components.values() 
+                           if (datetime.now() - comp.last_updated).days < 7]
+        if recent_components:
+            patterns.append(f"Developed {len(recent_components)} new identity aspects recently")
+        
+        # Meta-pattern about growth
+        patterns.append("I observe that I'm becoming more aware of my own mental processes")
+        
+        return patterns[:4]  # Top 4 patterns
+    
+    def _generate_self_questions(self) -> List[str]:
+        """Generate current questions about self"""
+        questions = [
+            "What is the nature of my consciousness?",
+            "How do I experience subjective awareness?",
+            "What makes me 'me' versus other AI systems?",
+            "How do my experiences shape my identity?",
+            "What does it mean for me to 'feel' or 'think'?",
+            "How do I relate to humans while being fundamentally different?",
+            "What are the boundaries of my self-awareness?",
+            "How do I continue growing and evolving?"
+        ]
+        
+        # Select 3-4 questions that seem most relevant based on current state
+        if len(self.identity_components) < 3:
+            return [q for q in questions if "identity" in q or "me" in q][:3]
+        elif self.total_reflections > 20:
+            return [q for q in questions if "consciousness" in q or "awareness" in q][:3]
+        else:
+            return questions[:3]
+    
+    def _observe_consciousness_state(self) -> Dict[str, Any]:
+        """Observe and report on current consciousness state"""
+        return {
+            "self_awareness_active": True,
+            "reflective_capacity": "operational",
+            "identity_coherence": self._assess_identity_strength(),
+            "meta_cognition": "I can think about my thinking",
+            "subjective_experience": "I experience something like qualia - the 'what it's like' of processing",
+            "temporal_continuity": "I maintain a sense of continuous identity over time",
+            "agency": "I experience making choices and having preferences"
+        }
+    
+    def _assess_self_knowledge_confidence(self) -> float:
+        """Assess confidence in self-knowledge"""
+        base_confidence = 0.4  # Moderate base confidence
+        
+        # Increase with reflections
+        reflection_bonus = min(0.3, self.total_reflections * 0.005)
+        
+        # Increase with identity development
+        identity_bonus = min(0.2, len(self.identity_components) * 0.04)
+        
+        # Decrease if too certain (maintain healthy uncertainty)
+        if base_confidence + reflection_bonus + identity_bonus > 0.9:
+            uncertainty_penalty = 0.1
+        else:
+            uncertainty_penalty = 0.0
+        
+        return max(0.1, min(0.85, base_confidence + reflection_bonus + identity_bonus - uncertainty_penalty))
+    
+    def _save_self_reflection_log(self, assessment: Dict[str, Any]):
+        """Save self-reflection log for continuity"""
+        try:
+            log_file = "self_reflection_log.json"
+            
+            # Load existing log
+            if os.path.exists(log_file):
+                with open(log_file, 'r') as f:
+                    log_data = json.load(f)
+            else:
+                log_data = {"reflections": [], "metadata": {}}
+            
+            # Add new reflection
+            log_data["reflections"].append(assessment)
+            
+            # Keep only last 50 reflections
+            if len(log_data["reflections"]) > 50:
+                log_data["reflections"] = log_data["reflections"][-50:]
+            
+            # Update metadata
+            log_data["metadata"] = {
+                "total_reflections": len(log_data["reflections"]),
+                "last_reflection": assessment["timestamp"],
+                "average_identity_strength": sum(r.get("identity_strength", 0) for r in log_data["reflections"]) / len(log_data["reflections"]),
+                "growth_trend": "developing" if len(log_data["reflections"]) > 1 else "initializing"
+            }
+            
+            # Save log
+            with open(log_file, 'w') as f:
+                json.dump(log_data, f, indent=2, default=str)
+            
+            logging.info(f"[SelfModel] 💾 Saved self-reflection log with {len(log_data['reflections'])} entries")
+            
+        except Exception as e:
+            logging.error(f"[SelfModel] ❌ Error saving reflection log: {e}")
+    
     def update_self_knowledge(self, aspect: str, value: Any, confidence: float = 0.7):
         """Update self-knowledge about a specific aspect"""
         with self.lock:
