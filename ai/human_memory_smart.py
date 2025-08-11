@@ -731,25 +731,46 @@ class SmartHumanLikeMemory:
             
         print(f"[SmartMemory] 🧠 Processing: '{text}'")
         
-        # Edge-case hardening: Multi-event splitting
-        try:
-            from utils.time_helper import _split_multi_events
-            text_parts = _split_multi_events(text)
-            if len(text_parts) > 1:
-                print(f"[SmartMemory] ✂️ Split into {len(text_parts)} events")
-                for i, part in enumerate(text_parts):
-                    print(f"[SmartMemory] 📝 Processing part {i+1}: '{part}'")
-                    # Process each part separately
-                    self._extract_single_text_memory(part)
-                return
-        except ImportError:
-            pass  # Fallback if time_helper not available
+        # B) Turn on multi-event splitting - process each segment with sequence numbers
+        segments = self.split_multi_events(text)
+        if len(segments) > 1:
+            print(f"[SmartMemory] ✂️ Split into {len(segments)} events")
+            # Generate shared episode_id for related sub-events
+            shared_episode_id = f"ep_{int(time.time() * 1000)}_{random.randint(1000, 9999)}"
+            for i, segment in enumerate(segments, 1):
+                print(f"[SmartMemory] 📝 Processing segment {i}: '{segment}'")
+                # Process each segment with sequence info
+                self._extract_single_text_memory(segment, sequence=i, episode_id=shared_episode_id)
+            return
         
         # Process as single event
         self._extract_single_text_memory(text)
     
-    def _extract_single_text_memory(self, text: str):
+    def _extract_single_text_memory(self, text: str, sequence: int = None, episode_id: str = None):
         """Extract memory from a single text fragment"""
+        # E) Auto-trigger corrections/negations - check for correction patterns first
+        CORRECTION_PATTERNS = [
+            r"\bnot\s+(?P<old>[^,.;]+)\s*,\s*(?P<new>[^,.;]+)",
+            r"\bi mean\s+(?P<new>[^.]+)",
+            r"\bactually\s+(?P<new>[^.]+)",
+            r"\bI meant\s+(?P<new>[^.]+)",
+            r"\bwait,?\s*(?P<new>[^.]+)",
+            r"\bcorrection:?\s*(?P<new>[^.]+)"
+        ]
+        
+        correction_detected = False
+        for pattern in CORRECTION_PATTERNS:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                print(f"[SmartMemory] 🔄 Correction pattern detected: {match.group(0)}")
+                # Process the correction through existing correction system
+                correction_result = self.process_correction(text, "user")
+                if correction_result.get('correction_processed'):
+                    print(f"[SmartMemory] ✅ Auto-correction processed successfully")
+                    return
+                correction_detected = True
+                break
+        
         # Also use the existing MEGA-INTELLIGENT extraction
         self.mega_memory.extract_memories_from_text(text)
         
@@ -820,6 +841,12 @@ class SmartHumanLikeMemory:
                     if not isinstance(raw_event, dict) or not raw_event.get('topic'):
                         print(f"[SmartMemory] ⚠️ Skipping invalid event: {raw_event}")
                         continue
+                    
+                    # Add sequence and shared episode_id for multi-event processing
+                    if sequence is not None:
+                        raw_event['sequence'] = sequence
+                    if episode_id is not None:
+                        raw_event['episode_id'] = episode_id
                     
                     # Store as hypothesis if confidence too low
                     if raw_event.get('_needs_confirmation'):
@@ -2662,10 +2689,35 @@ Return only valid JSON array:"""
         # Get target collection and filename
         target_collection, filename = collection_map.get(category, (self.conversation_highlights, 'smart_highlights.json'))
         
-        # 1) SHORT-WINDOW STITCHING (30-minute window)
+        # A) Use canonical fast path against the correct in-memory list for this category
+        # This handles 30-minute short-window merging efficiently
+        merge_result = self._merge_or_append_event(new_event, target_collection)
+        if merge_result != target_collection:  # A merge occurred
+            # Write back atomically and return the merged event
+            self._atomic_write_json(filename, target_collection)
+            # Find the merged event (last one added or updated)
+            for event in reversed(target_collection):
+                if event.get('id') == new_event.get('id') or event.get('topic') == new_event.get('topic'):
+                    return event
+        
+        # Fallback to existing candidate logic if fast path didn't merge
         if episode_candidates:
             # Sort candidates by similarity (best first)
             episode_candidates.sort(key=lambda x: x.get('similarity', 0.0), reverse=True)
+            
+            # C) Add ambiguity guard - don't auto-merge if top two scores are too close
+            if len(episode_candidates) >= 2:
+                top_score = episode_candidates[0].get('similarity', 0.0)
+                second_score = episode_candidates[1].get('similarity', 0.0)
+                if abs(top_score - second_score) < 0.08:
+                    print(f"[SmartMemory] ❓ Ambiguous merge targets: {top_score:.3f} vs {second_score:.3f}")
+                    # Save as hypothesis with stealth hint
+                    new_event['_stealth_hint'] = self._build_stealth_hint(new_event, 
+                        [f"Multiple similar events found (scores: {top_score:.3f}, {second_score:.3f})"], 
+                        new_event.get('original_text', ''))
+                    new_event['_needs_confirmation'] = True
+                    self._store_hypothesis_memory(new_event, new_event.get('original_text', ''))
+                    return new_event
             
             for candidate in episode_candidates:
                 if candidate.get('merge_type') == 'duplicate' and candidate.get('similarity', 0.0) > 0.8:
@@ -2680,7 +2732,7 @@ Return only valid JSON array:"""
                             if event.get('id') == event_id:
                                 target_collection[i] = merged_event
                                 # Write back atomically
-                                self.save_memory(target_collection, filename)
+                                self._atomic_write_json(filename, merged_event)
                                 return merged_event
                     break
         
@@ -2709,12 +2761,12 @@ Return only valid JSON array:"""
                         for i, event in enumerate(collection):
                             if event.get('id') == ref_event_id:
                                 collection[i] = merged_event
-                                self.save_memory(collection, coll_filename)
+                                self._atomic_write_json(coll_filename, collection)
                                 return merged_event
         
         # 3) APPEND AS NEW EVENT
         target_collection.append(new_event)
-        self.save_memory(target_collection, filename)
+        self._atomic_write_json(filename, target_collection)
         return new_event
 
     def process_correction(self, correction_text: str, username: str) -> Dict[str, Any]:

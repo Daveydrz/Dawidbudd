@@ -249,6 +249,114 @@ def _format_time_ago(timestamp_str: str) -> str:
     except Exception:
         return "unknown time"
 
+def _resolve_relative_date_safe(text: str, now=None, tz_offset_minutes=None) -> tuple:
+    """Return (YYYY-MM-DD, note). Handle today/yesterday/tomorrow, last/next weekday; capture tz offset."""
+    if now is None:
+        try:
+            tz = pytz.timezone(USER_TIMEZONE)
+            now = datetime.now(tz).replace(tzinfo=None)
+        except:
+            now = datetime.now()
+    
+    text = text.lower().strip()
+    note = "parsed successfully"
+    
+    # Handle timezone offset if provided
+    if tz_offset_minutes is not None:
+        now = now + timedelta(minutes=tz_offset_minutes)
+        note = f"adjusted for timezone offset: {tz_offset_minutes} minutes"
+    
+    # Basic patterns
+    if text in ['today', 'now', 'right now', 'just now']:
+        return now.strftime('%Y-%m-%d'), f"{note} (today)"
+    elif text in ['yesterday', 'last night']:
+        result_date = now - timedelta(days=1)
+        return result_date.strftime('%Y-%m-%d'), f"{note} (yesterday)"
+    elif text in ['tomorrow', 'later today', 'tonight']:
+        result_date = now + timedelta(days=1)
+        return result_date.strftime('%Y-%m-%d'), f"{note} (tomorrow)"
+    
+    # Weekday patterns
+    days_of_week = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    for i, day in enumerate(days_of_week):
+        if day in text:
+            current_weekday = now.weekday()
+            days_until = (i - current_weekday) % 7
+            
+            if 'next' in text and days_until == 0:
+                days_until = 7
+            elif 'last' in text:
+                if days_until == 0:
+                    days_until = -7
+                else:
+                    days_until = days_until - 7
+            elif days_until == 0:
+                days_until = 0  # This weekday (today)
+                
+            result_date = now + timedelta(days=days_until)
+            direction = "next" if days_until > 0 else "last" if days_until < 0 else "this"
+            return result_date.strftime('%Y-%m-%d'), f"{note} ({direction} {day})"
+    
+    # Relative day patterns with safety caps
+    try:
+        # N days ago
+        match = re.search(r'(\d+)\s+days?\s+ago', text)
+        if match:
+            days = min(int(match.group(1)), 365)  # Cap at 365 days
+            result_date = now - timedelta(days=days)
+            return result_date.strftime('%Y-%m-%d'), f"{note} ({days} days ago, capped at 365)"
+        
+        # N days from now
+        match = re.search(r'(\d+)\s+days?\s+from\s+now', text)
+        if match:
+            days = min(int(match.group(1)), 365)
+            result_date = now + timedelta(days=days)
+            return result_date.strftime('%Y-%m-%d'), f"{note} ({days} days from now, capped at 365)"
+        
+        # N weeks ago
+        match = re.search(r'(\d+)\s+weeks?\s+ago', text)
+        if match:
+            weeks = min(int(match.group(1)), 52)  # Cap at 52 weeks
+            result_date = now - timedelta(weeks=weeks)
+            return result_date.strftime('%Y-%m-%d'), f"{note} ({weeks} weeks ago, capped at 52)"
+        
+        # N hours ago
+        match = re.search(r'(\d+)\s+hours?\s+ago', text)
+        if match:
+            hours = min(int(match.group(1)), 168)  # Cap at 1 week
+            result_date = now - timedelta(hours=hours)
+            return result_date.strftime('%Y-%m-%d'), f"{note} ({hours} hours ago, capped at 168)"
+            
+    except (ValueError, AttributeError) as e:
+        note = f"error parsing numeric pattern: {e}"
+    
+    # Week-based patterns
+    if 'last week' in text or 'a week ago' in text:
+        result_date = now - timedelta(weeks=1)
+        return result_date.strftime('%Y-%m-%d'), f"{note} (last week)"
+    elif 'next week' in text:
+        result_date = now + timedelta(weeks=1)
+        return result_date.strftime('%Y-%m-%d'), f"{note} (next week)"
+    elif 'this week' in text:
+        # Start of this week (Monday)
+        days_since_monday = now.weekday()
+        result_date = now - timedelta(days=days_since_monday)
+        return result_date.strftime('%Y-%m-%d'), f"{note} (start of this week)"
+    
+    # Month-based patterns
+    if 'last month' in text:
+        result_date = now - timedelta(days=30)
+        return result_date.strftime('%Y-%m-%d'), f"{note} (last month, approx)"
+    elif 'next month' in text:
+        result_date = now + timedelta(days=30)
+        return result_date.strftime('%Y-%m-%d'), f"{note} (next month, approx)"
+    elif 'this month' in text:
+        result_date = now.replace(day=1)
+        return result_date.strftime('%Y-%m-%d'), f"{note} (start of this month)"
+    
+    # Safe fallback
+    return now.strftime('%Y-%m-%d'), f"fallback to today - could not parse: '{text}'"
+
 # Additional internal helpers for robust time parsing (edge-case hardening)
 def _parse_time_range_robust(query: str) -> tuple:
     """Internal helper: Parse time range from query with robust handling"""
