@@ -10,9 +10,14 @@ from typing import Optional, Generator, List
 from concurrent.futures import ThreadPoolExecutor, Future
 from dataclasses import dataclass
 from audio.kyutai_coordinator import StreamingChunk, get_kyutai_coordinator
-from config import (KOKORO_FASTAPI_URL, KOKORO_DEFAULT_VOICE, KOKORO_TIMEOUT, DEBUG,
-                   ENHANCED_SMART_STREAMING, SMART_STREAMING_MIN_WORDS, 
-                   SMART_STREAMING_TARGET_COMPLETE, SMART_STREAMING_RESPONSE_DELAY)
+from config import KOKORO_DEFAULT_VOICE, DEBUG
+import config as CFG
+KOKORO_FASTAPI_URL = getattr(CFG, "KOKORO_FASTAPI_URL", getattr(CFG, "KOKORO_API_BASE_URL", "http://127.0.0.1:8000"))
+KOKORO_TIMEOUT = getattr(CFG, "KOKORO_TIMEOUT", 30)
+ENHANCED_SMART_STREAMING = getattr(CFG, "ENHANCED_SMART_STREAMING", False)
+SMART_STREAMING_MIN_WORDS = getattr(CFG, "SMART_STREAMING_MIN_WORDS", 18)
+SMART_STREAMING_RESPONSE_DELAY = getattr(CFG, "SMART_STREAMING_RESPONSE_DELAY", getattr(CFG, "STREAMING_RESPONSE_DELAY", 0.35))
+SMART_STREAMING_TARGET_COMPLETE = getattr(CFG, "SMART_STREAMING_TARGET_COMPLETE", 0.85)
 
 @dataclass
 class AudioChunk:

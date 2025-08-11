@@ -7,9 +7,13 @@ import time
 import queue
 import numpy as np
 from collections import deque
-from config import (DEBUG, USER_SPEECH_THRESHOLD, BUDDY_INTERRUPT_THRESHOLD, SAMPLE_RATE,
-                   ENABLE_AEC, AEC_REAL_TIME, FULL_DUPLEX_BUFFER_SIZE, FULL_DUPLEX_OVERLAP,
-                   ADVANCED_FILTERING)
+from config import DEBUG, USER_SPEECH_THRESHOLD, BUDDY_INTERRUPT_THRESHOLD, SAMPLE_RATE
+import config as CFG
+ENABLE_AEC = getattr(CFG, "ENABLE_AEC", False)
+AEC_REAL_TIME = getattr(CFG, "AEC_REAL_TIME", True)
+ADVANCED_FILTERING = getattr(CFG, "ADVANCED_FILTERING", False)
+FULL_DUPLEX_BUFFER_SIZE = getattr(CFG, "FULL_DUPLEX_BUFFER_SIZE", 4096)
+FULL_DUPLEX_OVERLAP = getattr(CFG, "FULL_DUPLEX_OVERLAP", 512)
 
 from audio.smart_aec import smart_aec
 
