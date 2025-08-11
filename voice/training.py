@@ -10,13 +10,13 @@ from config import SAMPLE_RATE
 def _speak(text: str):
     """Lazy-loaded speak function to break import cycles"""
     from audio.output import speak_streaming
-    _speak(text)
+    speak_streaming(text)
 
-def __play_chime():
+def _play_chime():
     """Lazy-loaded play_chime function to break import cycles"""
     try:
         from audio.output import play_chime
-        _play_chime()
+        play_chime()
     except ImportError:
         pass  # Skip if not available
 
