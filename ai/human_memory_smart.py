@@ -845,29 +845,12 @@ class SmartHumanLikeMemory:
                         action = 'create'
                     self._add_to_audit_log(action, stitched_event, {'original_text': text})
                     
-                    # Store in appropriate collection based on type
-                    event_type = stitched_event['type']
-                    if event_type == 'appointment':
-                        self._store_event_with_dedup(self.appointments, stitched_event, 'appointment')
-                    elif event_type == 'life_event':
-                        self._store_event_with_dedup(self.life_events, stitched_event, 'life_event')
-                    elif event_type == 'highlight':
-                        self._store_event_with_dedup(self.conversation_highlights, stitched_event, 'highlight')
-                    elif event_type == 'health_state':
-                        self._store_event_with_dedup(self.health_states, stitched_event, 'health_state')
-                    elif event_type == 'mood_state':
-                        self._store_event_with_dedup(self.mood_states, stitched_event, 'mood_state')
-                    elif event_type == 'visit':
-                        self._store_event_with_dedup(self.visits, stitched_event, 'visit')
-                    
-                    # Update knowledge graph
+                    # Update knowledge graph (stitching already handled collection storage)
                     self._update_knowledge_graph(stitched_event)
                     
-                    print(f"[SmartMemory] ✅ Stored {stitched_event['type']}: {stitched_event['topic']}")
+                    print(f"[SmartMemory] ✅ Stitched {stitched_event['type']}: {stitched_event['topic']}")
                 
-                # Save memories with atomic write
-                if fused_events or resolved_events:  # Save if we found events OR references
-                    self._atomic_save_memories()
+                # Note: stitching already handled collection storage atomically
                 
         except Exception as e:
             print(f"[SmartMemory] ❌ Error processing memories: {e}")
@@ -1848,8 +1831,10 @@ Return only valid JSON array:"""
         merged['items'] = list(existing_items | new_items)
         
         # Update with better details if new event has more information
-        if len(new_event.get('details', '')) > len(existing_event.get('details', '')):
-            merged['details'] = new_event.get('details')
+        new_details = new_event.get('details') or ''
+        existing_details = existing_event.get('details') or ''
+        if len(new_details) > len(existing_details):
+            merged['details'] = new_details
         
         # Take higher salience score
         merged['salience'] = max(
@@ -2652,6 +2637,85 @@ Return only valid JSON array:"""
                 merged[key] = value
         
         return merged
+    
+    def _stitch_episode(self, new_event: dict, episode_candidates: list[dict]) -> dict:
+        """
+        Try short-window merge; else cross-convo reference; else append.
+        Always write back to the correct collection and return the final event.
+        """
+        # Pick collection/list from new_event['category'] or 'type'
+        category = new_event.get('category', new_event.get('type', 'highlight'))
+        
+        # Map categories to collections
+        collection_map = {
+            'appointment': (self.appointments, 'smart_appointments.json'),
+            'life_event': (self.life_events, 'smart_life_events.json'),
+            'highlight': (self.conversation_highlights, 'smart_highlights.json'),
+            'health': (self.health_states, 'smart_health_states.json'),
+            'health_state': (self.health_states, 'smart_health_states.json'),
+            'mood': (self.mood_states, 'smart_mood_states.json'),
+            'mood_state': (self.mood_states, 'smart_mood_states.json'),
+            'activity': (self.visits, 'smart_visits.json'),
+            'visit': (self.visits, 'smart_visits.json')
+        }
+        
+        # Get target collection and filename
+        target_collection, filename = collection_map.get(category, (self.conversation_highlights, 'smart_highlights.json'))
+        
+        # 1) SHORT-WINDOW STITCHING (30-minute window)
+        if episode_candidates:
+            # Sort candidates by similarity (best first)
+            episode_candidates.sort(key=lambda x: x.get('similarity', 0.0), reverse=True)
+            
+            for candidate in episode_candidates:
+                if candidate.get('merge_type') == 'duplicate' and candidate.get('similarity', 0.0) > 0.8:
+                    # High similarity short-window merge
+                    existing_event = candidate['event']
+                    merged_event = self._merge_duplicate_events(new_event, existing_event)
+                    
+                    # Update the existing event in place in the collection
+                    event_id = existing_event.get('id')
+                    if event_id:
+                        for i, event in enumerate(target_collection):
+                            if event.get('id') == event_id:
+                                target_collection[i] = merged_event
+                                # Write back atomically
+                                self.save_memory(target_collection, filename)
+                                return merged_event
+                    break
+        
+        # 2) CROSS-CONVERSATION REFERENCE
+        original_text = new_event.get('original_text', '')
+        if original_text:
+            reference_match = self._resolve_reference_episode(original_text, 0.65)
+            if reference_match:
+                reference_event = reference_match['event']
+                merged_event = self._merge_into_reference(new_event, reference_event)
+                
+                # Update the referenced event in its collection
+                ref_event_id = reference_event.get('id')
+                if ref_event_id:
+                    # Find which collection contains the reference event
+                    all_collections = [
+                        (self.appointments, 'smart_appointments.json'),
+                        (self.life_events, 'smart_life_events.json'), 
+                        (self.conversation_highlights, 'smart_highlights.json'),
+                        (self.health_states, 'smart_health_states.json'),
+                        (self.mood_states, 'smart_mood_states.json'),
+                        (self.visits, 'smart_visits.json')
+                    ]
+                    
+                    for collection, coll_filename in all_collections:
+                        for i, event in enumerate(collection):
+                            if event.get('id') == ref_event_id:
+                                collection[i] = merged_event
+                                self.save_memory(collection, coll_filename)
+                                return merged_event
+        
+        # 3) APPEND AS NEW EVENT
+        target_collection.append(new_event)
+        self.save_memory(target_collection, filename)
+        return new_event
 
     def process_correction(self, correction_text: str, username: str) -> Dict[str, Any]:
         """Process user corrections with field-level change detection"""

@@ -1,0 +1,11 @@
+[
+  {
+    "type": "highlight",
+    "topic": "Test event",
+    "date": "2025-08-11",
+    "time": "14:00",
+    "category": "highlight",
+    "original_text": "This is a test event",
+    "confidence": 0.8
+  }
+]
