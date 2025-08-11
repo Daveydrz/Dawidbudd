@@ -368,24 +368,21 @@ class SmartHumanLikeMemory:
     
     def _build_stealth_hint(self, event: Dict, conflicts: List[str], text: str) -> str:
         """Build stealth hint for uncertain events without user prompts"""
-        hints = []
+        import random
+        low_confidence_fields = [k for k, v in (event.get('field_confidence') or {}).items() 
+                               if k in ('date', 'location', 'state') and v < 0.60]
         
-        if 'date' in conflicts:
-            hints.append("unclear when this happened")
-        if 'location' in conflicts:
-            hints.append("uncertain about the location")
-        if 'state' in conflicts:
-            hints.append("ambiguous health/mood state")
+        if low_confidence_fields:
+            hints = {
+                'date': ["when this happened", "the timing", "exact time"],
+                'location': ["where this was", "the location", "exact place"], 
+                'state': ["how you felt", "your condition", "the feeling"]
+            }
+            
+            selected_hints = [random.choice(hints.get(field, [field])) for field in low_confidence_fields[:2]]
+            return f"Ask about {' and '.join(selected_hints)} if details needed"
         
-        event_type = event.get('type', 'event')
-        topic = event.get('topic', 'something')
-        
-        if hints:
-            hint_text = f"Remember {topic} but {' and '.join(hints)}"
-        else:
-            hint_text = f"Low confidence about {topic} details"
-        
-        return hint_text
+        return "Low confidence - consider asking for clarification"
     
     def _calculate_overall_confidence(self, field_confidences: Dict[str, float]) -> float:
         """Calculate overall confidence from field confidences"""
@@ -2559,6 +2556,422 @@ Return only valid JSON array:"""
             
         except:
             return False
+    
+    def _merge_or_append_event(self, event: Dict, existing_events: List[Dict]) -> List[Dict]:
+        """Merge event with existing or append as new event"""
+        # Check for duplicates within the same day
+        event_date = event.get('date', '')
+        event_topic = event.get('topic', '')
+        event_type = event.get('type', '')
+        
+        for i, existing in enumerate(existing_events):
+            if (existing.get('date') == event_date and 
+                existing.get('topic') == event_topic and
+                existing.get('type') == event_type):
+                
+                # Merge by updating confidence and evidence
+                existing['confidence'] = max(existing.get('confidence', 0), event.get('confidence', 0))
+                existing['last_updated'] = datetime.utcnow().isoformat()
+                
+                # Extend evidence trail
+                existing_evidence = existing.get('evidence', [])
+                new_evidence = event.get('evidence', [])
+                existing['evidence'] = existing_evidence + new_evidence
+                
+                return existing_events
+        
+        # No duplicate found, append new event
+        existing_events.append(event)
+        return existing_events
+    
+    def _resolve_reference_episode(self, reference_text: str, confidence: float) -> Optional[Dict]:
+        """Resolve cross-conversation reference to specific episode"""
+        # Search all event types for matching episodes
+        all_events = []
+        for event_list in [self.life_events, self.appointments, self.visits, self.health_states, self.mood_states]:
+            all_events.extend(event_list)
+        
+        best_match = None
+        best_score = 0.0
+        
+        for event in all_events:
+            # Check topic similarity
+            topic_similarity = difflib.SequenceMatcher(None, 
+                                                     reference_text.lower(), 
+                                                     event.get('topic', '').lower()).ratio()
+            
+            # Check location similarity if present
+            location_similarity = 0.0
+            if 'location' in event:
+                location_similarity = difflib.SequenceMatcher(None,
+                                                            reference_text.lower(),
+                                                            event.get('location', '').lower()).ratio()
+            
+            # Composite score
+            score = max(topic_similarity, location_similarity)
+            
+            if score > best_score and score > 0.6:
+                best_score = score
+                best_match = event
+        
+        if best_match and best_score >= confidence:
+            return {
+                'event': best_match,
+                'confidence': best_score,
+                'match_type': 'reference_resolution'
+            }
+        
+        return None
+    
+    def _merge_into_reference(self, new_event: Dict, reference_event: Dict) -> Dict:
+        """Merge new event data into referenced event"""
+        merged = reference_event.copy()
+        
+        # Update last_updated timestamp
+        merged['last_updated'] = datetime.utcnow().isoformat()
+        
+        # Boost confidence from cross-reference
+        original_confidence = merged.get('confidence', 0.5)
+        merged['confidence'] = min(1.0, original_confidence + 0.1)
+        
+        # Extend evidence trail
+        existing_evidence = merged.get('evidence', [])
+        new_evidence = {
+            'method': 'cross_reference_merge',
+            'confidence': new_event.get('confidence', 0.6),
+            'fields_contributed': list(new_event.keys()),
+            'reference_text': new_event.get('original_text', ''),
+            'timestamp': datetime.utcnow().isoformat()
+        }
+        existing_evidence.append(new_evidence)
+        merged['evidence'] = existing_evidence
+        
+        # Merge any additional fields from new event
+        for key, value in new_event.items():
+            if key not in merged and key not in ['created', 'episode_id', 'fingerprint']:
+                merged[key] = value
+        
+        return merged
+
+    def process_correction(self, correction_text: str, username: str) -> Dict[str, Any]:
+        """Process user corrections with field-level change detection"""
+        result = {
+            'correction_processed': False,
+            'matched_events': [],
+            'changes_made': [],
+            'confidence_boost': 0.0,
+            'evidence_added': False
+        }
+        
+        # Find events to correct (48-hour window)
+        cutoff_time = datetime.utcnow() - timedelta(hours=48)
+        
+        # Search across all event types
+        all_events = []
+        event_sources = [
+            ('life_events', self.life_events),
+            ('appointments', self.appointments), 
+            ('visits', self.visits),
+            ('health_states', self.health_states),
+            ('mood_states', self.mood_states),
+            ('highlights', self.conversation_highlights)
+        ]
+        
+        for source_name, event_list in event_sources:
+            for event in event_list:
+                event_created = datetime.fromisoformat(event.get('created', cutoff_time.isoformat()))
+                if event_created >= cutoff_time:
+                    all_events.append((source_name, event, event_list))
+        
+        # Find best matching event using similarity scoring
+        best_match = None
+        best_score = 0.0
+        best_source = None
+        
+        for source_name, event, event_list in all_events:
+            # Calculate similarity to original text or topic
+            original_text = event.get('original_text', event.get('topic', ''))
+            score = difflib.SequenceMatcher(None, correction_text.lower(), original_text.lower()).ratio()
+            
+            # Boost score for recent events
+            recency_hours = (datetime.utcnow() - datetime.fromisoformat(event.get('created', cutoff_time.isoformat()))).total_seconds() / 3600
+            recency_boost = max(0, 0.2 - (recency_hours / 240))  # Linear decay over 48h
+            score += recency_boost
+            
+            if score > best_score and score > 0.4:
+                best_score = score
+                best_match = (source_name, event, event_list)
+                best_source = source_name
+        
+        if best_match:
+            source_name, event, event_list = best_match
+            original_event = event.copy()
+            
+            # Track field-level changes
+            fields_changed = []
+            
+            # Extract potential corrections from text
+            corrections = self._extract_corrections_from_text(correction_text, event)
+            
+            for field, new_value in corrections.items():
+                if field in event and event[field] != new_value:
+                    fields_changed.append({
+                        'field': field,
+                        'old_value': event[field],
+                        'new_value': new_value
+                    })
+                    event[field] = new_value
+            
+            if fields_changed:
+                # Boost confidence from user correction
+                original_confidence = event.get('confidence', 0.5)
+                confidence_boost = min(0.3, 0.1 * len(fields_changed))
+                event['confidence'] = min(1.0, original_confidence + confidence_boost)
+                
+                # Add correction to evidence trail
+                correction_evidence = {
+                    'method': 'user_correction',
+                    'confidence': 1.0,  # User corrections are high confidence
+                    'fields_changed': fields_changed,
+                    'correction_text': correction_text,
+                    'timestamp': datetime.utcnow().isoformat(),
+                    'similarity_score': best_score
+                }
+                
+                existing_evidence = event.get('evidence', [])
+                existing_evidence.append(correction_evidence)
+                event['evidence'] = existing_evidence
+                event['last_updated'] = datetime.utcnow().isoformat()
+                
+                # Log correction audit trail
+                audit_entry = {
+                    'type': 'correction',
+                    'username': username,
+                    'event_id': event.get('episode_id', 'unknown'),
+                    'event_type': source_name,
+                    'original_event': original_event,
+                    'corrected_event': event,
+                    'fields_changed': fields_changed,
+                    'confidence_boost': confidence_boost,
+                    'similarity_score': best_score,
+                    'timestamp': datetime.utcnow().isoformat()
+                }
+                
+                self._log_audit_trail(audit_entry)
+                
+                # Save updated events
+                self._save_all_categories()
+                
+                result.update({
+                    'correction_processed': True,
+                    'matched_events': [event],
+                    'changes_made': fields_changed,
+                    'confidence_boost': confidence_boost,
+                    'evidence_added': True,
+                    'source_type': source_name,
+                    'similarity_score': best_score
+                })
+        
+        return result
+    
+    def _extract_corrections_from_text(self, correction_text: str, original_event: Dict) -> Dict[str, str]:
+        """Extract field corrections from correction text"""
+        corrections = {}
+        text_lower = correction_text.lower()
+        
+        # Time/date corrections
+        time_patterns = [
+            r"(?:it was|happened|occurred)(?: on| at)?\s+([^.,!?\n]+?)(?:\s*[.,!]|$)",
+            r"actually\s+(yesterday|today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)",
+            r"correction:?\s*([^.,!?\n]+?)(?:\s*[.,!]|$)"
+        ]
+        
+        for pattern in time_patterns:
+            match = re.search(pattern, text_lower)
+            if match:
+                time_info = match.group(1).strip()
+                parsed_date = self._parse_flexible_date(time_info)
+                if parsed_date:
+                    corrections['date'] = parsed_date
+        
+        # Location corrections
+        location_patterns = [
+            r"(?:at|in|to)\s+([A-Z][^.,!?\n]*?)(?:\s*[.,!]|$)",
+            r"location:?\s*([^.,!?\n]+?)(?:\s*[.,!]|$)"
+        ]
+        
+        for pattern in location_patterns:
+            match = re.search(pattern, correction_text)
+            if match:
+                location = match.group(1).strip()
+                if len(location) > 2:
+                    corrections['location'] = location
+        
+        # State/mood corrections
+        state_patterns = [
+            r"(?:feeling|felt)\s+(good|bad|sick|well|unwell|happy|sad|tired|energetic|anxious|calm)",
+            r"(?:was|am)\s+(feeling\s+)?(good|bad|sick|well|unwell|happy|sad|tired|energetic|anxious|calm)"
+        ]
+        
+        for pattern in state_patterns:
+            match = re.search(pattern, text_lower)
+            if match:
+                state = match.group(-1)  # Last group
+                corrections['state'] = state
+        
+        return corrections
+    
+    def _parse_flexible_date(self, date_text: str) -> Optional[str]:
+        """Parse flexible date expressions for corrections"""
+        date_text = date_text.lower().strip()
+        now = datetime.now()
+        
+        # Relative dates
+        if 'yesterday' in date_text:
+            target_date = now - timedelta(days=1)
+            return target_date.strftime('%Y-%m-%d')
+        elif 'today' in date_text:
+            return now.strftime('%Y-%m-%d')
+        elif 'tomorrow' in date_text:
+            target_date = now + timedelta(days=1)
+            return target_date.strftime('%Y-%m-%d')
+        
+        # Days of week
+        weekdays = {
+            'monday': 0, 'tuesday': 1, 'wednesday': 2, 'thursday': 3,
+            'friday': 4, 'saturday': 5, 'sunday': 6
+        }
+        
+        for day_name, day_num in weekdays.items():
+            if day_name in date_text:
+                current_weekday = now.weekday()
+                days_diff = (day_num - current_weekday) % 7
+                if days_diff == 0:  # Same day this week
+                    days_diff = -7  # Assume last week
+                target_date = now + timedelta(days=days_diff)
+                return target_date.strftime('%Y-%m-%d')
+        
+        # Try parsing other formats
+        try:
+            # Try various date formats
+            formats = ['%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y', '%m-%d-%Y']
+            for fmt in formats:
+                try:
+                    parsed = datetime.strptime(date_text, fmt)
+                    return parsed.strftime('%Y-%m-%d')
+                except ValueError:
+                    continue
+        except:
+            pass
+        
+        return None
+    
+    def learn_alias(self, text: str, username: str) -> Dict[str, Any]:
+        """Learn bidirectional aliases for people, places, activities"""
+        result = {
+            'aliases_learned': [],
+            'entity_type': None,
+            'confidence': 0.0
+        }
+        
+        # Extract entity mappings from text
+        alias_patterns = [
+            r"call\s+([^,\s]+)\s+([^,\s]+)",  # "call Dave David"
+            r"([^,\s]+)\s+(?:is|means)\s+([^,\s]+)",  # "Dave is David"
+            r"([^,\s]+)\s*=\s*([^,\s]+)",  # "Dave = David"
+            r"also\s+(?:known\s+as|called)\s+([^,\s]+)",  # "also known as Dave"
+        ]
+        
+        for pattern in alias_patterns:
+            matches = re.findall(pattern, text.lower())
+            for match in matches:
+                if len(match) == 2:
+                    entity1, entity2 = match
+                    entity_type = self._detect_entity_type(entity1, entity2, text)
+                    
+                    if entity_type:
+                        # Store bidirectional mapping
+                        alias_entry = {
+                            'primary': entity2.title(),
+                            'alias': entity1.title(),
+                            'entity_type': entity_type,
+                            'learned_from': username,
+                            'timestamp': datetime.utcnow().isoformat(),
+                            'usage_count': 1,
+                            'context': text[:100]
+                        }
+                        
+                        result['aliases_learned'].append(alias_entry)
+                        result['entity_type'] = entity_type
+                        result['confidence'] = 0.8
+        
+        return result
+    
+    def _detect_entity_type(self, entity1: str, entity2: str, context: str) -> Optional[str]:
+        """Auto-detect entity type (person/place/activity)"""
+        context_lower = context.lower()
+        
+        # Person indicators
+        person_indicators = ['friend', 'person', 'guy', 'girl', 'man', 'woman', 'name', 'called', 'known as']
+        if any(indicator in context_lower for indicator in person_indicators):
+            return 'person'
+        
+        # Place indicators  
+        place_indicators = ['place', 'restaurant', 'cafe', 'shop', 'store', 'location', 'address']
+        if any(indicator in context_lower for indicator in place_indicators):
+            return 'place'
+        
+        # Activity indicators
+        activity_indicators = ['activity', 'do', 'doing', 'going', 'visit', 'appointment']
+        if any(indicator in context_lower for indicator in activity_indicators):
+            return 'activity'
+        
+        # Default to person if names look like person names
+        if entity1.istitle() and entity2.istitle() and len(entity1) > 2 and len(entity2) > 2:
+            return 'person'
+        
+        return None
+    
+    def split_multi_events(self, text: str) -> List[str]:
+        """Split text with multiple events using conjunctions"""
+        # Conjunction patterns that indicate separate events
+        split_patterns = [
+            r'\band then\b',
+            r'\bafter that\b', 
+            r'\bthen\b(?!\s+I\s+went)',  # "then" but not "then I went"
+            r'\bnext\b',
+            r'\blater\b',
+            r'\bafterwards?\b',
+            r'\bsubsequently\b'
+        ]
+        
+        # Find split points
+        split_points = []
+        for pattern in split_patterns:
+            for match in re.finditer(pattern, text, re.IGNORECASE):
+                split_points.append(match.start())
+        
+        if not split_points:
+            return [text]
+        
+        # Sort split points and create segments
+        split_points.sort()
+        segments = []
+        start = 0
+        
+        for split_point in split_points:
+            if start < split_point:
+                segment = text[start:split_point].strip()
+                if len(segment) > 10:  # Minimum meaningful segment length
+                    segments.append(segment)
+            start = split_point
+        
+        # Add final segment
+        final_segment = text[start:].strip()
+        if len(final_segment) > 10:
+            segments.append(final_segment)
+        
+        return segments if segments else [text]
     
     def _save_all_categories(self):
         """Save all memory categories"""

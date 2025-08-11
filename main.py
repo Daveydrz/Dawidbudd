@@ -76,7 +76,14 @@ from voice.manager_names import UltraIntelligentNameManager
 voice_manager.ultra_name_manager = UltraIntelligentNameManager(voice_manager)
 print("[Main] ✅ UltraIntelligentNameManager assigned to voice_manager")
 
-from config import *
+from config import (
+    FULL_DUPLEX_MODE, STREAMING_LLM_ENABLED, STREAMING_TTS_ENABLED, 
+    KOKORO_API_BASE_URL, KOKORO_DEFAULT_VOICE, USER_PRECISE_LOCATION,
+    USER_COORDINATES_PRECISE, USER_POSTCODE_PRECISE, USER_LANDMARKS,
+    BIRTINYA_LOCATION, STREAMING_LLM_CHUNK_WORDS, STREAMING_CHUNK_WORDS,
+    STREAMING_RESPONSE_DELAY, VOICE_PROFILES_DIR, RAW_AUDIO_DIR, 
+    ANONYMOUS_CLUSTERS_DIR, UNCERTAIN_SAMPLES_DIR
+)
 
 # Import with better error handling
 try:
