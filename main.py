@@ -2335,7 +2335,20 @@ def main():
                                 time.sleep(0.5)
                                 speak_streaming("I stream responses as I think and understand context. Just introduce yourself!")
                         
-                        time.sleep(3)
+                        # Wait for greeting TTS to complete
+                        time.sleep(2)
+                        
+                        # Add transition to full duplex conversation after wake word greeting
+                        print("[AdvancedBuddy] 🔄 Transitioning to conversation mode after wake word...")
+                        
+                        try:
+                            # Call the full duplex conversation handler to start listening
+                            handle_full_duplex_conversation()
+                        except Exception as e:
+                            print(f"[AdvancedBuddy] ⚠️ Conversation transition error: {e}")
+                            print("[AdvancedBuddy] 🔄 Returning to wake word detection...")
+                        
+                        print(f"[AdvancedBuddy] 👂 Ready! Say '{wake_word}' to start again...")
                         
             except KeyboardInterrupt:
                 print("\n[AdvancedBuddy] 👋 Shutting down ADVANCED AI ASSISTANT + CONSCIOUSNESS...")
