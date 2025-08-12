@@ -596,7 +596,7 @@ class SelfModel:
                 belief_system["belief_metadata"]["current_identity_phase"] = self.identity_formation_stage
             
             with open(self.belief_system_path, 'w') as f:
-                json.dump(belief_system, f, indent=2)
+                json.dump(belief_system, f, indent=2, ensure_ascii=False)
                 
         except Exception as e:
             logging.error(f"[SelfModel] ❌ Error saving belief system: {e}")
@@ -999,7 +999,7 @@ class SelfModel:
             }
             
             with open(self.save_path, 'w') as f:
-                json.dump(data, f, indent=2)
+                json.dump(data, f, indent=2, ensure_ascii=False)
             
             self.last_save = datetime.now()
             logging.debug("[SelfModel] 💾 Self-model saved")

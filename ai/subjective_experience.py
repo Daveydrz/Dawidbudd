@@ -1109,7 +1109,7 @@ class SubjectiveExperienceSystem:
             }
             
             with open(self.save_path, 'w') as f:
-                json.dump(data, f, indent=2)
+                json.dump(data, f, indent=2, ensure_ascii=False)
             
             logging.debug("[SubjectiveExperience] 💾 Experience state saved")
             

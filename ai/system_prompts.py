@@ -1,5 +1,5 @@
 # ai/system_prompts.py - Location-aware system prompts
-from config import *
+from config import USER_LOCATION, USER_STATE, USER_COUNTRY, USER_TIMEZONE
 
 try:
     from utils.location_manager import get_current_location, get_time_info, get_location_summary

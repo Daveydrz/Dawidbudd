@@ -1,0 +1,2 @@
+{"timestamp": "2025-08-11T04:49:49.405294", "action": "create", "event_id": "visit_1754887789403_228", "event_type": "visit", "username": "fix_test", "metadata": {"original_text": "I went to the store and then visited mom"}}
+{"timestamp": "2025-08-11T04:49:49.405970", "action": "update", "event_id": "visit_1754887789403_228", "event_type": "visit", "username": "fix_test", "metadata": {"original_text": "I went to the store and then visited mom"}}

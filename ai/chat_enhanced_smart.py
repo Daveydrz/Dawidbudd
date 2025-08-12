@@ -1,6 +1,13 @@
-# ai/chat_enhanced_smart.py - Smart LLM-based chat integration
+# ai/chat_enhanced_smart.py - Smart LLM-based chat integration - delegates to core
 import random
-from ai.chat import generate_response_streaming, ask_kobold_streaming, get_current_brisbane_time
+from ai.chat_core.core import (
+    ask_kobold_streaming,
+    get_current_brisbane_time,
+    build_messages,
+    add_memory_context_to_messages,
+    validate_and_enhance_response,
+    apply_safety_filters
+)
 from ai.human_memory_smart import SmartHumanLikeMemory
 from ai.memory import add_to_conversation_history
 
@@ -43,12 +50,19 @@ def generate_response_streaming_with_smart_memory(question, username, lang="en")
             connectors = [" ", "Also, ", "And ", "By the way, ", "Oh, and "]
             yield random.choice(connectors)
         
-        # Use existing streaming generation
+        # Use core streaming directly
+        messages = build_messages(question, username)
+        messages = add_memory_context_to_messages(messages, username, question)
+        
         full_response = ""
-        for chunk in generate_response_streaming(question, username, lang):
+        for chunk in ask_kobold_streaming(messages):
             if chunk and chunk.strip():
-                full_response += chunk.strip() + " "
-                yield chunk.strip()
+                safe_chunk = apply_safety_filters(chunk.strip())
+                validated_chunk = validate_and_enhance_response(safe_chunk, username)
+                
+                if validated_chunk:
+                    full_response += validated_chunk + " "
+                    yield validated_chunk
         
         # Add to conversation history
         if full_response.strip():

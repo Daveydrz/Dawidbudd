@@ -10,8 +10,36 @@ import difflib
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple, Set
 from collections import defaultdict, Counter
-import numpy as np
 import requests
+
+# ✅ LAZY NUMPY IMPORT - Only load when needed for embeddings
+try:
+    import numpy as np
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
+    # Create simple fallback for numpy operations
+    class NumpyFallback:
+        @staticmethod
+        def array(x):
+            return x
+        @staticmethod 
+        def mean(x):
+            return sum(x) / len(x) if x else 0
+        @staticmethod
+        def dot(a, b):
+            return sum(ai * bi for ai, bi in zip(a, b))
+        @property
+        def ndarray(self):
+            return list  # Fallback to list for type checking
+        @staticmethod
+        def linalg():
+            class LinalgFallback:
+                @staticmethod
+                def norm(x):
+                    return sum(xi * xi for xi in x) ** 0.5
+            return LinalgFallback()
+    np = NumpyFallback()
 
 try:
     from voice.smart_voice_recognition import smart_voice_recognition
@@ -21,16 +49,20 @@ except ImportError:
     SMART_VOICE_AVAILABLE = False
     print("[UltraIntelligentNameManager] ⚠️ Smart voice recognition not available")
 
-# 🔧 FIXED: Handle import errors gracefully
-try:
-    from audio.output import speak_streaming
-    AUDIO_AVAILABLE = True
-    print("[UltraIntelligentNameManager] ✅ Audio output available")
-except ImportError:
-    AUDIO_AVAILABLE = False
-    print("[UltraIntelligentNameManager] ⚠️ Audio output not available - using fallback")
-    def speak_streaming(text):
-        print(f"[SPEAK] {text}")
+# ✅ BREAK IMPORT CYCLE: Use lazy loading instead of top-level import
+
+def _speak(text: str):
+    """Lazy-loaded speak function to break import cycles"""
+    try:
+        from audio.output import speak_streaming  # lazy import
+        speak_streaming(text)
+    except ImportError:
+        print(f"[VoiceFallback] 🗣️ {text}")
+
+# Keep the old speak_streaming function for backward compatibility but delegate to _speak
+def speak_streaming(text: str):
+    """Backward compatible speak_streaming function"""
+    _speak(text)
 
 try:
     from voice.database import known_users, anonymous_clusters, save_known_users, link_anonymous_to_named, handle_same_name_collision
@@ -47,7 +79,7 @@ except ImportError:
     def handle_same_name_collision(name): return name
 
 try:
-    from config import *
+    # No specific config imports needed for this module
     CONFIG_AVAILABLE = True
     print("[UltraIntelligentNameManager] ✅ Config available")
 except ImportError:
@@ -1556,7 +1588,7 @@ class UltraIntelligentNameManager:
                 self.session_context['pending_voice_confirm'] = result
                 
                 # Ask for confirmation
-                speak_streaming(f"Is this {suspected_user}?")
+                _speak(f"Is this {suspected_user}?")
                 
                 return suspected_user, "SMART_VOICE_NEEDS_CONFIRMATION"
             
@@ -1587,7 +1619,7 @@ class UltraIntelligentNameManager:
                 confirmed_user = pending_data['suspected_username']
                 self._update_session_context_with_name(confirmed_user)
                 
-                speak_streaming(f"Thanks for confirming, {confirmed_user}!")
+                _speak(f"Thanks for confirming, {confirmed_user}!")
                 
                 # Clear pending
                 self.session_context.pop('pending_voice_confirm', None)
@@ -1597,7 +1629,7 @@ class UltraIntelligentNameManager:
                 # User rejected
                 smart_voice_recognition.confirm_recognition(False, pending_data)
                 
-                speak_streaming("I'll remember you as a new person. What's your name?")
+                _speak("I'll remember you as a new person. What's your name?")
                 
                 # Clear pending
                 self.session_context.pop('pending_voice_confirm', None)
@@ -1619,7 +1651,7 @@ class UltraIntelligentNameManager:
             
             if cluster_id:
                 self._update_session_context_with_name(username)
-                speak_streaming(f"Nice to meet you, {username}! I'll remember your voice.")
+                _speak(f"Nice to meet you, {username}! I'll remember your voice.")
                 return True
             
             return False
@@ -1640,23 +1672,23 @@ class UltraIntelligentNameManager:
             if result['status'] == 'verified':
                 # High confidence - accept
                 self._update_session_context_with_name(claimed_username)
-                speak_streaming(result['message'])
+                _speak(result['message'])
                 return claimed_username, "SMART_VOICE_VERIFIED"
             
             elif result['status'] == 'verify_confirm':
                 # Medium confidence - ask for confirmation
                 self.session_context['pending_voice_confirm'] = result['pending_data']
-                speak_streaming(result['message'])
+                _speak(result['message'])
                 return claimed_username, "SMART_VOICE_VERIFY_CONFIRM"
             
             elif result['status'] == 'verify_rejected':
                 # Low confidence - reject
-                speak_streaming(result['message'])
+                _speak(result['message'])
                 return "Rejected", "SMART_VOICE_VERIFY_REJECTED"
             
             else:
                 # User not found
-                speak_streaming(result['message'])
+                _speak(result['message'])
                 return "NotFound", "SMART_VOICE_USER_NOT_FOUND"
         
         except Exception as e:
@@ -1715,7 +1747,7 @@ class UltraIntelligentNameManager:
                 # Get current user name (would need session context)
                 current_user = 'Daveydrz'  # You'd get this from session
                 self.add_personal_name_alias(current_user, alias)
-                speak_streaming(f"Got it! I'll remember that you can be called {alias}.")
+                _speak(f"Got it! I'll remember that you can be called {alias}.")
                 return current_user, "ALIAS_ADDED"
         
         return "NoCommand", "NO_OVERRIDE_COMMAND"
@@ -2198,7 +2230,7 @@ class UltraIntelligentNameManager:
                         self._log_blocked_attempt(text, "extremely_suspicious", extracted_name)
                         return "NoCommand", "EXTREMELY_SUSPICIOUS_BLOCKED"
                     else:
-                        speak_streaming(f"Did you say your name is {extracted_name}? Please say yes or no.")
+                        _speak(f"Did you say your name is {extracted_name}? Please say yes or no.")
                         self.pending_name_change_confirmation = True
                         self.new_name_suggestion = extracted_name
                         return extracted_name, "WAITING_CONFIRMATION"
@@ -2575,6 +2607,18 @@ class UltraIntelligentNameManager:
             ]
         }
 
+    def _estimate_linguistic_confidence(self, text_lower: str) -> float:
+        """📊 Estimate linguistic confidence using existing booleans"""
+        score = 0.0
+        if self._has_explicit_introduction_phrase(text_lower): score += 0.20
+        if self._has_name_database_match(text_lower): score += 0.10
+        if self._has_cultural_variant(text_lower): score += 0.10
+        if self._has_good_sentence_structure(text_lower): score += 0.10
+        if self._has_greeting_context(text_lower): score += 0.05
+        if self._is_whisper_error_pattern(text_lower): score -= 0.20
+        if self._is_casual_conversation_pattern(text_lower): score -= 0.20
+        return max(0.0, min(1.0, score))
+
     def is_ultra_intelligent_spontaneous_introduction(self, text: str) -> bool:
         """🧠 ULTRA-INTELLIGENT spontaneous introduction detection"""
         
@@ -2609,11 +2653,13 @@ class UltraIntelligentNameManager:
         
         # ✅ PHASE 4: MULTI-FACTOR INTRODUCTION VALIDATION
         introduction_score = self._calculate_ultra_intelligent_introduction_score(text_lower)
+        ling_conf = self._estimate_linguistic_confidence(text_lower)
         
         print(f"[UltraIntelligentNameManager] 🧠 ULTRA-AI INTRODUCTION SCORE: {introduction_score:.3f}")
+        print(f"[UltraIntelligentNameManager] 🧠 LINGUISTIC CONFIDENCE: {ling_conf:.3f}")
         
-        # 🔧 FIX: Lowered threshold from 0.85 to 0.65
-        return introduction_score > 0.50
+        # 🆕 NEW: Gate decision with both introduction score and linguistic confidence
+        return (introduction_score > 0.50) and (ling_conf >= 0.30)
     
     def _is_ultra_intelligent_command_detection(self, text_lower: str) -> bool:
         """🧠 ULTRA-INTELLIGENT command detection beyond GPT-4 level"""
@@ -3269,7 +3315,7 @@ class UltraIntelligentNameManager:
             print(f"[UltraIntelligentNameManager] 👤 New name in request: {new_name}")
             return self.confirm_name_change(new_name)
         else:
-            speak_streaming("Sure! What would you like me to call you?")
+            _speak("Sure! What would you like me to call you?")
             self.waiting_for_new_name = True
             return "CurrentUser", "WAITING_FOR_NEW_NAME"
     
@@ -3299,7 +3345,7 @@ class UltraIntelligentNameManager:
             print(f"[UltraIntelligentNameManager] 👤 New name received: {new_name}")
             return self.confirm_name_change(new_name)
         else:
-            speak_streaming("I didn't catch that name clearly. Just say the name you want.")
+            _speak("I didn't catch that name clearly. Just say the name you want.")
             return "CurrentUser", "WAITING_FOR_NEW_NAME"
     
     def extract_flexible_name_from_text(self, text: str) -> Optional[str]:
@@ -3330,7 +3376,7 @@ class UltraIntelligentNameManager:
         self.waiting_for_new_name = False
         self.pending_name_change_confirmation = True
         
-        speak_streaming(f"I will call you {new_name}. Is that correct?")
+        _speak(f"I will call you {new_name}. Is that correct?")
         return "CurrentUser", "CONFIRMING_NAME_CHANGE"
     
     def handle_name_change_confirmation(self, text: str) -> Tuple[str, str]:
@@ -3340,12 +3386,12 @@ class UltraIntelligentNameManager:
         if any(word in text_lower for word in ["yes", "yeah", "correct", "right", "ok"]):
             return self.execute_name_change()
         elif any(word in text_lower for word in ["no", "nope", "wrong"]):
-            speak_streaming("What would you like me to call you?")
+            _speak("What would you like me to call you?")
             self.pending_name_change_confirmation = False
             self.waiting_for_new_name = True
             return "CurrentUser", "WAITING_FOR_NEW_NAME"
         else:
-            speak_streaming(f"I will call you {self.new_name_suggestion}. Is that correct?")
+            _speak(f"I will call you {self.new_name_suggestion}. Is that correct?")
             return "CurrentUser", "CONFIRMING_NAME_CHANGE"
     
     def execute_name_change(self) -> Tuple[str, str]:
@@ -3365,13 +3411,13 @@ class UltraIntelligentNameManager:
                     save_known_users()
                     break
             
-            speak_streaming(f"Great! I'll call you {self.new_name_suggestion} from now on.")
+            _speak(f"Great! I'll call you {self.new_name_suggestion} from now on.")
             self.reset_name_change_state()
             return self.new_name_suggestion, "NAME_CHANGED"
             
         except Exception as e:
             print(f"[UltraIntelligentNameManager] ❌ Name change error: {e}")
-            speak_streaming(f"I'll call you {self.new_name_suggestion} from now on.")
+            _speak(f"I'll call you {self.new_name_suggestion} from now on.")
             self.reset_name_change_state()
             return self.new_name_suggestion, "NAME_NOTED"
     

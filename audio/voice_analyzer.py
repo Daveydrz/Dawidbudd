@@ -7,7 +7,7 @@ import scipy.signal as signal
 from scipy.fft import fft, fftfreq
 from collections import deque
 import time
-from config import *
+from config import DEBUG, MAX_PITCH_HZ, MAX_ZERO_CROSSING_RATE, SAMPLE_RATE
 
 try:
     from audio.smart_detection_manager import analyze_speech_detection, get_current_threshold

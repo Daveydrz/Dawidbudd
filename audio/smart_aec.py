@@ -5,7 +5,7 @@
 import numpy as np
 from collections import deque
 import time
-from config import *
+from config import AEC_ADAPTATION_RATE, AEC_SUPPRESSION_FACTOR
 
 class SmartAEC:
     def __init__(self):

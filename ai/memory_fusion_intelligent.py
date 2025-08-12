@@ -6,7 +6,6 @@ from datetime import datetime
 from typing import Dict, List, Tuple, Optional
 from pathlib import Path
 from ai.memory import get_user_memory, UserMemorySystem
-from ai.chat import ask_kobold
 
 class IntelligentMemoryAnalyzer:
     """🧠 Use Hermes 3 Pro Mistral for smart memory analysis"""
@@ -28,7 +27,7 @@ class IntelligentMemoryAnalyzer:
         """Save user clusters"""
         os.makedirs(self.memory_base_dir, exist_ok=True)
         with open(self.cluster_file, 'w') as f:
-            json.dump(self.clusters, f, indent=2)
+            json.dump(self.clusters, f, indent=2, ensure_ascii=False)
     
     def analyze_user_similarity_intelligent(self, user1: str, user2: str) -> Tuple[float, str]:
         """🧠 Use Hermes 3 Pro Mistral to analyze user similarity"""
@@ -107,6 +106,7 @@ Analyze ONLY the actual data provided. Do not invent details."""
             ]
             
             # ✅ PERFORMANCE FIX: Reduced max_tokens and timeout
+            from ai.chat import ask_kobold  # Lazy import to break cycle
             llm_response = ask_kobold(messages, max_tokens=200)
             
             # Parse LLM response
@@ -598,6 +598,7 @@ Respond ONLY in this exact JSON format:
                 {"role": "user", "content": conflict_prompt}
             ]
             
+            from ai.chat import ask_kobold  # Lazy import to break cycle
             response = ask_kobold(messages, max_tokens=400)
             resolution = self.analyzer._extract_json_analysis(response)
             

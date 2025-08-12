@@ -1,0 +1,1 @@
+{"timestamp": "2025-08-11T06:01:56.914369", "episode_id": "ep_test_user_1754892000", "action": "expire", "event_id": null, "event_type": "highlight", "user": "test_user", "metadata": {"age_days": 9354.251353175394}, "provenance": {"fingerprint": null, "source": null, "original_text": "This is a test event", "confidence_avg": 0.0}}

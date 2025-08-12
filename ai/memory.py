@@ -2,6 +2,7 @@
 import time
 import json
 import datetime
+from datetime import datetime, timedelta
 import re
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
@@ -798,14 +799,14 @@ class UserMemorySystem:
                 entity_dict = asdict(entity)
                 entity_dict['status'] = entity.status.value if entity.status else "unknown"  # Convert enum to string
                 entities_data[name] = entity_dict
-            json.dump(entities_data, f, indent=2)
+            json.dump(entities_data, f, indent=2, ensure_ascii=False)
     
     def _save_life_events(self):
         """Save life events"""
         events_file = self.memory_dir / "life_events.json"
         with open(events_file, 'w') as f:
             events_data = {k: asdict(v) for k, v in self.life_events.items()}
-            json.dump(events_data, f, indent=2)
+            json.dump(events_data, f, indent=2, ensure_ascii=False)
     
     def load_memory(self):
         """Load enhanced memory with entity awareness"""
@@ -857,25 +858,25 @@ class UserMemorySystem:
                 if hasattr(v, 'current_status'):
                     fact_dict['current_status'] = v.current_status.value if v.current_status else "unknown"
                 facts_data[k] = fact_dict
-            json.dump(facts_data, f, indent=2)
+            json.dump(facts_data, f, indent=2, ensure_ascii=False)
     
     def _save_emotional_history(self):
         emotions_file = self.memory_dir / "emotions.json"
         with open(emotions_file, 'w') as f:
             emotions_data = [asdict(e) for e in self.emotional_history]
-            json.dump(emotions_data, f, indent=2)
+            json.dump(emotions_data, f, indent=2, ensure_ascii=False)
     
     def _save_scheduled_events(self):
         events_file = self.memory_dir / "events.json"
         with open(events_file, 'w') as f:
             events_data = [asdict(e) for e in self.scheduled_events]
-            json.dump(events_data, f, indent=2)
+            json.dump(events_data, f, indent=2, ensure_ascii=False)
     
     def _save_conversation_topics(self):
         topics_file = self.memory_dir / "conversation_topics.json"
         with open(topics_file, 'w') as f:
             topics_data = [asdict(t) for t in self.conversation_topics]
-            json.dump(topics_data, f, indent=2)
+            json.dump(topics_data, f, indent=2, ensure_ascii=False)
     
     def _load_personal_facts(self):
         facts_file = self.memory_dir / "personal_facts.json"
@@ -1213,4 +1214,987 @@ print(f"[MegaMemory] 🧠 MEGA-INTELLIGENT Memory System Loaded!")
 print(f"[MegaMemory] ✅ Entity Status Tracking: Active")
 print(f"[MegaMemory] ✅ Life Event Detection: Active") 
 print(f"[MegaMemory] ✅ Response Validation: Active")
+
+# ================================================================================
+# 🧠 ROBUST RECALL PLANNER - Deterministic Memory Queries
+# ================================================================================
+
+def query_memories_by_timeframe(username: str, event_type: str, days_back: int, filter_func=None) -> List[Dict]:
+    """🔍 Pure function: Query memories by timeframe with optional filtering
+    
+    Args:
+        username: User to query memories for
+        event_type: Type of event ('health_state', 'mood_state', 'appointment', etc.)
+        days_back: How many days back to search
+        filter_func: Optional function to filter events (event) -> bool
+    
+    Returns:
+        List of matching events sorted by date (most recent first)
+    """
+    try:
+        from ai.human_memory_smart import SmartHumanLikeMemory
+        memory = SmartHumanLikeMemory(username)
+        
+        # Get appropriate event list
+        event_lists = {
+            'health_state': memory.health_states,
+            'mood_state': memory.mood_states,
+            'visit': memory.visits,
+            'appointment': memory.appointments,
+            'life_event': memory.life_events,
+            'highlight': memory.conversation_highlights
+        }
+        
+        if event_type not in event_lists:
+            return []
+        
+        events = event_lists[event_type]
+        cutoff_date = datetime.now() - timedelta(days=days_back)
+        
+        matching_events = []
+        for event in events:
+            try:
+                created = datetime.fromisoformat(event.get('created', '2000-01-01T00:00:00'))
+                if created >= cutoff_date:
+                    # Apply optional filter
+                    if filter_func is None or filter_func(event):
+                        matching_events.append(event)
+            except Exception:
+                continue
+        
+        # Sort by creation date (most recent first)
+        matching_events.sort(key=lambda e: e.get('created', '2000-01-01T00:00:00'), reverse=True)
+        return matching_events
+        
+    except Exception as e:
+        print(f"[RecallPlanner] ⚠️ Query error: {e}")
+        return []
+
+def query_health_states_this_week(username: str) -> List[Dict]:
+    """🏥 Find all health states from the past week"""
+    return query_memories_by_timeframe(username, 'health_state', 7)
+
+def query_recent_unwell_periods(username: str, days_back: int = 14) -> List[Dict]:
+    """🏥 Find recent periods when user was unwell"""
+    def is_unwell(event):
+        return event.get('state', '').lower() == 'unwell'
+    
+    return query_memories_by_timeframe(username, 'health_state', days_back, is_unwell)
+
+def query_mood_patterns(username: str, days_back: int = 7) -> Dict[str, List[Dict]]:
+    """😊 Analyze mood patterns over time period"""
+    moods = query_memories_by_timeframe(username, 'mood_state', days_back)
+    
+    # Group by mood type
+    mood_groups = {}
+    for mood_event in moods:
+        mood = mood_event.get('mood', 'unknown')
+        if mood not in mood_groups:
+            mood_groups[mood] = []
+        mood_groups[mood].append(mood_event)
+    
+    return mood_groups
+
+def query_visits_and_activities(username: str, days_back: int = 30) -> List[Dict]:
+    """🏪 Find recent visits and activities"""
+    return query_memories_by_timeframe(username, 'visit', days_back)
+
+def query_upcoming_appointments(username: str, days_ahead: int = 7) -> List[Dict]:
+    """📅 Find upcoming appointments"""
+    try:
+        from ai.human_memory_smart import SmartHumanLikeMemory
+        memory = SmartHumanLikeMemory(username)
+        
+        now = datetime.now()
+        future_cutoff = now + timedelta(days=days_ahead)
+        
+        upcoming = []
+        for appointment in memory.appointments:
+            try:
+                event_date = datetime.strptime(appointment.get('date', '2000-01-01'), '%Y-%m-%d')
+                if now <= event_date <= future_cutoff and appointment.get('status') == 'pending':
+                    upcoming.append(appointment)
+            except Exception:
+                continue
+        
+        # Sort by date (soonest first)
+        upcoming.sort(key=lambda e: e.get('date', '2000-01-01'))
+        return upcoming
+        
+    except Exception as e:
+        print(f"[RecallPlanner] ⚠️ Appointment query error: {e}")
+        return []
+
+def query_memories_by_confidence(username: str, min_confidence: float = 0.8) -> Dict[str, List[Dict]]:
+    """🎯 Find high-confidence memories across all types"""
+    try:
+        from ai.human_memory_smart import SmartHumanLikeMemory
+        memory = SmartHumanLikeMemory(username)
+        
+        high_confidence = {}
+        
+        event_lists = {
+            'health_state': memory.health_states,
+            'mood_state': memory.mood_states,
+            'visit': memory.visits,
+            'appointment': memory.appointments,
+            'life_event': memory.life_events,
+            'highlight': memory.conversation_highlights
+        }
+        
+        for event_type, events in event_lists.items():
+            high_conf_events = []
+            for event in events:
+                field_conf = event.get('field_confidence', {})
+                if field_conf:
+                    avg_conf = sum(field_conf.values()) / len(field_conf)
+                    if avg_conf >= min_confidence:
+                        high_conf_events.append(event)
+            
+            if high_conf_events:
+                high_confidence[event_type] = high_conf_events
+        
+        return high_confidence
+        
+    except Exception as e:
+        print(f"[RecallPlanner] ⚠️ Confidence query error: {e}")
+        return {}
+
+def query_salient_memories(username: str, min_salience: float = 0.7, days_back: int = 30) -> List[Dict]:
+    """⭐ Find highly salient (important) memories"""
+    try:
+        from ai.human_memory_smart import SmartHumanLikeMemory
+        memory = SmartHumanLikeMemory(username)
+        
+        cutoff_date = datetime.now() - timedelta(days=days_back)
+        salient_memories = []
+        
+        event_lists = [
+            memory.health_states, memory.mood_states, memory.visits,
+            memory.appointments, memory.life_events, memory.conversation_highlights
+        ]
+        
+        for event_list in event_lists:
+            for event in event_list:
+                try:
+                    created = datetime.fromisoformat(event.get('created', '2000-01-01T00:00:00'))
+                    salience = event.get('salience', 0.0)
+                    
+                    if created >= cutoff_date and salience >= min_salience:
+                        salient_memories.append(event)
+                except Exception:
+                    continue
+        
+        # Sort by salience score (highest first)
+        salient_memories.sort(key=lambda e: e.get('salience', 0.0), reverse=True)
+        return salient_memories
+        
+    except Exception as e:
+        print(f"[RecallPlanner] ⚠️ Salience query error: {e}")
+        return []
+
+def get_memory_summary_for_period(username: str, days_back: int = 7) -> Dict[str, Any]:
+    """📊 Get comprehensive memory summary for a time period"""
+    try:
+        summary = {
+            'period_days': days_back,
+            'health_states': query_memories_by_timeframe(username, 'health_state', days_back),
+            'mood_states': query_memories_by_timeframe(username, 'mood_state', days_back),
+            'visits': query_memories_by_timeframe(username, 'visit', days_back),
+            'appointments': query_memories_by_timeframe(username, 'appointment', days_back),
+            'life_events': query_memories_by_timeframe(username, 'life_event', days_back),
+            'highlights': query_memories_by_timeframe(username, 'highlight', days_back)
+        }
+        
+        # Add statistics
+        summary['stats'] = {
+            'total_events': sum(len(events) for events in summary.values() if isinstance(events, list)),
+            'health_events': len(summary['health_states']),
+            'mood_events': len(summary['mood_states']),
+            'social_events': len(summary['visits']) + len(summary['life_events']),
+            'upcoming_appointments': len(query_upcoming_appointments(username, 7))
+        }
+        
+        return summary
+        
+    except Exception as e:
+        print(f"[RecallPlanner] ⚠️ Summary error: {e}")
+        return {'error': str(e)}
+
+# Convenience functions for natural language queries
+def answer_when_was_i_unwell(username: str) -> str:
+    """🏥 Answer: 'When was I unwell this week?'"""
+    unwell_events = query_recent_unwell_periods(username, 7)
+    
+    if not unwell_events:
+        return "I don't have records of you being unwell in the past week."
+    
+    responses = []
+    for event in unwell_events[:3]:  # Top 3 most recent
+        date = event.get('date', 'unknown date')
+        symptoms = event.get('symptoms', [])
+        severity = event.get('severity', '')
+        
+        response = f"On {date}"
+        if symptoms:
+            response += f" you had {', '.join(symptoms)}"
+        if severity:
+            response += f" ({severity})"
+        
+        responses.append(response)
+    
+    return "; ".join(responses) + "."
+
+def answer_whats_my_mood_been_like(username: str, days_back: int = 7) -> str:
+    """😊 Answer: 'What's my mood been like lately?'"""
+    mood_patterns = query_mood_patterns(username, days_back)
+    
+    if not mood_patterns:
+        return f"I don't have mood records from the past {days_back} days."
+    
+    # Summarize mood trends
+    mood_summary = []
+    for mood, events in mood_patterns.items():
+        count = len(events)
+        if count == 1:
+            mood_summary.append(f"you felt {mood} once")
+        else:
+            mood_summary.append(f"you felt {mood} {count} times")
+    
+    return f"Over the past {days_back} days, " + ", ".join(mood_summary) + "."
+
+def answer_where_have_i_been(username: str, days_back: int = 14) -> str:
+    """🏪 Answer: 'Where have I been recently?'"""
+    visits = query_visits_and_activities(username, days_back)
+    
+    if not visits:
+        return f"I don't have records of visits in the past {days_back} days."
+    
+    locations = []
+    for visit in visits:
+        location = visit.get('location', 'somewhere')
+        date = visit.get('date', '')
+        if location != 'somewhere':
+            locations.append(f"{location}" + (f" on {date}" if date else ""))
+    
+    if not locations:
+        return f"No specific locations recorded in the past {days_back} days."
+    
+    unique_locations = list(dict.fromkeys(locations))  # Remove duplicates while preserving order
+    return f"You've been to: " + ", ".join(unique_locations[:5]) + "."  # Top 5
+
+# ================================================================================
+# 🧠 ENHANCED DETERMINISTIC RECALL PLANNER - Advanced Query Capabilities
+# ================================================================================
+
+def get_memory_timeline(username: str, days_back: int = 30) -> List[Dict]:
+    """📅 Get chronological timeline of all memories"""
+    try:
+        memory_system = get_user_memory(username)
+        all_events = []
+        
+        # Collect from smart memory if available
+        if hasattr(memory_system, 'smart_memory'):
+            smart = memory_system.smart_memory
+            all_events.extend(smart.appointments or [])
+            all_events.extend(smart.life_events or [])
+            all_events.extend(smart.health_states or [])
+            all_events.extend(smart.mood_states or [])
+            all_events.extend(smart.visits or [])
+            all_events.extend(smart.conversation_highlights or [])
+        
+        # Filter by date range
+        cutoff = datetime.now() - timedelta(days=days_back)
+        filtered_events = []
+        
+        for event in all_events:
+            event_date_str = event.get('date', '')
+            try:
+                event_date = datetime.strptime(event_date_str, '%Y-%m-%d')
+                if event_date >= cutoff:
+                    filtered_events.append(event)
+            except ValueError:
+                # Include events with invalid dates (better to have them)
+                filtered_events.append(event)
+        
+        # Sort by date (most recent first)
+        filtered_events.sort(key=lambda x: x.get('created', '2000-01-01T00:00:00'), reverse=True)
+        
+        return filtered_events
+        
+    except Exception as e:
+        print(f"[RecallPlanner] ⚠️ Timeline error: {e}")
+        return []
+
+def query_memories_by_confidence_range(username: str, min_confidence: float = 0.0, max_confidence: float = 1.0) -> Dict[str, List[Dict]]:
+    """🎯 Query memories by confidence range"""
+    try:
+        memory_system = get_user_memory(username)
+        confident_memories = {}
+        
+        if hasattr(memory_system, 'smart_memory'):
+            smart = memory_system.smart_memory
+            
+            collections = {
+                'appointments': smart.appointments or [],
+                'life_events': smart.life_events or [],
+                'health_states': smart.health_states or [],
+                'mood_states': smart.mood_states or [],
+                'visits': smart.visits or [],
+                'highlights': smart.conversation_highlights or []
+            }
+            
+            for collection_name, events in collections.items():
+                filtered = []
+                for event in events:
+                    confidence = event.get('confidence', 0.5)
+                    if min_confidence <= confidence <= max_confidence:
+                        filtered.append(event)
+                
+                if filtered:
+                    confident_memories[collection_name] = filtered[:20]  # Top 20 per type
+        
+        return confident_memories
+        
+    except Exception as e:
+        print(f"[RecallPlanner] ⚠️ Confidence query error: {e}")
+        return {}
+
+def query_hypothesis_memories(username: str) -> List[Dict]:
+    """🤔 Query uncertain memories that need confirmation"""
+    try:
+        memory_system = get_user_memory(username)
+        
+        if hasattr(memory_system, 'smart_memory') and hasattr(memory_system.smart_memory, 'hypothesis_memories'):
+            return memory_system.smart_memory.hypothesis_memories or []
+        
+        return []
+        
+    except Exception as e:
+        print(f"[RecallPlanner] ⚠️ Hypothesis query error: {e}")
+        return []
+
+def query_knowledge_graph_entities(username: str, entity_type: str = None) -> Dict:
+    """🌐 Query personal knowledge graph entities"""
+    try:
+        memory_system = get_user_memory(username)
+        
+        if hasattr(memory_system, 'smart_memory') and hasattr(memory_system.smart_memory, 'knowledge_graph'):
+            kg = memory_system.smart_memory.knowledge_graph
+            entities = kg.get('entities', {})
+            
+            if entity_type:
+                filtered = {k: v for k, v in entities.items() if v.get('type') == entity_type}
+                return filtered
+            
+            return entities
+        
+        return {}
+        
+    except Exception as e:
+        print(f"[RecallPlanner] ⚠️ Knowledge graph query error: {e}")
+        return {}
+
+def get_entity_relationships(username: str, entity_name: str) -> List[Dict]:
+    """🔗 Get relationships for a specific entity"""
+    try:
+        memory_system = get_user_memory(username)
+        
+        if hasattr(memory_system, 'smart_memory') and hasattr(memory_system.smart_memory, 'knowledge_graph'):
+            kg = memory_system.smart_memory.knowledge_graph
+            relationships = kg.get('relationships', [])
+            
+            entity_name_lower = entity_name.lower()
+            related = []
+            
+            for rel in relationships:
+                from_entity = rel.get('from', '').split(':')[-1]  # Get name part after type:
+                to_entity = rel.get('to', '').split(':')[-1]
+                
+                if from_entity == entity_name_lower or to_entity == entity_name_lower:
+                    related.append(rel)
+            
+            return related
+        
+        return []
+        
+    except Exception as e:
+        print(f"[RecallPlanner] ⚠️ Relationship query error: {e}")
+        return []
+
+def answer_what_do_i_know_about(username: str, entity_name: str) -> str:
+    """💭 Answer: 'What do I know about [person/place/thing]?'"""
+    try:
+        # Query knowledge graph
+        relationships = get_entity_relationships(username, entity_name)
+        entities = query_knowledge_graph_entities(username)
+        
+        # Find the entity
+        entity_key = None
+        for key, entity in entities.items():
+            if entity.get('name', '').lower() == entity_name.lower():
+                entity_key = key
+                break
+        
+        if not entity_key:
+            return f"I don't have any information about {entity_name}."
+        
+        entity = entities[entity_key]
+        facts = []
+        
+        # Basic info
+        entity_type = entity.get('type', 'unknown')
+        mention_count = entity.get('mention_count', 0)
+        facts.append(f"{entity_name} is a {entity_type} mentioned {mention_count} time{'s' if mention_count != 1 else ''}")
+        
+        # Associated events
+        event_count = len(entity.get('associated_events', []))
+        if event_count > 0:
+            facts.append(f"associated with {event_count} memory event{'s' if event_count != 1 else ''}")
+        
+        # Relationships
+        if relationships:
+            related_entities = []
+            for rel in relationships[:3]:  # Top 3 relationships
+                from_name = rel.get('from', '').split(':')[-1]
+                to_name = rel.get('to', '').split(':')[-1]
+                relation = rel.get('relation', 'related to')
+                
+                other_entity = to_name if from_name == entity_name.lower() else from_name
+                related_entities.append(f"{relation.replace('_', ' ')} {other_entity}")
+            
+            if related_entities:
+                facts.append("relationships: " + ", ".join(related_entities))
+        
+        return f"{entity_name}: " + "; ".join(facts) + "."
+        
+    except Exception as e:
+        print(f"[RecallPlanner] ⚠️ Entity query error: {e}")
+        return f"Unable to retrieve information about {entity_name}."
+
+def answer_when_did_i_last(username: str, activity: str) -> str:
+    """📅 Answer: 'When did I last [do something]?'"""
+    try:
+        timeline = get_memory_timeline(username, 90)  # Look back 90 days
+        
+        activity_lower = activity.lower()
+        matching_events = []
+        
+        for event in timeline:
+            topic = (event.get('topic', '') or '').lower()
+            details = (event.get('details', '') or '').lower()
+            location = (event.get('location', '') or '').lower()
+            
+            # Check if activity matches any field
+            if (activity_lower in topic or 
+                activity_lower in details or
+                activity_lower in location):
+                matching_events.append(event)
+        
+        if not matching_events:
+            return f"I don't have records of you {activity} recently."
+        
+        # Get most recent match
+        recent_event = matching_events[0]
+        date = recent_event.get('date', 'an unknown date')
+        topic = recent_event.get('topic', activity)
+        
+        return f"You last {activity} on {date} ({topic})."
+        
+    except Exception as e:
+        print(f"[RecallPlanner] ⚠️ Last activity query error: {e}")
+        return f"Unable to find when you last {activity}."
+
+def get_memory_insights(username: str, days_back: int = 30) -> Dict[str, Any]:
+    """📊 Get insights and patterns from memory data"""
+    try:
+        timeline = get_memory_timeline(username, days_back)
+        
+        if not timeline:
+            return {'error': 'No memories found in the specified period'}
+        
+        insights = {
+            'total_events': len(timeline),
+            'event_types': {},
+            'most_active_days': {},
+            'location_frequency': {},
+            'mood_trends': [],
+            'health_mentions': 0,
+            'confidence_distribution': {'high': 0, 'medium': 0, 'low': 0},
+            'memory_quality': 0.0
+        }
+        
+        # Analyze event types
+        for event in timeline:
+            event_type = event.get('type', 'unknown')
+            insights['event_types'][event_type] = insights['event_types'].get(event_type, 0) + 1
+            
+            # Track confidence distribution
+            confidence = event.get('confidence', 0.5)
+            if confidence >= 0.8:
+                insights['confidence_distribution']['high'] += 1
+            elif confidence >= 0.5:
+                insights['confidence_distribution']['medium'] += 1
+            else:
+                insights['confidence_distribution']['low'] += 1
+            
+            # Track locations
+            location = event.get('location')
+            if location:
+                insights['location_frequency'][location] = insights['location_frequency'].get(location, 0) + 1
+            
+            # Track daily activity
+            date = event.get('date', '')
+            if date:
+                insights['most_active_days'][date] = insights['most_active_days'].get(date, 0) + 1
+            
+            # Health mentions
+            if event_type == 'health_state' or 'health' in event.get('topic', '').lower():
+                insights['health_mentions'] += 1
+            
+            # Mood tracking
+            if event_type == 'mood_state':
+                mood = event.get('mood', 'neutral')
+                insights['mood_trends'].append({
+                    'mood': mood,
+                    'date': event.get('date', ''),
+                    'intensity': event.get('intensity', 'medium')
+                })
+        
+        # Calculate overall memory quality
+        total_confidence = sum(event.get('confidence', 0.5) for event in timeline)
+        insights['memory_quality'] = total_confidence / len(timeline) if timeline else 0.0
+        
+        return insights
+        
+    except Exception as e:
+        print(f"[RecallPlanner] ⚠️ Insights error: {e}")
+        return {'error': str(e)}
+
+
+# ========================================
+# DETERMINISTIC RECALL PLANNER
+# ========================================
+
+def list_events(username: str, *, types=None, category=None, start_date=None, end_date=None, state=None) -> List[Dict]:
+    """List events with optional filtering - pure function with no side effects"""
+    try:
+        from ai.human_memory_smart import SmartHumanLikeMemory
+        
+        # Initialize memory system to read data
+        memory = SmartHumanLikeMemory(username)
+        
+        # Gather all events from all lists
+        all_events = []
+        event_sources = [
+            (memory.appointments, 'appointment'),
+            (memory.life_events, 'life_event'),
+            (memory.conversation_highlights, 'highlight'),
+            (memory.health_states, 'health_state'),
+            (memory.mood_states, 'mood_state'),
+            (memory.visits, 'visit')
+        ]
+        
+        for event_list, event_type in event_sources:
+            for event in event_list:
+                event_copy = event.copy()
+                event_copy['_source_type'] = event_type
+                all_events.append(event_copy)
+        
+        # Apply filters
+        filtered_events = []
+        for event in all_events:
+            # Filter by types
+            if types and event.get('type') not in types:
+                continue
+                
+            # Filter by category  
+            if category and event.get('category') != category:
+                continue
+                
+            # Filter by date range
+            event_date = event.get('date', '')
+            if start_date and event_date < start_date:
+                continue
+            if end_date and event_date > end_date:
+                continue
+                
+            # Filter by state
+            if state and event.get('state') != state:
+                continue
+                
+            filtered_events.append(event)
+        
+        # Sort by date and time
+        filtered_events.sort(key=lambda x: (x.get('date', ''), x.get('time', '')), reverse=True)
+        return filtered_events
+        
+    except Exception as e:
+        print(f"[RecallPlanner] ❌ list_events error: {e}")
+        return []
+
+
+def parse_time_range(question: str) -> Tuple[Optional[str], Optional[str]]:
+    """Parse natural language time expressions into start_date, end_date - pure function"""
+    today = datetime.now().strftime('%Y-%m-%d')
+    question_lower = question.lower().strip()
+    
+    # Today
+    if 'today' in question_lower:
+        return today, today
+    
+    # Yesterday  
+    if 'yesterday' in question_lower:
+        yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+        return yesterday, yesterday
+    
+    # This week
+    if 'this week' in question_lower:
+        now = datetime.now()
+        start_of_week = now - timedelta(days=now.weekday())
+        end_of_week = start_of_week + timedelta(days=6)
+        return start_of_week.strftime('%Y-%m-%d'), end_of_week.strftime('%Y-%m-%d')
+    
+    # Last week
+    if 'last week' in question_lower:
+        now = datetime.now()
+        start_of_last_week = now - timedelta(days=now.weekday() + 7)
+        end_of_last_week = start_of_last_week + timedelta(days=6)
+        return start_of_last_week.strftime('%Y-%m-%d'), end_of_last_week.strftime('%Y-%m-%d')
+    
+    # This month
+    if 'this month' in question_lower:
+        now = datetime.now()
+        start_of_month = now.replace(day=1).strftime('%Y-%m-%d')
+        # Find last day of month
+        next_month = now.replace(day=28) + timedelta(days=4)
+        end_of_month = (next_month - timedelta(days=next_month.day)).strftime('%Y-%m-%d')
+        return start_of_month, end_of_month
+    
+    # Last month
+    if 'last month' in question_lower:
+        now = datetime.now()
+        first_day_this_month = now.replace(day=1)
+        last_day_last_month = first_day_this_month - timedelta(days=1)
+        start_of_last_month = last_day_last_month.replace(day=1).strftime('%Y-%m-%d')
+        return start_of_last_month, last_day_last_month.strftime('%Y-%m-%d')
+    
+    # Last N days
+    import re
+    days_match = re.search(r'(?:last|past)\s+(\d+)\s+days?', question_lower)
+    if days_match:
+        n_days = int(days_match.group(1))
+        start_date = (datetime.now() - timedelta(days=n_days)).strftime('%Y-%m-%d')
+        return start_date, today
+    
+    # Default: no time filter
+    return None, None
+
+
+def answer_simple_memory_question(username: str, question: str) -> Dict:
+    """Answer simple memory questions with deterministic results - pure function"""
+    try:
+        question_lower = question.lower().strip()
+        
+        # Parse time range from question
+        start_date, end_date = parse_time_range(question)
+        
+        # "when unwell this week?" - health state queries
+        if 'unwell' in question_lower or 'sick' in question_lower or 'ill' in question_lower:
+            events = list_events(username, types=['health_state'], start_date=start_date, end_date=end_date, state='unwell')
+            if events:
+                latest_event = events[0]  # Most recent
+                return {
+                    'answer': f"You were unwell on {latest_event.get('date')} - {latest_event.get('details', 'feeling unwell')}",
+                    'events': events,
+                    'confidence': 0.9
+                }
+            else:
+                time_desc = 'this week' if 'week' in question_lower else 'recently'
+                return {
+                    'answer': f"No records of being unwell {time_desc}",
+                    'events': [],
+                    'confidence': 0.8
+                }
+        
+        # "what did I have on [date]?" - general event queries
+        if 'what did i have' in question_lower or 'what happened' in question_lower:
+            events = list_events(username, start_date=start_date, end_date=end_date)
+            if events:
+                event_summaries = []
+                for event in events[:5]:  # Top 5 events
+                    summary = f"{event.get('type', 'event')}: {event.get('topic', 'unknown')}"
+                    if event.get('location'):
+                        summary += f" at {event.get('location')}"
+                    event_summaries.append(summary)
+                
+                return {
+                    'answer': f"Events found: {'; '.join(event_summaries)}",
+                    'events': events,
+                    'confidence': 0.9
+                }
+            else:
+                return {
+                    'answer': "No events found for that time period",
+                    'events': [],
+                    'confidence': 0.8
+                }
+        
+        # Mood queries
+        if 'mood' in question_lower or 'feeling' in question_lower:
+            events = list_events(username, types=['mood_state'], start_date=start_date, end_date=end_date)
+            if events:
+                latest_event = events[0]
+                mood = latest_event.get('mood', 'neutral')
+                intensity = latest_event.get('intensity', 'medium')
+                return {
+                    'answer': f"Your mood was {intensity} {mood} on {latest_event.get('date')}",
+                    'events': events,
+                    'confidence': 0.9
+                }
+            else:
+                return {
+                    'answer': "No mood records found for that time period",
+                    'events': [],
+                    'confidence': 0.8
+                }
+        
+        # Visit/location queries
+        if 'visited' in question_lower or 'went to' in question_lower:
+            events = list_events(username, types=['visit'], start_date=start_date, end_date=end_date)
+            if events:
+                locations = list(set(event.get('location', 'unknown') for event in events))
+                return {
+                    'answer': f"You visited: {', '.join(locations)}",
+                    'events': events,
+                    'confidence': 0.9
+                }
+            else:
+                return {
+                    'answer': "No visit records found for that time period",
+                    'events': [],
+                    'confidence': 0.8
+                }
+        
+        # Default: general search
+        events = list_events(username, start_date=start_date, end_date=end_date)
+        return {
+            'answer': f"Found {len(events)} events in the specified time period",
+            'events': events[:10],  # Limit to 10 most recent
+            'confidence': 0.7
+        }
+        
+    except Exception as e:
+        print(f"[RecallPlanner] ❌ answer_simple_memory_question error: {e}")
+        return {
+            'answer': f"Error processing question: {str(e)}",
+            'events': [],
+            'confidence': 0.1
+        }
+
+# Edge-case hardened recall planner functions
+def answer_memory_question_hardened(username: str, question: str) -> dict:
+    """Hardened version with deterministic mapping and safe fallbacks"""
+    try:
+        from utils.time_helper import _parse_time_range_robust
+        
+        # Deterministic question type mapping
+        question_lower = question.lower().strip()
+        
+        # Safe pattern matching with fallbacks
+        question_patterns = {
+            'when_last': [r'\bwhen.*last\b', r'\blast.*when\b', r'\bmost recent\b'],
+            'how_often': [r'\bhow.*often\b', r'\bhow.*many.*times\b', r'\bfrequency\b'],
+            'what_about': [r'\bwhat.*about\b', r'\btell.*about\b', r'\binfo.*about\b'],
+            'where_did': [r'\bwhere.*did\b', r'\bwhere.*was\b', r'\blocation\b'],
+            'health_status': [r'\bhow.*feeling\b', r'\bhealth\b', r'\bsick\b', r'\bunwell\b'],
+            'mood_status': [r'\bmood\b', r'\bhappy\b', r'\bsad\b', r'\bstressed\b']
+        }
+        
+        detected_type = 'general'  # Safe fallback
+        for q_type, patterns in question_patterns.items():
+            if any(re.search(pattern, question_lower) for pattern in patterns):
+                detected_type = q_type
+                break
+        
+        # Parse time range with robust handling
+        start_date, end_date = _parse_time_range_robust(question)
+        
+        # Route to appropriate handler with safe fallbacks
+        if detected_type == 'when_last':
+            return _handle_when_last_question_safe(username, question, start_date, end_date)
+        elif detected_type == 'health_status':
+            return _handle_health_question_safe(username, question, start_date, end_date)
+        elif detected_type == 'mood_status':
+            return _handle_mood_question_safe(username, question, start_date, end_date)
+        else:
+            # General fallback with safe search
+            return _handle_general_question_safe(username, question, start_date, end_date)
+            
+    except Exception as e:
+        print(f"[RecallPlanner] ❌ Hardened recall error: {e}")
+        return {
+            'answer': "I'm having trouble processing that question. Could you rephrase it?",
+            'events': [],
+            'confidence': 0.1,
+            'error': str(e)
+        }
+
+def _handle_when_last_question_safe(username: str, question: str, start_date: str, end_date: str) -> dict:
+    """Safe handler for 'when last' questions"""
+    try:
+        # Extract what they're asking about
+        question_lower = question.lower()
+        
+        # Look for key terms with safe defaults
+        if any(term in question_lower for term in ['unwell', 'sick', 'ill']):
+            events = query_health_states_this_week(username)
+            events = [e for e in events if e.get('state') == 'unwell']
+        elif any(term in question_lower for term in ['doctor', 'appointment']):
+            events = list_events(username, types=['appointment'])
+        elif any(term in question_lower for term in ['visit', 'went to', 'at']):
+            events = list_events(username, types=['visit'])
+        else:
+            # Safe fallback - recent highlights
+            events = list_events(username, start_date=start_date, end_date=end_date)
+        
+        if events:
+            # Sort by date, most recent first
+            events.sort(key=lambda x: x.get('date', ''), reverse=True)
+            latest = events[0]
+            
+            return {
+                'answer': f"The last time was on {latest.get('date', 'unknown date')}: {latest.get('topic', 'an event')}",
+                'events': [latest],
+                'confidence': 0.8
+            }
+        else:
+            return {
+                'answer': "I don't have any records of that in the timeframe you mentioned.",
+                'events': [],
+                'confidence': 0.6
+            }
+            
+    except Exception as e:
+        return {
+            'answer': "I couldn't find that information right now.",
+            'events': [],
+            'confidence': 0.1,
+            'error': str(e)
+        }
+
+def _handle_health_question_safe(username: str, question: str, start_date: str, end_date: str) -> dict:
+    """Safe handler for health-related questions"""
+    try:
+        events = query_health_states_this_week(username)
+        
+        if events:
+            # Group by state
+            states = {}
+            for event in events:
+                state = event.get('state', 'unknown')
+                if state not in states:
+                    states[state] = []
+                states[state].append(event)
+            
+            # Build safe response
+            if 'unwell' in states:
+                recent_unwell = states['unwell'][-1]  # Most recent
+                return {
+                    'answer': f"You were feeling unwell on {recent_unwell.get('date', 'recently')}",
+                    'events': states['unwell'],
+                    'confidence': 0.8
+                }
+            elif any(state in states for state in ['better', 'fine', 'good']):
+                return {
+                    'answer': "You've been feeling well recently",
+                    'events': [e for state in ['better', 'fine', 'good'] for e in states.get(state, [])],
+                    'confidence': 0.7
+                }
+        
+        return {
+            'answer': "I don't have recent health information to share",
+            'events': [],
+            'confidence': 0.5
+        }
+        
+    except Exception as e:
+        return {
+            'answer': "I couldn't check your health status right now",
+            'events': [],
+            'confidence': 0.1,
+            'error': str(e)
+        }
+
+def _handle_mood_question_safe(username: str, question: str, start_date: str, end_date: str) -> dict:
+    """Safe handler for mood-related questions"""
+    try:
+        events = list_events(username, types=['mood_state'], start_date=start_date, end_date=end_date)
+        
+        if events:
+            # Get most recent mood
+            events.sort(key=lambda x: x.get('date', ''), reverse=True)
+            latest_mood = events[0]
+            
+            mood = latest_mood.get('mood', 'unknown')
+            date = latest_mood.get('date', 'recently')
+            
+            return {
+                'answer': f"You were feeling {mood} on {date}",
+                'events': [latest_mood],
+                'confidence': 0.8
+            }
+        
+        return {
+            'answer': "I don't have recent mood information",
+            'events': [],
+            'confidence': 0.5
+        }
+        
+    except Exception as e:
+        return {
+            'answer': "I couldn't check your mood information right now",
+            'events': [],
+            'confidence': 0.1,
+            'error': str(e)
+        }
+
+def _handle_general_question_safe(username: str, question: str, start_date: str, end_date: str) -> dict:
+    """Safe fallback handler for general questions"""
+    try:
+        # Search across all event types with safe limits
+        all_events = []
+        
+        for event_type in ['health_state', 'mood_state', 'visit', 'appointment', 'life_event']:
+            try:
+                events = list_events(username, types=[event_type], start_date=start_date, end_date=end_date)
+                all_events.extend(events[:5])  # Limit to prevent overflow
+            except:
+                continue  # Skip failed event types
+        
+        if all_events:
+            # Sort by confidence/salience if available
+            all_events.sort(key=lambda x: x.get('confidence', 0.5), reverse=True)
+            
+            return {
+                'answer': f"I found {len(all_events)} relevant events in that timeframe",
+                'events': all_events[:3],  # Return top 3
+                'confidence': 0.6
+            }
+        
+        return {
+            'answer': "I couldn't find specific information about that",
+            'events': [],
+            'confidence': 0.4
+        }
+        
+    except Exception as e:
+        return {
+            'answer': "I'm having trouble searching for that information",
+            'events': [],
+            'confidence': 0.1,
+            'error': str(e)
+        }
+
+print(f"[MegaMemory] 🔍 Recall Planner: Active")
 print(f"[MegaMemory] ✅ Memory Inference Engine: Active")

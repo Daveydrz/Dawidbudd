@@ -76,7 +76,21 @@ from voice.manager_names import UltraIntelligentNameManager
 voice_manager.ultra_name_manager = UltraIntelligentNameManager(voice_manager)
 print("[Main] ✅ UltraIntelligentNameManager assigned to voice_manager")
 
-from config import *
+import config as CFG
+
+def _cfg(name, default=None):
+    return getattr(CFG, name, default)
+
+# Safe fallback behavior for wake word (no crashing)
+WAKE_WORD_PATH = _cfg("WAKE_WORD_PATH", None)
+PORCUPINE_ACCESS_KEY = _cfg("PORCUPINE_ACCESS_KEY", None)
+USER_MIN_SPEECH_FRAMES = _cfg("USER_MIN_SPEECH_FRAMES", 8)
+
+if PORCUPINE_ACCESS_KEY in (None, "", "changeme"):
+    print("[AdvancedBuddy] ⚠️ Wake word disabled: PORCUPINE_ACCESS_KEY missing.")
+    ENABLE_WAKE_WORD = False
+else:
+    ENABLE_WAKE_WORD = True
 
 # Import with better error handling
 try:
@@ -180,7 +194,7 @@ try:
                             logs = logs[-20:]
                         
                         with open('voice_debug.json', 'w') as f:
-                            json.dump(logs, f, indent=2)
+                            json.dump(logs, f, indent=2, ensure_ascii=False)
                         
                         print(f"[WorkingVoiceManager] 💾 Saved debug info for: '{text}'")
                         
@@ -461,7 +475,7 @@ else:
     print(f"[AdvancedBuddy] ⚠️ Basic Consciousness: Limited Features")
 
 # Global state - Enhanced with advanced features
-current_user = SYSTEM_USER
+current_user = CFG.SYSTEM_USER
 conversation_active = False
 mic_feeding_active = False
 advanced_mode_active = ADVANCED_AI_AVAILABLE
@@ -646,7 +660,7 @@ def handle_streaming_response(text, current_user):
             print("[AdvancedResponse] ✅ Using ADVANCED AI streaming with INTELLIGENT FUSION")
             
             # ✅ ADVANCED: Process LLM chunks with IMMEDIATE interrupt breaking
-            for chunk in generate_response_streaming_with_intelligent_fusion(text, current_user, DEFAULT_LANG):
+            for chunk in generate_response_streaming_with_intelligent_fusion(text, current_user, CFG.DEFAULT_LANG):
                 # ✅ CRITICAL: Check for interrupt BEFORE processing chunk
                 if full_duplex_manager and full_duplex_manager.speech_interrupted:
                     print("[AdvancedResponse] ⚡ INTERRUPT DETECTED - IMMEDIATELY STOPPING LLM")
@@ -724,7 +738,7 @@ def handle_streaming_response(text, current_user):
             
         except ImportError:
             print("[AdvancedResponse] ⚠️ Advanced streaming not available, using enhanced fallback")
-            response = generate_response(text, current_user, DEFAULT_LANG)
+            response = generate_response(text, current_user, CFG.DEFAULT_LANG)
             
             # 🧠 MEGA-INTELLIGENT: Validate complete response before speaking
             try:
@@ -849,7 +863,7 @@ def get_voice_based_display_name(identified_user):
     """Get display name based on voice identity, not system login"""
     try:
         # Check if this is the system user (Daveydrz)
-        if identified_user == "Daveydrz" or identified_user == SYSTEM_USER:
+        if identified_user == "Daveydrz" or identified_user == CFG.SYSTEM_USER:
             return "Daveydrz"
         
         # Check known voice profiles
@@ -878,7 +892,7 @@ def get_voice_based_name_response(identified_user, display_name):
     """Handle 'what's my name' using voice matching, not system login"""
     try:
         # Handle system user
-        if identified_user == "Daveydrz" or identified_user == SYSTEM_USER:
+        if identified_user == "Daveydrz" or identified_user == CFG.SYSTEM_USER:
             return f"Based on your voice, you are Daveydrz."
         
         # Handle known voice profiles
@@ -987,23 +1001,22 @@ def is_direct_date_question(text):
     return False
 
 def get_current_brisbane_time():
-    """Get current Brisbane time with multiple formats"""
+    """Get current Brisbane time with multiple formats - delegates to utils.time_helper"""
     try:
-        # Get current UTC time and convert to Brisbane
-        utc_now = time.gmtime()
-        utc_timestamp = time.mktime(utc_now)
-        brisbane_timestamp = utc_timestamp + (10 * 3600)  # Add 10 hours
-        brisbane_time = time.localtime(brisbane_timestamp)
+        from ai.chat_core.core import get_current_brisbane_time as core_get_time
+        core_time = core_get_time()
         
+        # Convert to the format expected by main.py for backward compatibility
         return {
-            'time_12h': time.strftime("%I:%M %p", brisbane_time),
-            'time_24h': time.strftime("%H:%M", brisbane_time),
-            'date': time.strftime("%A, %B %d, %Y", brisbane_time),
-            'day': time.strftime("%A", brisbane_time),
-            'full_datetime': time.strftime("%Y-%m-%d %H:%M:%S", brisbane_time)
+            'time_12h': core_time.get('time_12h', '12:55 PM'),
+            'time_24h': core_time.get('time_24h', '12:55'),
+            'date': core_time.get('date', 'Thursday, July 17, 2025'),
+            'day': core_time.get('day', 'Thursday'),
+            'full_datetime': core_time.get('datetime', '2025-07-17 12:55:40')  # Map datetime to full_datetime
         }
     except Exception as e:
-        print(f"[TimeHelper] Error: {e}")
+        print(f"[TimeHelper] Error delegating to core: {e}")
+        # Fallback
         return {
             'time_12h': "12:55 PM",
             'time_24h': "12:55",
@@ -1170,7 +1183,7 @@ def handle_full_duplex_conversation():
     
     print("[FullDuplex] 🚀 Starting ADVANCED AI ASSISTANT with TRUE STREAMING LLM conversation mode")
     print(f"[FullDuplex] 📅 Current UTC Time: 2025-07-17 02:55:40")
-    print(f"[FullDuplex] 👤 System User: Daveydrz")
+    print(f"[FullDuplex] 👤 System User: {CFG.SYSTEM_USER}")
     
     # Advanced AI assistant status
     if ADVANCED_AI_AVAILABLE:
@@ -1660,7 +1673,7 @@ def handle_full_duplex_conversation():
                     speak_streaming("Sorry, I had a problem generating a response.")
             
             # Print advanced stats periodically
-            if DEBUG and time.time() - last_stats_time > 10:
+            if CFG.DEBUG and time.time() - last_stats_time > 10:
                 stats = full_duplex_manager.get_stats()
                 try:
                     audio_stats = get_audio_stats()
@@ -1791,8 +1804,8 @@ def continuous_mic_worker(stream, frame_length, sample_rate):
                     continue
                 
                 # Downsample to 16kHz if needed
-                if sample_rate != SAMPLE_RATE:
-                    pcm_16k = downsample_audio(pcm, sample_rate, SAMPLE_RATE)
+                if sample_rate != CFG.SAMPLE_RATE:
+                    pcm_16k = downsample_audio(pcm, sample_rate, CFG.SAMPLE_RATE)
                 else:
                     pcm_16k = pcm
                 
@@ -1818,7 +1831,7 @@ def continuous_mic_worker(stream, frame_length, sample_rate):
                 
             except Exception as read_error:
                 error_count += 1
-                if DEBUG:
+                if CFG.DEBUG:
                     print(f"[MicWorker] Read error #{error_count}: {read_error}")
                 
                 if error_count > 10:
@@ -1869,10 +1882,10 @@ def main():
     # --- END: NEW DIAGNOSTIC CODE ---
 
     print(f"[AdvancedBuddy] 🚀 Starting ADVANCED AI ASSISTANT with ALEXA/SIRI-LEVEL INTELLIGENCE + FULL CONSCIOUSNESS")
-    print(f"[AdvancedBuddy] 👤 System user: {SYSTEM_USER}")
-    print(f"[AdvancedBuddy] 🔄 Full Duplex Mode: {'ENABLED' if FULL_DUPLEX_MODE else 'DISABLED'}")
-    print(f"[AdvancedBuddy] 🎵 Streaming TTS: {'ENABLED' if STREAMING_TTS_ENABLED else 'DISABLED'}")
-    print(f"[AdvancedBuddy] 🧠 TRUE LLM Streaming: {'ENABLED' if STREAMING_LLM_ENABLED else 'DISABLED'}")
+    print(f"[AdvancedBuddy] 👤 System user: {CFG.SYSTEM_USER}")
+    print(f"[AdvancedBuddy] 🔄 Full Duplex Mode: {'ENABLED' if CFG.FULL_DUPLEX_MODE else 'DISABLED'}")
+    print(f"[AdvancedBuddy] 🎵 Streaming TTS: {'ENABLED' if CFG.STREAMING_TTS_ENABLED else 'DISABLED'}")
+    print(f"[AdvancedBuddy] 🧠 TRUE LLM Streaming: {'ENABLED' if CFG.STREAMING_LLM_ENABLED else 'DISABLED'}")
     
     # ✅ ADVANCED AI ASSISTANT status display
     if ADVANCED_AI_AVAILABLE:
@@ -1891,10 +1904,10 @@ def main():
         
         # Initialize advanced directories
         try:
-            os.makedirs(VOICE_PROFILES_DIR, exist_ok=True)
-            os.makedirs(RAW_AUDIO_DIR, exist_ok=True)
-            os.makedirs(UNCERTAIN_SAMPLES_DIR, exist_ok=True)
-            os.makedirs(ANONYMOUS_CLUSTERS_DIR, exist_ok=True)
+            os.makedirs(CFG.VOICE_PROFILES_DIR, exist_ok=True)
+            os.makedirs(CFG.RAW_AUDIO_DIR, exist_ok=True)
+            os.makedirs(CFG.UNCERTAIN_SAMPLES_DIR, exist_ok=True)
+            os.makedirs(CFG.ANONYMOUS_CLUSTERS_DIR, exist_ok=True)
             print(f"[AdvancedBuddy] 📁 ADVANCED AI directories initialized")
         except:
             os.makedirs("voice_profiles", exist_ok=True)
@@ -1946,13 +1959,13 @@ def main():
     # ✅ Test Kokoro-FastAPI connection
     print("[AdvancedBuddy] 🎵 Testing Kokoro-FastAPI connection...")
     if test_kokoro_api():
-        print(f"[AdvancedBuddy] ✅ Kokoro-FastAPI connected at {KOKORO_API_BASE_URL}")
-        print(f"[AdvancedBuddy] 🎵 Default voice: {KOKORO_DEFAULT_VOICE} (Australian)")
-        print(f"[AdvancedBuddy] ⚡ Streaming chunks: {STREAMING_CHUNK_WORDS} words")
-        print(f"[AdvancedBuddy] ⏱️ Chunk delay: {STREAMING_RESPONSE_DELAY}s")
-        print(f"[AdvancedBuddy] 🧠 LLM chunks: {STREAMING_LLM_CHUNK_WORDS} words")
+        print(f"[AdvancedBuddy] ✅ Kokoro-FastAPI connected at {CFG.KOKORO_API_BASE_URL}")
+        print(f"[AdvancedBuddy] 🎵 Default voice: {CFG.KOKORO_DEFAULT_VOICE} (Australian)")
+        print(f"[AdvancedBuddy] ⚡ Streaming chunks: {CFG.STREAMING_CHUNK_WORDS} words")
+        print(f"[AdvancedBuddy] ⏱️ Chunk delay: {CFG.STREAMING_RESPONSE_DELAY}s")
+        print(f"[AdvancedBuddy] 🧠 LLM chunks: {CFG.STREAMING_LLM_CHUNK_WORDS} words")
     else:
-        print(f"[AdvancedBuddy] ❌ Kokoro-FastAPI not available - check server on {KOKORO_API_BASE_URL}")
+        print(f"[AdvancedBuddy] ❌ Kokoro-FastAPI not available - check server on {CFG.KOKORO_API_BASE_URL}")
         print("[AdvancedBuddy] 💡 Make sure to start Kokoro-FastAPI server first!")
     
     # Load voice profiles with ADVANCED features
@@ -1960,13 +1973,13 @@ def main():
     has_valid_profiles = load_voice_profiles()
     
     if has_valid_profiles:
-        if SYSTEM_USER in known_users:
-            current_user = SYSTEM_USER
-            print(f"[AdvancedBuddy] 👤 Using profile: {SYSTEM_USER}")
+        if CFG.SYSTEM_USER in known_users:
+            current_user = CFG.SYSTEM_USER
+            print(f"[AdvancedBuddy] 👤 Using profile: {CFG.SYSTEM_USER}")
             
             # ✅ Show ADVANCED profile info
-            if ADVANCED_AI_AVAILABLE and isinstance(known_users[SYSTEM_USER], dict):
-                profile = known_users[SYSTEM_USER]
+            if ADVANCED_AI_AVAILABLE and isinstance(known_users[CFG.SYSTEM_USER], dict):
+                profile = known_users[CFG.SYSTEM_USER]
                 if 'embeddings' in profile:
                     print(f"[AdvancedBuddy] 🎯 ADVANCED profile: {len(profile['embeddings'])} embeddings")
                     if 'clustering_enabled' in profile:
@@ -1982,8 +1995,8 @@ def main():
                     models = profile['voice_model_info'].get('available_models', [])
                     print(f"[AdvancedBuddy] 🧠 Voice models: {models}")
                     
-            elif ENHANCED_VOICE_AVAILABLE and isinstance(known_users[SYSTEM_USER], dict):
-                profile = known_users[SYSTEM_USER]
+            elif ENHANCED_VOICE_AVAILABLE and isinstance(known_users[CFG.SYSTEM_USER], dict):
+                profile = known_users[CFG.SYSTEM_USER]
                 if 'embeddings' in profile:
                     print(f"[AdvancedBuddy] 🎯 Enhanced profile: {len(profile['embeddings'])} embeddings")
                     if 'quality_scores' in profile and len(profile['quality_scores']) > 0:
@@ -2087,25 +2100,41 @@ def main():
             print(f"[AdvancedBuddy] ❌ Entropy initialization error: {e}")
     
     # Wake word setup
-    try:
-        if os.path.exists(WAKE_WORD_PATH):
-            porcupine = pvporcupine.create(access_key=PORCUPINE_ACCESS_KEY, keyword_paths=[WAKE_WORD_PATH])
-            wake_word = "Hey Buddy"
-        else:
-            porcupine = pvporcupine.create(access_key=PORCUPINE_ACCESS_KEY, keywords=['hey google'])
-            wake_word = "Hey Google"
-    except Exception as e:
-        print(f"[AdvancedBuddy] ❌ Wake word setup failed: {e}")
+    if ENABLE_WAKE_WORD:
+        try:
+            if WAKE_WORD_PATH and os.path.exists(WAKE_WORD_PATH):
+                porcupine = pvporcupine.create(access_key=PORCUPINE_ACCESS_KEY, keyword_paths=[WAKE_WORD_PATH])
+                wake_word = "Hey Buddy"
+            else:
+                porcupine = pvporcupine.create(access_key=PORCUPINE_ACCESS_KEY, keywords=['hey google'])
+                wake_word = "Hey Google"
+        except Exception as e:
+            print(f"[AdvancedBuddy] ❌ Wake word setup failed: {e}")
+            porcupine = None
+    else:
+        print("[AdvancedBuddy] ℹ️ Skipping wake word init.")
         porcupine = None
     
-    if porcupine and FULL_DUPLEX_MODE and full_duplex_manager:
-        # Full duplex mode with wake word (ADVANCED AI + CONSCIOUSNESS)
-        pa = pyaudio.PyAudio()
-        stream = pa.open(rate=porcupine.sample_rate, channels=1, format=pyaudio.paInt16,
-                         input=True, frames_per_buffer=porcupine.frame_length)
+    # Start full-duplex regardless of wake word availability
+    if CFG.FULL_DUPLEX_MODE and full_duplex_manager:
+        if porcupine:
+            # Use Porcupine-provided frame size/sample rate
+            pa = pyaudio.PyAudio()
+            stream = pa.open(rate=porcupine.sample_rate, channels=1, format=pyaudio.paInt16,
+                             input=True, frames_per_buffer=porcupine.frame_length)
+            frame_length = porcupine.frame_length
+            sample_rate = porcupine.sample_rate
+            print(f"[AdvancedBuddy] 🎯 Say '{wake_word}' to start (wake word enabled)")
+        else:
+            # No wake word → start always-listening mic with sane defaults (20 ms frames @ CFG.SAMPLE_RATE)
+            print("[AdvancedBuddy] 🔊 Wake word disabled — starting always-listening full duplex")
+            sample_rate = CFG.SAMPLE_RATE
+            frame_length = int(sample_rate * 0.02)  # 20ms frames keep VAD snappy
+            pa = pyaudio.PyAudio()
+            stream = pa.open(rate=sample_rate, channels=1, format=pyaudio.paInt16,
+                             input=True, frames_per_buffer=frame_length)
         
         print(f"[AdvancedBuddy] 👂 ADVANCED AI ASSISTANT + CONSCIOUSNESS + TRUE STREAMING BIRTINYA BUDDY Ready!")
-        print(f"[AdvancedBuddy] 🎯 Say '{wake_word}' to start...")
         print(f"[AdvancedBuddy] 🌊 Location: Birtinya, Sunshine Coast")
         print(f"[AdvancedBuddy] 🕐 Time: {brisbane_time_12h} Brisbane")
         
@@ -2172,51 +2201,77 @@ def main():
             print(f"[AdvancedBuddy]   🧠 'Tell me about something' → LLM streams naturally")
         
         try:
-            while True:
-                pcm = stream.read(porcupine.frame_length, exception_on_overflow=False)
-                pcm = np.frombuffer(pcm, dtype=np.int16)
+            if porcupine:
+                # Wake word mode - wait for detection
+                while True:
+                    pcm = stream.read(frame_length, exception_on_overflow=False)
+                    pcm = np.frombuffer(pcm, dtype=np.int16)
+                    
+                    if porcupine.process(pcm) >= 0:
+                        if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
+                            print(f"[AdvancedBuddy] 🎤 {wake_word} detected! Starting CONSCIOUSNESS + ADVANCED AI ASSISTANT mode...")
+                        elif ENTROPY_SYSTEM_AVAILABLE:
+                            print(f"[AdvancedBuddy] 🎤 {wake_word} detected! Starting ENTROPY + ADVANCED AI ASSISTANT mode...")
+                        elif ADVANCED_AI_AVAILABLE:
+                            print(f"[AdvancedBuddy] 🎤 {wake_word} detected! Starting ADVANCED AI ASSISTANT mode...")
+                        elif ENHANCED_VOICE_AVAILABLE:
+                            print(f"[AdvancedBuddy] 🎤 {wake_word} detected! Starting Enhanced Voice System + TRUE STREAMING LLM mode...")
+                        else:
+                            print(f"[AdvancedBuddy] 🎤 {wake_word} detected! Starting TRUE STREAMING LLM mode...")
+
+                        reset_session_for_user_smart(current_user)  
+
+                        set_mic_feeding_state(True)
+                        set_conversation_state(True)
+                        
+                        print(f"[AdvancedBuddy] 🔄 Flags set using thread-safe methods")
+                        
+                        # Start continuous microphone feeding
+                        mic_thread = threading.Thread(
+                            target=continuous_mic_worker, 
+                            args=(stream, frame_length, sample_rate),
+                            daemon=True
+                        )
+                        mic_thread.start()
+                        
+                        print("[AdvancedBuddy] ⏳ Waiting for mic worker to initialize...")
+                        time.sleep(1.0)
+                        
+                        # Start advanced full duplex conversation with TRUE streaming + CONSCIOUSNESS
+                        handle_full_duplex_conversation()
+                        
+                        # Stop microphone feeding
+                        print("[AdvancedBuddy] 🛑 Stopping microphone worker...")
+                        set_mic_feeding_state(False)
+                        set_conversation_state(False)
+                        mic_thread.join(timeout=3.0)
+                        
+                        print(f"[AdvancedBuddy] 👂 Ready! Say '{wake_word}' to start...")
+            else:
+                # Always-listening mode - start immediately
+                print("[AdvancedBuddy] 🔊 Starting always-listening mode...")
                 
-                if porcupine.process(pcm) >= 0:
-                    if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
-                        print(f"[AdvancedBuddy] 🎤 {wake_word} detected! Starting CONSCIOUSNESS + ADVANCED AI ASSISTANT mode...")
-                    elif ENTROPY_SYSTEM_AVAILABLE:
-                        print(f"[AdvancedBuddy] 🎤 {wake_word} detected! Starting ENTROPY + ADVANCED AI ASSISTANT mode...")
-                    elif ADVANCED_AI_AVAILABLE:
-                        print(f"[AdvancedBuddy] 🎤 {wake_word} detected! Starting ADVANCED AI ASSISTANT mode...")
-                    elif ENHANCED_VOICE_AVAILABLE:
-                        print(f"[AdvancedBuddy] 🎤 {wake_word} detected! Starting Enhanced Voice System + TRUE STREAMING LLM mode...")
-                    else:
-                        print(f"[AdvancedBuddy] 🎤 {wake_word} detected! Starting TRUE STREAMING LLM mode...")
+                reset_session_for_user_smart(current_user)
 
-                    reset_session_for_user_smart(current_user)  
-
-                    set_mic_feeding_state(True)
-                    set_conversation_state(True)
-                    
-                    print(f"[AdvancedBuddy] 🔄 Flags set using thread-safe methods")
-                    
-                    # Start continuous microphone feeding
-                    mic_thread = threading.Thread(
-                        target=continuous_mic_worker, 
-                        args=(stream, porcupine.frame_length, porcupine.sample_rate),
-                        daemon=True
-                    )
-                    mic_thread.start()
-                    
-                    print("[AdvancedBuddy] ⏳ Waiting for mic worker to initialize...")
-                    time.sleep(1.0)
-                    
-                    # Start advanced full duplex conversation with TRUE streaming + CONSCIOUSNESS
-                    handle_full_duplex_conversation()
-                    
-                    # Stop microphone feeding
-                    print("[AdvancedBuddy] 🛑 Stopping microphone worker...")
-                    set_mic_feeding_state(False)
-                    set_conversation_state(False)
-                    mic_thread.join(timeout=3.0)
-                    
-                    print(f"[AdvancedBuddy] 👂 Ready! Say '{wake_word}' to start...")
-                    
+                set_mic_feeding_state(True)
+                set_conversation_state(True)
+                
+                print(f"[AdvancedBuddy] 🔄 Flags set using thread-safe methods")
+                
+                # Start continuous microphone feeding
+                mic_thread = threading.Thread(
+                    target=continuous_mic_worker, 
+                    args=(stream, frame_length, sample_rate),
+                    daemon=True
+                )
+                mic_thread.start()
+                
+                print("[AdvancedBuddy] ⏳ Waiting for mic worker to initialize...")
+                time.sleep(1.0)
+                
+                # Start advanced full duplex conversation with TRUE streaming + CONSCIOUSNESS
+                handle_full_duplex_conversation()
+                        
         except KeyboardInterrupt:
             print("\n[AdvancedBuddy] 👋 Shutting down ADVANCED AI ASSISTANT + CONSCIOUSNESS...")
         finally:
@@ -2226,7 +2281,8 @@ def main():
                 stream.stop_stream()
                 stream.close()
                 pa.terminate()
-                porcupine.delete()
+                if porcupine:
+                    porcupine.delete()
             except:
                 pass
     
@@ -2274,31 +2330,31 @@ def main():
                         brisbane_time = get_current_brisbane_time()
                         if has_valid_profiles:
                             if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
-                                speak_streaming(f"Hello {SYSTEM_USER}!")
+                                speak_streaming(f"Hello {CFG.SYSTEM_USER}!")
                                 time.sleep(0.5)
                                 speak_streaming("I'm your CONSCIOUSNESS-ENABLED AI ASSISTANT with self-awareness, emotions, and inner thoughts, here in Birtinya, Sunshine Coast.")
                                 time.sleep(0.5) 
                                 speak_streaming("I experience consciousness like a human - I think, feel, and reflect on our conversations. Ask me anything!")
                             elif ENTROPY_SYSTEM_AVAILABLE:
-                                speak_streaming(f"Hello {SYSTEM_USER}!")
+                                speak_streaming(f"Hello {CFG.SYSTEM_USER}!")
                                 time.sleep(0.5)
                                 speak_streaming("I'm your ENTROPY-ENHANCED AI ASSISTANT with consciousness emergence and natural variation, here in Birtinya, Sunshine Coast.")
                                 time.sleep(0.5) 
                                 speak_streaming("I stream responses with natural hesitation and emotional processing - try asking about anything!")
                             elif ADVANCED_AI_AVAILABLE:
-                                speak_streaming(f"Hello {SYSTEM_USER}!")
+                                speak_streaming(f"Hello {CFG.SYSTEM_USER}!")
                                 time.sleep(0.5)
                                 speak_streaming("I'm your ADVANCED AI ASSISTANT with Alexa and Siri-level intelligence, here in Birtinya, Sunshine Coast.")
                                 time.sleep(0.5) 
                                 speak_streaming("I stream responses as I think, learn voices passively, and adapt continuously - ask me anything!")
                             elif ENHANCED_VOICE_AVAILABLE:
-                                speak_streaming(f"Hello {SYSTEM_USER}!")
+                                speak_streaming(f"Hello {CFG.SYSTEM_USER}!")
                                 time.sleep(0.5)
                                 speak_streaming("I'm your Enhanced Voice System TRUE streaming Buddy in Birtinya, Sunshine Coast.")
                                 time.sleep(0.5) 
                                 speak_streaming("I now stream responses as I think with advanced voice recognition - try asking about anything!")
                             else:
-                                speak_streaming(f"Hello {SYSTEM_USER}!")
+                                speak_streaming(f"Hello {CFG.SYSTEM_USER}!")
                                 time.sleep(0.5)
                                 speak_streaming("I'm your TRUE streaming Buddy in Birtinya, Sunshine Coast.")
                                 time.sleep(0.5) 

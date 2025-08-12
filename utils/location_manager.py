@@ -544,7 +544,7 @@ class PreciseLocationManager:
             }
             
             with open(self.location_cache_file, 'w') as f:
-                json.dump(cache_data, f, indent=2)
+                json.dump(cache_data, f, indent=2, ensure_ascii=False)
                 
             print(f"[PreciseLocation] 💾 Cached location: {location.confidence} accuracy")
             

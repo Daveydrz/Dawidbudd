@@ -3,10 +3,31 @@ import re
 import time
 import numpy as np
 from audio.input import aec_training_listen
-from audio.output import speak_streaming, play_chime, buddy_talking
 from ai.speech import transcribe_audio
 from voice.recognition import generate_voice_embedding
-from config import *
+from config import SAMPLE_RATE
+
+def _speak(text: str):
+    """Lazy-loaded speak function to break import cycles"""
+    from audio.output import speak_streaming
+    speak_streaming(text)
+
+def _play_chime():
+    """Lazy-loaded play_chime function to break import cycles"""
+    try:
+        from audio.output import play_chime
+        play_chime()
+    except ImportError:
+        pass  # Skip if not available
+
+def _get_buddy_talking():
+    """Lazy-loaded buddy_talking function to break import cycles"""
+    try:
+        from audio.output import buddy_talking
+        return buddy_talking
+    except ImportError:
+        import threading
+        return threading.Event()  # Fallback
 
 # ✅ ADVANCED: Comprehensive training phrases for robust clustering
 ADVANCED_TRAINING_PHRASES = [
@@ -69,10 +90,10 @@ def advanced_voice_training_mode():
         print("[AdvancedTraining] ⚠️ Using basic training mode")
     
     # ✅ CLEAR INSTRUCTION with clustering context
-    speak_streaming("Let's start advanced voice training with AI clustering technology.")
+    _speak("Let's start advanced voice training with AI clustering technology.")
     
     # ✅ CRITICAL: Wait for TTS to complete
-    while buddy_talking.is_set():
+    while _get_buddy_talking().is_set():
         time.sleep(0.1)
     time.sleep(2.0)
     
@@ -85,8 +106,8 @@ def advanced_voice_training_mode():
     if ENHANCED_MODULES:
         final_username = handle_same_name_collision(username)
         if final_username != username:
-            speak_streaming(f"I'll call you {final_username} to avoid name conflicts.")
-            while buddy_talking.is_set():
+            _speak(f"I'll call you {final_username} to avoid name conflicts.")
+            while _get_buddy_talking().is_set():
                 time.sleep(0.1)
             time.sleep(1.0)
         username = final_username
@@ -96,14 +117,14 @@ def advanced_voice_training_mode():
     # ✅ CLUSTERING-OPTIMIZED PHRASES
     training_phrases = CLUSTERING_OPTIMIZED_PHRASES
     
-    speak_streaming(f"Excellent! I'll train with {len(training_phrases)} clustering-optimized phrases for {username}.")
+    _speak(f"Excellent! I'll train with {len(training_phrases)} clustering-optimized phrases for {username}.")
     
-    while buddy_talking.is_set():
+    while _get_buddy_talking().is_set():
         time.sleep(0.1)
     time.sleep(1.0)
     
-    speak_streaming("Each phrase helps build your unique voice profile. Speak naturally when ready.")
-    while buddy_talking.is_set():
+    _speak("Each phrase helps build your unique voice profile. Speak naturally when ready.")
+    while _get_buddy_talking().is_set():
         time.sleep(0.1)
     time.sleep(2.0)
     
@@ -138,19 +159,19 @@ def advanced_voice_training_mode():
             
             # ✅ BRIEF FEEDBACK with clustering context
             if clustering_suit == 'excellent':
-                speak_streaming("Excellent quality.")
+                _speak("Excellent quality.")
             elif clustering_suit == 'good':
-                speak_streaming("Good.")
+                _speak("Good.")
             else:
-                speak_streaming("Accepted.")
+                _speak("Accepted.")
             
-            while buddy_talking.is_set():
+            while _get_buddy_talking().is_set():
                 time.sleep(0.1)
             time.sleep(0.5)
         else:
             print(f"[AdvancedTraining] ❌ Phrase {phrase_num} failed")
-            speak_streaming("Let's continue.")
-            while buddy_talking.is_set():
+            _speak("Let's continue.")
+            while _get_buddy_talking().is_set():
                 time.sleep(0.1)
             time.sleep(0.5)
     
@@ -158,18 +179,18 @@ def advanced_voice_training_mode():
     if successful_recordings >= 4:  # Lower threshold for reliability
         return create_advanced_clustering_profile(username, voice_samples, quality_scores, clustering_metrics, successful_recordings, total_attempts)
     else:
-        speak_streaming(f"I only got {successful_recordings} phrases. Let's try again later.")
-        while buddy_talking.is_set():
+        _speak(f"I only got {successful_recordings} phrases. Let's try again later.")
+        while _get_buddy_talking().is_set():
             time.sleep(0.1)
         return False
 
 def get_name_with_clustering_validation():
     """🏷️ Advanced name collection with clustering validation"""
     for attempt in range(3):
-        speak_streaming("Please say your first name clearly for voice profile creation.")
+        _speak("Please say your first name clearly for voice profile creation.")
         
         # ✅ CRITICAL: Wait for TTS to complete
-        while buddy_talking.is_set():
+        while _get_buddy_talking().is_set():
             time.sleep(0.1)
         
         # ✅ PATIENT: Give user time to prepare
@@ -177,7 +198,7 @@ def get_name_with_clustering_validation():
         
         # ✅ Optional beep for clarity
         try:
-            play_chime()
+            _play_chime()
             time.sleep(0.5)
         except:
             pass
@@ -187,8 +208,8 @@ def get_name_with_clustering_validation():
         # ✅ LONGER TIMEOUT for name
         name_audio = aec_training_listen("name", timeout=45)
         if name_audio is None:
-            speak_streaming("I didn't hear anything. Let's try again.")
-            while buddy_talking.is_set():
+            _speak("I didn't hear anything. Let's try again.")
+            while _get_buddy_talking().is_set():
                 time.sleep(0.1)
             continue
         
@@ -198,8 +219,8 @@ def get_name_with_clustering_validation():
             quality = enhanced_speaker_profiles.assess_audio_quality_advanced(name_audio)
             
             if quality['auto_discard'] or quality['clustering_suitability'] == 'unusable':
-                speak_streaming("Audio wasn't clear enough for voice clustering. Please speak a bit louder.")
-                while buddy_talking.is_set():
+                _speak("Audio wasn't clear enough for voice clustering. Please speak a bit louder.")
+                while _get_buddy_talking().is_set():
                     time.sleep(0.1)
                 continue
                 
@@ -209,8 +230,8 @@ def get_name_with_clustering_validation():
         # Transcribe name
         name_text = transcribe_audio(name_audio)
         if not name_text or len(name_text.strip()) < 2:
-            speak_streaming("I couldn't understand clearly. Please try again.")
-            while buddy_talking.is_set():
+            _speak("I couldn't understand clearly. Please try again.")
+            while _get_buddy_talking().is_set():
                 time.sleep(0.1)
             continue
         
@@ -220,9 +241,9 @@ def get_name_with_clustering_validation():
         username = extract_clustering_aware_name(name_text)
         if username:
             # ✅ ADVANCED: Confirm name with clustering context
-            speak_streaming(f"I heard {username}. This will be used for your voice clustering profile. Is that correct?")
+            _speak(f"I heard {username}. This will be used for your voice clustering profile. Is that correct?")
             
-            while buddy_talking.is_set():
+            while _get_buddy_talking().is_set():
                 time.sleep(0.1)
             time.sleep(1.0)
             
@@ -232,25 +253,25 @@ def get_name_with_clustering_validation():
                 if confirmation_text and any(word in confirmation_text.lower() for word in ["yes", "yeah", "correct", "right", "ok"]):
                     return username
                 else:
-                    speak_streaming("Let me try again.")
-                    while buddy_talking.is_set():
+                    _speak("Let me try again.")
+                    while _get_buddy_talking().is_set():
                         time.sleep(0.1)
                     continue
             else:
                 # ✅ ASSUME YES if no response (timeout)
-                speak_streaming(f"I'll use {username} for your voice clustering profile.")
-                while buddy_talking.is_set():
+                _speak(f"I'll use {username} for your voice clustering profile.")
+                while _get_buddy_talking().is_set():
                     time.sleep(0.1)
                 return username
         else:
-            speak_streaming("I couldn't extract your name clearly. Please try again.")
-            while buddy_talking.is_set():
+            _speak("I couldn't extract your name clearly. Please try again.")
+            while _get_buddy_talking().is_set():
                 time.sleep(0.1)
     
     # ✅ FALLBACK: Use default name if all attempts fail
     print("[AdvancedTraining] ❌ Name collection failed, using default")
-    speak_streaming("I'll use David as your name for advanced voice training.")
-    while buddy_talking.is_set():
+    _speak("I'll use David as your name for advanced voice training.")
+    while _get_buddy_talking().is_set():
         time.sleep(0.1)
     return "David"
 
@@ -272,19 +293,19 @@ def collect_phrase_with_clustering_analysis(phrase, phrase_num):
         print(f"[AdvancedTraining] 🎯 Collecting phrase {phrase_num} with clustering analysis (attempt {attempt + 1}/2)")
         
         # ✅ PATIENT: Clear instruction with TTS wait
-        speak_streaming(f"Phrase {phrase_num}: {phrase}")
+        _speak(f"Phrase {phrase_num}: {phrase}")
         
         # ✅ CRITICAL: Wait for TTS to complete
-        while buddy_talking.is_set():
+        while _get_buddy_talking().is_set():
             time.sleep(0.1)
         
         # ✅ PATIENT: Give user time to prepare
         time.sleep(1.0)
         
-        speak_streaming("Speak when you're ready.")
+        _speak("Speak when you're ready.")
         
         # ✅ CRITICAL: Wait for TTS to complete again
-        while buddy_talking.is_set():
+        while _get_buddy_talking().is_set():
             time.sleep(0.1)
         
         print(f"[AdvancedTraining] 👂 Listening for phrase {phrase_num}...")
@@ -310,8 +331,8 @@ def collect_phrase_with_clustering_analysis(phrase, phrase_num):
                 
                 if quality_info['auto_discard'] or quality_info['clustering_suitability'] == 'unusable':
                     if attempt == 0:
-                        speak_streaming("Audio quality isn't optimal for clustering. Let's try again.")
-                        while buddy_talking.is_set():
+                        _speak("Audio quality isn't optimal for clustering. Let's try again.")
+                        while _get_buddy_talking().is_set():
                             time.sleep(0.1)
                         time.sleep(1.0)
                         continue
@@ -331,8 +352,8 @@ def collect_phrase_with_clustering_analysis(phrase, phrase_num):
                 return audio, quality_info, clustering_info
             else:
                 if attempt == 0:
-                    speak_streaming("Let's try that phrase again for better clustering.")
-                    while buddy_talking.is_set():
+                    _speak("Let's try that phrase again for better clustering.")
+                    while _get_buddy_talking().is_set():
                         time.sleep(0.1)
                     time.sleep(1.0)
                 else:
@@ -342,8 +363,8 @@ def collect_phrase_with_clustering_analysis(phrase, phrase_num):
                     return audio, quality_info, clustering_info
         else:
             if attempt == 0:
-                speak_streaming("I didn't hear anything. Please try again.")
-                while buddy_talking.is_set():
+                _speak("I didn't hear anything. Please try again.")
+                while _get_buddy_talking().is_set():
                     time.sleep(0.1)
                 time.sleep(1.0)
             else:
@@ -356,10 +377,10 @@ def create_advanced_clustering_profile(username, voice_samples, quality_scores, 
     """🧠 Create advanced voice profile with clustering intelligence"""
     try:
         print(f"[AdvancedTraining] 🧠 Creating advanced clustering profile: {successful}/{total} samples")
-        speak_streaming("Processing your voice samples with advanced AI clustering algorithms...")
+        _speak("Processing your voice samples with advanced AI clustering algorithms...")
         
         # ✅ WAIT FOR TTS
-        while buddy_talking.is_set():
+        while _get_buddy_talking().is_set():
             time.sleep(0.1)
         
         # ✅ ADVANCED: Use enhanced profile creation with clustering
@@ -380,18 +401,18 @@ def create_advanced_clustering_profile(username, voice_samples, quality_scores, 
                 good_count = sum(1 for m in clustering_metrics if m.get('clustering_suitability') == 'good')
                 clustering_effectiveness = (excellent_count + good_count) / len(clustering_metrics) if clustering_metrics else 0.5
                 
-                speak_streaming("Excellent! Your advanced voice profile has been created with AI clustering technology.")
-                while buddy_talking.is_set():
+                _speak("Excellent! Your advanced voice profile has been created with AI clustering technology.")
+                while _get_buddy_talking().is_set():
                     time.sleep(0.1)
                 time.sleep(2.0)
                 
-                speak_streaming(f"Training success: {successful}/{total} samples with {clustering_effectiveness:.0%} clustering effectiveness.")
-                while buddy_talking.is_set():
+                _speak(f"Training success: {successful}/{total} samples with {clustering_effectiveness:.0%} clustering effectiveness.")
+                while _get_buddy_talking().is_set():
                     time.sleep(0.1)
                 time.sleep(1.5)
                 
-                speak_streaming("Your voice is now ready for intelligent recognition across all interactions.")
-                while buddy_talking.is_set():
+                _speak("Your voice is now ready for intelligent recognition across all interactions.")
+                while _get_buddy_talking().is_set():
                     time.sleep(0.1)
                 
                 return True
@@ -476,8 +497,8 @@ def create_basic_clustering_profile(username, voice_samples, clustering_metrics)
                 print(f"[AdvancedTraining] ✅ Profile verification successful")
                 print(f"[AdvancedTraining] 📊 Profile details: status={saved_profile.get('status')}, clustering_enabled={saved_profile.get('clustering_enabled', False)}")
                 
-                speak_streaming("Voice training completed successfully with clustering support!")
-                while buddy_talking.is_set():
+                _speak("Voice training completed successfully with clustering support!")
+                while _get_buddy_talking().is_set():
                     time.sleep(0.1)
                 return True
             else:
@@ -485,8 +506,8 @@ def create_basic_clustering_profile(username, voice_samples, clustering_metrics)
                 return False
         else:
             print(f"[AdvancedTraining] ❌ Not enough valid embeddings: {len(embeddings)}")
-            speak_streaming("I had trouble processing your voice. Let's try again later.")
-            while buddy_talking.is_set():
+            _speak("I had trouble processing your voice. Let's try again later.")
+            while _get_buddy_talking().is_set():
                 time.sleep(0.1)
             return False
             

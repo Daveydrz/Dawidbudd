@@ -18,6 +18,10 @@ def safe_import(module_name, fallback=None):
         print(f"⚠️ Could not import {module_name}: {e}")
         return fallback
 
+def _speak(text: str):
+    from audio.output import speak_streaming
+    speak_streaming(text)
+
 # ✅ FALLBACK: Mock voice models if not available
 try:
     from voice.voice_models import dual_voice_model_manager
@@ -73,8 +77,7 @@ except ImportError as e:
 try:
     from voice.database import find_similar_clusters, handle_same_name_collision
     from voice.training import voice_training_mode
-    from audio.output import speak_streaming
-    from config import *
+    from config import SAMPLE_RATE, TRAINING_MODE_NONE_STR
 except ImportError as e:
     print(f"[ManagerCore] ⚠️ Some imports failed: {e}")
     # Set fallback values
@@ -296,8 +299,7 @@ class AdvancedAIAssistantCore:
         try:
             # Integration with your audio output system
             try:
-                from audio.output import speak_streaming
-                speak_streaming(question)
+                _speak(question)
             except ImportError:
                 print(f"[AdvancedCore] 🗣️ SPEAK: {question}")
         

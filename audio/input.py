@@ -7,8 +7,9 @@ import numpy as np
 import time
 from scipy.io.wavfile import write
 from audio.processing import downsample_audio
-from audio.output import buddy_talking, is_buddy_talking
-from config import *
+from config import (
+    FULL_DUPLEX_MODE, MIC_SAMPLE_RATE, MIC_DEVICE_INDEX, SAMPLE_RATE
+)
 
 # Use only the Smart AEC system, as per config
 from audio.smart_aec import smart_aec
@@ -71,6 +72,7 @@ def full_duplex_vad_listen():
                         continue
                     
                     # ✅ CRITICAL FIX: Only apply AEC when Buddy is actually speaking
+                    from audio.output import is_buddy_talking
                     if is_buddy_talking():
                         # Apply gentle AEC only when needed
                         processed_chunk = smart_aec.process_microphone_input(chunk)
@@ -147,6 +149,7 @@ def half_duplex_vad_listen():
     print("[Buddy V2] 🎤 FIXED Half Duplex Listening...")
 
     # ✅ FIXED: Better wait for Buddy to finish
+    from audio.output import buddy_talking
     while buddy_talking.is_set():
         time.sleep(0.1)
     time.sleep(0.3)  # Shorter safety buffer
@@ -260,6 +263,7 @@ def aec_training_listen(description, timeout=8):
     print(f"[Training] 🎓 {description}")
     
     # ✅ FIXED: Better wait for Buddy to finish
+    from audio.output import buddy_talking
     while buddy_talking.is_set():
         time.sleep(0.1)
     time.sleep(1.0)  # Longer pause for training
@@ -303,6 +307,7 @@ def emergency_raw_audio_listen():
 
 def get_input_stats():
     """Get input system statistics"""
+    from audio.output import buddy_talking, is_buddy_talking
     return {
         "mic_device": MIC_DEVICE_INDEX,
         "mic_sample_rate": MIC_SAMPLE_RATE,

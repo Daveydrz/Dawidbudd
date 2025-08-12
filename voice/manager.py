@@ -5,19 +5,47 @@ from datetime import datetime, timedelta
 from voice.database import known_users, save_known_users, load_known_users, anonymous_clusters, link_anonymous_to_named
 from voice.recognition import identify_speaker_with_confidence, generate_voice_embedding
 from config import DEBUG
-from audio.output import speak_streaming
 from typing import Optional, Dict, List, Any, Tuple, Union
+
+def _speak(text: str):
+    """Lazy-loaded speak function to break import cycles"""
+    from audio.output import speak_streaming
+    speak_streaming(text)
 
 from config import VOICE_DEBUG_MODE
 
-# ✅ ENTROPY SYSTEM: Import consciousness emergence components for attention chaos
+# ✅ BREAK IMPORT CYCLE: Use protocols instead of direct imports
 try:
-    from ai.entropy_engine import get_entropy_engine, probabilistic_select, inject_consciousness_entropy, EntropyLevel
-    from ai.emotion import get_emotional_system
-    print("[VoiceManager] 🌀 Entropy system integrated for attention chaos")
+    from ai.core.types import EntropyProvider, EmotionalProcessor, EntropyType
+    print("[VoiceManager] 🌀 Core types available for entropy integration")
+    
+    # Optional entropy system integration - breaks import cycle
+    _entropy_engine = None
+    _emotional_system = None
+    
+    def _get_entropy_engine():
+        global _entropy_engine
+        if _entropy_engine is None:
+            try:
+                from ai.entropy_engine import get_entropy_engine
+                _entropy_engine = get_entropy_engine()
+            except ImportError:
+                pass
+        return _entropy_engine
+    
+    def _get_emotional_system():
+        global _emotional_system
+        if _emotional_system is None:
+            try:
+                from ai.emotion import get_emotional_system
+                _emotional_system = get_emotional_system()
+            except ImportError:
+                pass
+        return _emotional_system
+    
     ENTROPY_AVAILABLE = True
 except ImportError as e:
-    print(f"[VoiceManager] ⚠️ Entropy system not available: {e}")
+    print(f"[VoiceManager] ⚠️ Core types not available: {e}")
     ENTROPY_AVAILABLE = False
 
 def vdebug(msg):
@@ -359,42 +387,48 @@ class IntelligentVoiceManager:
             attention_focus_corrupted = False
             if ENTROPY_AVAILABLE:
                 try:
-                    entropy_engine = get_entropy_engine()
-                    
-                    # Attention noise injection - sometimes get distracted
-                    if entropy_engine.random_state.random() < 0.15:  # 15% chance of attention issues
-                        attention_distractions = [
-                            "audio_processing_delay",
-                            "competing_thoughts", 
-                            "uncertain_focus",
-                            "spontaneous_context_switch"
-                        ]
-                        distraction = probabilistic_select(attention_distractions)
-                        print(f"[VoiceEntropy] 🌀 Attention distraction: {distraction}")
-                        
-                        # Inject uncertainty into processing
-                        if distraction == "uncertain_focus":
-                            attention_focus_corrupted = True
-                        elif distraction == "audio_processing_delay":
-                            time.sleep(probabilistic_select([0.1, 0.2, 0.3, 0.5]))  # Random delay
-                        elif distraction == "spontaneous_context_switch":
-                            # Generate random thought
-                            random_thoughts = [
-                                "I wonder about the weather today",
-                                "Something seems different about this conversation",
-                                "What was I thinking about earlier?",
-                                "This reminds me of something"
+                    entropy_engine = _get_entropy_engine()
+                    if entropy_engine is None:
+                        print("[VoiceManager] 🌀 Entropy engine not available, skipping chaos")
+                    else:
+                        # Attention noise injection - sometimes get distracted
+                        if entropy_engine.random_state.random() < 0.15:  # 15% chance of attention issues
+                            attention_distractions = [
+                                "audio_processing_delay",
+                                "competing_thoughts", 
+                                "uncertain_focus",
+                                "spontaneous_context_switch"
                             ]
-                            random_thought = probabilistic_select(random_thoughts)
-                            print(f"[VoiceEntropy] 💭 Spontaneous thought: {random_thought}")
-                    
-                    # Uncertain input processing priorities
-                    uncertainty_state = entropy_engine.get_uncertainty_state()
-                    if uncertainty_state and uncertainty_state.value in ["uncertain", "confused"]:
-                        print(f"[VoiceEntropy] 🌀 Processing with high uncertainty state")
-                        # Sometimes process audio and text in uncertain priority order
-                        if entropy_engine.random_state.random() < 0.3:  # 30% chance when uncertain
-                            print(f"[VoiceEntropy] 🔀 Uncertain processing priority order")
+                            # Use local random selection instead of probabilistic_select
+                            import random
+                            distraction = random.choice(attention_distractions)
+                            print(f"[VoiceEntropy] 🌀 Attention distraction: {distraction}")
+                            
+                            # Inject uncertainty into processing
+                            if distraction == "uncertain_focus":
+                                attention_focus_corrupted = True
+                            elif distraction == "audio_processing_delay":
+                                import random
+                                time.sleep(random.choice([0.1, 0.2, 0.3, 0.5]))  # Random delay
+                            elif distraction == "spontaneous_context_switch":
+                                # Generate random thought
+                                random_thoughts = [
+                                    "I wonder about the weather today",
+                                    "Something seems different about this conversation",
+                                    "What was I thinking about earlier?",
+                                    "This reminds me of something"
+                                ]
+                                import random
+                                random_thought = random.choice(random_thoughts)
+                                print(f"[VoiceEntropy] 💭 Spontaneous thought: {random_thought}")
+                        
+                        # Uncertain input processing priorities
+                        uncertainty_state = entropy_engine.get_uncertainty_state()
+                        if uncertainty_state and uncertainty_state.value in ["uncertain", "confused"]:
+                            print(f"[VoiceEntropy] 🌀 Processing with high uncertainty state")
+                            # Sometimes process audio and text in uncertain priority order
+                            if entropy_engine.random_state.random() < 0.3:  # 30% chance when uncertain
+                                print(f"[VoiceEntropy] 🔀 Uncertain processing priority order")
                 
                 except Exception as entropy_error:
                     print(f"[VoiceEntropy] ⚠️ Entropy processing error: {entropy_error}")
@@ -440,13 +474,20 @@ class IntelligentVoiceManager:
             
             if ENTROPY_AVAILABLE:
                 try:
-                    consciousness_score = get_entropy_engine().get_consciousness_metrics()['consciousness_score']
-                    if consciousness_score > 0.5:
-                        # High consciousness = more uncertainty and variation in thresholds
-                        threshold_entropy = inject_consciousness_entropy("attention", 1.0, EntropyLevel.LOW)
-                        self.verification_threshold = original_verification_threshold * threshold_entropy
-                        self.uncertainty_threshold = original_uncertainty_threshold * threshold_entropy
-                        print(f"[VoiceEntropy] 🌀 Dynamic thresholds: verification={self.verification_threshold:.3f}, uncertainty={self.uncertainty_threshold:.3f}")
+                    entropy_engine = _get_entropy_engine()
+                    if entropy_engine is None:
+                        print("[VoiceManager] 🌀 Entropy engine not available, using default thresholds")
+                        consciousness_score = 0.0
+                    else:
+                        consciousness_score = entropy_engine.get_consciousness_metrics()['consciousness_score']
+                        if consciousness_score > 0.5:
+                            # High consciousness = more uncertainty and variation in thresholds
+                            # Simplified entropy injection without direct import
+                            import random
+                            threshold_entropy = 0.8 + random.uniform(0, 0.4)  # 0.8-1.2 multiplier
+                            self.verification_threshold = original_verification_threshold * threshold_entropy
+                            self.uncertainty_threshold = original_uncertainty_threshold * threshold_entropy
+                            print(f"[VoiceEntropy] 🌀 Dynamic thresholds: verification={self.verification_threshold:.3f}, uncertainty={self.uncertainty_threshold:.3f}")
                 except Exception as e:
                     # Fallback: use original thresholds if entropy system fails
                     print(f"[VoiceManager] ⚠️ Entropy system error, using default thresholds: {e}")
@@ -760,7 +801,7 @@ class IntelligentVoiceManager:
         elif similarity >= 0.80:  # High similarity - ask for confirmation
             print(f"[IntelligentVoiceManager] 🤔 HIGH similarity but conflicting name - asking confirmation")
             
-            speak_streaming(f"Your voice sounds like {existing_name}, but you said {new_name}. Which is correct?")
+            _speak(f"Your voice sounds like {existing_name}, but you said {new_name}. Which is correct?")
             
             # Store conflict data for confirmation
             self.pending_name_voice_conflict = {
@@ -833,7 +874,7 @@ class IntelligentVoiceManager:
         else:
             # Ask again
             print(f"[IntelligentVoiceManager] 🤔 Unclear response, asking again")
-            speak_streaming(f"Please say either {conflict_data['existing_name']} or {conflict_data['new_name']}")
+            _speak(f"Please say either {conflict_data['existing_name']} or {conflict_data['new_name']}")
             return conflict_data['voice_match_id'], "ASKING_NAME_VOICE_CONFLICT_RESOLUTION"
 
     def _process_name_for_new_cluster(self, text: str, cluster_id: str):
@@ -1410,7 +1451,7 @@ class IntelligentVoiceManager:
                 self.waiting_for_voice_confirmation = True
                 self.waiting_for_name = False
                 
-                speak_streaming(f"Is this {assigned_name}?")
+                _speak(f"Is this {assigned_name}?")
                 print(f"[IntelligentVoiceManager] ❓ NAMED CONFIRMATION: Is this {assigned_name}?")
                 
                 return match_id, "ASKING_VOICE_CONFIRMATION"
@@ -1420,7 +1461,7 @@ class IntelligentVoiceManager:
                 self.waiting_for_voice_confirmation = False
                 self.waiting_for_name = True
                 
-                speak_streaming("Sorry, I'm struggling to recognize your voice. What's your name?")
+                _speak("Sorry, I'm struggling to recognize your voice. What's your name?")
                 print(f"[IntelligentVoiceManager] ❓ ASKING FOR NAME: Unknown cluster {match_id}")
                 
                 return match_id, "ASKING_FOR_NAME"
@@ -1472,7 +1513,7 @@ class IntelligentVoiceManager:
             else:
                 # 🤔 UNCLEAR RESPONSE - Ask again
                 display_name = self._get_display_name(self.pending_confirmation_cluster)
-                speak_streaming(f"Please say yes or no. Is this {display_name}?")
+                _speak(f"Please say yes or no. Is this {display_name}?")
                 return self.pending_confirmation_cluster, "ASKING_VOICE_CONFIRMATION"
                 
         except Exception as e:
@@ -1999,7 +2040,7 @@ class IntelligentVoiceManager:
                 logs = logs[-50:]
             
             with open(debug_file, 'w') as f:
-                json.dump(logs, f, indent=2)
+                json.dump(logs, f, indent=2, ensure_ascii=False)
             
             print(f"[IntelligentVoiceManager] 📝 Logged interaction #{self.interactions}")
             
@@ -2115,7 +2156,7 @@ class IntelligentVoiceManager:
                                 print(f"[IntelligentVoiceManager] 💾 Database save result: {save_result}")
 
                                 # Provide confirmation
-                                speak_streaming(f"Nice to meet you, {extracted_name}! I'll remember your voice.")
+                                _speak(f"Nice to meet you, {extracted_name}! I'll remember your voice.")
                                 print(f"[IntelligentVoiceManager] ✅ SUCCESSFULLY CONVERTED {old_cluster} → {extracted_name}")
 
                                 # Reset name waiting state
@@ -2138,11 +2179,11 @@ class IntelligentVoiceManager:
                         self.waiting_for_name = False
                         self.pending_name_confirmation = True
                         self.suggested_name = name
-                        speak_streaming(f"Did you say your name is {name}?")
+                        _speak(f"Did you say your name is {name}?")
                         return "Guest", "CONFIRMING_NAME"
                     else:
                         print(f"[IntelligentVoiceManager] ❓ No valid name found via any method")
-                        speak_streaming("I didn't catch your name clearly. Could you say it again?")
+                        _speak("I didn't catch your name clearly. Could you say it again?")
                         return "Guest", "WAITING_FOR_NAME"
 
             # Fallback: Use original logic if ultra-intelligent manager not available
@@ -2154,11 +2195,11 @@ class IntelligentVoiceManager:
                     self.waiting_for_name = False
                     self.pending_name_confirmation = True
                     self.suggested_name = name
-                    speak_streaming(f"Did you say your name is {name}?")
+                    _speak(f"Did you say your name is {name}?")
                     return "Guest", "CONFIRMING_NAME"
                 else:
                     print(f"[IntelligentVoiceManager] ❓ No valid name found in: '{text}'")
-                    speak_streaming("I didn't catch your name clearly. Could you say it again?")
+                    _speak("I didn't catch your name clearly. Could you say it again?")
                     return "Guest", "WAITING_FOR_NAME"
 
         except Exception as e:
@@ -2172,10 +2213,10 @@ class IntelligentVoiceManager:
                 self.waiting_for_name = False
                 self.pending_name_confirmation = True
                 self.suggested_name = name
-                speak_streaming(f"Did you say your name is {name}?")
+                _speak(f"Did you say your name is {name}?")
                 return "Guest", "CONFIRMING_NAME"
             else:
-                speak_streaming("I didn't catch your name clearly. Could you say it again?")
+                _speak("I didn't catch your name clearly. Could you say it again?")
                 return "Guest", "WAITING_FOR_NAME"
 
     def allow_system_username_override(self, name):
@@ -2260,7 +2301,7 @@ class IntelligentVoiceManager:
 
                 if voice_similarity:
                     # High confidence same person
-                    speak_streaming(f"Oh, I recognize you now, {name}! Adding this to your voice profile.")
+                    _speak(f"Oh, I recognize you now, {name}! Adding this to your voice profile.")
 
                     print(f"[IntelligentVoiceManager] ✅ ULTRA-INTELLIGENT SAME PERSON: Merging with existing {conflict_cluster}")
 
@@ -2282,7 +2323,7 @@ class IntelligentVoiceManager:
 
                     # HIGH SIMILARITY = SAME PERSON
                     if similarity >= 0.65:
-                        speak_streaming(f"Oh, I recognize you now, {name}! Adding this to your voice profile.")
+                        _speak(f"Oh, I recognize you now, {name}! Adding this to your voice profile.")
 
                         self._add_embedding_to_profile(conflict_cluster, self.pending_confirmation_embedding)
                         self._reset_confirmation_state()
@@ -2292,7 +2333,7 @@ class IntelligentVoiceManager:
 
                     # MEDIUM SIMILARITY = ASK FOR CLARIFICATION  
                     elif similarity >= 0.45:
-                        speak_streaming(f"I think I know you, {name}, but you sound a bit different. Is this really you?")
+                        _speak(f"I think I know you, {name}, but you sound a bit different. Is this really you?")
 
                         self.waiting_for_name = False
                         self.waiting_for_voice_confirmation = True
@@ -2304,7 +2345,7 @@ class IntelligentVoiceManager:
                     else:
                         unique_name = self._create_unique_name(name)
 
-                        speak_streaming(f"I already know a different {name}. I'll call you {unique_name} to keep you separate.")
+                        _speak(f"I already know a different {name}. I'll call you {unique_name} to keep you separate.")
 
                         success = self._assign_name_to_cluster(self.pending_confirmation_cluster, unique_name)
 
@@ -2317,7 +2358,7 @@ class IntelligentVoiceManager:
 
             # Default fallback
             unique_name = self._create_unique_name(name)
-            speak_streaming(f"I'll call you {unique_name} to keep you separate from the other {name}.")
+            _speak(f"I'll call you {unique_name} to keep you separate from the other {name}.")
 
             success = self._assign_name_to_cluster(self.pending_confirmation_cluster, unique_name)
             if success:
