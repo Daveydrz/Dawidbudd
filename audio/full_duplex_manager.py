@@ -7,8 +7,11 @@ import time
 import queue
 import numpy as np
 from collections import deque
-from config import DEBUG, USER_SPEECH_THRESHOLD, BUDDY_INTERRUPT_THRESHOLD, SAMPLE_RATE
 import config as CFG
+DEBUG = getattr(CFG, "DEBUG", False)
+USER_SPEECH_THRESHOLD = getattr(CFG, "USER_SPEECH_THRESHOLD", 0.01)
+BUDDY_INTERRUPT_THRESHOLD = getattr(CFG, "BUDDY_INTERRUPT_THRESHOLD", 0.005)
+SAMPLE_RATE = getattr(CFG, "SAMPLE_RATE", 16000)
 ENABLE_AEC = getattr(CFG, "ENABLE_AEC", False)
 AEC_REAL_TIME = getattr(CFG, "AEC_REAL_TIME", True)
 ADVANCED_FILTERING = getattr(CFG, "ADVANCED_FILTERING", False)
