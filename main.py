@@ -2115,14 +2115,26 @@ def main():
         print("[AdvancedBuddy] ℹ️ Skipping wake word init.")
         porcupine = None
     
-    if porcupine and CFG.FULL_DUPLEX_MODE and full_duplex_manager:
-        # Full duplex mode with wake word (ADVANCED AI + CONSCIOUSNESS)
-        pa = pyaudio.PyAudio()
-        stream = pa.open(rate=porcupine.sample_rate, channels=1, format=pyaudio.paInt16,
-                         input=True, frames_per_buffer=porcupine.frame_length)
+    # Start full-duplex regardless of wake word availability
+    if CFG.FULL_DUPLEX_MODE and full_duplex_manager:
+        if porcupine:
+            # Use Porcupine-provided frame size/sample rate
+            pa = pyaudio.PyAudio()
+            stream = pa.open(rate=porcupine.sample_rate, channels=1, format=pyaudio.paInt16,
+                             input=True, frames_per_buffer=porcupine.frame_length)
+            frame_length = porcupine.frame_length
+            sample_rate = porcupine.sample_rate
+            print(f"[AdvancedBuddy] 🎯 Say '{wake_word}' to start (wake word enabled)")
+        else:
+            # No wake word → start always-listening mic with sane defaults (20 ms frames @ CFG.SAMPLE_RATE)
+            print("[AdvancedBuddy] 🔊 Wake word disabled — starting always-listening full duplex")
+            sample_rate = CFG.SAMPLE_RATE
+            frame_length = int(sample_rate * 0.02)  # 20ms frames keep VAD snappy
+            pa = pyaudio.PyAudio()
+            stream = pa.open(rate=sample_rate, channels=1, format=pyaudio.paInt16,
+                             input=True, frames_per_buffer=frame_length)
         
         print(f"[AdvancedBuddy] 👂 ADVANCED AI ASSISTANT + CONSCIOUSNESS + TRUE STREAMING BIRTINYA BUDDY Ready!")
-        print(f"[AdvancedBuddy] 🎯 Say '{wake_word}' to start...")
         print(f"[AdvancedBuddy] 🌊 Location: Birtinya, Sunshine Coast")
         print(f"[AdvancedBuddy] 🕐 Time: {brisbane_time_12h} Brisbane")
         
@@ -2189,51 +2201,77 @@ def main():
             print(f"[AdvancedBuddy]   🧠 'Tell me about something' → LLM streams naturally")
         
         try:
-            while True:
-                pcm = stream.read(porcupine.frame_length, exception_on_overflow=False)
-                pcm = np.frombuffer(pcm, dtype=np.int16)
+            if porcupine:
+                # Wake word mode - wait for detection
+                while True:
+                    pcm = stream.read(frame_length, exception_on_overflow=False)
+                    pcm = np.frombuffer(pcm, dtype=np.int16)
+                    
+                    if porcupine.process(pcm) >= 0:
+                        if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
+                            print(f"[AdvancedBuddy] 🎤 {wake_word} detected! Starting CONSCIOUSNESS + ADVANCED AI ASSISTANT mode...")
+                        elif ENTROPY_SYSTEM_AVAILABLE:
+                            print(f"[AdvancedBuddy] 🎤 {wake_word} detected! Starting ENTROPY + ADVANCED AI ASSISTANT mode...")
+                        elif ADVANCED_AI_AVAILABLE:
+                            print(f"[AdvancedBuddy] 🎤 {wake_word} detected! Starting ADVANCED AI ASSISTANT mode...")
+                        elif ENHANCED_VOICE_AVAILABLE:
+                            print(f"[AdvancedBuddy] 🎤 {wake_word} detected! Starting Enhanced Voice System + TRUE STREAMING LLM mode...")
+                        else:
+                            print(f"[AdvancedBuddy] 🎤 {wake_word} detected! Starting TRUE STREAMING LLM mode...")
+
+                        reset_session_for_user_smart(current_user)  
+
+                        set_mic_feeding_state(True)
+                        set_conversation_state(True)
+                        
+                        print(f"[AdvancedBuddy] 🔄 Flags set using thread-safe methods")
+                        
+                        # Start continuous microphone feeding
+                        mic_thread = threading.Thread(
+                            target=continuous_mic_worker, 
+                            args=(stream, frame_length, sample_rate),
+                            daemon=True
+                        )
+                        mic_thread.start()
+                        
+                        print("[AdvancedBuddy] ⏳ Waiting for mic worker to initialize...")
+                        time.sleep(1.0)
+                        
+                        # Start advanced full duplex conversation with TRUE streaming + CONSCIOUSNESS
+                        handle_full_duplex_conversation()
+                        
+                        # Stop microphone feeding
+                        print("[AdvancedBuddy] 🛑 Stopping microphone worker...")
+                        set_mic_feeding_state(False)
+                        set_conversation_state(False)
+                        mic_thread.join(timeout=3.0)
+                        
+                        print(f"[AdvancedBuddy] 👂 Ready! Say '{wake_word}' to start...")
+            else:
+                # Always-listening mode - start immediately
+                print("[AdvancedBuddy] 🔊 Starting always-listening mode...")
                 
-                if porcupine.process(pcm) >= 0:
-                    if CONSCIOUSNESS_ARCHITECTURE_AVAILABLE:
-                        print(f"[AdvancedBuddy] 🎤 {wake_word} detected! Starting CONSCIOUSNESS + ADVANCED AI ASSISTANT mode...")
-                    elif ENTROPY_SYSTEM_AVAILABLE:
-                        print(f"[AdvancedBuddy] 🎤 {wake_word} detected! Starting ENTROPY + ADVANCED AI ASSISTANT mode...")
-                    elif ADVANCED_AI_AVAILABLE:
-                        print(f"[AdvancedBuddy] 🎤 {wake_word} detected! Starting ADVANCED AI ASSISTANT mode...")
-                    elif ENHANCED_VOICE_AVAILABLE:
-                        print(f"[AdvancedBuddy] 🎤 {wake_word} detected! Starting Enhanced Voice System + TRUE STREAMING LLM mode...")
-                    else:
-                        print(f"[AdvancedBuddy] 🎤 {wake_word} detected! Starting TRUE STREAMING LLM mode...")
+                reset_session_for_user_smart(current_user)
 
-                    reset_session_for_user_smart(current_user)  
-
-                    set_mic_feeding_state(True)
-                    set_conversation_state(True)
-                    
-                    print(f"[AdvancedBuddy] 🔄 Flags set using thread-safe methods")
-                    
-                    # Start continuous microphone feeding
-                    mic_thread = threading.Thread(
-                        target=continuous_mic_worker, 
-                        args=(stream, porcupine.frame_length, porcupine.sample_rate),
-                        daemon=True
-                    )
-                    mic_thread.start()
-                    
-                    print("[AdvancedBuddy] ⏳ Waiting for mic worker to initialize...")
-                    time.sleep(1.0)
-                    
-                    # Start advanced full duplex conversation with TRUE streaming + CONSCIOUSNESS
-                    handle_full_duplex_conversation()
-                    
-                    # Stop microphone feeding
-                    print("[AdvancedBuddy] 🛑 Stopping microphone worker...")
-                    set_mic_feeding_state(False)
-                    set_conversation_state(False)
-                    mic_thread.join(timeout=3.0)
-                    
-                    print(f"[AdvancedBuddy] 👂 Ready! Say '{wake_word}' to start...")
-                    
+                set_mic_feeding_state(True)
+                set_conversation_state(True)
+                
+                print(f"[AdvancedBuddy] 🔄 Flags set using thread-safe methods")
+                
+                # Start continuous microphone feeding
+                mic_thread = threading.Thread(
+                    target=continuous_mic_worker, 
+                    args=(stream, frame_length, sample_rate),
+                    daemon=True
+                )
+                mic_thread.start()
+                
+                print("[AdvancedBuddy] ⏳ Waiting for mic worker to initialize...")
+                time.sleep(1.0)
+                
+                # Start advanced full duplex conversation with TRUE streaming + CONSCIOUSNESS
+                handle_full_duplex_conversation()
+                        
         except KeyboardInterrupt:
             print("\n[AdvancedBuddy] 👋 Shutting down ADVANCED AI ASSISTANT + CONSCIOUSNESS...")
         finally:
@@ -2243,7 +2281,8 @@ def main():
                 stream.stop_stream()
                 stream.close()
                 pa.terminate()
-                porcupine.delete()
+                if porcupine:
+                    porcupine.delete()
             except:
                 pass
     
