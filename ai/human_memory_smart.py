@@ -5,6 +5,7 @@ import random
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 import re
+import numpy as np
 from ai.memory import get_user_memory, add_to_conversation_history
 from ai.chat import ask_kobold  # Use your existing LLM connection
 
@@ -395,6 +396,304 @@ Return only valid JSON array:"""
         
         return events
     
+    def _smart_detect_events_and_persist(self, text: str) -> List[Dict]:
+        """
+        Return standardized items with fields:
+        kind, key, value, when_iso|null, status, participants, roles, sequence_index|null,
+        category, media_title, distance{km|miles}|null, items[list]|null, precision, anaphora_key|null
+        Persist each via memory_store.upsert_memory(...) and save embeddings via vector_store.
+        If nothing is extractable, persist a generic episodic event (description=text) so nothing is lost.
+        """
+        import uuid
+        from datetime import datetime
+        
+        print(f"[SmartMemory] 🧠 Step 6: LLM fallback detection from: '{text[:50]}...'")
+        
+        # Try to import dependencies - if they fail, still create standardized items
+        can_persist = True
+        try:
+            from ai.memory_store import upsert_memory, save_embedding
+        except ImportError as e:
+            print(f"[SmartMemory] ⚠️ Memory store import error: {e}")
+            can_persist = False
+        
+        try:
+            from ai.text_embedder import embed_text_batch, get_dim
+        except ImportError as e:
+            print(f"[SmartMemory] ⚠️ Text embedder import error: {e}")
+            # Still continue - we'll create items without embeddings
+        
+        try:
+            from ai.vector_store import VectorStore
+        except ImportError as e:
+            print(f"[SmartMemory] ⚠️ Vector store import error: {e}")
+            # Still continue - we'll create items without vector storage
+        
+        # Use existing smart detection
+        detected_events = self._smart_detect_events(text)
+        
+        # Convert to standardized format
+        standardized_items = []
+        
+        if detected_events:
+            for event in detected_events:
+                standardized_item = self._convert_to_standardized_format(event, text)
+                if standardized_item:
+                    standardized_items.append(standardized_item)
+        
+        # If nothing extractable, persist generic episodic event so nothing is lost
+        if not standardized_items:
+            print(f"[SmartMemory] 🤷 No events detected, creating generic episodic entry")
+            generic_item = {
+                'kind': 'episodic_generic',
+                'key': 'description',
+                'value': text,
+                'when_iso': datetime.utcnow().isoformat(),
+                'status': 'active',
+                'participants': [],
+                'roles': [],
+                'sequence_index': None,
+                'category': 'fallback',
+                'media_title': '',
+                'distance_km': None,
+                'distance_miles': None,
+                'items': [],
+                'precision': 'llm_fallback',
+                'anaphora_key': None
+            }
+            standardized_items.append(generic_item)
+        
+        # Persist each via memory_store and vector_store if possible
+        persisted_items = []
+        for item in standardized_items:
+            try:
+                if can_persist:
+                    persisted_item = self._persist_standardized_item(item, text)
+                    if persisted_item:
+                        persisted_items.append(persisted_item)
+                else:
+                    # Add ID for consistency even if we can't persist
+                    item_with_id = item.copy()
+                    item_with_id['id'] = str(uuid.uuid4())
+                    item_with_id['text'] = item['value']
+                    persisted_items.append(item_with_id)
+                    print(f"[SmartMemory] 📝 Created item (no persistence): {item['value'][:50]}...")
+            except Exception as e:
+                print(f"[SmartMemory] ⚠️ Failed to persist item: {e}")
+                # Still add the item without persistence
+                item_with_id = item.copy()
+                item_with_id['id'] = str(uuid.uuid4())
+                item_with_id['text'] = item['value']
+                persisted_items.append(item_with_id)
+        
+        # Ensure we ALWAYS return at least one item
+        if not persisted_items:
+            print(f"[SmartMemory] 🚨 Emergency fallback: creating minimal episodic entry")
+            emergency_item = {
+                'id': str(uuid.uuid4()),
+                'kind': 'episodic_emergency',
+                'key': 'utterance',
+                'value': text,
+                'text': text,
+                'when_iso': datetime.utcnow().isoformat(),
+                'status': 'active',
+                'participants': [],
+                'roles': [],
+                'sequence_index': None,
+                'category': 'emergency_fallback',
+                'media_title': '',
+                'distance_km': None,
+                'distance_miles': None,
+                'items': [],
+                'precision': 'emergency',
+                'anaphora_key': None
+            }
+            persisted_items.append(emergency_item)
+        
+        print(f"[SmartMemory] ✅ Step 6 complete: {len(persisted_items)} items returned (never empty)")
+        return persisted_items
+    
+    def _convert_to_standardized_format(self, event: Dict, original_text: str) -> Dict:
+        """Convert LLM-detected event to standardized memory format."""
+        from datetime import datetime
+        
+        # Parse temporal information using memory_normalize helpers if available
+        when_iso = None
+        try:
+            from ai.memory_normalize import parse_relative_time, parse_australian_date, resolve_anaphora
+            
+            if 'date' in event:
+                try:
+                    # Try parsing relative time first, then Australian format
+                    when_iso = parse_relative_time(original_text)
+                    if not when_iso and event['date']:
+                        when_iso = parse_australian_date(event['date'])
+                    if when_iso:
+                        when_iso = when_iso.isoformat()
+                except:
+                    when_iso = event.get('date', datetime.utcnow().isoformat())
+        except ImportError:
+            # Fallback if memory_normalize imports fail
+            when_iso = event.get('date', datetime.utcnow().isoformat())
+        
+        if not when_iso:
+            when_iso = datetime.utcnow().isoformat()
+        
+        # Map event type to standardized kind
+        kind_mapping = {
+            'appointment': 'appointment',
+            'life_event': 'social_event',
+            'highlight': 'emotional_state'
+        }
+        
+        kind = kind_mapping.get(event.get('type', 'unknown'), 'episodic')
+        
+        # Extract participants and roles if mentioned
+        participants = []
+        roles = []
+        
+        # Simple name extraction for participants
+        import re
+        name_patterns = [
+            r'\b([A-Z][a-z]+)(?:\'s)?\s+(?:birthday|visit|appointment)',
+            r'\bwith\s+([A-Z][a-z]+)\b',
+            r'\bseeing\s+([A-Z][a-z]+)\b',
+            r'\bvisiting\s+([A-Z][a-z]+)\b'
+        ]
+        
+        for pattern in name_patterns:
+            matches = re.findall(pattern, original_text, re.IGNORECASE)
+            for match in matches:
+                if match.lower() not in ['the', 'and', 'or']:
+                    participants.append(match)
+                    roles.append('participant')
+        
+        # Extract items if it's a shopping event
+        items = []
+        if 'shopping' in event.get('topic', '').lower() or 'bought' in original_text.lower():
+            # Simple item extraction for shopping
+            item_patterns = [
+                r'\bbought\s+([^.!?]+?)(?:\s+from|\s+at|$)',
+                r'\bpicked up\s+([^.!?]+?)(?:\s+from|\s+at|$)',
+                r'\bneed to buy\s+([^.!?]+?)(?:\s+from|\s+at|$)'
+            ]
+            for pattern in item_patterns:
+                matches = re.findall(pattern, original_text, re.IGNORECASE)
+                items.extend([match.strip() for match in matches])
+        
+        # Resolve anaphora if applicable
+        anaphora_key = None
+        try:
+            from ai.memory_normalize import resolve_anaphora
+            if kind in ['appointment', 'social_event']:
+                anaphora_key = resolve_anaphora(kind, 3)  # Look back 3 episodes
+        except:
+            pass
+        
+        standardized_item = {
+            'kind': kind,
+            'key': event.get('topic', 'detected_event'),
+            'value': event.get('topic', original_text[:100]),
+            'when_iso': when_iso,
+            'status': 'active',
+            'participants': participants,
+            'roles': roles,
+            'sequence_index': None,
+            'category': event.get('type', 'llm_detected'),
+            'media_title': '',
+            'distance_km': None,
+            'distance_miles': None,
+            'items': items,
+            'precision': 'llm_detected',
+            'anaphora_key': anaphora_key
+        }
+        
+        return standardized_item
+    
+    def _persist_standardized_item(self, item: Dict, original_text: str) -> Dict:
+        """Persist standardized item via memory_store.upsert_memory and save embeddings."""
+        import uuid
+        from datetime import datetime
+        
+        # Generate unique ID
+        memory_id = str(uuid.uuid4())
+        current_time = datetime.utcnow().isoformat()
+        
+        # Import and handle failures gracefully
+        try:
+            from ai.memory_store import upsert_memory, save_embedding
+            from ai.text_embedder import embed_text_batch, get_dim
+            from ai.vector_store import VectorStore
+            import os
+        except ImportError as e:
+            print(f"[SmartMemory] ⚠️ Persistence import error: {e}")
+            # Return item with ID for consistency
+            result_item = item.copy()
+            result_item['id'] = memory_id
+            result_item['text'] = item['value']
+            return result_item
+        
+        # Convert to memory store format
+        memory_record = {
+            'id': memory_id,
+            'text': item['value'],
+            'kind': item['kind'],
+            'created_at': current_time,
+            'when_iso': item['when_iso'],
+            'last_access': current_time,
+            'access_count': 0,
+            'strength': 1.0,
+            'importance': 0.6,  # LLM-detected items get medium importance
+            'status': item['status'],
+            'sequence_index': item['sequence_index'],
+            'participants': json.dumps(item['participants']),
+            'roles': json.dumps(item['roles']),
+            'location': '',
+            'media_title': item['media_title'],
+            'category': item['category'],
+            'distance_km': item['distance_km'],
+            'distance_miles': item['distance_miles'],
+            'items': json.dumps(item['items']),
+            'anaphora_key': item['anaphora_key'] or '',
+            'precision': item['precision'],
+            'deleted': 0
+        }
+        
+        try:
+            # Persist via memory_store.upsert_memory
+            upsert_memory(memory_record)
+            print(f"[SmartMemory] 💾 Persisted memory: {memory_id} - {item['value'][:50]}...")
+        except Exception as e:
+            print(f"[SmartMemory] ⚠️ Memory persistence error: {e}")
+        
+        try:
+            # Generate and save embeddings via vector_store
+            text_to_embed = memory_record['text']
+            embeddings = embed_text_batch([text_to_embed])
+            embedding = embeddings[0]
+            save_embedding(memory_id, embedding)
+            
+            # Add to vector store for similarity search
+            vector_store = VectorStore(get_dim(), os.path.join('data', 'vector.index'))
+            
+            # Ensure embedding has correct shape for upsert
+            if hasattr(embedding, "ndim") and embedding.ndim == 1:
+                embedding = embedding.reshape(1, -1)
+            elif not hasattr(embedding, "ndim"):
+                embedding = np.asarray(embedding, dtype="float32").reshape(1, -1)
+            
+            vector_store.upsert([memory_id], embedding)
+            print(f"[SmartMemory] 🔍 Added to vector store: {memory_id}")
+        except Exception as ve:
+            print(f"[SmartMemory] ⚠️ Vector store error: {ve}")
+        
+        # Return item with added ID for logging
+        result_item = item.copy()
+        result_item['id'] = memory_id
+        result_item['text'] = memory_record['text']
+        
+        return result_item
+
     def load_memory(self, filename: str) -> List[Dict]:
         """Load memory file"""
         file_path = os.path.join(self.memory_dir, filename)

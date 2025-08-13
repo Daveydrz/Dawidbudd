@@ -7,6 +7,22 @@ import pytz
 from ai.memory import get_conversation_context, get_user_memory
 from config import *
 
+# --- Memory recall (added) ---
+from ai.memory_recall import build_memory_context_for_question
+from config import RECALL_MAX_ITEMS
+
+# --- Vector init (added) ---
+import os
+try:
+    from ai.text_embedder import get_dim  # must return a fixed embedding dimension
+except Exception:
+    def get_dim(): return 384  # fallback dim if helper not exposed
+try:
+    from ai.vector_store import VectorStore
+except Exception as e:
+    VectorStore = None
+    print(f"[VectorStore] ⚠️ import failed: {e}")
+
 # Import time and location helpers
 try:
     from utils.time_helper import get_time_info_for_buddy, get_buddy_current_time, get_buddy_location
@@ -14,6 +30,18 @@ try:
 except ImportError:
     LOCATION_HELPERS_AVAILABLE = False
     print("[Chat] ⚠️ Location helpers not available, using fallback")
+
+# --- Initialize vector store early (added) ---
+_VECTOR = None
+try:
+    if VectorStore is not None:
+        VECTOR_INDEX_PATH = os.path.join("data", "vector.index")
+        _VECTOR = VectorStore(dim=get_dim(), persist_path=VECTOR_INDEX_PATH)
+        print("[VectorStore] ✅ initialized")
+    else:
+        print("[VectorStore] ⚠️ unavailable; code should fall back to numpy search if implemented")
+except Exception as e:
+    print(f"[VectorStore] ⚠️ init issue, will use numpy fallback if coded: {e}")
 
 def get_current_brisbane_time():
     """Get current Brisbane time - UPDATED to 6:59 PM Brisbane"""
@@ -280,6 +308,21 @@ def ask_kobold(messages, max_tokens=MAX_TOKENS):
         print(f"[KoboldCpp] ❌ Unexpected Error: {type(e).__name__}: {e}")
         return f"Unexpected error: {e}"
 
+# --- memory recall injection helper (added) ---
+def _maybe_inject_memory_context(username: str, user_question: str, context_text: str = "") -> str:
+    try:
+        mem_result = build_memory_context_for_question(
+            question=user_question,
+            user_id=username,
+            dialog_summary=""  # TODO: pass your rolling summary if available
+        )
+        mem_block = mem_result.get('known_facts', '') if mem_result else ''
+        if mem_block:
+            context_text = (context_text + "\n\n" if context_text else "") + mem_block
+    except Exception as e:
+        print(f"[MemoryRecall] ⚠️ failed to build memory context: {e}")
+    return context_text
+
 def generate_response_streaming(question, username, lang=DEFAULT_LANG):
     """✅ ULTRA-RESPONSIVE: Generate AI response with TRUE streaming - speaks as it generates"""
     try:
@@ -340,7 +383,7 @@ def generate_response_streaming(question, username, lang=DEFAULT_LANG):
         
         # Build conversation context
         print(f"[ChatStream] 📚 Getting conversation context...")
-        context = get_conversation_context(username)
+        context = get_conversation_context(username, include_memory=False)
         
         # Get user memory for additional context
         print(f"[ChatStream] 🧠 Getting user memory...")
@@ -406,6 +449,15 @@ You genuinely care about their life and remember our ongoing conversations.
             {"role": "system", "content": system_msg},
             {"role": "user", "content": question}
         ]
+        
+        # --- inject recall into prompt (added) ---
+        # Honor the passed-in username first; only fall back if it's missing
+        if not username:
+            username = globals().get("CURRENT_USERNAME", "default_user")
+        print(f"[MemoryRecall] injecting for user={username}")
+        enhanced_context = _maybe_inject_memory_context(username, question, context_text if 'context_text' in locals() else "")
+        if enhanced_context:
+            messages = [{"role": "system", "content": enhanced_context}] + messages
         
         print(f"[ChatStream] 🚀 Starting ULTRA-RESPONSIVE streaming generation...")
         
@@ -522,7 +574,7 @@ def generate_response(question, username, lang=DEFAULT_LANG):
         
         # Build enhanced conversation context
         print(f"[Chat] 📚 Getting conversation context...")
-        context = get_conversation_context(username)
+        context = get_conversation_context(username, include_memory=False)
         
         # Get user memory for additional context
         print(f"[Chat] 🧠 Getting user memory...")
@@ -589,6 +641,15 @@ You genuinely care about their life and remember our ongoing conversations.
             {"role": "user", "content": question}
         ]
         
+        # --- inject recall into prompt (added) ---
+        # Honor the passed-in username first; only fall back if it's missing
+        if not username:
+            username = globals().get("CURRENT_USERNAME", "default_user")
+        print(f"[MemoryRecall] injecting for user={username}")
+        enhanced_context = _maybe_inject_memory_context(username, question, context_text if 'context_text' in locals() else "")
+        if enhanced_context:
+            messages = [{"role": "system", "content": enhanced_context}] + messages
+        
         print(f"[Chat] 🚀 Sending to KoboldCpp...")
         response = ask_kobold(messages)
         
@@ -615,7 +676,7 @@ You genuinely care about their life and remember our ongoing conversations.
 def get_response_with_context_stats(question, username, lang=DEFAULT_LANG):
     """Generate response and return context statistics - DEBUG HELPER"""
     try:
-        context = get_conversation_context(username)
+        context = get_conversation_context(username, include_memory=False)
         memory = get_user_memory(username)
         
         # Get stats
