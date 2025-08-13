@@ -7,6 +7,10 @@ import pytz
 from ai.memory import get_conversation_context, get_user_memory
 from config import *
 
+# --- Memory recall (added) ---
+from ai.memory_recall import build_memory_context_for_question
+from config import RECALL_MAX_ITEMS
+
 # --- Vector init (added) ---
 import os
 try:
@@ -304,6 +308,21 @@ def ask_kobold(messages, max_tokens=MAX_TOKENS):
         print(f"[KoboldCpp] ❌ Unexpected Error: {type(e).__name__}: {e}")
         return f"Unexpected error: {e}"
 
+# --- memory recall injection helper (added) ---
+def _maybe_inject_memory_context(username: str, user_question: str, context_text: str = "") -> str:
+    try:
+        mem_result = build_memory_context_for_question(
+            question=user_question,
+            user_id=username,
+            dialog_summary=""  # TODO: pass your rolling summary if available
+        )
+        mem_block = mem_result.get('known_facts', '') if mem_result else ''
+        if mem_block:
+            context_text = (context_text + "\n\n" if context_text else "") + mem_block
+    except Exception as e:
+        print(f"[MemoryRecall] ⚠️ failed to build memory context: {e}")
+    return context_text
+
 def generate_response_streaming(question, username, lang=DEFAULT_LANG):
     """✅ ULTRA-RESPONSIVE: Generate AI response with TRUE streaming - speaks as it generates"""
     try:
@@ -430,6 +449,12 @@ You genuinely care about their life and remember our ongoing conversations.
             {"role": "system", "content": system_msg},
             {"role": "user", "content": question}
         ]
+        
+        # --- inject recall into prompt (added) ---
+        username = globals().get("CURRENT_USERNAME", username if not username.startswith('Anonymous_') else "default_user")
+        enhanced_context = _maybe_inject_memory_context(username, question, context_text if 'context_text' in locals() else "")
+        if enhanced_context:
+            messages = [{"role": "system", "content": enhanced_context}] + messages
         
         print(f"[ChatStream] 🚀 Starting ULTRA-RESPONSIVE streaming generation...")
         
@@ -612,6 +637,12 @@ You genuinely care about their life and remember our ongoing conversations.
             {"role": "system", "content": system_msg},
             {"role": "user", "content": question}
         ]
+        
+        # --- inject recall into prompt (added) ---
+        username = globals().get("CURRENT_USERNAME", username if not username.startswith('Anonymous_') else "default_user")
+        enhanced_context = _maybe_inject_memory_context(username, question, context_text if 'context_text' in locals() else "")
+        if enhanced_context:
+            messages = [{"role": "system", "content": enhanced_context}] + messages
         
         print(f"[Chat] 🚀 Sending to KoboldCpp...")
         response = ask_kobold(messages)
