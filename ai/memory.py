@@ -1092,7 +1092,7 @@ def add_to_conversation_history(username, user_message, ai_response):
         if DEBUG:
             print(f"[MegaMemory] ❌ Enhanced memory error: {e}")
 
-def get_conversation_context(username):
+def get_conversation_context(username, include_memory: bool = True):
     """🧠 Get MEGA-INTELLIGENT conversation context"""
     try:
         context_parts = []
@@ -1116,10 +1116,13 @@ def get_conversation_context(username):
                 context_parts.append(f"Human: {user_msg}")
                 context_parts.append(f"Assistant: {ai_msg}")
         
-        # 🧠 MEGA-INTELLIGENT: Enhanced memory context
-        memory = get_user_memory(username)
-        memory_context = memory.get_contextual_memory_for_response()
-        follow_ups = memory.get_follow_up_questions()
+        # 🧠 MEGA-INTELLIGENT: Enhanced memory context (optional)
+        memory_context = ""
+        follow_ups = []
+        if include_memory:
+            memory = get_user_memory(username)
+            memory_context = memory.get_contextual_memory_for_response()
+            follow_ups = memory.get_follow_up_questions()
         
         if memory_context:
             context_parts.append(f"\n🧠 MEGA-INTELLIGENT Memory Context for {username}:")

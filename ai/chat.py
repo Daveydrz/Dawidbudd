@@ -383,7 +383,7 @@ def generate_response_streaming(question, username, lang=DEFAULT_LANG):
         
         # Build conversation context
         print(f"[ChatStream] 📚 Getting conversation context...")
-        context = get_conversation_context(username)
+        context = get_conversation_context(username, include_memory=False)
         
         # Get user memory for additional context
         print(f"[ChatStream] 🧠 Getting user memory...")
@@ -574,7 +574,7 @@ def generate_response(question, username, lang=DEFAULT_LANG):
         
         # Build enhanced conversation context
         print(f"[Chat] 📚 Getting conversation context...")
-        context = get_conversation_context(username)
+        context = get_conversation_context(username, include_memory=False)
         
         # Get user memory for additional context
         print(f"[Chat] 🧠 Getting user memory...")
@@ -676,7 +676,7 @@ You genuinely care about their life and remember our ongoing conversations.
 def get_response_with_context_stats(question, username, lang=DEFAULT_LANG):
     """Generate response and return context statistics - DEBUG HELPER"""
     try:
-        context = get_conversation_context(username)
+        context = get_conversation_context(username, include_memory=False)
         memory = get_user_memory(username)
         
         # Get stats
