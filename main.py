@@ -81,6 +81,9 @@ print("[Main] ✅ UltraIntelligentNameManager assigned to voice_manager")
 
 from config import *
 
+# --- Username/session (added) ---
+CURRENT_USERNAME = "default_user"  # replace with actual account name if you have auth
+
 # Import with better error handling
 try:
     from audio.full_duplex_manager import full_duplex_manager
