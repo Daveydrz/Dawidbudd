@@ -9,10 +9,150 @@ import time
 import sqlite3
 import os
 import config
-from .text_embedder import embed_text_batch
-from .memory_store import neighbors_by_vector, find_by_ids, DB_PATH
-from .memory_logs import log_recall_decision
-from .memory_normalize import parse_australian_date, parse_relative_time
+
+# --- Safe imports with fallbacks ---
+try:
+    from .text_embedder import embed_text_batch
+    from .memory_store import neighbors_by_vector, find_by_ids, DB_PATH
+    from .memory_logs import log_recall_decision
+    from .memory_normalize import parse_australian_date, parse_relative_time
+    _MEMORY_DEPS_AVAILABLE = True
+except ImportError as e:
+    print(f"[MemoryRecall] ⚠️ Memory dependencies unavailable: {e}")
+    _MEMORY_DEPS_AVAILABLE = False
+    
+    # Fallback implementations
+    def embed_text_batch(texts):
+        return [[0.0] * 384 for _ in texts]
+    
+    def neighbors_by_vector(embedding, k=10):
+        return []
+    
+    def find_by_ids(ids):
+        return []
+    
+    def log_recall_decision(*args, **kwargs):
+        pass
+    
+    def parse_australian_date(date_str):
+        return None
+        
+    def parse_relative_time(time_str):
+        return None
+        
+    DB_PATH = "data/memory.db"
+
+# --- Recall relevance config (added) ---
+RECALL_MIN_SIM = 0.65         # minimum semantic similarity to inject without cues
+RECALL_MIN_SIM_WITH_CUES = 0.55
+RECALL_MIN_KEYWORDS = 1       # minimal keyword overlap unless sim is very high
+RECALL_CATEGORY_SOFT_BLOCK = {"appointment", "health"}  # only inject if question mentions them
+RECALL_FORCE_WORDS = {
+    "appointment": {"appointment","doctor","dentist","checkup","gp","clinic","what time","when"},
+    "health": {"health","sick","ill","fever","medicine","pill","pain","doctor","dentist"},
+}
+QUESTION_CUE_WORDS = {
+    "who","when","where","which","what","what time","why","how",
+    "remind","remember","did i","do i","have i","was i",
+    "before","after","next","last","where did","when did","what did i say"
+}
+STOPWORDS = {"the","a","an","and","or","to","of","in","on","for","is","it","that","this","my","your","with","at","as","be","are"}
+
+# --- Per-user cooldown (added) ---
+_LAST_INJECTED = {}         # username -> {"memory_id": str, "turn": int}
+_TURN_INDEX = {}            # username -> int
+COOLDOWN_TURNS = 2          # don't inject same memory again within this many turns
+
+
+def _bump_turn(username: str) -> int:
+    _TURN_INDEX[username] = _TURN_INDEX.get(username, 0) + 1
+    return _TURN_INDEX[username]
+
+def _tokenize(s: str) -> set:
+    import re
+    return {w for w in re.findall(r"[a-z0-9']+", (s or "").lower()) if w not in STOPWORDS}
+
+def _has_cue_words(q: str) -> bool:
+    tokens = _tokenize(q)
+    return bool(tokens & QUESTION_CUE_WORDS)
+
+def _has_force_words(q: str, category: str) -> bool:
+    tokens = _tokenize(q)
+    force_words = RECALL_FORCE_WORDS.get(category, set())
+    return bool(tokens & force_words)
+
+def _keyword_overlap_count(q: str, memory_text: str) -> int:
+    q_tokens = _tokenize(q)
+    mem_tokens = _tokenize(memory_text)
+    return len(q_tokens & mem_tokens)
+
+def _is_memory_on_cooldown(username: str, memory_id: str) -> bool:
+    user_last = _LAST_INJECTED.get(username, {})
+    if user_last.get("memory_id") == memory_id:
+        current_turn = _TURN_INDEX.get(username, 0)
+        last_turn = user_last.get("turn", 0)
+        return (current_turn - last_turn) < COOLDOWN_TURNS
+    return False
+
+def _mark_memory_injected(username: str, memory_id: str):
+    current_turn = _TURN_INDEX.get(username, 0)
+    _LAST_INJECTED[username] = {"memory_id": memory_id, "turn": current_turn}
+
+def should_inject_for_question(question: str, memories: List[Dict[str, Any]], username: str) -> List[Dict[str, Any]]:
+    """
+    Filter memories to only inject those that are relevant to the question.
+    
+    Args:
+        question: The question being asked
+        memories: List of candidate memories with similarity scores
+        username: Username for cooldown tracking
+        
+    Returns:
+        Filtered list of memories that should be injected
+    """
+    if not memories:
+        return []
+    
+    # Bump turn counter for this user
+    _bump_turn(username)
+    
+    # Check for cue words in question
+    has_cues = _has_cue_words(question)
+    sim_threshold = RECALL_MIN_SIM_WITH_CUES if has_cues else RECALL_MIN_SIM
+    
+    filtered_memories = []
+    
+    for memory in memories:
+        memory_id = memory.get('id', '')
+        memory_text = memory.get('text', '')
+        category = memory.get('kind', 'general')
+        
+        # Skip if memory is on cooldown
+        if _is_memory_on_cooldown(username, memory_id):
+            continue
+        
+        # Get similarity score (should be added by recall system)
+        similarity = memory.get('similarity_score', 0.0)
+        
+        # Check category soft-blocks
+        if category in RECALL_CATEGORY_SOFT_BLOCK:
+            if not _has_force_words(question, category):
+                continue  # Skip this category unless force words present
+        
+        # Check semantic similarity threshold
+        if similarity < sim_threshold:
+            # Check if we have enough keyword overlap to override low similarity
+            keyword_overlap = _keyword_overlap_count(question, memory_text)
+            if keyword_overlap < RECALL_MIN_KEYWORDS:
+                continue
+        
+        # Memory passed all filters
+        filtered_memories.append(memory)
+        
+        # Mark as injected for cooldown tracking
+        _mark_memory_injected(username, memory_id)
+    
+    return filtered_memories
 
 
 def parse_question_constraints(question: str) -> Dict[str, Any]:
@@ -354,6 +494,17 @@ def build_memory_context_for_question(
         - 'recall_strategy': Strategy used for recall
         - 'known_facts': Formatted bullet list string
     """
+    # Return empty context if dependencies are not available
+    if not _MEMORY_DEPS_AVAILABLE:
+        print("[MemoryRecall] ⚠️ Memory dependencies unavailable, returning empty context")
+        return {
+            'memories': [],
+            'confidence': 0.0,
+            'sources': [],
+            'recall_strategy': 'unavailable',
+            'known_facts': 'Known Facts: Memory system unavailable.'
+        }
+    
     start_time = time.time()
     current_time = datetime.now()
     
@@ -432,6 +583,9 @@ def build_memory_context_for_question(
         if memory_id in keyword_results:
             similarity = max(similarity, 0.3)  # Minimum similarity for keyword matches
         
+        # Add similarity score to memory object for filtering
+        memory['similarity_score'] = similarity
+        
         # Calculate combined score
         score = score_memory(memory, similarity, current_time)
         scored_memories.append((memory, score))
@@ -452,8 +606,12 @@ def build_memory_context_for_question(
         # Re-sort after jitter
         scored_memories.sort(key=lambda x: x[1], reverse=True)
     
-    # Take top memories
-    top_memories = [memory for memory, score in scored_memories[:limit]]
+    # Take top memories before relevance filtering
+    candidate_memories = [memory for memory, score in scored_memories[:limit]]
+    
+    # Apply relevance filtering with should_inject_for_question
+    username = user_id or "default_user"
+    top_memories = should_inject_for_question(question, candidate_memories, username)
     
     # Step 8: Update access patterns for retrieved memories
     from ai.memory_store import access_memory
@@ -464,8 +622,10 @@ def build_memory_context_for_question(
             print(f"[Memory] ⚠️ Failed to update access for {memory.get('id')}: {e}")
     
     # Calculate overall confidence
-    if scored_memories:
-        avg_score = sum(score for _, score in scored_memories[:limit]) / len(scored_memories[:limit])
+    if top_memories:
+        # Calculate confidence based on filtered memories' similarity scores
+        total_score = sum(memory.get('similarity_score', 0.0) for memory in top_memories)
+        avg_score = total_score / len(top_memories) if top_memories else 0.0
         confidence = min(1.0, avg_score)
     else:
         confidence = 0.0
