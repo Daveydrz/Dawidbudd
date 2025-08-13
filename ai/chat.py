@@ -7,6 +7,18 @@ import pytz
 from ai.memory import get_conversation_context, get_user_memory
 from config import *
 
+# --- Vector init (added) ---
+import os
+try:
+    from ai.text_embedder import get_dim  # must return a fixed embedding dimension
+except Exception:
+    def get_dim(): return 384  # fallback dim if helper not exposed
+try:
+    from ai.vector_store import VectorStore
+except Exception as e:
+    VectorStore = None
+    print(f"[VectorStore] ⚠️ import failed: {e}")
+
 # Import time and location helpers
 try:
     from utils.time_helper import get_time_info_for_buddy, get_buddy_current_time, get_buddy_location
@@ -14,6 +26,18 @@ try:
 except ImportError:
     LOCATION_HELPERS_AVAILABLE = False
     print("[Chat] ⚠️ Location helpers not available, using fallback")
+
+# --- Initialize vector store early (added) ---
+_VECTOR = None
+try:
+    if VectorStore is not None:
+        VECTOR_INDEX_PATH = os.path.join("data", "vector.index")
+        _VECTOR = VectorStore(dim=get_dim(), persist_path=VECTOR_INDEX_PATH)
+        print("[VectorStore] ✅ initialized")
+    else:
+        print("[VectorStore] ⚠️ unavailable; code should fall back to numpy search if implemented")
+except Exception as e:
+    print(f"[VectorStore] ⚠️ init issue, will use numpy fallback if coded: {e}")
 
 def get_current_brisbane_time():
     """Get current Brisbane time - UPDATED to 6:59 PM Brisbane"""
