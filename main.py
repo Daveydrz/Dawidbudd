@@ -17,6 +17,9 @@ from datetime import datetime  # ✅ ADD THIS IMPORT
 from typing import List, Any, Dict  # ✅ NEW: Add typing imports for consciousness functions
 from scipy.io.wavfile import write
 from voice.database import load_known_users, known_users, save_known_users, anonymous_clusters
+# --- Memory extraction (added) ---
+from ai.memory import extract_memories_from_text
+
 from ai.memory import validate_ai_response_appropriateness, add_to_conversation_history
 from ai.chat_enhanced_smart import generate_response_streaming_with_smart_memory, reset_session_for_user_smart
 from ai.chat_enhanced_smart_with_fusion import generate_response_streaming_with_intelligent_fusion
@@ -491,6 +494,13 @@ def get_mic_feeding_state():
     """Thread-safe way to get mic feeding state"""
     with state_lock:
         return mic_feeding_active
+
+# --- STT ingestion helper (added) ---
+def _ingest_user_utterance(username: str, utterance: str):
+    try:
+        extract_memories_from_text(utterance, username)
+    except Exception as e:
+        print(f"[MemoryExtract] ⚠️ failed on utterance: {e}")
 
 def handle_streaming_response(text, current_user):
     """✅ ENHANCED: Smart streaming with ADVANCED AI ASSISTANT features + VOICE-BASED IDENTITY + FULL CONSCIOUSNESS"""
@@ -1233,6 +1243,10 @@ def handle_full_duplex_conversation():
             if speech_result:
                 text, audio_data = speech_result
                 print(f"[FullDuplex] 👤 User said: '{text}'")
+                
+                # --- Memory extraction (added) ---
+                username = globals().get("CURRENT_USERNAME", "default_user")
+                _ingest_user_utterance(username, text)
                 
                 # ✅ STEP 1: Process user identification from text FIRST
                 try:
