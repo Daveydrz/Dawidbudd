@@ -75,7 +75,9 @@ def log_recall_decision(
         processing_time_ms: Time taken for recall in milliseconds
         metadata: Additional metadata to log
     """
-    # TODO: Implement logging to structured format
+    # Ensure logs directory exists
+    logs_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
+    os.makedirs(logs_dir, exist_ok=True)
     
     log_entry = {
         'timestamp': datetime.now().isoformat(),
@@ -89,8 +91,19 @@ def log_recall_decision(
         'metadata': metadata or {}
     }
     
-    # TODO: Write to appropriate log file
-    pass
+    # Write to daily log file
+    log_date = datetime.now().strftime('%Y-%m-%d')
+    log_file = os.path.join(logs_dir, f"memory_recall_{log_date}.jsonl")
+    
+    try:
+        with open(log_file, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(log_entry) + '\n')
+        
+        # Also print summary for debugging
+        print(f"[MemoryLog] 🧠 Recall: {len(recalled_memories)} memories, conf={confidence:.3f}, "
+              f"strategy={recall_strategy}, time={processing_time_ms:.1f}ms")
+    except Exception as e:
+        print(f"[MemoryLog] ⚠️ Failed to write recall log: {e}")
 
 
 def get_log_file_path(log_type: str) -> str:
