@@ -8,6 +8,7 @@ from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, asdict
 from config import MAX_HISTORY_LENGTH, DEBUG
 from enum import Enum
+import numpy as np
 
 # ✅ ENTROPY SYSTEM: Import consciousness emergence components for probabilistic memory
 try:
@@ -1360,7 +1361,14 @@ def extract_memories_from_text(text: str, username: str):
             try:
                 import os as os_module
                 vector_store = VectorStore(get_dim(), os_module.path.join('data', 'vector.index'))
-                vector_store.upsert([(memory_id, embedding)])
+                
+                # Ensure embedding has correct shape for upsert
+                if hasattr(embedding, "ndim") and embedding.ndim == 1:
+                    embedding = embedding.reshape(1, -1)
+                elif not hasattr(embedding, "ndim"):
+                    embedding = np.asarray(embedding, dtype="float32").reshape(1, -1)
+                
+                vector_store.upsert([memory_id], embedding)
             except Exception as ve:
                 print(f"[Memory] ⚠️ Vector store error: {ve}")
             

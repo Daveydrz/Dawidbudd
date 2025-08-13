@@ -104,14 +104,34 @@ class VectorStore:
         else:
             self.vector_array = None
             
-    def upsert(self, ids: List[str], vectors: np.ndarray) -> None:
+    def upsert(self, ids_or_pairs, vectors: Optional[np.ndarray] = None) -> None:
         """
         Insert or update vectors by ID.
         
         Args:
-            ids: List of unique identifiers for vectors
-            vectors: Array of vectors to store (shape: [n_vectors, dim])
+            ids_or_pairs: Either a list of IDs (when vectors is provided) or 
+                         a list of (id, vector) pairs for backwards compatibility
+            vectors: Array of vectors to store (shape: [n_vectors, dim]) - optional when using pairs format
         """
+        # Handle backwards compatibility for list of pairs format
+        if vectors is None and len(ids_or_pairs) > 0 and isinstance(ids_or_pairs[0], (list, tuple)):
+            # Unpack pairs format: [(id1, vec1), (id2, vec2), ...]
+            ids = []
+            vector_list = []
+            for pair in ids_or_pairs:
+                if len(pair) != 2:
+                    raise ValueError("Each pair must contain exactly 2 elements: (id, vector)")
+                ids.append(pair[0])
+                vector_list.append(pair[1])
+            
+            # Convert to numpy array
+            vectors = np.array(vector_list, dtype=np.float32)
+            if len(vectors.shape) == 1:
+                vectors = vectors.reshape(1, -1)
+        else:
+            # Standard format: separate ids and vectors arrays
+            ids = ids_or_pairs
+        
         if len(ids) != len(vectors):
             raise ValueError(f"Number of IDs ({len(ids)}) must match number of vectors ({len(vectors)})")
         

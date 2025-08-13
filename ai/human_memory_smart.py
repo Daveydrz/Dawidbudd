@@ -5,6 +5,7 @@ import random
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 import re
+import numpy as np
 from ai.memory import get_user_memory, add_to_conversation_history
 from ai.chat import ask_kobold  # Use your existing LLM connection
 
@@ -674,7 +675,14 @@ Return only valid JSON array:"""
             
             # Add to vector store for similarity search
             vector_store = VectorStore(get_dim(), os.path.join('data', 'vector.index'))
-            vector_store.upsert([(memory_id, embedding)])
+            
+            # Ensure embedding has correct shape for upsert
+            if hasattr(embedding, "ndim") and embedding.ndim == 1:
+                embedding = embedding.reshape(1, -1)
+            elif not hasattr(embedding, "ndim"):
+                embedding = np.asarray(embedding, dtype="float32").reshape(1, -1)
+            
+            vector_store.upsert([memory_id], embedding)
             print(f"[SmartMemory] 🔍 Added to vector store: {memory_id}")
         except Exception as ve:
             print(f"[SmartMemory] ⚠️ Vector store error: {ve}")
