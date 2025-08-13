@@ -26,8 +26,9 @@ def log_extraction_decision(
         llm_fallback_used: Whether LLM fallback was used
         metadata: Additional metadata to log
     """
-    # TODO: Implement logging to structured format
-    # Should log to logs/ directory with timestamp
+    # Ensure logs directory exists
+    logs_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
+    os.makedirs(logs_dir, exist_ok=True)
     
     log_entry = {
         'timestamp': datetime.now().isoformat(),
@@ -40,8 +41,19 @@ def log_extraction_decision(
         'metadata': metadata or {}
     }
     
-    # TODO: Write to appropriate log file
-    pass
+    # Write to daily log file
+    log_date = datetime.now().strftime('%Y-%m-%d')
+    log_file = os.path.join(logs_dir, f"memory_extraction_{log_date}.jsonl")
+    
+    try:
+        with open(log_file, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(log_entry) + '\n')
+        
+        # Also print summary for debugging
+        print(f"[MemoryLog] 📊 Extraction: {len(extracted_items)} items, conf={confidence:.3f}, "
+              f"LLM={'YES' if llm_fallback_used else 'NO'}, patterns={len(pattern_ids)}")
+    except Exception as e:
+        print(f"[MemoryLog] ⚠️ Failed to write log: {e}")
 
 
 def log_recall_decision(

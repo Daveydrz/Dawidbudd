@@ -1209,8 +1209,171 @@ def validate_ai_response_appropriateness(username: str, proposed_response: str) 
     memory = get_user_memory(username)
     return memory.validate_response_before_output(proposed_response)
 
+# ==== STEP 5: EXTRACTION WIRING (REGEX-FIRST → LLM FALLBACK) ====
+
+def extract_memories_from_text(text: str, username: str):
+    """
+    Step 5: Extraction Wiring - Regex-first memory extraction with LLM fallback.
+    
+    This function implements the core memory extraction pipeline:
+    1. Call extract_candidates for regex-based extraction
+    2. Compute max_confidence 
+    3. If no items OR confidence < threshold and LLM fallback enabled, use LLM
+    4. Always persist episodic_raw with original text and timestamp
+    5. Log extraction decision
+    6. Embed and store any structured memories
+    """
+    import sqlite3
+    import uuid
+    from datetime import datetime
+    
+    try:
+        from ai.memory_regex_bank import extract_candidates
+        from ai.memory_store import upsert_memory, save_embedding, DB_PATH, _init_db
+        from ai.memory_logs import log_extraction_decision
+        from ai.text_embedder import embed_text_batch, get_dim
+        from ai.vector_store import VectorStore
+        from ai.memory_normalize import parse_relative_time, parse_australian_date
+        from config import REGEX_CONFIDENCE_THRESHOLD, LLM_FALLBACK_ENABLED
+    except ImportError as e:
+        print(f"[Memory] ⚠️ Import error: {e}")
+        return
+    
+    print(f"[Memory] 🎯 Step 5: Extracting memories from text for {username}")
+    
+    # 1. Call extract_candidates for regex-based extraction
+    items, max_confidence, pattern_ids = extract_candidates(text)
+    
+    # 2. Determine if we should use LLM fallback
+    should_use_llm = (not items or max_confidence < REGEX_CONFIDENCE_THRESHOLD) and LLM_FALLBACK_ENABLED
+    
+    print(f"[Memory] 📊 Regex extraction: {len(items)} items, max_confidence={max_confidence:.3f}")
+    print(f"[Memory] 🤖 LLM fallback: {'YES' if should_use_llm else 'NO'}")
+    
+    llm_items = []
+    if should_use_llm:
+        try:
+            # Import SmartHumanLikeMemory for LLM-based extraction
+            from ai.human_memory_smart import SmartHumanLikeMemory
+            
+            # Create or get smart memory instance
+            smart_memory = SmartHumanLikeMemory(username)
+            
+            # Use LLM fallback for detection and persistence
+            llm_items = smart_memory._smart_detect_events_and_persist(text)
+            print(f"[Memory] 🧠 LLM extracted: {len(llm_items)} additional items")
+        except Exception as e:
+            print(f"[Memory] ⚠️ LLM fallback failed: {e}")
+    
+    # 3. Always persist episodic_raw with original text and timestamp
+    try:
+        _init_db()  # Ensure database exists
+        episodic_id = str(uuid.uuid4())
+        current_time = datetime.utcnow().isoformat()
+        
+        # Insert into episodic_raw table
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO episodic_raw (id, created_at, utterance) VALUES (?, ?, ?)",
+            (episodic_id, current_time, text)
+        )
+        conn.commit()
+        conn.close()
+        print(f"[Memory] 📝 Episodic raw stored: {episodic_id}")
+    except Exception as e:
+        print(f"[Memory] ⚠️ Failed to store episodic raw: {e}")
+    
+    # 4. Log extraction decision
+    try:
+        log_extraction_decision(
+            text=text,
+            extracted_items=items + llm_items,
+            confidence=max_confidence,
+            pattern_ids=pattern_ids,
+            llm_fallback_used=should_use_llm,
+            metadata={
+                'username': username,
+                'regex_items': len(items),
+                'llm_items': len(llm_items)
+            }
+        )
+    except Exception as e:
+        print(f"[Memory] ⚠️ Failed to log extraction decision: {e}")
+    
+    # 5. Process and persist structured memories with embeddings
+    all_items = items + llm_items
+    for item in all_items:
+        try:
+            # Create memory record
+            memory_id = str(uuid.uuid4())
+            current_time = datetime.utcnow().isoformat()
+            
+            # Normalize temporal information if present
+            when_iso = None
+            if 'date' in item or 'time' in item:
+                try:
+                    # Try parsing relative time first, then Australian format
+                    when_iso = parse_relative_time(text)
+                    if not when_iso and 'date' in item:
+                        when_iso = parse_australian_date(item['date'])
+                    if when_iso:
+                        when_iso = when_iso.isoformat()
+                except:
+                    pass
+            
+            memory_record = {
+                'id': memory_id,
+                'text': item.get('content', item.get('topic', text[:100])),
+                'kind': item.get('type', 'extracted'),
+                'created_at': current_time,
+                'when_iso': when_iso,
+                'last_access': current_time,
+                'access_count': 0,
+                'strength': 1.0,
+                'importance': item.get('confidence', 0.5),
+                'status': 'active',
+                'sequence_index': None,
+                'participants': '[]',
+                'roles': '[]',
+                'location': '',
+                'media_title': '',
+                'category': item.get('pattern_group', ''),
+                'distance_km': None,
+                'distance_miles': None,
+                'items': '[]',
+                'anaphora_key': '',
+                'precision': 'extracted',
+                'deleted': 0
+            }
+            
+            # Store memory in database
+            upsert_memory(memory_record)
+            
+            # 6. Generate and store embedding
+            text_to_embed = memory_record['text']
+            embeddings = embed_text_batch([text_to_embed])
+            embedding = embeddings[0]
+            save_embedding(memory_id, embedding)
+            
+            # Add to vector store for similarity search
+            try:
+                import os as os_module
+                vector_store = VectorStore(get_dim(), os_module.path.join('data', 'vector.index'))
+                vector_store.upsert([(memory_id, embedding)])
+            except Exception as ve:
+                print(f"[Memory] ⚠️ Vector store error: {ve}")
+            
+            print(f"[Memory] 💾 Stored memory: {memory_id} - {text_to_embed[:50]}...")
+            
+        except Exception as e:
+            print(f"[Memory] ⚠️ Failed to process memory item: {e}")
+    
+    print(f"[Memory] ✅ Step 5 complete: {len(all_items)} memories processed")
+
 print(f"[MegaMemory] 🧠 MEGA-INTELLIGENT Memory System Loaded!")
 print(f"[MegaMemory] ✅ Entity Status Tracking: Active")
 print(f"[MegaMemory] ✅ Life Event Detection: Active") 
 print(f"[MegaMemory] ✅ Response Validation: Active")
 print(f"[MegaMemory] ✅ Memory Inference Engine: Active")
+print(f"[MegaMemory] 🎯 Step 5 Extraction Wiring: Active")

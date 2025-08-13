@@ -395,6 +395,48 @@ Return only valid JSON array:"""
         
         return events
     
+    def _smart_detect_events_and_persist(self, text: str) -> List[Dict]:
+        """
+        Smart event detection with immediate persistence.
+        Called by Step 5 extraction wiring when LLM fallback is enabled.
+        
+        Returns list of detected and persisted events for logging.
+        """
+        print(f"[SmartMemory] 🧠 LLM fallback: detecting and persisting events from: '{text[:50]}...'")
+        
+        # Use existing smart detection
+        detected_events = self._smart_detect_events(text)
+        
+        if not detected_events:
+            print(f"[SmartMemory] 🤷 LLM detected no events worth storing")
+            return []
+        
+        # Persist detected events immediately
+        persisted_events = []
+        for event in detected_events:
+            try:
+                # Store in appropriate memory list based on type
+                if event['type'] == 'appointment':
+                    self.appointments.append(event)
+                    self.save_memory(self.appointments, 'smart_appointments.json')
+                    print(f"[SmartMemory] 📅 LLM persisted appointment: {event['topic']} on {event['date']}")
+                elif event['type'] == 'life_event':
+                    self.life_events.append(event)
+                    self.save_memory(self.life_events, 'smart_life_events.json')
+                    print(f"[SmartMemory] 📝 LLM persisted life event: {event['topic']} on {event['date']} ({event['emotion']})")
+                elif event['type'] == 'highlight':
+                    self.conversation_highlights.append(event)
+                    self.save_memory(self.conversation_highlights, 'smart_highlights.json')
+                    print(f"[SmartMemory] 💡 LLM persisted highlight: {event['topic']} ({event['emotion']})")
+                
+                persisted_events.append(event)
+                
+            except Exception as e:
+                print(f"[SmartMemory] ⚠️ Failed to persist LLM event: {e}")
+        
+        print(f"[SmartMemory] ✅ LLM fallback complete: {len(persisted_events)}/{len(detected_events)} events persisted")
+        return persisted_events
+    
     def load_memory(self, filename: str) -> List[Dict]:
         """Load memory file"""
         file_path = os.path.join(self.memory_dir, filename)
