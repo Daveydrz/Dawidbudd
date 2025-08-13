@@ -451,7 +451,10 @@ You genuinely care about their life and remember our ongoing conversations.
         ]
         
         # --- inject recall into prompt (added) ---
-        username = globals().get("CURRENT_USERNAME", username if not username.startswith('Anonymous_') else "default_user")
+        # Honor the passed-in username first; only fall back if it's missing
+        if not username:
+            username = globals().get("CURRENT_USERNAME", "default_user")
+        print(f"[MemoryRecall] injecting for user={username}")
         enhanced_context = _maybe_inject_memory_context(username, question, context_text if 'context_text' in locals() else "")
         if enhanced_context:
             messages = [{"role": "system", "content": enhanced_context}] + messages
@@ -639,7 +642,10 @@ You genuinely care about their life and remember our ongoing conversations.
         ]
         
         # --- inject recall into prompt (added) ---
-        username = globals().get("CURRENT_USERNAME", username if not username.startswith('Anonymous_') else "default_user")
+        # Honor the passed-in username first; only fall back if it's missing
+        if not username:
+            username = globals().get("CURRENT_USERNAME", "default_user")
+        print(f"[MemoryRecall] injecting for user={username}")
         enhanced_context = _maybe_inject_memory_context(username, question, context_text if 'context_text' in locals() else "")
         if enhanced_context:
             messages = [{"role": "system", "content": enhanced_context}] + messages

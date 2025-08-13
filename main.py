@@ -1247,9 +1247,10 @@ def handle_full_duplex_conversation():
                 text, audio_data = speech_result
                 print(f"[FullDuplex] 👤 User said: '{text}'")
                 
-                # --- Memory extraction (added) ---
-                username = globals().get("CURRENT_USERNAME", "default_user")
-                _ingest_user_utterance(username, text)
+                # --- Memory extraction (per recognized speaker) ---
+                # We already have the identified user in current_user for this STT segment
+                print(f"[MemoryExtract] user={current_user} text={text[:120]!r}")
+                _ingest_user_utterance(current_user, text)
                 
                 # ✅ STEP 1: Process user identification from text FIRST
                 try:
