@@ -455,6 +455,14 @@ def build_memory_context_for_question(
     # Take top memories
     top_memories = [memory for memory, score in scored_memories[:limit]]
     
+    # Step 8: Update access patterns for retrieved memories
+    from ai.memory_store import access_memory
+    for memory in top_memories:
+        try:
+            access_memory(memory.get('id'))
+        except Exception as e:
+            print(f"[Memory] ⚠️ Failed to update access for {memory.get('id')}: {e}")
+    
     # Calculate overall confidence
     if scored_memories:
         avg_score = sum(score for _, score in scored_memories[:limit]) / len(scored_memories[:limit])
